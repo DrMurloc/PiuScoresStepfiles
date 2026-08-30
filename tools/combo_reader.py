@@ -86,12 +86,32 @@ def norm_glyph(mask, box):
     scale = GLYPH_H / h
     return cv2.resize(g, (max(6, int(round(w * scale))), GLYPH_H))
 
+LABEL_BAND = (322, 388)
+
 def load_atlas():
     out = {}
     for p in glob.glob(os.path.join(ATLAS, "d*.png")):
         d = os.path.basename(p)[1]
         out.setdefault(d, []).append(cv2.imread(p, cv2.IMREAD_GRAYSCALE))
-    return out
+    labels = [cv2.imread(p, cv2.IMREAD_GRAYSCALE)
+              for p in glob.glob(os.path.join(ATLAS, "label_*.png"))]
+    return out, labels
+
+def find_label(frame, side, labels):
+    """The real counter always carries the COMBO label above its digits; the BGA's
+    own numbers (e.g. Tales of Pumpnia's RPG damage popups) don't. Returns the
+    label center x in band coordinates, or None when the counter is hidden."""
+    x0, x1 = X_BAND[side]
+    g = cv2.cvtColor(frame[LABEL_BAND[0]:LABEL_BAND[1], x0:x1], cv2.COLOR_BGR2GRAY)
+    best, best_cx = -1.0, None
+    for tpl in labels:
+        if g.shape[0] < tpl.shape[0] or g.shape[1] < tpl.shape[1]:
+            continue
+        res = cv2.matchTemplate(g, tpl, cv2.TM_CCOEFF_NORMED)
+        _, mx, _, loc = cv2.minMaxLoc(res)
+        if mx > best:
+            best, best_cx = mx, loc[0] + tpl.shape[1] / 2
+    return best_cx if best >= 0.6 else None
 
 def classify(glyph, atlas):
     best, best_d = -1.0, None
@@ -105,8 +125,12 @@ def classify(glyph, atlas):
                 best, best_d = score, d
     return (best_d, best) if best >= 0.5 else (None, best)
 
-def read_frame(frame, side, atlas):
+def read_frame(frame, side, atlas, labels):
+    cx = find_label(frame, side, labels)
+    if cx is None:
+        return None, -1.0  # counter hidden
     mask, row = digit_boxes(frame, side)
+    row = [b for b in row if abs(b[0] + b[2] / 2 - cx) < 190]
     if not row:
         return None, 1.0
     val, worst = "", 1.0
@@ -135,7 +159,7 @@ def bootstrap(vid, pairs):
     print("atlas now:", sorted({os.path.basename(p)[1] for p in glob.glob(os.path.join(ATLAS, 'd*.png'))}))
 
 def scan(vid, side, t0, t1):
-    atlas = load_atlas()
+    atlas, labels = load_atlas()
     cap = cv2.VideoCapture(video_path(vid))
     fps = cap.get(cv2.CAP_PROP_FPS)
     dur = cap.get(cv2.CAP_PROP_FRAME_COUNT) / fps
@@ -152,16 +176,7 @@ def scan(vid, side, t0, t1):
             if not ok:
                 break
             t = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
-            val, conf = read_frame(frame, side, atlas)
-            if val is None and conf > -1 and conf < 0.5 and unk < 40:
-                mask, row = digit_boxes(frame, side)
-                for i, b in enumerate(row):
-                    d, c = classify(norm_glyph(mask, b), load_atlas())
-                    if d is None:
-                        os.makedirs(os.path.join(ROOT, "work", "combo-unknown"), exist_ok=True)
-                        cv2.imwrite(os.path.join(ROOT, "work", "combo-unknown",
-                                                 f"{vid}_{t:.2f}_{i}.png"), norm_glyph(mask, b))
-                        unk += 1
+            val, conf = read_frame(frame, side, atlas, labels)
             out.write(json.dumps([round(t, 4), val, round(conf, 3)]) + "\n")
             n_read += val is not None
             n_none += val is None
