@@ -130,6 +130,31 @@ def main():
                 segs.append((round(b, 4), max(0, base + (bump if j < k else 0))))
                 b += step_len
             t["split"] = segs
+    # last resort: brute-force a two-segment schedule on the tuner around the
+    # best rates seen — their converter's per-segment rounding creates plateaus
+    # the incremental loop cannot always cross
+    import itertools
+    t = targets[tuner_idx]
+    t.pop("split", None)
+    base = rates[tuner_idx]
+    b0, b1 = t["b0"], t["b1"]
+    for r1, r2, k in itertools.product(
+            range(max(0, base - 2), base + 3), range(max(0, base - 2), base + 3),
+            [x / 2 for x in range(0, int((b1 - b0) * 2) + 1)]):
+        t2 = dict(t)
+        t2["split"] = [(b0, r1), (min(b0 + k, b1 - 0.25), r2)] if k > 0 else None
+        if not t2["split"]:
+            t2.pop("split")
+        tgts = targets[:tuner_idx] + [t2] + targets[tuner_idx + 1:]
+        rr = list(rates)
+        rr[tuner_idx] = r2 if k > 0 else r1
+        tc = build_tickcounts(tgts, rr, None)
+        text, ok = patch(original, tag, tc)
+        open(path, "w", encoding="utf-8", newline="").write(text)
+        taps, ticks = derive(path, tag, regions=targets)
+        if taps + sum(ticks) == judged:
+            print(f"CONVERGED (brute tuner r1={r1} r2={r2} k={k})")
+            return
     print("DID NOT CONVERGE — file restored")
     open(path, "w", encoding="utf-8", newline="").write(original)
 
