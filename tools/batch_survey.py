@@ -36,7 +36,7 @@ def main():
             print(f"[scan] {name} ({vid}, band {band})", flush=True)
             subprocess.run([PY, os.path.join(ROOT, "tools", "combo_reader.py"), "--scan", vid, f"side={band}"], check=True)
         s = led[vid][side]
-        breaks = int(s["good"]) + int(s["bad"]) + int(s["miss"])
+        breaks = int(s["bad"]) + int(s["miss"])  # goods do not break combo (Hyperion S20 evidence)
         counted = int(s["perfect"]) + int(s["great"])
         subprocess.run([PY, os.path.join(ROOT, "tools", "curve_assembler.py"), vid, band,
                         str(breaks), s["maxcombo"], str(counted)], check=True, capture_output=True)
