@@ -60,7 +60,7 @@ def main():
     anchors = [tuple(x) for x in json.load(open(os.path.join(ROOT, "work", "combo", vid + ".anchors.json")))]
     print(f"schedule: {len(taps)} taps, {len(spans)} holds; anchors: {len(anchors)}")
 
-    a, score = fit_offset(taps, anchors, 5.0, 40.0)
+    a, score = fit_offset(taps, anchors, 2.0, 45.0)
     print(f"offset fit: a = {a:.2f}s (video = chart + a), violation score {score:.1f}")
 
     tap_ts = sorted(taps)
