@@ -104,6 +104,16 @@ def main():
         same_anchor = (isinstance(how0, tuple) and isinstance(how1, tuple)
                        and how0[1] is not None and how0[1] == how1[1]
                        and not (how0[1][0] <= lo + a + 0.45 and hi + a - 0.45 <= how0[1][1]))
+        # with only one-sided estimates and no read inside the window, the numbers are
+        # fiction; two DISTINCT anchors (including hand pins) bracketing the window are
+        # trustworthy even with nothing in between
+        both_anchored = (isinstance(how0, tuple) and isinstance(how1, tuple)
+                         and how0[0] == "anchor" and how1[0] == "anchor"
+                         and how0[1] != how1[1])
+        if not same_anchor and not both_anchored and not any(
+                lo + a <= rt <= hi + a for rt, rv, rc in reads
+                if rv is not None and rc >= 0.85):
+            same_anchor = True
         h0n = how0 if isinstance(how0, str) else how0[0]
         h1n = how1 if isinstance(how1, str) else how1[0]
         if v0 is None or v1 is None or same_anchor:
