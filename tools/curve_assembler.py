@@ -62,10 +62,34 @@ def assemble(vid, band="C"):
     runs.append(cur)
     return chain, runs
 
+def to_cumulative(runs, breaks, maxcombo, counted):
+    """Convert per-run combo anchors to cumulative judged events. Each reset boundary
+    carries >=1 uncounted judgment (Gd/B/M all break combo). With exactly one break the
+    certified max combo determines both run peaks exactly (maxcombo and
+    counted - maxcombo, assigned by which observed run is longer); otherwise observed
+    peaks + one uncounted per boundary is the best reconstruction and closure absorbs
+    the slack at authoring."""
+    if breaks == 0 or len(runs) == 1:
+        return [a for r in runs for a in r]
+    peaks = [r[-1][2] for r in runs]
+    if breaks == 1 and len(runs) == 2:
+        a, b = maxcombo, counted - maxcombo
+        peaks[0] = a if peaks[0] > peaks[1] else b
+    out = []
+    offset = 0
+    for k, r in enumerate(runs):
+        if k > 0:
+            offset += peaks[k - 1] + 1
+        out.extend((t0, t1, v + offset) for t0, t1, v in r)
+    return out
+
 if __name__ == "__main__":
     vid = sys.argv[1]
     band = sys.argv[2] if len(sys.argv) > 2 and sys.argv[2] in "CLR" else "C"
     chain, runs = assemble(vid, band)
+    if len(sys.argv) > 5:
+        breaks, maxcombo, counted = int(sys.argv[3]), int(sys.argv[4]), int(sys.argv[5])
+        chain = to_cumulative(runs, breaks, maxcombo, counted)
     tot = 0
     for r in runs:
         tot += r[-1][2]

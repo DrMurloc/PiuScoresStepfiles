@@ -35,7 +35,11 @@ def main():
         if not os.path.exists(jsonl):
             print(f"[scan] {name} ({vid}, band {band})", flush=True)
             subprocess.run([PY, os.path.join(ROOT, "tools", "combo_reader.py"), "--scan", vid, f"side={band}"], check=True)
-        subprocess.run([PY, os.path.join(ROOT, "tools", "curve_assembler.py"), vid, band], check=True, capture_output=True)
+        s = led[vid][side]
+        breaks = int(s["good"]) + int(s["bad"]) + int(s["miss"])
+        counted = int(s["perfect"]) + int(s["great"])
+        subprocess.run([PY, os.path.join(ROOT, "tools", "curve_assembler.py"), vid, band,
+                        str(breaks), s["maxcombo"], str(counted)], check=True, capture_output=True)
         out = subprocess.run([PY, os.path.join(ROOT, "tools", "align_schedule.py"), vid, smap[name]["key"], str(r["judged"]), band],
                              capture_output=True, text=True).stdout
         fit = viol = total = None
