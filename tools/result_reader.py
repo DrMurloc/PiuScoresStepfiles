@@ -46,13 +46,19 @@ def glyph_mask(bgr):
     hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
     return ((hsv[:, :, 2] > 175) & (hsv[:, :, 1] < 70)).astype(np.uint8) * 255
 
+PAD = 2  # px of slack each side; classify() searches the best alignment inside it
+
+def _cell(band, x0):
+    lo, hi = max(0, x0 - PAD), min(band.shape[1], x0 + CELL_W + PAD)
+    return band[:, lo:hi]
+
 def cells_left(band):
     out = []
     for c in range(MAX_CELLS):
-        cell = band[:, c * CELL_W:(c + 1) * CELL_W]
-        if int(cell.sum() / 255) < 35:
+        core = band[:, c * CELL_W:(c + 1) * CELL_W]
+        if int(core.sum() / 255) < 35:
             break
-        out.append(cell)
+        out.append(_cell(band, c * CELL_W))
     return out
 
 def cells_right(band):
@@ -60,10 +66,10 @@ def cells_right(band):
     out = []
     for c in range(MAX_CELLS):
         x1 = w - c * CELL_W
-        cell = band[:, x1 - CELL_W:x1]
-        if int(cell.sum() / 255) < 35:
+        core = band[:, x1 - CELL_W:x1]
+        if int(core.sum() / 255) < 35:
             break
-        out.append(cell)
+        out.append(_cell(band, x1 - CELL_W))
     return list(reversed(out))
 
 def load_atlas():
@@ -76,7 +82,7 @@ def load_atlas():
 def classify(cell, digits, tag):
     best, best_d = -1.0, "?"
     for d, tpl in digits.items():
-        score = cv2.matchTemplate(cell, tpl, cv2.TM_CCOEFF_NORMED)[0][0]
+        score = float(cv2.matchTemplate(cell, tpl, cv2.TM_CCOEFF_NORMED).max())
         if score > best:
             best, best_d = score, d
     if best < 0.55:
@@ -138,7 +144,7 @@ def build_atlas(vid, t):
         print(f"y={y} truth={truth}: {len(cells)} cells")
         if len(cells) == len(truth):
             for ch, cell in zip(truth, cells):
-                got.setdefault(ch, cell)
+                got.setdefault(ch, cell[:, PAD:PAD + CELL_W])  # templates stay tight
     for ch, cell in got.items():
         cv2.imwrite(os.path.join(ATLAS, f"d{ch}.png"), cell)
     y0 = 466 - ANCHOR_CY

@@ -1,0 +1,1224 @@
+[
+ {
+  "chart": "God Mode feat. skizzo S4",
+  "chartId": "17B221E5-0AED-4684-A913-5C96B364731C",
+  "tier": "A",
+  "key": "God_Mode_feat._skizzo_-_Nato_S4_ARCADE",
+  "ssc_rel": "13 - PRIME 2/1507 - God Mode feat. skizzo/1507 - God Mode feat. skizzo.ssc",
+  "cs_taps": 210,
+  "census_taps": 210,
+  "ok": true
+ },
+ {
+  "chart": "Set me up S10",
+  "chartId": "291A467A-A22D-4B8E-B9C2-4C85A4A24B66",
+  "tier": "A",
+  "key": "Set_Me_Up_-_BanYa_S10_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 717 - Set Me Up/717 - Set Me Up.ssc",
+  "cs_taps": 276,
+  "census_taps": 276,
+  "ok": true
+ },
+ {
+  "chart": "Slam S5",
+  "chartId": "9CAE8667-6BF8-47CA-816A-60E5EC80DCA3",
+  "tier": "A",
+  "key": "Slam_-_Novasonic_S5_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(3) 516 - Slam/516 - Slam.ssc",
+  "cs_taps": 193,
+  "census_taps": 193,
+  "ok": true
+ },
+ {
+  "chart": "Final Audition 2 - SHORT CUT - D19",
+  "chartId": "5E8AC77F-B37F-4ABF-9CBB-AA9F0CC30182",
+  "tier": "B",
+  "key": "Final_Audition_2__-_SHORT_CUT_-_-_Banya_D19_SHORTCUT",
+  "ssc_rel": "08 - FIESTA/1048 - [Short Cut] Final Audition 2/1048 - [Short Cut] Final Audition 2.ssc",
+  "cs_taps": 313,
+  "census_taps": 313,
+  "ok": true
+ },
+ {
+  "chart": "Beethoven Virus D21",
+  "chartId": "A5CA5AB4-DE62-4C9E-B28C-3E205FBF0D53",
+  "tier": "B",
+  "key": "Beethoven_Virus_-_BanYa_D21_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(3) 505 - Beethoven Virus/505 - Beethoven Virus.ssc",
+  "cs_taps": 495,
+  "census_taps": 495,
+  "ok": true
+ },
+ {
+  "chart": "Slam D22",
+  "chartId": "81A0EC37-CCA3-4DDA-A825-5D5166D2B2BA",
+  "tier": "B",
+  "key": "Slam_-_Novasonic_D22_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(3) 516 - Slam/516 - Slam.ssc",
+  "cs_taps": 506,
+  "census_taps": 506,
+  "ok": true
+ },
+ {
+  "chart": "Gun Rock D24",
+  "chartId": "C35E33C1-F572-450C-A696-DB12FC09721A",
+  "tier": "B",
+  "key": "Gun_Rock_-_Banya_Production_D24_ARCADE",
+  "ssc_rel": "05 - NX~NX2/(2) D16 - Gun Rock/D16 - Gun Rock.ssc",
+  "cs_taps": 528,
+  "census_taps": 528,
+  "ok": true
+ },
+ {
+  "chart": "Vook D21",
+  "chartId": "A7716543-AF58-4873-A82A-A252AA52D8C0",
+  "tier": "B",
+  "key": "Vook_-_Banya_D21_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 735 - Vook/735 - Vook.ssc",
+  "cs_taps": 574,
+  "census_taps": 574,
+  "ok": true
+ },
+ {
+  "chart": "Another Truth D18",
+  "chartId": "24117E9D-CDBA-46B2-996B-707061FCB2E2",
+  "tier": "B",
+  "key": "Another_Truth_-_Novasonic_D18_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(3) 112 - Another Truth/112 - Another Truth.ssc",
+  "cs_taps": 381,
+  "census_taps": 381,
+  "ok": true
+ },
+ {
+  "chart": "She Likes Pizza D18",
+  "chartId": "DDFD3FF4-C7CE-4F2E-B3C8-5EA988BDE5CB",
+  "tier": "B",
+  "key": "She_Likes_Pizza_-_BanYa_D18_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(1) 310 - She Likes Pizza/310 - She Likes Pizza.ssc",
+  "cs_taps": 384,
+  "census_taps": 384,
+  "ok": true
+ },
+ {
+  "chart": "We will meet again D11",
+  "chartId": "AB4761AE-4DA7-48D0-B72C-908621CD32FC",
+  "tier": "B",
+  "key": "We_will_meet_again_-_BanYa_D11_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 715 - We Will Meet Again/715 - We Will Meet Again.ssc",
+  "cs_taps": 182,
+  "census_taps": 182,
+  "ok": true
+ },
+ {
+  "chart": "Slam S20",
+  "chartId": "A092E64C-A9DC-4716-A779-1DE6C619F6E1",
+  "tier": "B",
+  "key": "Slam_-_Novasonic_S20_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(3) 516 - Slam/516 - Slam.ssc",
+  "cs_taps": 505,
+  "census_taps": 505,
+  "ok": true
+ },
+ {
+  "chart": "Winter D21",
+  "chartId": "EB1F597C-F12D-4F19-8583-2C791FCF741E",
+  "tier": "B",
+  "key": "Winter_-_BanYa_D21_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 711 - Winter/711 - Winter.ssc",
+  "cs_taps": 505,
+  "census_taps": 505,
+  "ok": true
+ },
+ {
+  "chart": "Beethoven Virus D13",
+  "chartId": "3B0759E6-30A4-4717-93C4-33404A6DB3B7",
+  "tier": "B",
+  "key": "Beethoven_Virus_-_BanYa_D13_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(3) 505 - Beethoven Virus/505 - Beethoven Virus.ssc",
+  "cs_taps": 255,
+  "census_taps": 255,
+  "ok": true
+ },
+ {
+  "chart": "Will-O-The-Wisp D20",
+  "chartId": "34EB9E3B-6A3A-49D3-B32F-46168CFF9E4D",
+  "tier": "B",
+  "key": "Will-O-The-Wisp_-_BanYa_D20_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 712 - Will O The Wisp/712 - Will O The Wisp.ssc",
+  "cs_taps": 510,
+  "census_taps": 510,
+  "ok": true
+ },
+ {
+  "chart": "Bee D15",
+  "chartId": "1D1E3196-5294-4D38-9822-F434DE9E3E1A",
+  "tier": "B",
+  "key": "Bee_-_BanYa_D15_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(1) 802 - Bee/802 - Bee.ssc",
+  "cs_taps": 339,
+  "census_taps": 339,
+  "ok": true
+ },
+ {
+  "chart": "Extravaganza D15",
+  "chartId": "03EC032B-DD77-45F9-953D-66BE42D49545",
+  "tier": "B",
+  "key": "Extravaganza_-_BanYa_D15_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(2) 205 - Extravaganza/205 - Extravaganza.ssc",
+  "cs_taps": 340,
+  "census_taps": 340,
+  "ok": true
+ },
+ {
+  "chart": "Final Audition Ep. 1 D15",
+  "chartId": "3200CF0A-1582-4BF5-AAF6-40FE9BDCA304",
+  "tier": "B",
+  "key": "Final_Audition_Ep.1_-_BanYa_D15_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(1) 922 - Final Audition Episode 1/922 - Final Audition Episode 1.ssc",
+  "cs_taps": 340,
+  "census_taps": 340,
+  "ok": true
+ },
+ {
+  "chart": "Final Audition D19",
+  "chartId": "2835A617-B6BA-43BD-BB20-E4B755914C31",
+  "tier": "B",
+  "key": "Final_Audition_-_BanYa_D19_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(2) 204 - Final Audition/204 - Final Audition.ssc",
+  "cs_taps": 488,
+  "census_taps": 488,
+  "ok": true
+ },
+ {
+  "chart": "Will-O-The-Wisp D16",
+  "chartId": "0F03D9A6-D7A6-4A72-A364-E00055F3614A",
+  "tier": "B",
+  "key": "Will-O-The-Wisp_-_BanYa_D16_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 712 - Will O The Wisp/712 - Will O The Wisp.ssc",
+  "cs_taps": 384,
+  "census_taps": 384,
+  "ok": true
+ },
+ {
+  "chart": "Dr. M D18",
+  "chartId": "47504784-7DF7-4229-83F7-8A36BCB9A929",
+  "tier": "B",
+  "key": "Dr._M_-_BanYa_D18_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 701 - Dr. M/701 - Dr. M.ssc",
+  "cs_taps": 474,
+  "census_taps": 474,
+  "ok": true
+ },
+ {
+  "chart": "My Way D16",
+  "chartId": "775EE9C1-8A30-4225-8642-C43B276FFF83",
+  "tier": "B",
+  "key": "My_Way_-_BanYa_D16_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 707 - My Way/707 - My Way.ssc",
+  "cs_taps": 395,
+  "census_taps": 395,
+  "ok": true
+ },
+ {
+  "chart": "We will meet again S13",
+  "chartId": "0B3DA60F-A6D8-4F71-8FAC-6AC32DB94E9B",
+  "tier": "B",
+  "key": "We_will_meet_again_-_BanYa_S13_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 715 - We Will Meet Again/715 - We Will Meet Again.ssc",
+  "cs_taps": 366,
+  "census_taps": 366,
+  "ok": true
+ },
+ {
+  "chart": "Final Audition Ep. 1 S17",
+  "chartId": "61B5FE77-04A8-49CB-9EB2-DE8EBB589A6E",
+  "tier": "B",
+  "key": "Final_Audition_Ep.1_-_BanYa_S17_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(1) 922 - Final Audition Episode 1/922 - Final Audition Episode 1.ssc",
+  "cs_taps": 444,
+  "census_taps": 444,
+  "ok": true
+ },
+ {
+  "chart": "My Way S15",
+  "chartId": "1CF78526-218F-4E0F-B141-0BC0A4E8B276",
+  "tier": "B",
+  "key": "My_Way_-_BanYa_S15_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 707 - My Way/707 - My Way.ssc",
+  "cs_taps": 369,
+  "census_taps": 369,
+  "ok": true
+ },
+ {
+  "chart": "First Love S6",
+  "chartId": "0823D84B-BB2D-489A-911B-44B436CAEABE",
+  "tier": "B",
+  "key": "First_Love_-_BanYa_S6_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(4) 402 - First Love/402 - First Love.ssc",
+  "cs_taps": 151,
+  "census_taps": 151,
+  "ok": true
+ },
+ {
+  "chart": "Mr. Larpus D18",
+  "chartId": "8ED63EEA-7AE1-414F-9AD7-82E4765D26FA",
+  "tier": "B",
+  "key": "Mr._Larpus_-_BanYa_D18_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(4) 405 - Mr. Larpus/405 - Mr. Larpus.ssc",
+  "cs_taps": 492,
+  "census_taps": 492,
+  "ok": true
+ },
+ {
+  "chart": "Mr. Larpus D16",
+  "chartId": "A71D1C7A-4661-474C-A817-E7EF68DC059C",
+  "tier": "B",
+  "key": "Mr._Larpus_-_BanYa_D16_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(4) 405 - Mr. Larpus/405 - Mr. Larpus.ssc",
+  "cs_taps": 426,
+  "census_taps": 426,
+  "ok": true
+ },
+ {
+  "chart": "Dr. M D14",
+  "chartId": "C06D7C54-16E4-4260-AC47-93F490F70E2E",
+  "tier": "B",
+  "key": "Dr._M_-_BanYa_D14_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 701 - Dr. M/701 - Dr. M.ssc",
+  "cs_taps": 310,
+  "census_taps": 310,
+  "ok": true
+ },
+ {
+  "chart": "Final Audition S7",
+  "chartId": "4832A165-8637-4CB4-B005-D87104C75A88",
+  "tier": "B",
+  "key": "Final_Audition_-_BanYa_S7_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(2) 204 - Final Audition/204 - Final Audition.ssc",
+  "cs_taps": 234,
+  "census_taps": 234,
+  "ok": true
+ },
+ {
+  "chart": "Winter D17",
+  "chartId": "81515104-308E-4306-82BE-A06AF62A963D",
+  "tier": "B",
+  "key": "Winter_-_BanYa_D17_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 711 - Winter/711 - Winter.ssc",
+  "cs_taps": 472,
+  "census_taps": 472,
+  "ok": true
+ },
+ {
+  "chart": "An Interesting View S13",
+  "chartId": "2B261844-6841-4532-A914-25046D190BFC",
+  "tier": "B",
+  "key": "An_Interesting_View_-_BanYa_S13_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(1) 305 - An Interesting View/305 - An Interesting View.ssc",
+  "cs_taps": 325,
+  "census_taps": 325,
+  "ok": true
+ },
+ {
+  "chart": "Beat of The War S16",
+  "chartId": "D00E645E-2686-4708-AB36-F06C45AAA547",
+  "tier": "B",
+  "key": "Beat_of_The_War_-_Banya_S16_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(1) 820 - Beat of the War/820 - Beat of the War.ssc",
+  "cs_taps": 406,
+  "census_taps": 406,
+  "ok": true
+ },
+ {
+  "chart": "Pump me Amadeus D15",
+  "chartId": "1C462A2F-C1A7-4ABC-816A-7BA195DC7561",
+  "tier": "B",
+  "key": "Pump_me_Amadeus_-_BanYa_D15_ARCADE",
+  "ssc_rel": "04 - EXCEED~ZERO/(3) A05 - Pump Me Amadeus/A05 - Pump Me Amadeus.ssc",
+  "cs_taps": 363,
+  "census_taps": 363,
+  "ok": true
+ },
+ {
+  "chart": "She Likes Pizza D11",
+  "chartId": "87337A0E-4F12-44B6-B888-217EDD392384",
+  "tier": "B",
+  "key": "She_Likes_Pizza_-_BanYa_D11_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(1) 310 - She Likes Pizza/310 - She Likes Pizza.ssc",
+  "cs_taps": 244,
+  "census_taps": 244,
+  "ok": true
+ },
+ {
+  "chart": "All I Want For X-mas S5",
+  "chartId": "0AB7CA67-E052-4BAC-A527-8CF55758EFD2",
+  "tier": "B",
+  "key": "All_I_Want_For_X-Mas_-_BanYa_S5_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(3) 504 - All I Want For X-Mas/504 - All I Want For X-Mas.ssc",
+  "cs_taps": 167,
+  "census_taps": 167,
+  "ok": true
+ },
+ {
+  "chart": "Love is a Danger Zone pt.2 [Another] S18",
+  "chartId": "ADBFA498-101A-4FB9-9A3D-74763800C05F",
+  "tier": "B",
+  "key": "Love_is_a_Danger_Zone_pt._2_another_-_BanYa_S18_ARCADE",
+  "ssc_rel": "04 - EXCEED~ZERO/(1) DC04 - Love is a Danger Zone 2 (Another)/DC04 - Love is a Danger Zone 2 (Another).ssc",
+  "cs_taps": 637,
+  "census_taps": 637,
+  "ok": true
+ },
+ {
+  "chart": "Point Break S6",
+  "chartId": "398E7FEB-3E16-47C1-9A4A-0CA4F6F335DA",
+  "tier": "B",
+  "key": "Point_Break_-_BanYa_S6_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 708 - Point Break/708 - Point Break.ssc",
+  "cs_taps": 168,
+  "census_taps": 168,
+  "ok": true
+ },
+ {
+  "chart": "A nightmare S6",
+  "chartId": "CB437A3D-3C77-40F5-BF9C-E8F62C08214B",
+  "tier": "B",
+  "key": "A_Nightmare_-_BanYa_S6_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(1) 306 - Nightmare/306 - Nightmare.ssc",
+  "cs_taps": 171,
+  "census_taps": 171,
+  "ok": true
+ },
+ {
+  "chart": "2006. LOVE SONG D14",
+  "chartId": "5311047B-D101-4A3A-9B89-3BA2CAF7CA91",
+  "tier": "B",
+  "key": "2006._LOVE_SONG_-_Banya_Production_D14_ARCADE",
+  "ssc_rel": "05 - NX~NX2/(2) D14 - 2006 Love Song/D14 - 2006 Love Song.ssc",
+  "cs_taps": 344,
+  "census_taps": 344,
+  "ok": true
+ },
+ {
+  "chart": "Final Audition S18",
+  "chartId": "5037E875-E9A9-485D-A620-739F94D756F0",
+  "tier": "B",
+  "key": "Final_Audition_-_BanYa_S18_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(2) 204 - Final Audition/204 - Final Audition.ssc",
+  "cs_taps": 517,
+  "census_taps": 517,
+  "ok": true
+ },
+ {
+  "chart": "Mission Possible S7",
+  "chartId": "A57EFEE8-9430-4F98-84AA-21E3FD4AFF47",
+  "tier": "B",
+  "key": "Mission_Possible_-_BanYa_S7_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 706 - Mission Possible/706 - Mission Possible.ssc",
+  "cs_taps": 184,
+  "census_taps": 184,
+  "ok": true
+ },
+ {
+  "chart": "Winter S16",
+  "chartId": "CF99BC04-C23E-4869-9E50-2D463CBCECBA",
+  "tier": "B",
+  "key": "Winter_-_BanYa_S16_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 711 - Winter/711 - Winter.ssc",
+  "cs_taps": 472,
+  "census_taps": 472,
+  "ok": true
+ },
+ {
+  "chart": "Oh! Rosa D11",
+  "chartId": "3346E8F1-7CC0-4716-82ED-939AA471A0E3",
+  "tier": "B",
+  "key": "Oh!_Rosa_-_BanYa_D11_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(4) 401 - Oh! Rosa/401 - Oh! Rosa.ssc",
+  "cs_taps": 270,
+  "census_taps": 270,
+  "ok": true
+ },
+ {
+  "chart": "Will-O-The-Wisp S16",
+  "chartId": "DDF7395D-5096-4088-8D63-31D690DC13B8",
+  "tier": "B",
+  "key": "Will-O-The-Wisp_-_BanYa_S16_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 712 - Will O The Wisp/712 - Will O The Wisp.ssc",
+  "cs_taps": 449,
+  "census_taps": 449,
+  "ok": true
+ },
+ {
+  "chart": "Dr. M S9",
+  "chartId": "962028E4-AA00-4963-BF4F-A2005078603A",
+  "tier": "B",
+  "key": "Dr._M_-_BanYa_S9_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 701 - Dr. M/701 - Dr. M.ssc",
+  "cs_taps": 276,
+  "census_taps": 276,
+  "ok": true
+ },
+ {
+  "chart": "An Interesting View S6",
+  "chartId": "9CB4ACEC-00FE-441E-BA9D-8FEA42C43CD1",
+  "tier": "B",
+  "key": "An_Interesting_View_-_BanYa_S6_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(1) 305 - An Interesting View/305 - An Interesting View.ssc",
+  "cs_taps": 185,
+  "census_taps": 185,
+  "ok": true
+ },
+ {
+  "chart": "Extravaganza D18",
+  "chartId": "77B83481-5E80-439D-A44B-43474C1687B4",
+  "tier": "B",
+  "key": "Extravaganza_-_BanYa_D18_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(2) 205 - Extravaganza/205 - Extravaganza.ssc",
+  "cs_taps": 600,
+  "census_taps": 600,
+  "ok": true
+ },
+ {
+  "chart": "She Likes Pizza S10",
+  "chartId": "1F060CA8-0917-4EEA-8228-BD52DEF22A3F",
+  "tier": "B",
+  "key": "She_Likes_Pizza_-_BanYa_S10_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(1) 310 - She Likes Pizza/310 - She Likes Pizza.ssc",
+  "cs_taps": 279,
+  "census_taps": 279,
+  "ok": true
+ },
+ {
+  "chart": "Csikos Post D16",
+  "chartId": "26ABAF4F-E1C7-4A32-9992-66BA63AF4749",
+  "tier": "B",
+  "key": "Csikos_Post_-_Banya_D16_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 736 - Csikos Post/736 - Csikos Post.ssc",
+  "cs_taps": 517,
+  "census_taps": 517,
+  "ok": true
+ },
+ {
+  "chart": "Turkey March D13",
+  "chartId": "755E07A4-5BB3-4CAC-A936-746CF43126A6",
+  "tier": "B",
+  "key": "Turkey_March_-_BanYa_D13_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(1) 303 - Turkey March/303 - Turkey March.ssc",
+  "cs_taps": 287,
+  "census_taps": 287,
+  "ok": true
+ },
+ {
+  "chart": "Conflict D26",
+  "chartId": "9603CAFA-75BF-4E94-A784-675CA5D0EF85",
+  "tier": "C",
+  "key": "Conflict_-_Siromaru_+_Cranky_D26_ARCADE",
+  "ssc_rel": "14 - XX/1676 - Conflict/1676 - Conflict.ssc",
+  "cs_taps": 1198,
+  "census_taps": 1198,
+  "ok": true
+ },
+ {
+  "chart": "Another Truth D19",
+  "chartId": "F4678F44-7CBC-43F7-B204-58A887FC16D5",
+  "tier": "C",
+  "key": "Another_Truth_-_Novasonic_D19_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(3) 112 - Another Truth/112 - Another Truth.ssc",
+  "cs_taps": 167,
+  "census_taps": 167,
+  "ok": true
+ },
+ {
+  "chart": "Blaze Emotion S2",
+  "chartId": "147C90BF-F3CA-469F-97E6-9933856F3048",
+  "tier": "C",
+  "key": "Blaze_Emotion_-_YAHPP_S2_ARCADE",
+  "ssc_rel": "06 - NX ABSOLUTE/F01 - Blaze Emotion/F01 - Blaze Emotion.ssc",
+  "cs_taps": 104,
+  "census_taps": 104,
+  "ok": true
+ },
+ {
+  "chart": "Imagination S18",
+  "chartId": "15653381-C069-4359-87F0-6E731623ED6F",
+  "tier": "C",
+  "key": "Imagination_-_SHK_S18_ARCADE",
+  "ssc_rel": "14 - XX/1678 - Imagination/1678 - Imagination.ssc",
+  "cs_taps": 386,
+  "census_taps": 386,
+  "ok": true
+ },
+ {
+  "chart": "Conflict S22",
+  "chartId": "6531BE63-B496-472E-A43B-6E4F6088DCC8",
+  "tier": "C",
+  "key": "Conflict_-_Siromaru_+_Cranky_S22_ARCADE",
+  "ssc_rel": "14 - XX/1676 - Conflict/1676 - Conflict.ssc",
+  "cs_taps": 1196,
+  "census_taps": 1196,
+  "ok": true
+ },
+ {
+  "chart": "Like Me S14",
+  "chartId": "DDC6ADE1-8C32-4F12-8FCE-EE63CDD5FAC8",
+  "tier": "C",
+  "key": "Like_Me_-_SHK_S14_ARCADE",
+  "ssc_rel": "12 - PRIME/1499 - Like Me/1499 - Like Me.ssc",
+  "cs_taps": 245,
+  "census_taps": 245,
+  "ok": true
+ },
+ {
+  "chart": "Sarabande S20",
+  "chartId": "FBF0C346-AB65-4277-92BE-4C58F82DBCB2",
+  "tier": "C",
+  "key": "Sarabande_-_MAX_S20_ARCADE",
+  "ssc_rel": "13 - PRIME 2/1516 - Sarabande/1516 - Sarabande.ssc",
+  "cs_taps": 521,
+  "census_taps": 521,
+  "ok": true
+ },
+ {
+  "chart": "Tales of Pumpnia D21",
+  "chartId": "24892DAA-BB0B-42E0-B01B-0742CD43B10C",
+  "tier": "C",
+  "key": "Tales_of_Pumpnia_-_Applesoda_D21_ARCADE",
+  "ssc_rel": "14 - XX/1629 - Tales of Pumpnia/1629 - Tales of Pumpnia.ssc",
+  "cs_taps": 295,
+  "census_taps": 295,
+  "ok": true
+ },
+ {
+  "chart": "Final Audition Ep. 2-2 D23",
+  "chartId": "43F26510-DC01-42D6-8F28-87CF2045B18B",
+  "tier": "C",
+  "key": "Final_Audition_Ep._2-2_-_YAHPP_D23_ARCADE",
+  "ssc_rel": "05 - NX~NX2/(2) D30 - Final Audition Episode 2-2/D30 - Final Audition Episode 2-2.ssc",
+  "cs_taps": 520,
+  "census_taps": 520,
+  "ok": true
+ },
+ {
+  "chart": "Mental Rider D22",
+  "chartId": "F3D7D79E-2B1B-42B6-BB20-45594722E34A",
+  "tier": "C",
+  "key": "Mental_Rider_-_SQUAR_D22_ARCADE",
+  "ssc_rel": "10 - FIESTA 2/(1) 1390 - Mental Rider/1390 - Mental Rider.ssc",
+  "cs_taps": 506,
+  "census_taps": 506,
+  "ok": true
+ },
+ {
+  "chart": "Wedding Crashers - SHORT CUT - S4",
+  "chartId": "8306CEC4-75CB-4115-826D-393154112144",
+  "tier": "C",
+  "key": "Wedding_Crashers_-_SHORT_CUT_-_-_SHK_S4_SHORTCUT",
+  "ssc_rel": "14 - XX/16F1 - [Short Cut] Wedding Crashers/16F1 - [Short Cut] Wedding Crashers.ssc",
+  "cs_taps": 78,
+  "census_taps": 78,
+  "ok": true
+ },
+ {
+  "chart": "Pop The Track - SHORT CUT - D16",
+  "chartId": "10335C51-D036-4EB7-BCD2-F04B81F74475",
+  "tier": "C",
+  "key": "Pop_The_Track_-_SHORT_CUT_-_-_J-Mi__Midi-D__Ft._Hanna_Stockzell_D16_SHORTCUT",
+  "ssc_rel": "10 - FIESTA 2/(1) 13E0 - [Short Cut] Pop The Track/13E0 - [Short Cut] Pop The Track.ssc",
+  "cs_taps": 282,
+  "census_taps": 282,
+  "ok": true
+ },
+ {
+  "chart": "Destination - SHORT CUT - D21",
+  "chartId": "BBC92E59-EB32-44D0-827C-2DD0C69B9D10",
+  "tier": "C",
+  "key": "Destination_-_SHORT_CUT_-_-_SHK_D21_SHORTCUT",
+  "ssc_rel": "08 - FIESTA/1064 - [Short Cut] Destination/1064 - [Short Cut] Destination.ssc",
+  "cs_taps": 449,
+  "census_taps": 449,
+  "ok": true
+ },
+ {
+  "chart": "Extravaganza - SHORT CUT - D16",
+  "chartId": "604ED470-4527-4B77-A89F-1D9074E69917",
+  "tier": "C",
+  "key": "Extravaganza_-_SHORT_CUT_-_-_Banya_D16_SHORTCUT",
+  "ssc_rel": "08 - FIESTA/1053 - [Short Cut] Extravaganza/1053 - [Short Cut] Extravaganza.ssc",
+  "cs_taps": 285,
+  "census_taps": 285,
+  "ok": true
+ },
+ {
+  "chart": "Hyperion - SHORT CUT - S20",
+  "chartId": "3ECC24BE-E1FF-4232-9CA1-96A6DDB094F4",
+  "tier": "C",
+  "key": "Hyperion_-_SHORT_CUT_-_-_M2U_S20_SHORTCUT",
+  "ssc_rel": "13 - PRIME 2/15F5 - [Short Cut] Hyperion/15F5 - [Short Cut] Hyperion.ssc",
+  "cs_taps": 372,
+  "census_taps": 372,
+  "ok": true
+ },
+ {
+  "chart": "Moonlight - SHORT CUT - S19",
+  "chartId": "E0871A14-DC1F-43B8-9281-68193B5890F3",
+  "tier": "C",
+  "key": "Moonlight_-_SHORT_CUT_-_-_Banya_S19_SHORTCUT",
+  "ssc_rel": "08 - FIESTA/1057 - [Short Cut] Moonlight/1057 - [Short Cut] Moonlight.ssc",
+  "cs_taps": 286,
+  "census_taps": 286,
+  "ok": true
+ },
+ {
+  "chart": "Tales of Pumpnia D18",
+  "chartId": "B5B07DA7-64DE-4A19-940D-70A996A74366",
+  "tier": "C",
+  "key": "Tales_of_Pumpnia_-_Applesoda_D18_ARCADE",
+  "ssc_rel": "14 - XX/1629 - Tales of Pumpnia/1629 - Tales of Pumpnia.ssc",
+  "cs_taps": 119,
+  "census_taps": 119,
+  "ok": true
+ },
+ {
+  "chart": "K.O.A : Alice in Wonderworld - SHORT CUT - D18",
+  "chartId": "4761EE00-BCDD-4EFE-86E3-F60839C35A9B",
+  "tier": "C",
+  "key": "K.O.A__Alice_in_Wonderworld_-_SHORT_CUT_-_-_Banya_Production_D18_SHORTCUT",
+  "ssc_rel": "08 - FIESTA/1061 - [Short Cut] K.O.A. Alice in Wonderworld/1061 - [Short Cut] K.O.A. Alice in Wonderworld.ssc",
+  "cs_taps": 327,
+  "census_taps": 327,
+  "ok": true
+ },
+ {
+  "chart": "Love is a Danger Zone pt. 2 - SHORT CUT - D23",
+  "chartId": "2B175D30-2BCE-4ACE-BC93-5B6A985E8AE2",
+  "tier": "C",
+  "key": "Love_is_a_Danger_Zone_pt._2_-_SHORT_CUT_-_-_YAHPP_D23_SHORTCUT",
+  "ssc_rel": "08 - FIESTA/1052 - [Short Cut] Love is a Danger Zone 2/1052 - [Short Cut] Love is a Danger Zone 2.ssc",
+  "cs_taps": 366,
+  "census_taps": 366,
+  "ok": true
+ },
+ {
+  "chart": "Poseidon - SHORT CUT - S14",
+  "chartId": "EA88F939-A1CB-4DC6-AEAF-751D022612EE",
+  "tier": "C",
+  "key": "Poseidon_-_SHORT_CUT_-_-_Quree_S14_SHORTCUT",
+  "ssc_rel": "14 - XX/16F5 - [Short Cut] Poseidon/16F5 - [Short Cut] Poseidon.ssc",
+  "cs_taps": 195,
+  "census_taps": 195,
+  "ok": true
+ },
+ {
+  "chart": "Tales of Pumpnia S20",
+  "chartId": "58179303-1869-42C3-9EE3-944595B2699D",
+  "tier": "C",
+  "key": "Tales_of_Pumpnia_-_Applesoda_S20_ARCADE",
+  "ssc_rel": "14 - XX/1629 - Tales of Pumpnia/1629 - Tales of Pumpnia.ssc",
+  "cs_taps": 279,
+  "census_taps": 279,
+  "ok": true
+ },
+ {
+  "chart": "Tales of Pumpnia S17",
+  "chartId": "7B01FEBB-DCFA-4961-BF8B-C161E5390584",
+  "tier": "C",
+  "key": "Tales_of_Pumpnia_-_Applesoda_S17_ARCADE",
+  "ssc_rel": "14 - XX/1629 - Tales of Pumpnia/1629 - Tales of Pumpnia.ssc",
+  "cs_taps": 118,
+  "census_taps": 118,
+  "ok": true
+ },
+ {
+  "chart": "Break it Down D21",
+  "chartId": "4B0439B1-C6DE-4997-A580-573EE34E791F",
+  "tier": "C",
+  "key": "Break_It_Down_-_MAZO_D21_ARCADE",
+  "ssc_rel": "12 - PRIME/1497 - Break It Down/1497 - Break It Down.ssc",
+  "cs_taps": 383,
+  "census_taps": 383,
+  "ok": true
+ },
+ {
+  "chart": "Trotpris - SHORT CUT - D15",
+  "chartId": "6BD508CC-A134-4667-A98F-67A47C61DEB8",
+  "tier": "C",
+  "key": "Trotpris_-_SHORT_CUT_-_-_Doin_D15_SHORTCUT",
+  "ssc_rel": "09 - FIESTA EX/1145 - [Short Cut] Trotpris/1145 - [Short Cut] Trotpris.ssc",
+  "cs_taps": 229,
+  "census_taps": 229,
+  "ok": true
+ },
+ {
+  "chart": "Ignis Fatuus(DM Ashura Mix) - SHORT CUT - D21",
+  "chartId": "8E704ED0-711C-44C2-AC8D-AE17C8EACB28",
+  "tier": "C",
+  "key": "Ignis_Fatuus(DM_Ashura_Mix)_-_SHORT_CUT_-_-_DM_Ashura_D21_SHORTCUT",
+  "ssc_rel": "10 - FIESTA 2/(1) 13E2 - [Short Cut] Ignis Fatuus/13E2 - [Short Cut] Ignis Fatuus.ssc",
+  "cs_taps": 270,
+  "census_taps": 270,
+  "ok": true
+ },
+ {
+  "chart": "Can-can ~Orpheus in The Party Mix~ - SHORT CUT - D23",
+  "chartId": "0BE86344-BA30-483C-914B-9BE4D04B3CE2",
+  "tier": "C",
+  "key": "Can-can_Orpheus_in_The_Party_Mix_-_SHORT_CUT_-_-_Sr._Lan_Belmont_D23_SHORTCUT",
+  "ssc_rel": "14 - XX/16F2 - [Short Cut] Can-can ~Orpheus in The Party Mix~/16F2 - [Short Cut] Can-can ~Orpheus in The Party Mix~.ssc",
+  "cs_taps": 254,
+  "census_taps": 254,
+  "ok": true
+ },
+ {
+  "chart": "Naissance S20",
+  "chartId": "F7232203-55F5-4EC0-AAB7-F4B9A16BDAD1",
+  "tier": "C",
+  "key": "Naissance_-_BanYa_S20_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(1) 302 - Naissance/302 - Naissance.ssc",
+  "cs_taps": 363,
+  "census_taps": 363,
+  "ok": true
+ },
+ {
+  "chart": "Poseidon - SHORT CUT - D21",
+  "chartId": "9E186F0B-4CA2-4184-816B-4E87094B68A6",
+  "tier": "C",
+  "key": "Poseidon_-_SHORT_CUT_-_-_Quree_D21_SHORTCUT",
+  "ssc_rel": "14 - XX/16F5 - [Short Cut] Poseidon/16F5 - [Short Cut] Poseidon.ssc",
+  "cs_taps": 388,
+  "census_taps": 388,
+  "ok": true
+ },
+ {
+  "chart": "Pumptris 8Bit ver. - SHORT CUT - D22",
+  "chartId": "006D4A84-4301-44B9-A04D-A2AC0F5C18AA",
+  "tier": "C",
+  "key": "Pumptris_8Bit_ver._-_SHORT_CUT_-_-_YAHPP_D22_SHORTCUT",
+  "ssc_rel": "08 - FIESTA/1063 - [Short Cut] Pumptris 8bit Ver/1063 - [Short Cut] Pumptris 8bit Ver.ssc",
+  "cs_taps": 346,
+  "census_taps": 346,
+  "ok": true
+ },
+ {
+  "chart": "Chimera S18",
+  "chartId": "4377F1B3-A52F-4A39-8C5E-A8A49497D8D4",
+  "tier": "C",
+  "key": "Chimera_-_YAHPP_S18_ARCADE",
+  "ssc_rel": "05 - NX~NX2/(2) D03 - Chimera/D03 - Chimera.ssc",
+  "cs_taps": 508,
+  "census_taps": 508,
+  "ok": true
+ },
+ {
+  "chart": "Emperor S16",
+  "chartId": "B3CADD3B-4B69-486E-BB96-137D8B18048E",
+  "tier": "C",
+  "key": "Emperor_-_BanYa_S16_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 702 - Emperor/702 - Emperor.ssc",
+  "cs_taps": 417,
+  "census_taps": 417,
+  "ok": true
+ },
+ {
+  "chart": "Final Audition Ep. 2-2 S21",
+  "chartId": "B1EA2FE7-E5FE-4510-83D4-3595E4A7736A",
+  "tier": "C",
+  "key": "Final_Audition_Ep._2-2_-_YAHPP_S21_ARCADE",
+  "ssc_rel": "05 - NX~NX2/(2) D30 - Final Audition Episode 2-2/D30 - Final Audition Episode 2-2.ssc",
+  "cs_taps": 561,
+  "census_taps": 561,
+  "ok": true
+ },
+ {
+  "chart": "Poseidon - SHORT CUT - S21",
+  "chartId": "D8F75B9E-BACE-4370-B057-44A1C7930932",
+  "tier": "C",
+  "key": "Poseidon_-_SHORT_CUT_-_-_Quree_S21_SHORTCUT",
+  "ssc_rel": "14 - XX/16F5 - [Short Cut] Poseidon/16F5 - [Short Cut] Poseidon.ssc",
+  "cs_taps": 389,
+  "census_taps": 389,
+  "ok": true
+ },
+ {
+  "chart": "Exceed2 Opening - SHORT CUT - S16",
+  "chartId": "0164FE9B-0D26-4551-9B79-166AF7EE58C0",
+  "tier": "C",
+  "key": "Exceed2_Opening_-_SHORT_CUT_-_-_Banya_S16_SHORTCUT",
+  "ssc_rel": "08 - FIESTA/1059 - [Short Cut] Exceed 2 Opening/1059 - [Short Cut] Exceed 2 Opening.ssc",
+  "cs_taps": 139,
+  "census_taps": 139,
+  "ok": true
+ },
+ {
+  "chart": "Switronic - SHORT CUT - S9",
+  "chartId": "5FEE4325-B8ED-4E63-9E8B-16EBE519E100",
+  "tier": "C",
+  "key": "Switronic_-_SHORT_CUT_-_-_SHK_S9_SHORTCUT",
+  "ssc_rel": "14 - XX/16F6 - [Short Cut] Switronic/16F6 - [Short Cut] Switronic.ssc",
+  "cs_taps": 171,
+  "census_taps": 171,
+  "ok": true
+ },
+ {
+  "chart": "Xenesis S18",
+  "chartId": "B6DD8E33-15C3-4EDE-9EB5-677A054DC653",
+  "tier": "C",
+  "key": "Xenesis_-_Banya_Production_S18_ARCADE",
+  "ssc_rel": "08 - FIESTA/1022 - Xenesis/1022 - Xenesis.ssc",
+  "cs_taps": 413,
+  "census_taps": 413,
+  "ok": true
+ },
+ {
+  "chart": "Baroque Virus - FULL SONG - S15",
+  "chartId": "84A35520-F96D-4330-9EBB-46923D80ED3D",
+  "tier": "C",
+  "key": "Baroque_Virus_-_FULL_SONG_-_-_Zircon_S15_FULLSONG",
+  "ssc_rel": "14 - XX/16F9 - [Full Song] Baroque Virus/16F9 - [Full Song] Baroque Virus.ssc",
+  "cs_taps": 675,
+  "census_taps": 675,
+  "ok": true
+ },
+ {
+  "chart": "Chase Me S20",
+  "chartId": "A962BE7C-6049-43E8-917B-A07C11608764",
+  "tier": "C",
+  "key": "Chase_Me_-_Dreamcatcher_S20_ARCADE",
+  "ssc_rel": "13 - PRIME 2/1547 - Chase Me/1547 - Chase Me.ssc",
+  "cs_taps": 608,
+  "census_taps": 608,
+  "ok": true
+ },
+ {
+  "chart": "Death Moon - SHORT CUT - D23",
+  "chartId": "5B13B85D-4541-404E-A0C8-70EF1CBC3FAA",
+  "tier": "C",
+  "key": "Death_Moon_-_SHORT_CUT_-_-_SHK_D23_SHORTCUT",
+  "ssc_rel": "13 - PRIME 2/15F1 - [Short Cut] Death Moon/15F1 - [Short Cut] Death Moon.ssc",
+  "cs_taps": 430,
+  "census_taps": 430,
+  "ok": true
+ },
+ {
+  "chart": "Emperor D17",
+  "chartId": "5E1EE9BB-3B1C-47A2-A305-73E564667C7B",
+  "tier": "C",
+  "key": "Emperor_-_BanYa_D17_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 702 - Emperor/702 - Emperor.ssc",
+  "cs_taps": 414,
+  "census_taps": 414,
+  "ok": true
+ },
+ {
+  "chart": "Final Audition 2 - SHORT CUT - S17",
+  "chartId": "64513E9E-FC20-4266-A78B-66193E8DA036",
+  "tier": "C",
+  "key": "Final_Audition_2__-_SHORT_CUT_-_-_Banya_S17_SHORTCUT",
+  "ssc_rel": "08 - FIESTA/1048 - [Short Cut] Final Audition 2/1048 - [Short Cut] Final Audition 2.ssc",
+  "cs_taps": 277,
+  "census_taps": 277,
+  "ok": true
+ },
+ {
+  "chart": "Super Fantasy - SHORT CUT - S19",
+  "chartId": "D2D97633-BC7B-48B8-87C5-920DC1A9769A",
+  "tier": "C",
+  "key": "Super_Fantasy_-_SHORT_CUT_-_-_SHK_S19_SHORTCUT",
+  "ssc_rel": "12 - PRIME/14E0 - [Short Cut] Super Fantasy/14E0 - [Short Cut] Super Fantasy.ssc",
+  "cs_taps": 252,
+  "census_taps": 252,
+  "ok": true
+ },
+ {
+  "chart": "Super Fantasy - SHORT CUT - D17",
+  "chartId": "2273595E-6408-4360-B0C0-DABCCFBF114D",
+  "tier": "C",
+  "key": "Super_Fantasy_-_SHORT_CUT_-_-_SHK_D17_SHORTCUT",
+  "ssc_rel": "12 - PRIME/14E0 - [Short Cut] Super Fantasy/14E0 - [Short Cut] Super Fantasy.ssc",
+  "cs_taps": 252,
+  "census_taps": 252,
+  "ok": true
+ },
+ {
+  "chart": "Can-can ~Orpheus in The Party Mix~ - SHORT CUT - D21",
+  "chartId": "DA8A2055-4F36-45C3-B53D-3D87AB6F945F",
+  "tier": "C",
+  "key": "Can-can_Orpheus_in_The_Party_Mix_-_SHORT_CUT_-_-_Sr._Lan_Belmont_D21_SHORTCUT",
+  "ssc_rel": "14 - XX/16F2 - [Short Cut] Can-can ~Orpheus in The Party Mix~/16F2 - [Short Cut] Can-can ~Orpheus in The Party Mix~.ssc",
+  "cs_taps": 260,
+  "census_taps": 260,
+  "ok": true
+ },
+ {
+  "chart": "Can-can ~Orpheus in The Party Mix~ - SHORT CUT - D17",
+  "chartId": "E3627EAC-E2C3-4BE1-9140-2436627806E9",
+  "tier": "C",
+  "key": "Can-can_Orpheus_in_The_Party_Mix_-_SHORT_CUT_-_-_Sr._Lan_Belmont_D17_SHORTCUT",
+  "ssc_rel": "14 - XX/16F2 - [Short Cut] Can-can ~Orpheus in The Party Mix~/16F2 - [Short Cut] Can-can ~Orpheus in The Party Mix~.ssc",
+  "cs_taps": 197,
+  "census_taps": 197,
+  "ok": true
+ },
+ {
+  "chart": "Slam D24",
+  "chartId": "F9CF82A5-D7AC-4EF8-85E4-92E7C7D88870",
+  "tier": "C",
+  "key": "Slam_-_Novasonic_D24_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(3) 516 - Slam/516 - Slam.ssc",
+  "cs_taps": 468,
+  "census_taps": 468,
+  "ok": true
+ },
+ {
+  "chart": "XX OPENING - SHORT CUT - S6",
+  "chartId": "F066C4BA-531E-4520-8108-83BFAB53F0F3",
+  "tier": "C",
+  "key": "XX_OPENING_-_SHORT_CUT_-_-_MAX_S6_SHORTCUT",
+  "ssc_rel": "14 - XX/16F3 - [Short Cut] XX OPENING/16F3 - [Short Cut] XX OPENING.ssc",
+  "cs_taps": 88,
+  "census_taps": 88,
+  "ok": true
+ },
+ {
+  "chart": "Final Audition 3 - SHORT CUT - D18",
+  "chartId": "4B62092E-F252-4E67-8D87-E3A12656DFCD",
+  "tier": "C",
+  "key": "Final_Audition_3_-_SHORT_CUT_-_-_Banya_D18_SHORTCUT",
+  "ssc_rel": "08 - FIESTA/1049 - [Short Cut] Final Audition 3/1049 - [Short Cut] Final Audition 3.ssc",
+  "cs_taps": 361,
+  "census_taps": 361,
+  "ok": true
+ },
+ {
+  "chart": "Final Audition 3 - SHORT CUT - S18",
+  "chartId": "0B779D61-96F7-4625-93A5-24B0FFC97132",
+  "tier": "C",
+  "key": "Final_Audition_3_-_SHORT_CUT_-_-_Banya_S18_SHORTCUT",
+  "ssc_rel": "08 - FIESTA/1049 - [Short Cut] Final Audition 3/1049 - [Short Cut] Final Audition 3.ssc",
+  "cs_taps": 364,
+  "census_taps": 364,
+  "ok": true
+ },
+ {
+  "chart": "Gun Rock S20",
+  "chartId": "E2C3750C-CB8A-43B5-9305-81BCE2A9AFE9",
+  "tier": "C",
+  "key": "Gun_Rock_-_Banya_Production_S20_ARCADE",
+  "ssc_rel": "05 - NX~NX2/(2) D16 - Gun Rock/D16 - Gun Rock.ssc",
+  "cs_taps": 424,
+  "census_taps": 424,
+  "ok": true
+ },
+ {
+  "chart": "Bad Apple!! feat. Nomico D20",
+  "chartId": "F961EE5A-EDC7-464B-AF2E-D06082053C6E",
+  "tier": "C",
+  "key": "Bad_Apple!!_feat._Nomico_-_Masayoshi_Minoshima_D20_ARCADE",
+  "ssc_rel": "12 - PRIME/1481 - Bad Apple!! (feat. Nomico)/1481 - Bad Apple!! (feat. Nomico).ssc",
+  "cs_taps": 408,
+  "census_taps": 408,
+  "ok": true
+ },
+ {
+  "chart": "Hyperion - SHORT CUT - S16",
+  "chartId": "F2A444A3-5709-450C-BAF0-0344B3773BBA",
+  "tier": "C",
+  "key": "Hyperion_-_SHORT_CUT_-_-_M2U_S16_SHORTCUT",
+  "ssc_rel": "13 - PRIME 2/15F5 - [Short Cut] Hyperion/15F5 - [Short Cut] Hyperion.ssc",
+  "cs_taps": 372,
+  "census_taps": 372,
+  "ok": true
+ },
+ {
+  "chart": "Kasou Shinja - SHORT CUT - S20",
+  "chartId": "1D507558-695A-4E9E-B68E-FE868EE0DF49",
+  "tier": "C",
+  "key": "Kasou_Shinja_-_SHORT_CUT_-_-_MAX_S20_SHORTCUT",
+  "ssc_rel": "13 - PRIME 2/15F6 - [Short Cut] Kasou Shinja/15F6 - [Short Cut] Kasou Shinja.ssc",
+  "cs_taps": 360,
+  "census_taps": 360,
+  "ok": true
+ },
+ {
+  "chart": "Poseidon - SHORT CUT - S11",
+  "chartId": "4E428056-5F37-488D-BD6C-71FDBF2939CA",
+  "tier": "C",
+  "key": "Poseidon_-_SHORT_CUT_-_-_Quree_S11_SHORTCUT",
+  "ssc_rel": "14 - XX/16F5 - [Short Cut] Poseidon/16F5 - [Short Cut] Poseidon.ssc",
+  "cs_taps": 198,
+  "census_taps": 198,
+  "ok": true
+ },
+ {
+  "chart": "Another Truth D21",
+  "chartId": "02B0E539-C5F8-46B8-A189-C76DC3D04E72",
+  "tier": "C",
+  "key": "Another_Truth_-_Novasonic_D21_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(3) 112 - Another Truth/112 - Another Truth.ssc",
+  "cs_taps": 348,
+  "census_taps": 348,
+  "ok": true
+ },
+ {
+  "chart": "Destination - SHORT CUT - D20",
+  "chartId": "0AF4692C-DBCD-462E-BD5B-75061DD718D5",
+  "tier": "C",
+  "key": "Destination_-_SHORT_CUT_-_-_SHK_D20_SHORTCUT",
+  "ssc_rel": "08 - FIESTA/1064 - [Short Cut] Destination/1064 - [Short Cut] Destination.ssc",
+  "cs_taps": 278,
+  "census_taps": 278,
+  "ok": true
+ },
+ {
+  "chart": "Kasou Shinja - SHORT CUT - D21",
+  "chartId": "78578492-2461-47E8-AFA1-89E00D622FDE",
+  "tier": "C",
+  "key": "Kasou_Shinja_-_SHORT_CUT_-_-_MAX_D21_SHORTCUT",
+  "ssc_rel": "13 - PRIME 2/15F6 - [Short Cut] Kasou Shinja/15F6 - [Short Cut] Kasou Shinja.ssc",
+  "cs_taps": 327,
+  "census_taps": 327,
+  "ok": true
+ },
+ {
+  "chart": "Witch Doctor S19",
+  "chartId": "EFEF6A92-0FA3-4748-92E8-0FD00ECC9BB2",
+  "tier": "C",
+  "key": "Witch_Doctor_-_BanYa_S19_ARCADE",
+  "ssc_rel": "04 - EXCEED~ZERO/(1) C03 - Witch Doctor/C03 - Witch Doctor.ssc",
+  "cs_taps": 372,
+  "census_taps": 372,
+  "ok": true
+ },
+ {
+  "chart": "Come to Me S17",
+  "chartId": "AD3E691C-AADA-477C-B07F-EF82E60D8F4F",
+  "tier": "C",
+  "key": "Come_to_Me_-_Banya_S13_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(1) 826 - Come to Me/826 - Come to Me.ssc",
+  "cs_taps": 250,
+  "census_taps": 250,
+  "ok": true,
+  "note": "matched by tap fingerprint (pack meter differs from P1 level)"
+ },
+ {
+  "chart": "Bee S17",
+  "chartId": "78B9EA74-0347-4A9B-8E69-2966535ECDDF",
+  "tier": "B",
+  "key": "Bee_-_BanYa_S17_INFOBAR_TITLE_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(1) 802 - Bee/802 - Bee.ssc",
+  "cs_taps": 442,
+  "census_taps": 442,
+  "ok": true,
+  "note": "pass-3 (suffix/marker/alias relaxations), tap-verified"
+ },
+ {
+  "chart": "Love is a Danger Zone S17",
+  "chartId": "263E807F-F5C3-4958-8003-AA73C6E66004",
+  "tier": "B",
+  "key": "Love_is_a_Danger_Zone_-_BanYa_S17_INFOBAR_TITLE_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 704 - Love is a Danger Zone/704 - Love is a Danger Zone.ssc",
+  "cs_taps": 432,
+  "census_taps": 432,
+  "ok": true,
+  "note": "pass-3 (suffix/marker/alias relaxations), tap-verified"
+ },
+ {
+  "chart": "Slam S18",
+  "chartId": "2C113945-7FA6-47A2-AEF2-99FAD3713A3F",
+  "tier": "B",
+  "key": "Slam_-_Novasonic_S18_INFOBAR_TITLE_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(3) 516 - Slam/516 - Slam.ssc",
+  "cs_taps": 421,
+  "census_taps": 421,
+  "ok": true,
+  "note": "pass-3 (suffix/marker/alias relaxations), tap-verified"
+ },
+ {
+  "chart": "Close Your Eye S6",
+  "chartId": "CC6D7E45-EB1F-4FB2-965E-BB4FE8BC9B08",
+  "tier": "B",
+  "key": "Close_Your_Eyes_-_BanYa_S6_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(1) 307 - Close Your Eyes/307 - Close Your Eyes.ssc",
+  "cs_taps": 141,
+  "census_taps": 141,
+  "ok": true,
+  "note": "pass-3 (suffix/marker/alias relaxations), tap-verified"
+ },
+ {
+  "chart": "First Love D15",
+  "chartId": "E442D003-96EA-4642-9A3A-BED87198BF48",
+  "tier": "B",
+  "key": "First_Love_-_BanYa_D15_HALFDOUBLE_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(4) 402 - First Love/402 - First Love.ssc",
+  "cs_taps": 357,
+  "census_taps": 357,
+  "ok": true,
+  "note": "pass-3 (suffix/marker/alias relaxations), tap-verified"
+ },
+ {
+  "chart": "Vook D15",
+  "chartId": "13F50493-F6EC-4369-90D0-24D28159292F",
+  "tier": "B",
+  "key": "Vook_-_Banya_D15_HALFDOUBLE_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 735 - Vook/735 - Vook.ssc",
+  "cs_taps": 354,
+  "census_taps": 354,
+  "ok": true,
+  "note": "pass-3 (suffix/marker/alias relaxations), tap-verified"
+ },
+ {
+  "chart": "Caprice of DJ Otada S21",
+  "chartId": "4F795EB3-500B-44C3-AA6F-F2390DFA3BC5",
+  "tier": "B",
+  "key": "Caprice_of_DJ_Otada_-_Banya_Production_S21_REMIX",
+  "ssc_rel": "06 - NX ABSOLUTE/F33 - [Remix] Caprice of DJ Otada/F33 - [Remix] Caprice of DJ Otada.ssc",
+  "cs_taps": 760,
+  "census_taps": 760,
+  "ok": true,
+  "note": "pass-3 (suffix/marker/alias relaxations), tap-verified"
+ },
+ {
+  "chart": "Caprice of DJ Otada D22",
+  "chartId": "CBBB81BD-F545-4DC9-9BE1-A3D7FE995757",
+  "tier": "B",
+  "key": "Caprice_of_DJ_Otada_-_Banya_Production_D22_REMIX",
+  "ssc_rel": "06 - NX ABSOLUTE/F33 - [Remix] Caprice of DJ Otada/F33 - [Remix] Caprice of DJ Otada.ssc",
+  "cs_taps": 842,
+  "census_taps": 842,
+  "ok": true,
+  "note": "pass-3 (suffix/marker/alias relaxations), tap-verified"
+ },
+ {
+  "chart": "Mr. Larpus S15",
+  "chartId": "0DE9EED8-8571-4887-8A50-3CECD0BE284A",
+  "tier": "B",
+  "key": "Mr._Larpus_-_BanYa_S15_INFOBAR_TITLE_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(4) 405 - Mr. Larpus/405 - Mr. Larpus.ssc",
+  "cs_taps": 458,
+  "census_taps": 458,
+  "ok": true,
+  "note": "pass-3 (suffix/marker/alias relaxations), tap-verified"
+ },
+ {
+  "chart": "Leather D22",
+  "chartId": "B1ED5A4B-4A0F-4069-9605-4B2436D6ED88",
+  "tier": "C",
+  "key": "Leather_-_Doin_D22_REMIX",
+  "ssc_rel": "13 - PRIME 2/15D3 - [Remix] Leather/15D3 - [Remix] Leather.ssc",
+  "cs_taps": 830,
+  "census_taps": 830,
+  "ok": true,
+  "note": "pass-3 (suffix/marker/alias relaxations), tap-verified"
+ },
+ {
+  "chart": "Desaparecer D25",
+  "chartId": "F635E094-20B9-4555-97AE-58FD5C07D95D",
+  "tier": "C",
+  "key": "Desaparecer_-_Applessoda_vs_MAX_D25_REMIX",
+  "ssc_rel": "14 - XX/16D0 - [Remix] Desaparecer/16D0 - [Remix] Desaparecer.ssc",
+  "cs_taps": 926,
+  "census_taps": 926,
+  "ok": true,
+  "note": "pass-3 (suffix/marker/alias relaxations), tap-verified"
+ }
+]

@@ -15,7 +15,7 @@ Downloads folders and scratch checkouts. Two jobs:
 
 | Path | What |
 |---|---|
-| `overrides/` | Corrected .ssc files, pack-relative paths mirroring the PIU-Simfiles checkout (e.g. `overrides/13 - PRIME/1401 - Slam/1401 - Slam.ssc`). The annotation pipeline copies these over the pack input before ingest. One file per corrected song; provenance in the commit message + `sources/`. |
+| `overrides/` | Corrected .ssc files, pack-relative paths mirroring the PIU-Simfiles checkout (e.g. `overrides/13 - PRIME/1401 - Slam/1401 - Slam.ssc`). Baseline = the unmodified pack files for the audited charts (see overrides/README.md); fixes edit them in place so git diff shows exactly what changed per chart. |
 | `snapshots/` | The current upload zip + its provenance note. Exactly one "current" zip; superseded ones are deleted from HEAD (history keeps them). |
 | `sources/` | The census that drives the repair project: which footage each corrected chart was transcribed from (`stepfile-video-census-*.csv`), and the download worklist (`video-map.json`). |
 | `tools/` | Operator scripts: footage downloader, extraction/transcription tooling. Run with the `../piu-annotate/.venv` Python. |
