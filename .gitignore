@@ -1,0 +1,8 @@
+videos/
+work/
+frames/
+__pycache__/
+*.pyc
+.venv/
+*.part
+*.ytdl
