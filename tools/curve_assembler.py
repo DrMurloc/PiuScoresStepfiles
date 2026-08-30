@@ -17,8 +17,8 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RATE = 25.0
 
-def assemble(vid):
-    pts = [json.loads(l) for l in open(os.path.join(ROOT, "work", "combo", vid + ".jsonl"), encoding="utf-8")]
+def assemble(vid, band="C"):
+    pts = [json.loads(l) for l in open(os.path.join(ROOT, "work", "combo", f"{vid}.{band}.jsonl"), encoding="utf-8")]
     vals = [(t, v, c) for t, v, c in pts if v is not None]
     cands = []
     i = 0
@@ -64,12 +64,13 @@ def assemble(vid):
 
 if __name__ == "__main__":
     vid = sys.argv[1]
-    chain, runs = assemble(vid)
+    band = sys.argv[2] if len(sys.argv) > 2 and sys.argv[2] in "CLR" else "C"
+    chain, runs = assemble(vid, band)
     tot = 0
     for r in runs:
         tot += r[-1][2]
         print(f"  {r[0][0]:7.2f}s -> {r[-1][1]:7.2f}s  combo {r[0][2]}..{r[-1][2]}  anchors {len(r)}")
     print(f"runs {len(runs)}, sum of run-final {tot}", sys.argv[2:] and f"(target P+G {sys.argv[2]})" or "")
-    out = os.path.join(ROOT, "work", "combo", vid + ".anchors.json")
+    out = os.path.join(ROOT, "work", "combo", f"{vid}.{band}.anchors.json")
     json.dump([[round(a[0], 3), round(a[1], 3), a[2]] for a in chain], open(out, "w"))
     print("anchors ->", out)

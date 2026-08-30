@@ -189,7 +189,7 @@ def scan(vid, side, t0, t1):
     t1 = min(t1, dur)
     cap.set(cv2.CAP_PROP_POS_MSEC, t0 * 1000)
     os.makedirs(os.path.join(ROOT, "work", "combo"), exist_ok=True)
-    out_path = os.path.join(ROOT, "work", "combo", f"{vid}.jsonl")
+    out_path = os.path.join(ROOT, "work", "combo", f"{vid}.{side}.jsonl")
     n_read = n_none = 0
     unk = 0
     with open(out_path, "w", encoding="utf-8") as out:

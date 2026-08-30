@@ -56,12 +56,26 @@ def fit_offset(taps, anchors, lo, hi, step=0.01):
 def main():
     vid, key = sys.argv[1], sys.argv[2]
     expected = int(sys.argv[3]) if len(sys.argv) > 3 else None
+    band = sys.argv[4] if len(sys.argv) > 4 else "C"
     taps, heads, spans = load_schedule(key)
-    anchors = [tuple(x) for x in json.load(open(os.path.join(ROOT, "work", "combo", vid + ".anchors.json")))]
+    anchors = [tuple(x) for x in json.load(open(os.path.join(ROOT, "work", "combo", f"{vid}.{band}.anchors.json")))]
     print(f"schedule: {len(taps)} taps, {len(spans)} holds; anchors: {len(anchors)}")
 
-    a, score = fit_offset(taps, anchors, 2.0, 45.0)
-    print(f"offset fit: a = {a:.2f}s (video = chart + a), violation score {score:.1f}")
+    # the offset cannot push the chart's last event past the video's end (the result
+    # screen needs a moment too) — an unconstrained grid can find false minima there
+    reads_path = os.path.join(ROOT, "work", "combo", f"{vid}.{band}.jsonl")
+    last_t = 0.0
+    with open(reads_path, encoding="utf-8") as f:
+        for line in f:
+            pass
+        last_t = json.loads(line)[0]
+    last_event = max(taps[-1] if taps else 0, max((s[1] for s in spans), default=0))
+    hi = min(45.0, last_t - last_event - 1.0)
+    if hi <= 2.0:
+        print(f"IMPOSSIBLE: video too short for schedule (video {last_t:.1f}s, chart end {last_event:.1f}s)")
+        return
+    a, score = fit_offset(taps, anchors, 2.0, hi)
+    print(f"offset fit: a = {a:.2f}s (video = chart + a), violation score {score:.1f} (grid 2..{hi:.1f})")
 
     tap_ts = sorted(taps)
     print("\n cumulative ticks at each anchor (chart-time):")

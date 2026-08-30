@@ -31,24 +31,18 @@ def main():
       # noqa
         side = cert["side"]
         band = band_for(r, side)
-        jsonl = os.path.join(ROOT, "work", "combo", vid + ".jsonl")
-        band_mark = jsonl + f".band-{band}"
-        if not (os.path.exists(jsonl) and os.path.exists(band_mark)):
+        jsonl = os.path.join(ROOT, "work", "combo", f"{vid}.{band}.jsonl")
+        if not os.path.exists(jsonl):
             print(f"[scan] {name} ({vid}, band {band})", flush=True)
             subprocess.run([PY, os.path.join(ROOT, "tools", "combo_reader.py"), "--scan", vid, f"side={band}"], check=True)
-            for p in [band_mark] + [jsonl + f".band-{b}" for b in "CLR" if b != band]:
-                if p.endswith(f"band-{band}"):
-                    open(p, "w").write("")
-                elif os.path.exists(p):
-                    os.remove(p)
-        subprocess.run([PY, os.path.join(ROOT, "tools", "curve_assembler.py"), vid], check=True, capture_output=True)
-        out = subprocess.run([PY, os.path.join(ROOT, "tools", "align_schedule.py"), vid, smap[name]["key"], str(r["judged"])],
+        subprocess.run([PY, os.path.join(ROOT, "tools", "curve_assembler.py"), vid, band], check=True, capture_output=True)
+        out = subprocess.run([PY, os.path.join(ROOT, "tools", "align_schedule.py"), vid, smap[name]["key"], str(r["judged"]), band],
                              capture_output=True, text=True).stdout
         fit = viol = total = None
         for line in out.splitlines():
             if line.startswith("offset fit"):
                 fit = line.split("a = ")[1].split("s")[0]
-                viol = float(line.rsplit("score", 1)[1])
+                viol = float(line.rsplit("score", 1)[1].split("(")[0])
             if line.startswith("total observed ticks"):
                 total = int(line.split(":")[1].split()[0])
         expect = r["judged"] - r["file_taps"]

@@ -5,7 +5,8 @@
 # Holds whose edges can't be pinned (counter hidden, e.g. before combo 4) are
 # reported as a GROUP with the remainder implied by closure.
 #
-#   python tools/hold_observe.py <videoId> <chartstructKey> <offset> <judged>
+#   python tools/hold_observe.py <videoId> <chartstructKey> <offset> <judged> <band> [pins.json]
+# pins.json: [[video_t, combo], ...] — hand-read frames, treated as authoritative anchors.
 import bisect
 import csv
 import json
@@ -47,7 +48,7 @@ def combo_at(tv, anchors, reads):
     near = [a for a in anchors if a[0] - 0.45 <= tv <= a[1] + 0.45]
     if near:
         best = min(near, key=lambda a: min(abs(tv - a[0]), abs(tv - a[1])))
-        return best[2], "anchor"
+        return best[2], ("anchor", best)
     # isotonic single reads in +/-1.2s: value bounded by surrounding anchors
     lo_b = max((a[2] for a in anchors if a[1] <= tv), default=0)
     hi_b = min((a[2] for a in anchors if a[0] >= tv), default=10**9)
@@ -64,14 +65,19 @@ def combo_at(tv, anchors, reads):
     before = [v for t, v in keep if t <= tv]
     after = [v for t, v in keep if t > tv]
     if before and after:
-        return (before[-1] + after[0]) // 2 if after[0] - before[-1] > 1 else before[-1], "iso"
-    return (before[-1] if before else after[0]), "iso-edge"
+        return (before[-1] + after[0]) // 2 if after[0] - before[-1] > 1 else before[-1], ("iso", None)
+    return (before[-1] if before else after[0]), ("iso-edge", None)
 
 def main():
     vid, key, a, judged = sys.argv[1], sys.argv[2], float(sys.argv[3]), int(sys.argv[4])
+    band = sys.argv[5] if len(sys.argv) > 5 else "C"
     taps, spans = load(key)
-    anchors = [tuple(x) for x in json.load(open(os.path.join(ROOT, "work", "combo", vid + ".anchors.json")))]
-    reads = [json.loads(l) for l in open(os.path.join(ROOT, "work", "combo", vid + ".jsonl"), encoding="utf-8")]
+    anchors = [tuple(x) for x in json.load(open(os.path.join(ROOT, "work", "combo", f"{vid}.{band}.anchors.json")))]
+    if len(sys.argv) > 6:
+        for pt, pv in json.load(open(sys.argv[6], encoding="utf-8")):
+            anchors.append((pt, pt, pv))
+        anchors.sort()
+    reads = [json.loads(l) for l in open(os.path.join(ROOT, "work", "combo", f"{vid}.{band}.jsonl"), encoding="utf-8")]
     total_ticks = judged - len(taps)
     print(f"taps {len(taps)}, holds {len(spans)}, target total hold events {total_ticks}")
     # partition time at hold-gap midpoints so every judged event is attributed to
@@ -93,13 +99,20 @@ def main():
         (v0, how0), (v1, how1) = cvals[i], cvals[i + 1]
         lo, hi = cuts[i], cuts[i + 1]
         taps_in = bisect.bisect_right(taps, hi) - bisect.bisect_right(taps, lo)
-        if v0 is None or v1 is None:
+        # both cuts served by the SAME anchor that does not span the hold: the hold
+        # sits inside an observation gap and "0 observed" would be fiction
+        same_anchor = (isinstance(how0, tuple) and isinstance(how1, tuple)
+                       and how0[1] is not None and how0[1] == how1[1]
+                       and not (how0[1][0] <= lo + a + 0.45 and hi + a - 0.45 <= how0[1][1]))
+        h0n = how0 if isinstance(how0, str) else how0[0]
+        h1n = how1 if isinstance(how1, str) else how1[0]
+        if v0 is None or v1 is None or same_anchor:
             unpinned.append((t0, t1, b0, b1))
-            print(f"  hold {t0:7.2f}..{t1:7.2f}s (beat {b0:6.2f}..{b1:6.2f})  UNPINNED ({how0}/{how1})")
+            print(f"  hold {t0:7.2f}..{t1:7.2f}s (beat {b0:6.2f}..{b1:6.2f})  UNPINNED ({h0n}/{h1n})")
             continue
         ev = v1 - v0 - taps_in
         observed.append((t0, t1, b0, b1, ev))
-        print(f"  hold {t0:7.2f}..{t1:7.2f}s (beat {b0:6.2f}..{b1:6.2f})  observed {ev:4d}  (combo {v0}->{v1}, taps_in {taps_in}, {how0}/{how1})")
+        print(f"  hold {t0:7.2f}..{t1:7.2f}s (beat {b0:6.2f}..{b1:6.2f})  observed {ev:4d}  (combo {v0}->{v1}, taps_in {taps_in}, {h0n}/{h1n})")
     pinned_sum = sum(e for *_, e in observed)
     rem = total_ticks - pinned_sum
     print(f"pinned sum {pinned_sum}; remainder for {len(unpinned)} unpinned hold(s): {rem}")
