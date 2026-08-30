@@ -78,7 +78,7 @@ def main():
     text = original
     stall = 0
     prev_resid = None
-    for it in range(16):
+    for it in range(28):
         tc = build_tickcounts(targets, rates, None)
         text, ok = patch(original, tag, tc)
         assert ok, "block not found"
@@ -107,7 +107,7 @@ def main():
         t.pop("split", None)  # rebuild fresh — a stale split freezes the tuner
         span = t["b1"] - t["b0"]
         resid = judged - implied
-        whole = int(resid / span)
+        whole = int(0.7 * resid / span)
         if whole:
             rates[tuner_idx] = max(0, rates[tuner_idx] + whole)
         else:
@@ -116,12 +116,14 @@ def main():
             base = rates[tuner_idx]
             step_len = max((t["b1"] - t["b0"]) / 8.0, 0.05)
             n_seg = int(round((t["b1"] - t["b0"]) / step_len))
-            # bump enough leading sub-segments by +/-8 rate to move ~1 tick each;
-            # escalate when the residue stalls (rounding plateaus)
+            # bump leading sub-segments so each contributes ~1 tick of correction:
+            # delta-ticks per bumped segment = bump * step_len
             stall = stall + 1 if resid == prev_resid else 0
             prev_resid = resid
-            k = min(n_seg, abs(resid) + stall)
-            bump = 8 if resid > 0 else -8
+            bump_mag = 1 if step_len >= 0.5 else 8
+            per_seg = max(bump_mag * step_len, 0.4)
+            k = min(n_seg, int(round(abs(resid) / per_seg)) + stall)
+            bump = bump_mag if resid > 0 else -bump_mag
             segs = []
             b = t["b0"]
             for j in range(n_seg):
