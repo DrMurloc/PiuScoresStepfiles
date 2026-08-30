@@ -1,0 +1,3398 @@
+{
+ "-nyqpq9J-L8": {
+  "vid": "-nyqpq9J-L8",
+  "status": "ok",
+  "t": 136.9,
+  "1p": {
+   "perfect": "1103",
+   "great": "018",
+   "good": "001",
+   "bad": "000",
+   "miss": "003",
+   "maxcombo": "609",
+   "judged": 1125
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Tales of Pumpnia D21": {
+    "expected": 1125,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "0-ihickoY9M": {
+  "vid": "0-ihickoY9M",
+  "status": "ok",
+  "t": 82.3,
+  "1p": {
+   "perfect": "056",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "056",
+   "judged": 56
+  },
+  "2p": {
+   "perfect": "325",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "325",
+   "judged": 325
+  },
+  "charts": {
+   "XX OPENING - SHORT CUT - S6": {
+    "expected": 325,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "0AwhvEuKnSM": {
+  "vid": "0AwhvEuKnSM",
+  "status": "ok",
+  "t": 118.9,
+  "1p": {
+   "perfect": "650",
+   "great": "002",
+   "good": "001",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "652",
+   "judged": 653
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Another Truth D18": {
+    "expected": 653,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "0EEHF-jmwBI": {
+  "vid": "0EEHF-jmwBI",
+  "status": "ok",
+  "t": 117.6,
+  "1p": {
+   "perfect": "438",
+   "great": "005",
+   "good": "002",
+   "bad": "003",
+   "miss": "002",
+   "maxcombo": "138",
+   "judged": 450
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Vook D15": {
+    "expected": 450,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "0LMEZTnDzKM": {
+  "vid": "0LMEZTnDzKM",
+  "status": "ok",
+  "t": 79.6,
+  "1p": {
+   "perfect": "283",
+   "great": "001",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "284",
+   "judged": 284
+  },
+  "2p": {
+   "perfect": "416",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "416",
+   "judged": 416
+  },
+  "charts": {
+   "Wedding Crashers - SHORT CUT - S4": {
+    "expected": 284,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "0zotlsONiVU": {
+  "vid": "0zotlsONiVU",
+  "status": "ok",
+  "t": 122.7,
+  "1p": {
+   "perfect": "641",
+   "great": "050",
+   "good": "004",
+   "bad": "001",
+   "miss": "006",
+   "maxcombo": "300",
+   "judged": 702
+  },
+  "2p": {
+   "perfect": "762",
+   "great": "033",
+   "good": "001",
+   "bad": "000",
+   "miss": "004",
+   "maxcombo": "465",
+   "judged": 800
+  },
+  "charts": {
+   "Slam S18": {
+    "expected": 702,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   },
+   "Slam S20": {
+    "expected": 800,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "1CZt_IOEe2w": {
+  "vid": "1CZt_IOEe2w",
+  "status": "ok",
+  "t": 122.4,
+  "1p": {
+   "perfect": "289",
+   "great": "007",
+   "good": "003",
+   "bad": "000",
+   "miss": "001",
+   "maxcombo": "207",
+   "judged": 300
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Oh! Rosa D11": {
+    "expected": 300,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "1juO2049sp8": {
+  "vid": "1juO2049sp8",
+  "status": "ok",
+  "t": 115.6,
+  "1p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "2p": {
+   "perfect": "961",
+   "great": "019",
+   "good": "000",
+   "bad": "000",
+   "miss": "001",
+   "maxcombo": "880",
+   "judged": 981
+  },
+  "charts": {
+   "Witch Doctor S19": {
+    "expected": 981,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "26lAell5CFk": {
+  "vid": "26lAell5CFk",
+  "status": "ok",
+  "t": 139.8,
+  "1p": {
+   "perfect": "959",
+   "great": "036",
+   "good": "000",
+   "bad": "001",
+   "miss": "004",
+   "maxcombo": "465",
+   "judged": 1000
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Chimera S18": {
+    "expected": 1000,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "3OydW7VJG68": {
+  "vid": "3OydW7VJG68",
+  "status": "ok",
+  "t": 126.2,
+  "1p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "2p": {
+   "perfect": "377",
+   "great": "016",
+   "good": "002",
+   "bad": "001",
+   "miss": "004",
+   "maxcombo": "152",
+   "judged": 400
+  },
+  "charts": {
+   "Beethoven Virus D13": {
+    "expected": 400,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "3RtKAjQdWl0": {
+  "vid": "3RtKAjQdWl0",
+  "status": "ok",
+  "t": 124.3,
+  "1p": {
+   "perfect": "537",
+   "great": "012",
+   "good": "001",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "549",
+   "judged": 550
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "My Way D16": {
+    "expected": 550,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "3TTn6FWDZcQ": {
+  "vid": "3TTn6FWDZcQ",
+  "status": "ok",
+  "t": 123.2,
+  "1p": {
+   "perfect": "303",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "303",
+   "judged": 303
+  },
+  "2p": {
+   "perfect": "415",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "415",
+   "judged": 415
+  },
+  "charts": {
+   "Dr. M S9": {
+    "expected": 303,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "3qecyp0VCUA": {
+  "vid": "3qecyp0VCUA",
+  "status": "ok",
+  "t": 115.2,
+  "1p": {
+   "perfect": "200",
+   "great": "001",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "201",
+   "judged": 201
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Close Your Eye S6": {
+    "expected": 201,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "4_clp3QK814": {
+  "vid": "4_clp3QK814",
+  "status": "ok",
+  "t": 121.5,
+  "1p": {
+   "perfect": "768",
+   "great": "019",
+   "good": "003",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "787",
+   "judged": 790
+  },
+  "2p": {
+   "perfect": "980",
+   "great": "013",
+   "good": "001",
+   "bad": "001",
+   "miss": "000",
+   "maxcombo": "848",
+   "judged": 995
+  },
+  "charts": {
+   "Love is a Danger Zone S17": {
+    "expected": 790,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "5DABfNiBz_I": {
+  "vid": "5DABfNiBz_I",
+  "status": "ok",
+  "t": 130.0,
+  "1p": {
+   "perfect": "911",
+   "great": "046",
+   "good": "024",
+   "bad": "008",
+   "miss": "011",
+   "maxcombo": "612",
+   "judged": 1000
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Break it Down D21": {
+    "expected": 1000,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "5xJTDl3a67s": {
+  "vid": "5xJTDl3a67s",
+  "status": "ok",
+  "t": 112.4,
+  "1p": {
+   "perfect": "802",
+   "great": "016",
+   "good": "009",
+   "bad": "000",
+   "miss": "003",
+   "maxcombo": "409",
+   "judged": 830
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Bee S17": {
+    "expected": 830,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "6MKwujCHaBM": {
+  "vid": "6MKwujCHaBM",
+  "status": "ok",
+  "t": 126.3,
+  "1p": {
+   "perfect": "618",
+   "great": "031",
+   "good": "004",
+   "bad": "003",
+   "miss": "004",
+   "maxcombo": "237",
+   "judged": 660
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Mr. Larpus D18": {
+    "expected": 660,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "7KGWQbLGtoA": {
+  "vid": "7KGWQbLGtoA",
+  "status": "ok",
+  "t": 127.3,
+  "1p": {
+   "perfect": "300",
+   "great": "003",
+   "good": "000",
+   "bad": "000",
+   "miss": "001",
+   "maxcombo": "208",
+   "judged": 304
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Turkey March D13": {
+    "expected": 304,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "7NSEVRpGnG0": {
+  "vid": "7NSEVRpGnG0",
+  "status": "ok",
+  "t": 190.7,
+  "1p": {
+   "perfect": "1291",
+   "great": "091",
+   "good": "031",
+   "bad": "020",
+   "miss": "017",
+   "maxcombo": "316",
+   "judged": 1450
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Leather D22": {
+    "expected": 1450,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "888VuP3vbTI": {
+  "vid": "888VuP3vbTI",
+  "status": "ok",
+  "t": 170.3,
+  "1p": {
+   "perfect": "891",
+   "great": "073",
+   "good": "018",
+   "bad": "006",
+   "miss": "012",
+   "maxcombo": "335",
+   "judged": 1000
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Caprice of DJ Otada D22": {
+    "expected": 1000,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "9m5buDBg4Q8": {
+  "vid": "9m5buDBg4Q8",
+  "status": "ok",
+  "t": 69.3,
+  "1p": {
+   "perfect": "789",
+   "great": "013",
+   "good": "002",
+   "bad": "000",
+   "miss": "001",
+   "maxcombo": "713",
+   "judged": 805
+  },
+  "2p": {
+   "perfect": "975",
+   "great": "021",
+   "good": "001",
+   "bad": "002",
+   "miss": "001",
+   "maxcombo": "595",
+   "judged": 1000
+  },
+  "charts": {
+   "Poseidon - SHORT CUT - S21": {
+    "expected": 1000,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "9tONP0GeecU": {
+  "vid": "9tONP0GeecU",
+  "status": "ok",
+  "t": 73.9,
+  "1p": {
+   "perfect": "1155",
+   "great": "019",
+   "good": "005",
+   "bad": "004",
+   "miss": "003",
+   "maxcombo": "906",
+   "judged": 1186
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Destination - SHORT CUT - D21": {
+    "expected": 1186,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "AMUXSFsvko4": {
+  "vid": "AMUXSFsvko4",
+  "status": "ok",
+  "t": 115.7,
+  "1p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "2p": {
+   "perfect": "886",
+   "great": "012",
+   "good": "002",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "898",
+   "judged": 900
+  },
+  "charts": {
+   "Gun Rock S20": {
+    "expected": 900,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "AXAYju0GBsc": {
+  "vid": "AXAYju0GBsc",
+  "status": "ok",
+  "t": 119.7,
+  "1p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "2p": {
+   "perfect": "694",
+   "great": "004",
+   "good": "002",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "698",
+   "judged": 700
+  },
+  "charts": {
+   "Final Audition D19": {
+    "expected": 700,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "C4723UfuqL8": {
+  "vid": "C4723UfuqL8",
+  "status": "ok",
+  "t": 121.2,
+  "1p": {
+   "perfect": "195",
+   "great": "002",
+   "good": "001",
+   "bad": "002",
+   "miss": "000",
+   "maxcombo": "150",
+   "judged": 200
+  },
+  "2p": {
+   "perfect": "276",
+   "great": "006",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "282",
+   "judged": 282
+  },
+  "charts": {
+   "All I Want For X-mas S5": {
+    "expected": 200,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "CDO1dic37c4": {
+  "vid": "CDO1dic37c4",
+  "status": "ok",
+  "t": 104.7,
+  "1p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "2p": {
+   "perfect": "555",
+   "great": "036",
+   "good": "005",
+   "bad": "001",
+   "miss": "003",
+   "maxcombo": "324",
+   "judged": 600
+  },
+  "charts": {
+   "Winter D17": {
+    "expected": 600,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "COBESy-EzwA": {
+  "vid": "COBESy-EzwA",
+  "status": "ok",
+  "t": 132.6,
+  "1p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "2p": {
+   "perfect": "987",
+   "great": "075",
+   "good": "021",
+   "bad": "018",
+   "miss": "010",
+   "maxcombo": "525",
+   "judged": 1111
+  },
+  "charts": {
+   "Sarabande S20": {
+    "expected": 1111,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "Cwt1seaJnxM": {
+  "vid": "Cwt1seaJnxM",
+  "status": "ok",
+  "t": 112.2,
+  "1p": {
+   "perfect": "297",
+   "great": "003",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "300",
+   "judged": 300
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "She Likes Pizza D11": {
+    "expected": 300,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "D5zLc3PhQtE": {
+  "vid": "D5zLc3PhQtE",
+  "status": "ok",
+  "t": 81.2,
+  "1p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "2p": {
+   "perfect": "945",
+   "great": "032",
+   "good": "004",
+   "bad": "001",
+   "miss": "001",
+   "maxcombo": "578",
+   "judged": 983
+  },
+  "charts": {
+   "Final Audition 3 - SHORT CUT - S18": {
+    "expected": 983,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "DB6hN86sfCM": {
+  "vid": "DB6hN86sfCM",
+  "status": "ok",
+  "t": 139.8,
+  "1p": {
+   "perfect": "000",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "208",
+   "maxcombo": "000",
+   "judged": 208
+  },
+  "2p": {
+   "perfect": "548",
+   "great": "004",
+   "good": "001",
+   "bad": "000",
+   "miss": "001",
+   "maxcombo": "541",
+   "judged": 554
+  },
+  "charts": {
+   "God Mode feat. skizzo S4": {
+    "expected": 208,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "DgLesNMzb1w": {
+  "vid": "DgLesNMzb1w",
+  "status": "ok",
+  "t": 117.9,
+  "1p": {
+   "perfect": "572",
+   "great": "028",
+   "good": "001",
+   "bad": "002",
+   "miss": "003",
+   "maxcombo": "400",
+   "judged": 606
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Final Audition Ep. 1 S17": {
+    "expected": 606,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "Dkpv7LP8LGI": {
+  "vid": "Dkpv7LP8LGI",
+  "status": "ok",
+  "t": 117.3,
+  "1p": {
+   "perfect": "372",
+   "great": "007",
+   "good": "001",
+   "bad": "001",
+   "miss": "000",
+   "maxcombo": "253",
+   "judged": 381
+  },
+  "2p": {
+   "perfect": "500",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "500",
+   "judged": 500
+  },
+  "charts": {
+   "Will-O-The-Wisp S16": {
+    "expected": 500,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "DqZwBZ8OjZY": {
+  "vid": "DqZwBZ8OjZY",
+  "status": "ok",
+  "t": 71.1,
+  "1p": {
+   "perfect": "792",
+   "great": "001",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "793",
+   "judged": 793
+  },
+  "2p": {
+   "perfect": "1026",
+   "great": "004",
+   "good": "002",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "1030",
+   "judged": 1032
+  },
+  "charts": {
+   "Hyperion - SHORT CUT - S20": {
+    "expected": 1032,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   },
+   "Hyperion - SHORT CUT - S16": {
+    "expected": 793,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "FlbgoE8L0dE": {
+  "vid": "FlbgoE8L0dE",
+  "status": "ok",
+  "t": 133.5,
+  "1p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "2p": {
+   "perfect": "841",
+   "great": "039",
+   "good": "010",
+   "bad": "000",
+   "miss": "010",
+   "maxcombo": "457",
+   "judged": 900
+  },
+  "charts": {
+   "Naissance S20": {
+    "expected": 900,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "GB-vaFnJoqo": {
+  "vid": "GB-vaFnJoqo",
+  "status": "ok",
+  "t": 136.2,
+  "1p": {
+   "perfect": "1048",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "004",
+   "maxcombo": "815",
+   "judged": 1052
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Tales of Pumpnia D18": {
+    "expected": 1052,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "GDF4ndpdI30": {
+  "vid": "GDF4ndpdI30",
+  "status": "ok",
+  "t": 77.5,
+  "1p": {
+   "perfect": "898",
+   "great": "001",
+   "good": "001",
+   "bad": "000",
+   "miss": "001",
+   "maxcombo": "672",
+   "judged": 901
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Final Audition 2 - SHORT CUT - D19": {
+    "expected": 901,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "GR0LvDh4EmI": {
+  "vid": "GR0LvDh4EmI",
+  "status": "ok",
+  "t": 123.3,
+  "1p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "2p": {
+   "perfect": "474",
+   "great": "013",
+   "good": "003",
+   "bad": "005",
+   "miss": "005",
+   "maxcombo": "163",
+   "judged": 500
+  },
+  "charts": {
+   "Final Audition Ep. 1 D15": {
+    "expected": 500,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "H4H0IzzK-MQ": {
+  "vid": "H4H0IzzK-MQ",
+  "status": "ok",
+  "t": 165.3,
+  "1p": {
+   "perfect": "1291",
+   "great": "204",
+   "good": "054",
+   "bad": "036",
+   "miss": "015",
+   "maxcombo": "327",
+   "judged": 1600
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Desaparecer D25": {
+    "expected": 1600,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "IG4XNqxVU4g": {
+  "vid": "IG4XNqxVU4g",
+  "status": "ok",
+  "t": 122.6,
+  "1p": {
+   "perfect": "969",
+   "great": "018",
+   "good": "004",
+   "bad": "002",
+   "miss": "007",
+   "maxcombo": "498",
+   "judged": 1000
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Slam D22": {
+    "expected": 1000,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "ILkwtynEdoU": {
+  "vid": "ILkwtynEdoU",
+  "status": "ok",
+  "t": 119.0,
+  "1p": {
+   "perfect": "601",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "601",
+   "judged": 601
+  },
+  "2p": {
+   "perfect": "700",
+   "great": "014",
+   "good": "000",
+   "bad": "000",
+   "miss": "001",
+   "maxcombo": "502",
+   "judged": 715
+  },
+  "charts": {
+   "Final Audition S18": {
+    "expected": 601,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "Ii5LlE3aznY": {
+  "vid": "Ii5LlE3aznY",
+  "status": "ok",
+  "t": 124.6,
+  "1p": {
+   "perfect": "274",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "274",
+   "judged": 274
+  },
+  "2p": {
+   "perfect": "634",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "634",
+   "judged": 634
+  },
+  "charts": {
+   "Set me up S10": {
+    "expected": 274,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "Ip9-ro43B1M": {
+  "vid": "Ip9-ro43B1M",
+  "status": "ok",
+  "t": 68.5,
+  "1p": {
+   "perfect": "810",
+   "great": "015",
+   "good": "004",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "825",
+   "judged": 829
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Super Fantasy - SHORT CUT - S19": {
+    "expected": 829,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "IyYNcWMMGjQ": {
+  "vid": "IyYNcWMMGjQ",
+  "status": "ok",
+  "t": 112.2,
+  "1p": {
+   "perfect": "254",
+   "great": "001",
+   "good": "002",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "255",
+   "judged": 257
+  },
+  "2p": {
+   "perfect": "296",
+   "great": "007",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "303",
+   "judged": 303
+  },
+  "charts": {
+   "She Likes Pizza S10": {
+    "expected": 303,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "KV0Qlupj5zo": {
+  "vid": "KV0Qlupj5zo",
+  "status": "ok",
+  "t": 73.2,
+  "1p": {
+   "perfect": "969",
+   "great": "004",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "973",
+   "judged": 973
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "K.O.A : Alice in Wonderworld - SHORT CUT - D18": {
+    "expected": 973,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "K_-jc0OI6mg": {
+  "vid": "K_-jc0OI6mg",
+  "status": "ok",
+  "t": 73.8,
+  "1p": {
+   "perfect": "1009",
+   "great": "013",
+   "good": "007",
+   "bad": "000",
+   "miss": "001",
+   "maxcombo": "563",
+   "judged": 1030
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Can-can ~Orpheus in The Party Mix~ - SHORT CUT - D23": {
+    "expected": 1030,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "LCMJoe7QjKM": {
+  "vid": "LCMJoe7QjKM",
+  "status": "ok",
+  "t": 144.2,
+  "1p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "2p": {
+   "perfect": "479",
+   "great": "001",
+   "good": "000",
+   "bad": "000",
+   "miss": "001",
+   "maxcombo": "315",
+   "judged": 481
+  },
+  "charts": {
+   "Like Me S14": {
+    "expected": 481,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "LU_aZhier0o": {
+  "vid": "LU_aZhier0o",
+  "status": "ok",
+  "t": 121.9,
+  "1p": {
+   "perfect": "489",
+   "great": "004",
+   "good": "003",
+   "bad": "003",
+   "miss": "001",
+   "maxcombo": "309",
+   "judged": 500
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Mr. Larpus S15": {
+    "expected": 500,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "LnjDld0jyXk": {
+  "vid": "LnjDld0jyXk",
+  "status": "ok",
+  "t": 105.8,
+  "1p": {
+   "perfect": "792",
+   "great": "000",
+   "good": "007",
+   "bad": "001",
+   "miss": "000",
+   "maxcombo": "697",
+   "judged": 800
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Winter D21": {
+    "expected": 800,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "Lno2EF7kp38": {
+  "vid": "Lno2EF7kp38",
+  "status": "ok",
+  "t": 120.2,
+  "1p": {
+   "perfect": "711",
+   "great": "001",
+   "good": "000",
+   "bad": "000",
+   "miss": "003",
+   "maxcombo": "704",
+   "judged": 715
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Another Truth D19": {
+    "expected": 715,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "M4xMfunI8qY": {
+  "vid": "M4xMfunI8qY",
+  "status": "ok",
+  "t": 139.8,
+  "1p": {
+   "perfect": "1030",
+   "great": "068",
+   "good": "008",
+   "bad": "001",
+   "miss": "004",
+   "maxcombo": "863",
+   "judged": 1111
+  },
+  "2p": {
+   "perfect": "1312",
+   "great": "055",
+   "good": "014",
+   "bad": "013",
+   "miss": "006",
+   "maxcombo": "413",
+   "judged": 1400
+  },
+  "charts": {
+   "Conflict S22": {
+    "expected": 1400,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "MJ6HPoYg9D4": {
+  "vid": "MJ6HPoYg9D4",
+  "status": "ok",
+  "t": 119.5,
+  "1p": {
+   "perfect": "623",
+   "great": "020",
+   "good": "009",
+   "bad": "005",
+   "miss": "009",
+   "maxcombo": "215",
+   "judged": 666
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Dr. M D18": {
+    "expected": 666,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "MoWM7Riiti0": {
+  "vid": "MoWM7Riiti0",
+  "status": "ok",
+  "t": 170.0,
+  "1p": {
+   "perfect": "797",
+   "great": "001",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "798",
+   "judged": 798
+  },
+  "2p": {
+   "perfect": "855",
+   "great": "034",
+   "good": "011",
+   "bad": "001",
+   "miss": "003",
+   "maxcombo": "609",
+   "judged": 904
+  },
+  "charts": {
+   "Caprice of DJ Otada S21": {
+    "expected": 904,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "NhCMpQh2eaI": {
+  "vid": "NhCMpQh2eaI",
+  "status": "ok",
+  "t": 119.6,
+  "1p": {
+   "perfect": "495",
+   "great": "036",
+   "good": "005",
+   "bad": "003",
+   "miss": "011",
+   "maxcombo": "200",
+   "judged": 550
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Mr. Larpus D16": {
+    "expected": 550,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "OLPN4bvUaDI": {
+  "vid": "OLPN4bvUaDI",
+  "status": "ok",
+  "t": 68.1,
+  "1p": {
+   "perfect": "821",
+   "great": "004",
+   "good": "002",
+   "bad": "003",
+   "miss": "001",
+   "maxcombo": "540",
+   "judged": 831
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Super Fantasy - SHORT CUT - D17": {
+    "expected": 831,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "OmtOd1Fmezg": {
+  "vid": "OmtOd1Fmezg",
+  "status": "ok",
+  "t": 337.2,
+  "1p": {
+   "perfect": "1292",
+   "great": "005",
+   "good": "000",
+   "bad": "002",
+   "miss": "001",
+   "maxcombo": "929",
+   "judged": 1300
+  },
+  "2p": {
+   "perfect": "2035",
+   "great": "046",
+   "good": "012",
+   "bad": "001",
+   "miss": "006",
+   "maxcombo": "1060",
+   "judged": 2100
+  },
+  "charts": {
+   "Baroque Virus - FULL SONG - S15": {
+    "expected": 1300,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "OwpO-gz0apE": {
+  "vid": "OwpO-gz0apE",
+  "status": "ok",
+  "t": 126.0,
+  "1p": {
+   "perfect": "963",
+   "great": "018",
+   "good": "007",
+   "bad": "002",
+   "miss": "014",
+   "maxcombo": "534",
+   "judged": 1004
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Slam D24": {
+    "expected": 1004,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "PjwAeE1sVbI": {
+  "vid": "PjwAeE1sVbI",
+  "status": "ok",
+  "t": 127.8,
+  "1p": {
+   "perfect": "520",
+   "great": "020",
+   "good": "003",
+   "bad": "003",
+   "miss": "004",
+   "maxcombo": "346",
+   "judged": 550
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Csikos Post D16": {
+    "expected": 550,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "Q34_Jy78ulk": {
+  "vid": "Q34_Jy78ulk",
+  "status": "ok",
+  "t": 76.7,
+  "1p": {
+   "perfect": "977",
+   "great": "001",
+   "good": "001",
+   "bad": "002",
+   "miss": "000",
+   "maxcombo": "586",
+   "judged": 981
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Final Audition 3 - SHORT CUT - D18": {
+    "expected": 981,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "QAPaDpe5AVM": {
+  "vid": "QAPaDpe5AVM",
+  "status": "ok",
+  "t": 70.0,
+  "1p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "2p": {
+   "perfect": "556",
+   "great": "016",
+   "good": "003",
+   "bad": "001",
+   "miss": "002",
+   "maxcombo": "349",
+   "judged": 578
+  },
+  "charts": {
+   "Exceed2 Opening - SHORT CUT - S16": {
+    "expected": 578,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "QQMvHsiTpFQ": {
+  "vid": "QQMvHsiTpFQ",
+  "status": "ok",
+  "t": 128.2,
+  "1p": {
+   "perfect": "1116",
+   "great": "065",
+   "good": "008",
+   "bad": "002",
+   "miss": "009",
+   "maxcombo": "291",
+   "judged": 1200
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Mental Rider D22": {
+    "expected": 1200,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "QmNPPq2Vsrk": {
+  "vid": "QmNPPq2Vsrk",
+  "status": "ok",
+  "t": 122.5,
+  "1p": {
+   "perfect": "000",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "448",
+   "maxcombo": "000",
+   "judged": 448
+  },
+  "2p": {
+   "perfect": "782",
+   "great": "004",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "786",
+   "judged": 786
+  },
+  "charts": {
+   "Come to Me S17": {
+    "expected": 786,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "SqpYgEUEARk": {
+  "vid": "SqpYgEUEARk",
+  "status": "ok",
+  "t": 118.9,
+  "1p": {
+   "perfect": "300",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "300",
+   "judged": 300
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "We will meet again D11": {
+    "expected": 300,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "TP6E8cpAv40": {
+  "vid": "TP6E8cpAv40",
+  "status": "ok",
+  "t": 87.4,
+  "1p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "2p": {
+   "perfect": "796",
+   "great": "012",
+   "good": "004",
+   "bad": "004",
+   "miss": "004",
+   "maxcombo": "533",
+   "judged": 820
+  },
+  "charts": {
+   "Extravaganza - SHORT CUT - D16": {
+    "expected": 820,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "Tfcr5kv9yEg": {
+  "vid": "Tfcr5kv9yEg",
+  "status": "ok",
+  "t": 118.6,
+  "1p": {
+   "perfect": "000",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "203",
+   "maxcombo": "000",
+   "judged": 203
+  },
+  "2p": {
+   "perfect": "321",
+   "great": "010",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "331",
+   "judged": 331
+  },
+  "charts": {
+   "First Love S6": {
+    "expected": 203,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "UD4dCDT_nZY": {
+  "vid": "UD4dCDT_nZY",
+  "status": "ok",
+  "t": 61.3,
+  "1p": {
+   "perfect": "546",
+   "great": "001",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "547",
+   "judged": 547
+  },
+  "2p": {
+   "perfect": "775",
+   "great": "020",
+   "good": "004",
+   "bad": "000",
+   "miss": "001",
+   "maxcombo": "531",
+   "judged": 800
+  },
+  "charts": {
+   "Moonlight - SHORT CUT - S19": {
+    "expected": 800,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "VADcnBS5RDk": {
+  "vid": "VADcnBS5RDk",
+  "status": "ok",
+  "t": 111.8,
+  "1p": {
+   "perfect": "754",
+   "great": "031",
+   "good": "007",
+   "bad": "005",
+   "miss": "004",
+   "maxcombo": "304",
+   "judged": 801
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Will-O-The-Wisp D20": {
+    "expected": 801,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "VUGBxQx8wic": {
+  "vid": "VUGBxQx8wic",
+  "status": "ok",
+  "t": 112.1,
+  "1p": {
+   "perfect": "601",
+   "great": "039",
+   "good": "005",
+   "bad": "004",
+   "miss": "004",
+   "maxcombo": "185",
+   "judged": 653
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "She Likes Pizza D18": {
+    "expected": 653,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "X6t8wL8Bkmc": {
+  "vid": "X6t8wL8Bkmc",
+  "status": "ok",
+  "t": 114.4,
+  "1p": {
+   "perfect": "398",
+   "great": "003",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "401",
+   "judged": 401
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "2006. LOVE SONG D14": {
+    "expected": 401,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "XNMIAm04k_c": {
+  "vid": "XNMIAm04k_c",
+  "status": "ok",
+  "t": 115.6,
+  "1p": {
+   "perfect": "369",
+   "great": "009",
+   "good": "001",
+   "bad": "000",
+   "miss": "001",
+   "maxcombo": "230",
+   "judged": 380
+  },
+  "2p": {
+   "perfect": "475",
+   "great": "012",
+   "good": "002",
+   "bad": "001",
+   "miss": "010",
+   "maxcombo": "222",
+   "judged": 500
+  },
+  "charts": {
+   "Beat of The War S16": {
+    "expected": 500,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "Ys-1MMRxwL0": {
+  "vid": "Ys-1MMRxwL0",
+  "status": "ok",
+  "t": 79.0,
+  "1p": {
+   "perfect": "920",
+   "great": "009",
+   "good": "001",
+   "bad": "001",
+   "miss": "000",
+   "maxcombo": "597",
+   "judged": 931
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Final Audition 2 - SHORT CUT - S17": {
+    "expected": 931,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "_ddGQ6TvQA8": {
+  "vid": "_ddGQ6TvQA8",
+  "status": "ok",
+  "t": 116.5,
+  "1p": {
+   "perfect": "519",
+   "great": "016",
+   "good": "006",
+   "bad": "002",
+   "miss": "007",
+   "maxcombo": "165",
+   "judged": 550
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Will-O-The-Wisp D16": {
+    "expected": 550,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "a8pgyhNsbnE": {
+  "vid": "a8pgyhNsbnE",
+  "status": "ok",
+  "t": 138.3,
+  "1p": {
+   "perfect": "1013",
+   "great": "006",
+   "good": "000",
+   "bad": "001",
+   "miss": "003",
+   "maxcombo": "916",
+   "judged": 1023
+  },
+  "2p": {
+   "perfect": "1055",
+   "great": "011",
+   "good": "001",
+   "bad": "000",
+   "miss": "001",
+   "maxcombo": "754",
+   "judged": 1068
+  },
+  "charts": {
+   "Tales of Pumpnia S20": {
+    "expected": 1068,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   },
+   "Tales of Pumpnia S17": {
+    "expected": 1023,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "ad6H__2fccI": {
+  "vid": "ad6H__2fccI",
+  "status": "ok",
+  "t": 149.3,
+  "1p": {
+   "perfect": "978",
+   "great": "035",
+   "good": "013",
+   "bad": "009",
+   "miss": "008",
+   "maxcombo": "502",
+   "judged": 1043
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Bad Apple!! feat. Nomico D20": {
+    "expected": 1043,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "bSO6xqKFnwA": {
+  "vid": "bSO6xqKFnwA",
+  "status": "ok",
+  "t": 146.4,
+  "1p": {
+   "perfect": "705",
+   "great": "013",
+   "good": "002",
+   "bad": "000",
+   "miss": "001",
+   "maxcombo": "446",
+   "judged": 721
+  },
+  "2p": {
+   "perfect": "1050",
+   "great": "040",
+   "good": "020",
+   "bad": "017",
+   "miss": "014",
+   "maxcombo": "247",
+   "judged": 1141
+  },
+  "charts": {
+   "Imagination S18": {
+    "expected": 721,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "bXMj-YNDufs": {
+  "vid": "bXMj-YNDufs",
+  "status": "ok",
+  "t": 120.6,
+  "1p": {
+   "perfect": "000",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "277",
+   "maxcombo": "000",
+   "judged": 277
+  },
+  "2p": {
+   "perfect": "495",
+   "great": "012",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "507",
+   "judged": 507
+  },
+  "charts": {
+   "My Way S15": {
+    "expected": 507,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "cM9yZ08lF58": {
+  "vid": "cM9yZ08lF58",
+  "status": "ok",
+  "t": 76.2,
+  "1p": {
+   "perfect": "746",
+   "great": "023",
+   "good": "012",
+   "bad": "012",
+   "miss": "010",
+   "maxcombo": "352",
+   "judged": 803
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Destination - SHORT CUT - D20": {
+    "expected": 803,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "cl7uy-mYWRA": {
+  "vid": "cl7uy-mYWRA",
+  "status": "ok",
+  "t": 116.2,
+  "1p": {
+   "perfect": "450",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "450",
+   "judged": 450
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "First Love D15": {
+    "expected": 450,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "dLZsccXaoJQ": {
+  "vid": "dLZsccXaoJQ",
+  "status": "ok",
+  "t": 120.1,
+  "1p": {
+   "perfect": "428",
+   "great": "007",
+   "good": "003",
+   "bad": "004",
+   "miss": "007",
+   "maxcombo": "117",
+   "judged": 449
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Pump me Amadeus D15": {
+    "expected": 449,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "dvdxvkr-4cM": {
+  "vid": "dvdxvkr-4cM",
+  "status": "ok",
+  "t": 129.3,
+  "1p": {
+   "perfect": "1100",
+   "great": "062",
+   "good": "020",
+   "bad": "010",
+   "miss": "021",
+   "maxcombo": "396",
+   "judged": 1213
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Final Audition Ep. 2-2 D23": {
+    "expected": 1213,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "eK0DqUZg3DY": {
+  "vid": "eK0DqUZg3DY",
+  "status": "ok",
+  "t": 78.9,
+  "1p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "2p": {
+   "perfect": "661",
+   "great": "006",
+   "good": "000",
+   "bad": "000",
+   "miss": "001",
+   "maxcombo": "406",
+   "judged": 668
+  },
+  "charts": {
+   "Trotpris - SHORT CUT - D15": {
+    "expected": 668,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "f0Syr_zdY_0": {
+  "vid": "f0Syr_zdY_0",
+  "status": "ok",
+  "t": 123.8,
+  "1p": {
+   "perfect": "887",
+   "great": "102",
+   "good": "020",
+   "bad": "008",
+   "miss": "015",
+   "maxcombo": "437",
+   "judged": 1032
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Vook D21": {
+    "expected": 1032,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "gK9UgKx0RRI": {
+  "vid": "gK9UgKx0RRI",
+  "status": "ok",
+  "t": 117.6,
+  "1p": {
+   "perfect": "1009",
+   "great": "007",
+   "good": "000",
+   "bad": "000",
+   "miss": "005",
+   "maxcombo": "915",
+   "judged": 1021
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Another Truth D21": {
+    "expected": 1021,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "gn0VpL3jrW0": {
+  "vid": "gn0VpL3jrW0",
+  "status": "ok",
+  "t": 87.7,
+  "1p": {
+   "perfect": "1172",
+   "great": "074",
+   "good": "024",
+   "bad": "017",
+   "miss": "013",
+   "maxcombo": "646",
+   "judged": 1300
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Death Moon - SHORT CUT - D23": {
+    "expected": 1300,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "h6hMwb60hhA": {
+  "vid": "h6hMwb60hhA",
+  "status": "ok",
+  "t": 115.4,
+  "1p": {
+   "perfect": "490",
+   "great": "004",
+   "good": "003",
+   "bad": "002",
+   "miss": "001",
+   "maxcombo": "309",
+   "judged": 500
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Bee D15": {
+    "expected": 500,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "hkJQUdoReOo": {
+  "vid": "hkJQUdoReOo",
+  "status": "ok",
+  "t": 132.7,
+  "1p": {
+   "perfect": "375",
+   "great": "005",
+   "good": "004",
+   "bad": "000",
+   "miss": "001",
+   "maxcombo": "234",
+   "judged": 385
+  },
+  "2p": {
+   "perfect": "672",
+   "great": "032",
+   "good": "006",
+   "bad": "001",
+   "miss": "002",
+   "maxcombo": "375",
+   "judged": 713
+  },
+  "charts": {
+   "Emperor S16": {
+    "expected": 713,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "hlinRNR4O44": {
+  "vid": "hlinRNR4O44",
+  "status": "ok",
+  "t": 119.4,
+  "1p": {
+   "perfect": "918",
+   "great": "054",
+   "good": "011",
+   "bad": "009",
+   "miss": "008",
+   "maxcombo": "484",
+   "judged": 1000
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Gun Rock D24": {
+    "expected": 1000,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "j63He18RRoU": {
+  "vid": "j63He18RRoU",
+  "status": "ok",
+  "t": 119.6,
+  "1p": {
+   "perfect": "508",
+   "great": "002",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "510",
+   "judged": 510
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "We will meet again S13": {
+    "expected": 510,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "jatpRnJNt_s": {
+  "vid": "jatpRnJNt_s",
+  "status": "ok",
+  "t": 121.1,
+  "1p": {
+   "perfect": "384",
+   "great": "003",
+   "good": "001",
+   "bad": "002",
+   "miss": "004",
+   "maxcombo": "204",
+   "judged": 394
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Dr. M D14": {
+    "expected": 394,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "jf-5AWFVrpY": {
+  "vid": "jf-5AWFVrpY",
+  "status": "ok",
+  "t": 121.4,
+  "1p": {
+   "perfect": "473",
+   "great": "024",
+   "good": "001",
+   "bad": "002",
+   "miss": "002",
+   "maxcombo": "296",
+   "judged": 502
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Extravaganza D15": {
+    "expected": 502,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "kvHDjRuzX0Y": {
+  "vid": "kvHDjRuzX0Y",
+  "status": "ok",
+  "t": 80.0,
+  "1p": {
+   "perfect": "1175",
+   "great": "040",
+   "good": "014",
+   "bad": "007",
+   "miss": "008",
+   "maxcombo": "794",
+   "judged": 1244
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Love is a Danger Zone pt. 2 - SHORT CUT - D23": {
+    "expected": 1244,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "l_6Hc6DSLNc": {
+  "vid": "l_6Hc6DSLNc",
+  "status": "ok",
+  "t": 118.8,
+  "1p": {
+   "perfect": "000",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "078",
+   "maxcombo": "000",
+   "judged": 78
+  },
+  "2p": {
+   "perfect": "198",
+   "great": "002",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "200",
+   "judged": 200
+  },
+  "charts": {
+   "A nightmare S6": {
+    "expected": 200,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "mQyzNMQ9Ov4": {
+  "vid": "mQyzNMQ9Ov4",
+  "status": "ok",
+  "t": 79.3,
+  "1p": {
+   "perfect": "1012",
+   "great": "025",
+   "good": "002",
+   "bad": "003",
+   "miss": "001",
+   "maxcombo": "682",
+   "judged": 1043
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Pumptris 8Bit ver. - SHORT CUT - D22": {
+    "expected": 1043,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "moHDv2w9y3U": {
+  "vid": "moHDv2w9y3U",
+  "status": "no-result-screen",
+  "charts": {
+   "Conflict D26": {
+    "expected": 1600,
+    "side": null,
+    "verdict": "OPEN"
+   }
+  }
+ },
+ "n32Sh0lzypg": {
+  "vid": "n32Sh0lzypg",
+  "status": "ok",
+  "t": 74.4,
+  "1p": {
+   "perfect": "664",
+   "great": "008",
+   "good": "000",
+   "bad": "001",
+   "miss": "005",
+   "maxcombo": "402",
+   "judged": 678
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Can-can ~Orpheus in The Party Mix~ - SHORT CUT - D17": {
+    "expected": 678,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "npeDr9bumF4": {
+  "vid": "npeDr9bumF4",
+  "status": "ok",
+  "t": 78.4,
+  "1p": {
+   "perfect": "878",
+   "great": "004",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "882",
+   "judged": 882
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Pop The Track - SHORT CUT - D16": {
+    "expected": 882,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "p32HHIkF_OE": {
+  "vid": "p32HHIkF_OE",
+  "status": "ok",
+  "t": 76.8,
+  "1p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "2p": {
+   "perfect": "952",
+   "great": "027",
+   "good": "005",
+   "bad": "004",
+   "miss": "012",
+   "maxcombo": "547",
+   "judged": 1000
+  },
+  "charts": {
+   "Ignis Fatuus(DM Ashura Mix) - SHORT CUT - D21": {
+    "expected": 1000,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "qYaVIP8efzU": {
+  "vid": "qYaVIP8efzU",
+  "status": "ok",
+  "t": 70.8,
+  "1p": {
+   "perfect": "468",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "468",
+   "judged": 468
+  },
+  "2p": {
+   "perfect": "608",
+   "great": "002",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "610",
+   "judged": 610
+  },
+  "charts": {
+   "Poseidon - SHORT CUT - S14": {
+    "expected": 610,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   },
+   "Poseidon - SHORT CUT - S11": {
+    "expected": 468,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "rgZKHutbte0": {
+  "vid": "rgZKHutbte0",
+  "status": "ok",
+  "t": 133.6,
+  "1p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "2p": {
+   "perfect": "665",
+   "great": "037",
+   "good": "001",
+   "bad": "000",
+   "miss": "005",
+   "maxcombo": "250",
+   "judged": 708
+  },
+  "charts": {
+   "Emperor D17": {
+    "expected": 708,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "sNCNNndY3oE": {
+  "vid": "sNCNNndY3oE",
+  "status": "ok",
+  "t": 105.2,
+  "1p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "2p": {
+   "perfect": "528",
+   "great": "009",
+   "good": "000",
+   "bad": "002",
+   "miss": "001",
+   "maxcombo": "459",
+   "judged": 540
+  },
+  "charts": {
+   "Winter S16": {
+    "expected": 540,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "sgaOggiQuAM": {
+  "vid": "sgaOggiQuAM",
+  "status": "ok",
+  "t": 123.4,
+  "1p": {
+   "perfect": "428",
+   "great": "013",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "441",
+   "judged": 441
+  },
+  "2p": {
+   "perfect": "839",
+   "great": "027",
+   "good": "006",
+   "bad": "001",
+   "miss": "000",
+   "maxcombo": "714",
+   "judged": 873
+  },
+  "charts": {
+   "Xenesis S18": {
+    "expected": 873,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "txKtdvCPj8Q": {
+  "vid": "txKtdvCPj8Q",
+  "status": "ok",
+  "t": 118.3,
+  "1p": {
+   "perfect": "191",
+   "great": "001",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "192",
+   "judged": 192
+  },
+  "2p": {
+   "perfect": "250",
+   "great": "001",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "251",
+   "judged": 251
+  },
+  "charts": {
+   "Slam S5": {
+    "expected": 192,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "uv28TOVcMiA": {
+  "vid": "uv28TOVcMiA",
+  "status": "ok",
+  "t": 78.1,
+  "1p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "2p": {
+   "perfect": "946",
+   "great": "041",
+   "good": "020",
+   "bad": "006",
+   "miss": "010",
+   "maxcombo": "586",
+   "judged": 1023
+  },
+  "charts": {
+   "Kasou Shinja - SHORT CUT - S20": {
+    "expected": 1023,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "wSipNldO6os": {
+  "vid": "wSipNldO6os",
+  "status": "ok",
+  "t": 77.4,
+  "1p": {
+   "perfect": "987",
+   "great": "006",
+   "good": "006",
+   "bad": "010",
+   "miss": "005",
+   "maxcombo": "648",
+   "judged": 1014
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Kasou Shinja - SHORT CUT - D21": {
+    "expected": 1014,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "weSz1C5SvaU": {
+  "vid": "weSz1C5SvaU",
+  "status": "ok",
+  "t": 81.3,
+  "1p": {
+   "perfect": "256",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "256",
+   "judged": 256
+  },
+  "2p": {
+   "perfect": "432",
+   "great": "001",
+   "good": "000",
+   "bad": "001",
+   "miss": "000",
+   "maxcombo": "320",
+   "judged": 434
+  },
+  "charts": {
+   "Switronic - SHORT CUT - S9": {
+    "expected": 434,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "x1OTFIcEL2c": {
+  "vid": "x1OTFIcEL2c",
+  "status": "ok",
+  "t": 137.6,
+  "1p": {
+   "perfect": "000",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "117",
+   "maxcombo": "000",
+   "judged": 117
+  },
+  "2p": {
+   "perfect": "233",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "233",
+   "judged": 233
+  },
+  "charts": {
+   "Blaze Emotion S2": {
+    "expected": 117,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "xEPow4sDWbU": {
+  "vid": "xEPow4sDWbU",
+  "status": "ok",
+  "t": 120.8,
+  "1p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "2p": {
+   "perfect": "566",
+   "great": "076",
+   "good": "003",
+   "bad": "003",
+   "miss": "006",
+   "maxcombo": "264",
+   "judged": 654
+  },
+  "charts": {
+   "Extravaganza D18": {
+    "expected": 654,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "xKaQQImTQig": {
+  "vid": "xKaQQImTQig",
+  "status": "ok",
+  "t": 140.9,
+  "1p": {
+   "perfect": "1087",
+   "great": "009",
+   "good": "003",
+   "bad": "001",
+   "miss": "000",
+   "maxcombo": "1044",
+   "judged": 1100
+  },
+  "2p": {
+   "perfect": "1076",
+   "great": "000",
+   "good": "001",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "1076",
+   "judged": 1077
+  },
+  "charts": {
+   "Chase Me S20": {
+    "expected": 1077,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "xhWIYnG5utw": {
+  "vid": "xhWIYnG5utw",
+  "status": "ok",
+  "t": 74.7,
+  "1p": {
+   "perfect": "914",
+   "great": "056",
+   "good": "015",
+   "bad": "006",
+   "miss": "009",
+   "maxcombo": "672",
+   "judged": 1000
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Can-can ~Orpheus in The Party Mix~ - SHORT CUT - D21": {
+    "expected": 1000,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "y3VaBGQ1v3g": {
+  "vid": "y3VaBGQ1v3g",
+  "status": "ok",
+  "t": 66.7,
+  "1p": {
+   "perfect": "991",
+   "great": "007",
+   "good": "000",
+   "bad": "001",
+   "miss": "001",
+   "maxcombo": "646",
+   "judged": 1000
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Poseidon - SHORT CUT - D21": {
+    "expected": 1000,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "yMzGjdvL-Tk": {
+  "vid": "yMzGjdvL-Tk",
+  "status": "ok",
+  "t": 125.3,
+  "1p": {
+   "perfect": "951",
+   "great": "112",
+   "good": "056",
+   "bad": "032",
+   "miss": "012",
+   "maxcombo": "411",
+   "judged": 1163
+  },
+  "2p": {
+   "perfect": "1238",
+   "great": "088",
+   "good": "018",
+   "bad": "012",
+   "miss": "009",
+   "maxcombo": "436",
+   "judged": 1365
+  },
+  "charts": {
+   "Final Audition Ep. 2-2 S21": {
+    "expected": 1163,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "yOnV7_FDmq8": {
+  "vid": "yOnV7_FDmq8",
+  "status": "ok",
+  "t": 120.7,
+  "1p": {
+   "perfect": "985",
+   "great": "009",
+   "good": "004",
+   "bad": "001",
+   "miss": "001",
+   "maxcombo": "639",
+   "judged": 1000
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Beethoven Virus D21": {
+    "expected": 1000,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "yVX4_lP7664": {
+  "vid": "yVX4_lP7664",
+  "status": "ok",
+  "t": 101.4,
+  "1p": {
+   "perfect": "000",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "200",
+   "maxcombo": "000",
+   "judged": 200
+  },
+  "2p": {
+   "perfect": "398",
+   "great": "000",
+   "good": "001",
+   "bad": "001",
+   "miss": "000",
+   "maxcombo": "351",
+   "judged": 400
+  },
+  "charts": {
+   "An Interesting View S13": {
+    "expected": 400,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   },
+   "An Interesting View S6": {
+    "expected": 200,
+    "side": "1p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ },
+ "zJ8Wm0UYjug": {
+  "vid": "zJ8Wm0UYjug",
+  "status": "ok",
+  "t": 133.2,
+  "1p": {
+   "perfect": "928",
+   "great": "037",
+   "good": "006",
+   "bad": "002",
+   "miss": "004",
+   "maxcombo": "538",
+   "judged": 977
+  },
+  "2p": {
+   "perfect": "764",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "764",
+   "judged": 764
+  },
+  "charts": {
+   "Love is a Danger Zone pt.2 [Another] S18": {
+    "expected": 764,
+    "side": "2p",
+    "verdict": "CERTIFIED"
+   }
+  }
+ }
+}
