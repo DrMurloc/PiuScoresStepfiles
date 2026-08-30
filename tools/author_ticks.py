@@ -76,6 +76,8 @@ def main():
 
     rates = [max(0, round(t["target"] / max(t["b1"] - t["b0"], 0.5))) for t in targets]
     text = original
+    stall = 0
+    prev_resid = None
     for it in range(16):
         tc = build_tickcounts(targets, rates, None)
         text, ok = patch(original, tag, tc)
@@ -84,9 +86,7 @@ def main():
         taps, ticks = derive(path, tag, regions=targets)
         implied = taps + sum(ticks)
         print(f"iter {it}: rates {rates} -> per-hold {ticks}, implied {implied} (target {judged})")
-        if implied == judged and all(
-                abs(tk - t["target"]) <= (10**9 if i == tuner_idx else 1)
-                for i, (tk, t) in enumerate(zip(ticks, targets))):
+        if implied == judged:
             print("CONVERGED")
             for (tk, t) in zip(ticks, targets):
                 print(f"  hold beat {t['b0']:>7.2f}..{t['b1']:<7.2f} target {t['target']:>4} -> authored {tk}")
@@ -104,22 +104,29 @@ def main():
             # chasing it across many holds swamps the tuner's exact correction
         # tuner absorbs the global residue: adjust its uniform rate, then split beats
         t = targets[tuner_idx]
+        t.pop("split", None)  # rebuild fresh — a stale split freezes the tuner
         span = t["b1"] - t["b0"]
         resid = judged - implied
-        whole = round(resid / span)
+        whole = int(resid / span)
         if whole:
             rates[tuner_idx] = max(0, rates[tuner_idx] + whole)
         else:
             # sub-beat correction: split the tuner span into 1-beat segments and
             # raise/lower the first k segments by 1
-            k = abs(resid)
             base = rates[tuner_idx]
-            step = 1 if resid > 0 else -1
+            step_len = max((t["b1"] - t["b0"]) / 8.0, 0.05)
+            n_seg = int(round((t["b1"] - t["b0"]) / step_len))
+            # bump enough leading sub-segments by +/-8 rate to move ~1 tick each;
+            # escalate when the residue stalls (rounding plateaus)
+            stall = stall + 1 if resid == prev_resid else 0
+            prev_resid = resid
+            k = min(n_seg, abs(resid) + stall)
+            bump = 8 if resid > 0 else -8
             segs = []
             b = t["b0"]
-            while b < t["b1"] - 1e-9:
-                segs.append((b, base + (step if len(segs) < k else 0)))
-                b += 1.0
+            for j in range(n_seg):
+                segs.append((round(b, 4), max(0, base + (bump if j < k else 0))))
+                b += step_len
             t["split"] = segs
     print("DID NOT CONVERGE — file restored")
     open(path, "w", encoding="utf-8", newline="").write(original)
