@@ -22,11 +22,13 @@ def main():
     led = json.load(open(os.path.join(ROOT, "work", "certification.json"), encoding="utf-8"))
     report = []
     for name in sys.argv[1:]:
+      try:
         r = census[name]
         vid = r["video"].rsplit("/", 1)[1]
         cert = (led.get(vid, {}).get("charts") or {}).get(name, {})
         if cert.get("verdict") != "CERTIFIED":
             report.append((name, "NOT-CERTIFIED", "")); continue
+      # noqa
         side = cert["side"]
         band = band_for(r, side)
         jsonl = os.path.join(ROOT, "work", "combo", vid + ".jsonl")
@@ -53,6 +55,9 @@ def main():
         status = "SUSPECT" if viol and viol > 2 else ("OK" if total == expect else "PINS")
         report.append((name, status, f"offset {fit} viol {viol} observed {total} expect {expect}"))
         print(f"[{status}] {name}: offset {fit}, violations {viol}, ticks {total}/{expect}", flush=True)
+      except Exception as e:
+        report.append((name, "ERROR", str(e)[:80]))
+        print(f"[ERROR] {name}: {e}", flush=True)
     print("\n=== SURVEY ===")
     for name, status, detail in report:
         print(f"{status:<14} {name:<48} {detail}")

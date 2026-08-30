@@ -23,7 +23,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ATLAS = os.path.join(ROOT, "tools", "atlas-combo")
 GLYPH_H = 32          # normalized glyph height
 Y_BAND = (370, 450)   # digit row band at 720p (below the pulsing COMBO label)
-X_BAND = {"C": (470, 810), "L": (150, 490), "R": (790, 1130)}
+HALF = {"L": (0, 640), "R": (640, 1280), "C": (0, 1280)}  # label found within the half; digits hang off it
 DIGIT_W = 51          # single glyph width at rest scale; wider components get split
 
 def video_path(vid):
@@ -31,29 +31,32 @@ def video_path(vid):
             if not p.endswith((".part", ".ytdl", ".txt"))]
     return hits[0] if hits else None
 
-def digit_boxes(frame, side):
-    x0, x1 = X_BAND[side]
-    band = frame[Y_BAND[0]:Y_BAND[1], x0:x1]
+def digit_boxes(frame, x0, x1, y0, y1, cx_local=None):
+    """Digit glyphs in the window below the COMBO label. Scrolling notes fuse with
+    digit BOTTOMS (inflating component height), so boxes are filtered to those
+    top-aligned with the row and cropped to the row's minimum height — the digit
+    portion survives, the fused note tail is discarded."""
+    band = frame[y0:y1, x0:x1]
     hsv = cv2.cvtColor(band, cv2.COLOR_BGR2HSV)
-    mask = ((hsv[:, :, 2] > 170) & (hsv[:, :, 1] < 65)).astype(np.uint8) * 255
+    mask = ((hsv[:, :, 2] > 170) & (hsv[:, :, 1] < 70)).astype(np.uint8) * 255
     n, _, stats, _ = cv2.connectedComponentsWithStats(mask, 8)
-    boxes = []
-    for i in range(1, n):
-        x, y, w, h, area = stats[i]
-        if 26 <= h <= 78 and 10 <= w <= 170 and area >= 140:
-            boxes.append((x, y, w, h))
+    boxes = [(x, y, w, h) for x, y, w, h, a in (s for s in stats[1:])
+             if h >= 26 and w >= 8 and a >= 140]
+    if cx_local is not None:
+        boxes = [b for b in boxes if abs(b[0] + b[2] / 2 - cx_local) <= 118]
     if not boxes:
         return mask, []
-    # dominant row by y-center, then height consistency (kills label/ribbon fragments)
-    med = float(np.median([y + h / 2 for x, y, w, h in boxes]))
-    row = [b for b in boxes if abs(b[1] + b[3] / 2 - med) < 26]
-    hmed = float(np.median([h for _, _, _, h in row]))
-    row = [b for b in row if abs(b[3] - hmed) <= hmed * 0.45]
-    row.sort()
-    # split merged multi-digit components (per-box scale from its own height)
+    anchored = [b for b in boxes if b[1] >= 2] or boxes
+    row_top = min(y for _, y, _, _ in anchored)
+    boxes = [b for b in boxes if b[1] <= row_top + 6]
+    hmed = float(np.median([h for _, _, _, h in boxes]))
+    boxes = [b for b in boxes if b[3] >= 0.7 * hmed]
+    h_ref = min(h for _, _, _, h in boxes)
+    boxes = [(x, y, w, h_ref) for x, y, w, h in boxes]
+    boxes.sort()
     final = []
-    for x, y, w, h in row:
-        scale = h / 42.0
+    scale = h_ref / 42.0
+    for x, y, w, h in boxes:
         if w <= DIGIT_W * 1.25 * scale:
             final.append((x, y, w, h))
             continue
@@ -65,15 +68,14 @@ def digit_boxes(frame, side):
             lo, hi = max(1, c0 - 12), min(w - 1, c0 + 12)
             cuts.append(lo + int(np.argmin(prof[lo:hi])))
         cuts.append(w)
-        for a, b in zip(cuts, cuts[1:]):
-            if b - a >= 8:
-                final.append((x + a, y, b - a, h))
-    # digits form one tight run; drop isolated fragments (gap > ~60% of a digit width)
+        for a2, b2 in zip(cuts, cuts[1:]):
+            if b2 - a2 >= 8:
+                final.append((x + a2, y, b2 - a2, h))
     if len(final) > 1:
         runs, cur = [], [final[0]]
         for prev, nxt in zip(final, final[1:]):
             gap = nxt[0] - (prev[0] + prev[2])
-            if gap > 0.6 * DIGIT_W * (prev[3] / 42.0):
+            if gap > 0.6 * DIGIT_W * scale:
                 runs.append(cur); cur = []
             cur.append(nxt)
         runs.append(cur)
@@ -86,7 +88,7 @@ def norm_glyph(mask, box):
     scale = GLYPH_H / h
     return cv2.resize(g, (max(6, int(round(w * scale))), GLYPH_H))
 
-LABEL_BAND = (322, 388)
+LABEL_BAND = (310, 400)
 
 def load_atlas():
     out = {}
@@ -99,19 +101,23 @@ def load_atlas():
 
 def find_label(frame, side, labels):
     """The real counter always carries the COMBO label above its digits; the BGA's
-    own numbers (e.g. Tales of Pumpnia's RPG damage popups) don't. Returns the
-    label center x in band coordinates, or None when the counter is hidden."""
-    x0, x1 = X_BAND[side]
-    g = cv2.cvtColor(frame[LABEL_BAND[0]:LABEL_BAND[1], x0:x1], cv2.COLOR_BGR2GRAY)
-    best, best_cx = -1.0, None
+    own numbers (e.g. Tales of Pumpnia's RPG damage popups) don't. The counter's
+    x position varies by layout (split halves ~400/880, full-screen singles ~320/960,
+    doubles ~640), so the label is searched across the whole requested half and the
+    digit window hangs off wherever it is. Returns (center_x, label_top_y) in frame
+    coords, or None when the counter is hidden."""
+    hx0, hx1 = HALF[side]
+    g = cv2.cvtColor(frame[LABEL_BAND[0]:LABEL_BAND[1], hx0:hx1], cv2.COLOR_BGR2GRAY)
+    best, where = -1.0, None
     for tpl in labels:
         if g.shape[0] < tpl.shape[0] or g.shape[1] < tpl.shape[1]:
             continue
         res = cv2.matchTemplate(g, tpl, cv2.TM_CCOEFF_NORMED)
         _, mx, _, loc = cv2.minMaxLoc(res)
         if mx > best:
-            best, best_cx = mx, loc[0] + tpl.shape[1] / 2
-    return best_cx if best >= 0.6 else None
+            best = mx
+            where = (hx0 + loc[0] + tpl.shape[1] / 2, LABEL_BAND[0] + loc[1])
+    return where if best >= 0.55 else None
 
 def classify(glyph, atlas):
     best, best_d = -1.0, None
@@ -126,21 +132,32 @@ def classify(glyph, atlas):
     return (best_d, best) if best >= 0.5 else (None, best)
 
 def read_frame(frame, side, atlas, labels):
-    cx = find_label(frame, side, labels)
-    if cx is None:
+    hit = find_label(frame, side, labels)
+    if hit is None:
         return None, -1.0  # counter hidden
-    mask, row = digit_boxes(frame, side)
-    row = [b for b in row if abs(b[0] + b[2] / 2 - cx) < 190]
+    cx, ly = hit
+    x0 = max(0, int(cx - 185)); x1 = min(frame.shape[1], int(cx + 185))
+    y0 = int(ly + 26); y1 = min(frame.shape[0], int(ly + 102))
+    mask, row = digit_boxes(frame, x0, x1, y0, y1, cx_local=cx - x0)
     if not row:
         return None, 1.0
-    val, worst = "", 1.0
+    reads = []
+    worst = 1.0
     for b in row:
         d, conf = classify(norm_glyph(mask, b), atlas)
         worst = min(worst, conf)
-        if d is None:
-            return None, worst
-        val += d
-    return (int(val) if val else None), worst
+        reads.append((d, b))
+    # tolerate an unknown at either edge ONLY when it is a sub-digit-width fragment
+    # (clipped note remnant) — a digit-sized unknown voids the read, never truncates it
+    scale = row[0][3] / 42.0 if row else 1.0
+    frag_w = 0.55 * DIGIT_W * scale
+    if reads and reads[0][0] is None and reads[0][1][2] < frag_w:
+        reads = reads[1:]
+    if reads and reads[-1][0] is None and reads[-1][1][2] < frag_w:
+        reads = reads[:-1]
+    if not reads or any(d is None for d, _ in reads):
+        return None, worst
+    return int("".join(d for d, _ in reads)), worst
 
 def bootstrap(vid, pairs):
     os.makedirs(ATLAS, exist_ok=True)
@@ -149,7 +166,13 @@ def bootstrap(vid, pairs):
     for t, truth, side in pairs:
         cap.set(cv2.CAP_PROP_POS_MSEC, t * 1000)
         ok, frame = cap.read()
-        mask, row = digit_boxes(frame, side)
+        _, labels = load_atlas()
+        hit = find_label(frame, side, labels)
+        if hit is None:
+            print(f"t={t}: NO LABEL"); continue
+        cx, ly = hit
+        mask, row = digit_boxes(frame, max(0, int(cx - 185)), min(frame.shape[1], int(cx + 185)),
+                                int(ly + 24), min(frame.shape[0], int(ly + 100)))
         print(f"t={t}: {len(row)} boxes for truth {truth} ({[b[2:] for b in row]})")
         if len(row) != len(truth):
             continue
