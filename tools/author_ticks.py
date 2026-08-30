@@ -15,11 +15,29 @@ sys.path.insert(0, r"C:\Users\jonec\repos\piu-annotate")
 from piu_annotate.formats.sscfile import StepchartSSC              # noqa: E402
 from piu_annotate.formats.ssc_to_chartstruct import stepchart_ssc_to_chartstruct  # noqa: E402
 
-def derive(path, tag):
+def derive(path, tag, regions=None):
+    """taps + per-hold ticks; when `regions` (list of {t0,t1}) is given, their hold
+    segments are aggregated into those time regions (converter segmentation of
+    overlapping jump-holds differs from union-merged spans, so indexes never zip)."""
     sc = StepchartSSC.from_song_ssc_file(path, tag)
     df, holdticks, msg = stepchart_ssc_to_chartstruct(sc)
     taps = int(df["Line"].str.contains("1", regex=False).sum())
-    return taps, [round(t[2]) for t in holdticks], [(t[0], t[1]) for t in holdticks]
+    segs = [(t[0], t[1], round(t[2])) for t in holdticks]
+    if regions is None:
+        return taps, [s[2] for s in segs]
+    sums = [0] * len(regions)
+    for s0, s1, tk in segs:
+        mid = (s0 + s1) / 2
+        best, bi = None, None
+        for i, r in enumerate(regions):
+            if r["t0"] - 0.1 <= mid <= r["t1"] + 0.1:
+                bi = i
+                break
+            d = min(abs(mid - r["t0"]), abs(mid - r["t1"]))
+            if best is None or d < best:
+                best, bi = d, i
+        sums[bi] += tk
+    return taps, sums
 
 def build_tickcounts(holds, rates, splits):
     entries = [(0.0, 0)]
@@ -58,12 +76,12 @@ def main():
 
     rates = [max(0, round(t["target"] / max(t["b1"] - t["b0"], 0.5))) for t in targets]
     text = original
-    for it in range(12):
+    for it in range(16):
         tc = build_tickcounts(targets, rates, None)
         text, ok = patch(original, tag, tc)
         assert ok, "block not found"
         open(path, "w", encoding="utf-8", newline="").write(text)
-        taps, ticks, spans = derive(path, tag)
+        taps, ticks = derive(path, tag, regions=targets)
         implied = taps + sum(ticks)
         print(f"iter {it}: rates {rates} -> per-hold {ticks}, implied {implied} (target {judged})")
         if implied == judged and all(
@@ -79,9 +97,11 @@ def main():
                 continue
             if abs(tk - t["target"]) > 1:
                 span = max(t["b1"] - t["b0"], 0.5)
-                rates[i] = max(0, rates[i] + round((t["target"] - tk) / span))
-            elif tk != t["target"] and rates[i] > 0:
-                rates[i] += 1 if t["target"] > tk else -1
+                step = round((t["target"] - tk) / span)
+                step = max(-25, min(25, step))
+                rates[i] = max(0, rates[i] + step)
+            # within +/-1 of target: freeze — that is inside observation noise, and
+            # chasing it across many holds swamps the tuner's exact correction
         # tuner absorbs the global residue: adjust its uniform rate, then split beats
         t = targets[tuner_idx]
         span = t["b1"] - t["b0"]

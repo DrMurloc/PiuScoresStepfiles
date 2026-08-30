@@ -29,9 +29,18 @@ def load(key):
                 open_h[c] = (t, b)
             elif ch == "3" and c in open_h:
                 (t0, b0) = open_h.pop(c)
-                spans.append((t0, t, b0, b, c))
+                spans.append((t0, t, b0, b))
     spans.sort()
-    return sorted(taps), spans
+    # merge overlapping/touching spans: simultaneous holds judge ONE event per
+    # tick moment (matching piu-annotate's merged hold list)
+    merged = []
+    for s in spans:
+        if merged and s[0] <= merged[-1][1] + 1e-6:
+            m = merged[-1]
+            merged[-1] = (m[0], max(m[1], s[1]), m[2], max(m[3], s[3]))
+        else:
+            merged.append(s)
+    return sorted(taps), merged
 
 def combo_at(tv, anchors, reads):
     # strict anchor covering or near tv
@@ -65,11 +74,25 @@ def main():
     reads = [json.loads(l) for l in open(os.path.join(ROOT, "work", "combo", vid + ".jsonl"), encoding="utf-8")]
     total_ticks = judged - len(taps)
     print(f"taps {len(taps)}, holds {len(spans)}, target total hold events {total_ticks}")
+    # partition time at hold-gap midpoints so every judged event is attributed to
+    # exactly one hold's interval (overlapping edge windows double-counted before)
+    cuts = []
+    for i, (t0, t1, b0, b1) in enumerate(spans):
+        if i == 0:
+            cuts.append(t0 - EDGE)
+        else:
+            pe = spans[i - 1][1]
+            cuts.append((pe + t0) / 2 if t0 - pe < 2 * EDGE else t0 - EDGE)
+    cuts.append(spans[-1][1] + EDGE)
+    cvals = []
+    for c in cuts:
+        v, how = combo_at(c + a, anchors, reads)
+        cvals.append((v, how))
     observed, unpinned = [], []
-    for t0, t1, b0, b1, col in spans:
-        v0, how0 = combo_at(t0 - EDGE + a, anchors, reads)
-        v1, how1 = combo_at(t1 + EDGE + a, anchors, reads)
-        taps_in = bisect.bisect_right(taps, t1 + EDGE) - bisect.bisect_right(taps, t0 - EDGE)
+    for i, (t0, t1, b0, b1) in enumerate(spans):
+        (v0, how0), (v1, how1) = cvals[i], cvals[i + 1]
+        lo, hi = cuts[i], cuts[i + 1]
+        taps_in = bisect.bisect_right(taps, hi) - bisect.bisect_right(taps, lo)
         if v0 is None or v1 is None:
             unpinned.append((t0, t1, b0, b1))
             print(f"  hold {t0:7.2f}..{t1:7.2f}s (beat {b0:6.2f}..{b1:6.2f})  UNPINNED ({how0}/{how1})")
