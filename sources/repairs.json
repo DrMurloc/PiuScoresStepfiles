@@ -60,6 +60,16 @@
   "commit": "11c9e8d"
  },
  {
+  "chart": "Death Moon - SHORT CUT - D23",
+  "key": "Death_Moon_-_SHORT_CUT_-_-_SHK_D23_SHORTCUT",
+  "ssc_rel": "13 - PRIME 2/15F1 - [Short Cut] Death Moon/15F1 - [Short Cut] Death Moon.ssc",
+  "video": "https://youtu.be/gn0VpL3jrW0",
+  "judged": 1300,
+  "taps": 430,
+  "ticks": 870,
+  "commit": "885945f"
+ },
+ {
   "chart": "Destination - SHORT CUT - D20",
   "key": "Destination_-_SHORT_CUT_-_-_SHK_D20_SHORTCUT",
   "ssc_rel": "08 - FIESTA/1064 - [Short Cut] Destination/1064 - [Short Cut] Destination.ssc",
@@ -138,6 +148,26 @@
   "taps": 364,
   "ticks": 619,
   "commit": "1df1a8a"
+ },
+ {
+  "chart": "Final Audition Ep. 2-2 D23",
+  "key": "Final_Audition_Ep._2-2_-_YAHPP_D23_ARCADE",
+  "ssc_rel": "05 - NX~NX2/(2) D30 - Final Audition Episode 2-2/D30 - Final Audition Episode 2-2.ssc",
+  "video": "https://youtu.be/dvdxvkr-4cM",
+  "judged": 1213,
+  "taps": 520,
+  "ticks": 693,
+  "commit": "a2d0412"
+ },
+ {
+  "chart": "Final Audition Ep. 2-2 S21",
+  "key": "Final_Audition_Ep._2-2_-_YAHPP_S21_ARCADE",
+  "ssc_rel": "05 - NX~NX2/(2) D30 - Final Audition Episode 2-2/D30 - Final Audition Episode 2-2.ssc",
+  "video": "https://youtu.be/yMzGjdvL-Tk",
+  "judged": 1163,
+  "taps": 561,
+  "ticks": 602,
+  "commit": "a2d0412"
  },
  {
   "chart": "Gun Rock S20",
