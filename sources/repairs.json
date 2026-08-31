@@ -60,6 +60,16 @@
   "commit": "11c9e8d"
  },
  {
+  "chart": "Destination - SHORT CUT - D20",
+  "key": "Destination_-_SHORT_CUT_-_-_SHK_D20_SHORTCUT",
+  "ssc_rel": "08 - FIESTA/1064 - [Short Cut] Destination/1064 - [Short Cut] Destination.ssc",
+  "video": "https://youtu.be/cM9yZ08lF58",
+  "judged": 803,
+  "taps": 278,
+  "ticks": 525,
+  "commit": "ae21ce1"
+ },
+ {
   "chart": "Destination - SHORT CUT - D21",
   "key": "Destination_-_SHORT_CUT_-_-_SHK_D21_SHORTCUT",
   "ssc_rel": "08 - FIESTA/1064 - [Short Cut] Destination/1064 - [Short Cut] Destination.ssc",
@@ -67,7 +77,7 @@
   "judged": 1186,
   "taps": 449,
   "ticks": 737,
-  "commit": "3b5d4a1"
+  "commit": "ae21ce1"
  },
  {
   "chart": "Emperor D17",
@@ -87,7 +97,7 @@
   "judged": 713,
   "taps": 417,
   "ticks": 296,
-  "commit": "de6e5ce"
+  "commit": "5a2050e"
  },
  {
   "chart": "Exceed2 Opening - SHORT CUT - S16",
@@ -127,7 +137,7 @@
   "judged": 983,
   "taps": 364,
   "ticks": 619,
-  "commit": "1624529"
+  "commit": "1df1a8a"
  },
  {
   "chart": "Gun Rock S20",
@@ -147,7 +157,7 @@
   "judged": 793,
   "taps": 372,
   "ticks": 421,
-  "commit": "67f4429"
+  "commit": "2980a82"
  },
  {
   "chart": "Hyperion - SHORT CUT - S20",
@@ -177,7 +187,17 @@
   "judged": 1014,
   "taps": 327,
   "ticks": 687,
-  "commit": "1ac386a"
+  "commit": "5cc3eb4"
+ },
+ {
+  "chart": "Kasou Shinja - SHORT CUT - S20",
+  "key": "Kasou_Shinja_-_SHORT_CUT_-_-_MAX_S20_SHORTCUT",
+  "ssc_rel": "13 - PRIME 2/15F6 - [Short Cut] Kasou Shinja/15F6 - [Short Cut] Kasou Shinja.ssc",
+  "video": "https://youtu.be/uv28TOVcMiA",
+  "judged": 1023,
+  "taps": 360,
+  "ticks": 663,
+  "commit": "5cc3eb4"
  },
  {
   "chart": "Like Me S14",
@@ -227,7 +247,7 @@
   "judged": 468,
   "taps": 198,
   "ticks": 270,
-  "commit": "5f97d18"
+  "commit": "9200d3d"
  },
  {
   "chart": "Poseidon - SHORT CUT - S14",
@@ -237,7 +257,7 @@
   "judged": 610,
   "taps": 195,
   "ticks": 415,
-  "commit": "5f97d18"
+  "commit": "9200d3d"
  },
  {
   "chart": "Pumptris 8Bit ver. - SHORT CUT - D22",
@@ -267,7 +287,7 @@
   "judged": 829,
   "taps": 252,
   "ticks": 577,
-  "commit": "9c69b57"
+  "commit": "3848136"
  },
  {
   "chart": "Switronic - SHORT CUT - S9",
@@ -287,7 +307,7 @@
   "judged": 1052,
   "taps": 119,
   "ticks": 933,
-  "commit": "220b37d"
+  "commit": "fe5f470"
  },
  {
   "chart": "Tales of Pumpnia D21",
@@ -307,7 +327,7 @@
   "judged": 1023,
   "taps": 118,
   "ticks": 905,
-  "commit": "3a39027"
+  "commit": "fe5f470"
  },
  {
   "chart": "Tales of Pumpnia S20",
@@ -317,7 +337,7 @@
   "judged": 1068,
   "taps": 279,
   "ticks": 789,
-  "commit": "c8d7d44"
+  "commit": "fe5f470"
  },
  {
   "chart": "Wedding Crashers - SHORT CUT - S4",
@@ -328,6 +348,16 @@
   "taps": 78,
   "ticks": 206,
   "commit": "4e5bc1e"
+ },
+ {
+  "chart": "Witch Doctor S19",
+  "key": "Witch_Doctor_-_BanYa_S19_ARCADE",
+  "ssc_rel": "04 - EXCEED~ZERO/(1) C03 - Witch Doctor/C03 - Witch Doctor.ssc",
+  "video": "https://youtu.be/1juO2049sp8",
+  "judged": 981,
+  "taps": 372,
+  "ticks": 609,
+  "commit": "d3357e2"
  },
  {
   "chart": "XX OPENING - SHORT CUT - S6",
