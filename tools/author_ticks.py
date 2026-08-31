@@ -18,7 +18,15 @@ from piu_annotate.formats.ssc_to_chartstruct import stepchart_ssc_to_chartstruct
 def derive(path, tag, regions=None):
     """taps + per-hold ticks; when `regions` (list of {t0,t1}) is given, their hold
     segments are aggregated into those time regions (converter segmentation of
-    overlapping jump-holds differs from union-merged spans, so indexes never zip)."""
+    overlapping jump-holds differs from union-merged spans, so indexes never zip).
+
+    Segments are assigned by MAXIMUM OVERLAP, not by midpoint. On drill charts the
+    converter emits more segments than there are regions (165 vs 145 on Witch Doctor
+    S19) and they are ~0.1s long, so a midpoint can land just outside its own region:
+    the neighbour then absorbs two segments while the true owner reads 0. A region
+    stuck at 0 can never respond to its own rate, so the nudge loop raises it forever
+    and the whole schedule diverges. Overlap has no such blind spot, and a segment
+    that overlaps nothing still falls back to the nearest region rather than vanishing."""
     sc = StepchartSSC.from_song_ssc_file(path, tag)
     df, holdticks, msg = stepchart_ssc_to_chartstruct(sc)
     taps = int(df["Line"].str.contains("1", regex=False).sum())
@@ -27,15 +35,15 @@ def derive(path, tag, regions=None):
         return taps, [s[2] for s in segs]
     sums = [0] * len(regions)
     for s0, s1, tk in segs:
-        mid = (s0 + s1) / 2
-        best, bi = None, None
+        best_ov, bi = 0.0, None
         for i, r in enumerate(regions):
-            if r["t0"] - 0.1 <= mid <= r["t1"] + 0.1:
-                bi = i
-                break
-            d = min(abs(mid - r["t0"]), abs(mid - r["t1"]))
-            if best is None or d < best:
-                best, bi = d, i
+            ov = min(s1, r["t1"]) - max(s0, r["t0"])
+            if ov > best_ov:
+                best_ov, bi = ov, i
+        if bi is None:                      # touches no region: nearest edge wins
+            mid = (s0 + s1) / 2
+            bi = min(range(len(regions)),
+                     key=lambda i: min(abs(mid - regions[i]["t0"]), abs(mid - regions[i]["t1"])))
         sums[bi] += tk
     return taps, sums
 
