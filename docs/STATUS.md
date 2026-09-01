@@ -4,7 +4,7 @@
 tree by `tools/rebuild_repairs.py`, so it cannot go stale. This file is the working ledger
 for what is **left**, and it is hand-kept: re-derive the counts before trusting them.
 
-As of 2026-09-01: **42 of the 121 census charts repaired**, 79 remaining.
+As of 2026-09-01: **47 of the 121 census charts repaired**, 74 remaining.
 
 ## The remaining 79, by what actually blocks them
 
@@ -45,19 +45,22 @@ pt. 2 SC D23, Ignis Fatuus SC D21 (also shows missing content), Bad Apple D20, D
 D25 (51 breaks; its assembly comes out non-monotone, which is the tell that the run structure
 itself is wrong).
 
-### D. Reachable with the current pipeline — 6 charts
+### D. Reachable with the current pipeline — batch of 2026-09-01: 5 of 6 repaired
 
-Grid OK **and** the counter's ticks land where the file has holds (`align_schedule`
-out-of-hold accrual near zero). Ordered by expected effort:
+| Chart | Commit | What it took |
+|---|---|---|
+| Poseidon SC S21 | `788597a` | the arrow-counting bug had hidden two intro stumbles; with them placed the head slack dip vanished |
+| Extravaganza SC D16 | `7f649db` | hidden stumbles re-split by the slack profile (gap 3, not gap 4) |
+| Can-can SC D17 | `fff361a` | two more hidden breaks found in the raw reads; 671+1 = P+G |
+| Break it Down D21 | `ac7eb8c` | one 1.2s hold carrying all 617 ticks at ~514/s; resets hidden in blind stretches, GOODs drift priced in |
+| Can-can SC D21 | `d1baa8a` | fresh scan; the "58" over-sum was a misread, nine near-zero miss-cluster runs |
+| Mental Rider D22 | `9ed304d` (timing only) | **parked.** Its authored freeze gimmick (BPM 1.0 + a 999s stop one beat before the last hold's tail) gave it a 17-minute final hold in every release; that is fixed and the chart ends at 103.5s as the video shows. The tick repair is blocked: the counter bursts 18–40 ticks in half-second stretches that *trail* clusters of 0.03s micro-holds by 0.5–1s with no file hold beneath — either the file's 42-entry BPM map mis-times them or the game judges micro-hold ticks on a coarser grid. Needs a timing-model decision. Its `p2-082626` chartstruct CSV was regenerated locally from the fixed file so the tools could run (`.pre-timing-fix` backup kept). |
 
-| Chart | Breaks | Coverage | Out-of-hold | Note |
-|---|---:|---:|---:|---|
-| Poseidon SC S21 | 3 | 607/611 | 3 | 4-run structure already decoded with frame pins (55 → 329 → 595 = maxcombo); the old "head vs tail offset conflict" was computed with the arrow-counting bug and is likely void |
-| Extravaganza SC D16 | 8 | 523/535 | 8 | structure decoded (4 observed resets + 4 hidden stumbles, closure 34) |
-| Can-can SC D17 | 6 | 475/481 | 0 | Gd0 yet violation 1,872 — the hidden-run split in the segment offsets needs refining |
-| Break it Down D21 | 19 | 575/617 | 31 | heaviest run assembly in the group; Gd24 inflates violation |
-| Mental Rider D22 | 11 | 675/694 | ~120 | **timing puzzle, parked.** Its D22 block carried an authored freeze gimmick (BPM 1.0 + a 999s stop at beat 289.7) that the converter honoured into a 17-minute final hold; that is fixed (commit below) and the chart now ends at 103.5s as the video shows. But the tick repair is blocked: the counter bursts 18–40 ticks in half-second stretches that each *trail* a cluster of 0.03s micro-holds by 0.5–1s, with no file hold underneath. Either the file's 42-entry BPM map mis-times those clusters, or the game judges micro-hold ticks on a coarser grid than the converter. Needs a timing-model decision, not a tick count. Note: this chart's `p2-082626` chartstruct CSV was regenerated locally from the fixed file so the tools could run (`.pre-timing-fix` backup kept). |
-| Can-can SC D21 | 15 | 84/740 | 1 | anchors are the survey's sparse ones (11% coverage); needs re-scan + assembly first |
+Every one of the five needed run-structure work the survey pass had not done: hidden breaks
+inside blind stretches or miss clusters, priced by closure and placed by where the slack
+profile fell. Two lessons are recorded in [EVIDENCE-RULES.md](EVIDENCE-RULES.md): GOODs make
+slack drift down one per good, so a "minimal non-falling" solver over-asks by exactly the
+goods before a bomb; and `fit2` beat-aliased again (Mental Rider: 12.62 reported, ~8.6 real).
 
 ### D′. Grid OK but the holds are missing — 4 charts
 
@@ -141,5 +144,5 @@ from footage and diffing it against the file**. That capability also answers the
 goal of validating every Phoenix 2 chart note by note, since a full-corpus validation is the
 same operation run over 4,582 charts instead of 60.
 
-Groups C, D and F are 11 charts of hand work reachable with the existing tooling — the
-nearest available progress, and enough to take the project past half the census.
+Groups C and F are 5 charts of hand work reachable with the existing tooling, plus Mental
+Rider once its timing model is decided.
