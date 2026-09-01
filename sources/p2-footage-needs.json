@@ -1,0 +1,277 @@
+{
+ "generated": "2026-09-01",
+ "source": "local prod-synced ScoreTracker DB, scores.ChartMix Phoenix vs Phoenix2",
+ "policy": "Phoenix 2 footage preferred; Phoenix 1 acceptable where the note count is unchanged between mixes",
+ "categories": {
+  "p1_footage_sufficient": 2988,
+  "needs_p2_footage_notecount_changed": 16,
+  "needs_p2_footage_p2_only_chart": 249,
+  "unknown_p2_notecount_not_yet_in_db": 1363,
+  "p1_only_dropped_from_p2": 204
+ },
+ "needs_p2_footage": [
+  {
+   "song": "Solve My Hurt - SHORT CUT -",
+   "type": "Double",
+   "p1_level": "26",
+   "p2_level": "26",
+   "p1_notes": 1566,
+   "p2_notes": 1026,
+   "delta": -540
+  },
+  {
+   "song": "Destination - SHORT CUT -",
+   "type": "Double",
+   "p1_level": "21",
+   "p2_level": "22",
+   "p1_notes": 1186,
+   "p2_notes": 826,
+   "delta": -360
+  },
+  {
+   "song": "Slam",
+   "type": "Double",
+   "p1_level": "24",
+   "p2_level": "24",
+   "p1_notes": 1004,
+   "p2_notes": 704,
+   "delta": -300
+  },
+  {
+   "song": "PARADOXX - SHORT CUT -",
+   "type": "Single",
+   "p1_level": "24",
+   "p2_level": "24",
+   "p1_notes": 1200,
+   "p2_notes": 1400,
+   "delta": 200
+  },
+  {
+   "song": "Paradoxx",
+   "type": "Single",
+   "p1_level": "26",
+   "p2_level": "26",
+   "p1_notes": 2300,
+   "p2_notes": 2100,
+   "delta": -200
+  },
+  {
+   "song": "Brown Sky",
+   "type": "Single",
+   "p1_level": "25",
+   "p2_level": "25",
+   "p1_notes": 2071,
+   "p2_notes": 1904,
+   "delta": -167
+  },
+  {
+   "song": "Doppelganger",
+   "type": "Double",
+   "p1_level": "26",
+   "p2_level": "26",
+   "p1_notes": 1492,
+   "p2_notes": 1374,
+   "delta": -118
+  },
+  {
+   "song": "Sorceress Elise",
+   "type": "Double",
+   "p1_level": "24",
+   "p2_level": "24",
+   "p1_notes": 1387,
+   "p2_notes": 1500,
+   "delta": 113
+  },
+  {
+   "song": "BEMERA",
+   "type": "Single",
+   "p1_level": "24",
+   "p2_level": "24",
+   "p1_notes": 1757,
+   "p2_notes": 1858,
+   "delta": 101
+  },
+  {
+   "song": "HTTP",
+   "type": "CoOp",
+   "p1_level": "2",
+   "p2_level": "2",
+   "p1_notes": 2100,
+   "p2_notes": 2032,
+   "delta": -68
+  },
+  {
+   "song": "Crimson Hood",
+   "type": "Single",
+   "p1_level": "24",
+   "p2_level": "24",
+   "p1_notes": 1445,
+   "p2_notes": 1495,
+   "delta": 50
+  },
+  {
+   "song": "Shub Sothoth",
+   "type": "Single",
+   "p1_level": "25",
+   "p2_level": "25",
+   "p1_notes": 1900,
+   "p2_notes": 1850,
+   "delta": -50
+  },
+  {
+   "song": "Monolith",
+   "type": "Double",
+   "p1_level": "22",
+   "p2_level": "23",
+   "p1_notes": 1284,
+   "p2_notes": 1276,
+   "delta": -8
+  },
+  {
+   "song": "Windmill",
+   "type": "Double",
+   "p1_level": "18",
+   "p2_level": "18",
+   "p1_notes": 884,
+   "p2_notes": 882,
+   "delta": -2
+  },
+  {
+   "song": "Necromancy",
+   "type": "Single",
+   "p1_level": "20",
+   "p2_level": "20",
+   "p1_notes": 1229,
+   "p2_notes": 1228,
+   "delta": -1
+  },
+  {
+   "song": "Burn Out",
+   "type": "Double",
+   "p1_level": "20",
+   "p2_level": "20",
+   "p1_notes": 911,
+   "p2_notes": 912,
+   "delta": 1
+  }
+ ],
+ "p2_only_songs": [
+  [
+   "404 (New Era)",
+   9
+  ],
+  [
+   "Antique Serenade",
+   7
+  ],
+  [
+   "B3",
+   8
+  ],
+  [
+   "BANG BANG",
+   12
+  ],
+  [
+   "BLAZOR",
+   9
+  ],
+  [
+   "Crash-Landing Rendezvous",
+   7
+  ],
+  [
+   "Cynical",
+   8
+  ],
+  [
+   "Digitalis",
+   7
+  ],
+  [
+   "Dizzy Dance, Street Light",
+   7
+  ],
+  [
+   "Do the Dance",
+   12
+  ],
+  [
+   "Dreamchasers",
+   7
+  ],
+  [
+   "Enjoy The Show",
+   7
+  ],
+  [
+   "Ercitite",
+   11
+  ],
+  [
+   "Freedom Dive",
+   7
+  ],
+  [
+   "INFiNiTE ENERZY -Overdoze-",
+   8
+  ],
+  [
+   "King's Tomb",
+   11
+  ],
+  [
+   "Legendary Dominion",
+   7
+  ],
+  [
+   "Lucky Star",
+   9
+  ],
+  [
+   "NightTheater",
+   7
+  ],
+  [
+   "OVERNIGHT FLOWER",
+   9
+  ],
+  [
+   "Pull me up (Feat. Monya)",
+   8
+  ],
+  [
+   "Punishment Restaurant",
+   8
+  ],
+  [
+   "QUATTUORUX",
+   8
+  ],
+  [
+   "Rise Up (feat. Miori Celesta)",
+   8
+  ],
+  [
+   "SUPER?HARAGURO?POP",
+   12
+  ],
+  [
+   "T.B.H",
+   10
+  ],
+  [
+   "The Last Rebellion",
+   7
+  ],
+  [
+   "Unfelicitas",
+   9
+  ],
+  [
+   "We Love Your Step",
+   10
+  ]
+ ],
+ "unknown_pending_p2_notecounts": 1363
+}

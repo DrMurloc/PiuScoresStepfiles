@@ -60,6 +60,35 @@ Imagination S18. The video is legible to a human but the digit font does not mat
 and a hold rail runs through the digits. Five ground-truth readings are banked in the project
 notes (148@40s, 267@60s, 386@80s, 059@100s, 179@120s) for a per-video atlas bootstrap.
 
+## Footage policy for a Phoenix 2 validation pass
+
+Owner's rule (2026-09-01): **prefer Phoenix 2 footage; Phoenix 1 is acceptable for any chart
+not suspected of note changes between the two mixes.** Where we find newer video than what
+the database holds, record it — the owner bulk-updates the database from that list later.
+Charts with no P2 footage *and* a changed note count are the worst case, and he will capture
+those himself.
+
+The note count is the signal for "did this chart change", and
+`sources/p2-footage-needs.json` sizes it from the local prod-synced database:
+
+| Charts | Situation | Footage |
+|---|---|---|
+| 2,988 | note count identical P1 → P2 | **Phoenix 1 is fine** |
+| 16 | note count genuinely changed | **needs P2** — P1 footage is actively misleading here |
+| 249 (29 songs) | chart exists only in P2 | **needs P2** — there is no P1 chart |
+| 1,363 | no P2 note count in the database yet | **unknown**, and unanswerable until P2 data lands |
+| 204 | chart dropped in P2 | out of scope for a P2 pass; P1 footage is all there is |
+
+So the capture-card list is bounded at **265 charts today**, not the whole corpus — and the
+16 changed ones are where P1 footage would silently validate the wrong chart. Some of those
+deltas are enormous (Solve My Hurt SC D26 loses 540 notes, Destination SC D21 loses 360),
+which is exactly the re-step signature `grid_screen` detects.
+
+The 1,363 unknowns are a **data gap, not a chart-change estimate** — Phoenix 2 has not
+released, so most note counts simply are not populated. Re-run the query behind
+`p2-footage-needs.json` once they are; every chart that moves out of "unknown" into
+"identical" is one more that Phoenix 1 footage covers for free.
+
 ## What this implies
 
 Groups A and B are 65 of the 79, and they need the same thing: **extracting the note grid
