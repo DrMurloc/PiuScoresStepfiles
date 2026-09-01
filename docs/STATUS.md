@@ -45,17 +45,27 @@ pt. 2 SC D23, Ignis Fatuus SC D21 (also shows missing content), Bad Apple D20, D
 D25 (51 breaks; its assembly comes out non-monotone, which is the tell that the run structure
 itself is wrong).
 
-### D. Reachable with the current pipeline — 10 charts
+### D. Reachable with the current pipeline — 6 charts
 
-Can-can SC D21 (15 breaks, 23 holds, 534 ticks owed), plus the nine released by the
-`grid_screen` fix: Trotpris SC D15, Poseidon SC S21, Another Truth D21, Can-can SC D17,
-Extravaganza SC D16, Naissance S20, Mental Rider D22, Conflict S22, Break it Down D21.
+Grid OK **and** the counter's ticks land where the file has holds (`align_schedule`
+out-of-hold accrual near zero). Ordered by expected effort:
 
-Several of these already have their run structure worked out from the earlier passes, so
-they are closer to done than a cold start. Two carry known complications worth reading the
-history on first: Trotpris SC D15 showed heavy out-of-hold accrual (395 of 439 ticks landing
-where the file has no hold, which is a missing-content signature and a separate question from
-the grid), and Poseidon SC S21's head and its maxcombo-rest tail wanted offsets ~1.2s apart.
+| Chart | Breaks | Coverage | Out-of-hold | Note |
+|---|---:|---:|---:|---|
+| Poseidon SC S21 | 3 | 607/611 | 3 | 4-run structure already decoded with frame pins (55 → 329 → 595 = maxcombo); the old "head vs tail offset conflict" was computed with the arrow-counting bug and is likely void |
+| Extravaganza SC D16 | 8 | 523/535 | 8 | structure decoded (4 observed resets + 4 hidden stumbles, closure 34) |
+| Can-can SC D17 | 6 | 475/481 | 0 | Gd0 yet violation 1,872 — the hidden-run split in the segment offsets needs refining |
+| Break it Down D21 | 19 | 575/617 | 31 | heaviest run assembly in the group; Gd24 inflates violation |
+| Mental Rider D22 | 11 | — | — | over-ticked by 801 across 189 holds; only the triage assembly exists, needs a real one |
+| Can-can SC D21 | 15 | 84/740 | 1 | anchors are the survey's sparse ones (11% coverage); needs re-scan + assembly first |
+
+### D′. Grid OK but the holds are missing — 4 charts
+
+`grid_screen` passes these — the file's taps never outrun the counter — but the counter
+ticks hundreds of times where the file has **no hold at all**: Another Truth D21 (666
+out-of-hold, file has 4 holds), Naissance S20 (414 of 537, file has 2), Trotpris SC D15 (395
+of 439), Conflict S22 (113, and over-ticked besides). A tick schedule cannot fix a hold that
+is not there. Same capability as group A; the grid verdict just says the *taps* are right.
 
 ### E. Blocked on footage — 8 charts
 
@@ -126,10 +136,10 @@ current state is accepted: leave them alone, and do not raise them in an audit.
 
 ## What this implies
 
-Groups A and B are 56 of the 79, and they need the same thing: **extracting the note grid
+Groups A, B and D′ are 60 of the 79, and they need the same thing: **extracting the note grid
 from footage and diffing it against the file**. That capability also answers the standing
 goal of validating every Phoenix 2 chart note by note, since a full-corpus validation is the
-same operation run over 4,582 charts instead of 56.
+same operation run over 4,582 charts instead of 60.
 
-Groups C, D and F are 15 charts of hand work reachable with the existing tooling — the
+Groups C, D and F are 11 charts of hand work reachable with the existing tooling — the
 nearest available progress, and enough to take the project past half the census.
