@@ -8,6 +8,18 @@ change is a commit that names its evidence, so the whole corpus has a reviewable
 Also the custody home for the current annotated snapshot, so the live `/Admin/PiuCenter` batch
 isn't a single file in someone's Downloads folder.
 
+## Working on this repo
+
+Start with [CLAUDE.md](CLAUDE.md) — the working rules — then:
+
+| You want to | Read |
+|---|---|
+| Fix a chart | [docs/REPAIR-WORKFLOW.md](docs/REPAIR-WORKFLOW.md) |
+| Understand the combo-counter evidence | [docs/EVIDENCE-RULES.md](docs/EVIDENCE-RULES.md) |
+| Know what each tool does | [docs/TOOLS.md](docs/TOOLS.md) |
+| Regenerate the snapshot (**owner-requested only**) | [docs/SNAPSHOT.md](docs/SNAPSHOT.md) |
+| See what is fixed and what is left | [docs/STATUS.md](docs/STATUS.md) |
+
 ## Layout
 
 | Path | What |
