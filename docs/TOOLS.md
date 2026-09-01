@@ -19,6 +19,14 @@ popups). A digit-sized unknown glyph voids the read rather than truncating it; o
 sub-digit-width edge fragments are dropped. Unknown glyphs are dumped to `work/combo-unknown/`
 for atlas work.
 
+**`cell_reader.py --calibrate|--bootstrap|--scan <vid> <side> ...`**
+Fixed-cell OCR for videos whose digit font the shared atlas cannot read (Imagination S18) or
+whose counter sits mid-field under the notes (2P doubles, Love is a Danger Zone pt. 2). Cells
+are fixed boxes hung off the COMBO label; `--calibrate` fits the geometry from frames,
+`--bootstrap` learns a per-video atlas from eye-read frames (`<t>=<digits>`, `?` for an
+occluded cell), `--scan` writes the usual `work/combo/<vid>.<side>.jsonl`. Atlases live in
+`tools/atlas-cell/<vid>/`. Never label a frame you have not looked at.
+
 **`result_reader.py`**
 Certifies a video from its result screen — the `P/G/Gd/B/M` and `maxcombo` that make a video
 usable as evidence. Output is the certification ledger in `sources/`.
@@ -39,6 +47,13 @@ exceed `P + G`, so a counted "reset" is a misread and the curve built on it is f
 Deliberately crude: good enough to sort, never good enough to author from.
 
 ## Building the curve
+
+**`curve_tools.py`** (library)
+`continuity_repair` restores dropped hundreds and decides resets with lookahead; `lis_chain`
+keeps the longest monotone chain of a segment; `build_anchors(pts, offsets, total)` turns raw
+reads plus a descending list of `(boundary_time, cumulative_offset)` run boundaries into the
+anchors file. The run boundaries are the operator's call, made from frames — the tools only
+assemble what has been decided.
 
 **`fit2.py <vid> <band> <key>`**
 Two-sided offset fit, scored only inside tap-only windows where the observed combo delta must
@@ -67,6 +82,19 @@ distributes over unpinned holds by beat weight, largest becomes the tuner. **Its
 distribution is a guess and must be checked** — see step 5 of
 [REPAIR-WORKFLOW.md](REPAIR-WORKFLOW.md).
 
+**`window_targets.py <vid> <band> <key> <offset> <judged> <out.json> [windowSec] [clusterGap] [t0-t1=N ...] [spread=length]`**
+For drill charts — hundreds of tenth-second holds the curve cannot bracket one at a time.
+Clusters the file's holds, tiles each cluster into ~2s windows (never cutting a hold), reads
+each window's ticks straight off the curve, pins any window the frames settled (`t0-t1=N`),
+and spreads the closure remainder over the unpinned windows by what the curve saw there or,
+with `spread=length`, by hold length (the right choice when a player dropped holds: a window
+that read zero because of a BAD still owes the ticks the chart judges there).
+
+**`windows_to_holds.py <key> <windows.json> <out.json>`**
+Splits window targets into converter regions — overlapping and tail-sharing holds merged
+first, globally — because `author_ticks` converges on regions and cycles on multi-hold
+windows. A window's ticks go to the regions inside it by overlap length.
+
 **`wall_targets.py <vid> <band> <key> <offset> <judged> <out.json> [windowSec]`**
 Alternative for wall-class charts: tiles observed hold spans into fixed windows read straight
 off the anchor curve, so the interior is observation-driven rather than profile-driven. Only
@@ -79,6 +107,15 @@ the incremental loop cannot cross. Restores the file if it cannot converge — b
 checkout` the `.ssc` after any failure**, since a failed run can leave a partial schedule.
 Aggregates converter segments into target regions by **maximum overlap**; the older midpoint
 rule silently starved regions on drill charts and made the loop diverge.
+
+**Read its closing report.** A converged *total* says nothing about the interior: the tuner
+absorbs whatever the other regions could not reach, and on Bad Apple D20 a "CONVERGED" run
+had parked 182 ticks on one 0.2s hold. The tool now prints authored-versus-target per region
+and the count of regions over and under; a tuner more than a handful off its target means the
+targets were unreachable as given, not that the file is right. Every region under two beats is
+nudged to exact (the old "within ±1" slack pooled 41 ticks onto one hold on Desaparecer), a
+region that flips sign every step is locked at its closer grid value, and the finisher starts
+from the best state seen rather than the last.
 
 **`edit_notes.py add-hold|move-release <ssc> <BLOCK> <col> <startBeat> <endBeat>`**
 Surgical note-grid edits, for content the file is genuinely missing rather than mis-ticking.

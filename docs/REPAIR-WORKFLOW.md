@@ -76,6 +76,23 @@ disagree, pushing the remainder into the window where the counter actually moved
 beat-weight distributor routinely wants hundreds of ticks in a window the curve says holds
 twenty (Kasou Shinja D21 wanted 348 where observation said 20).
 
+### 5b. Drill charts: windows instead of brackets
+
+When the file has hundreds of tenth-second holds (Bad Apple D20 has 232, Desaparecer D25
+144), skip `hold_observe`/`make_targets` — a 0.1s hold "observes" 0 or 38 depending on which
+anchor sits next to it. Read two-second windows off the curve instead and split them into
+converter regions:
+
+```
+$PY tools/window_targets.py <vid> <band> <key> <offset> <judged> work/<name>-targets.json 2.0 1.0 [t0-t1=N ...] [spread=length]
+$PY tools/windows_to_holds.py <key> work/<name>-targets.json work/<name>-holds.json
+```
+
+Pin any window the frames settled (a finale that rests at a known value: `119.85-122.25=58`
+— give the pin a little slack past the hold's end, a hold ending on the pin's edge falls
+out). Use `spread=length` when the player dropped holds: a window that read zero because of
+a BAD still owes the ticks the chart judges there. Then author the `-holds.json`.
+
 ## 6. Author and verify
 
 ```
@@ -86,6 +103,13 @@ $PY tools/tick_verify.py "<chart>" <judged>
 `author_ticks` patches `#TICKCOUNTS`, iterates against the real converter, and restores the
 file if it cannot converge. **If it fails, `git checkout` the `.ssc`** — a failed run can
 leave a partial schedule behind.
+
+**Then read its closing report, not just the word CONVERGED.** A converged total says nothing
+about the interior: the tuner absorbs whatever the other regions could not reach. The tool
+prints authored-versus-target per region and how many regions sit over and under; on Bad
+Apple D20 the first "CONVERGED" run had parked 182 ticks on one 0.2s hold. A tuner more than
+a handful off its target means the targets were unreachable as given — fix the targets (merge
+regions, check the window pins) and author again. Worst deviations go in the commit message.
 
 Convergence trouble is usually one of: targets too fine-grained (merge windows), or a
 mis-assigned region. If a chart "cannot converge", suspect region assignment first — that was

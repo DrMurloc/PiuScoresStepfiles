@@ -4,9 +4,9 @@
 tree by `tools/rebuild_repairs.py`, so it cannot go stale. This file is the working ledger
 for what is **left**, and it is hand-kept: re-derive the counts before trusting them.
 
-As of 2026-09-01: **47 of the 121 census charts repaired**, 74 remaining.
+As of 2026-09-01 (evening): **51 of the 121 census charts repaired**, 70 remaining.
 
-## The remaining 79, by what actually blocks them
+## The remaining 70, by what actually blocks them
 
 ### A. Missing hold notes, not missing tick counts — 54 charts
 
@@ -37,15 +37,26 @@ group A. (Slam D24 keeping this verdict is consistent with its Phoenix 2 re-step
 > are in group D below. The repairs were never affected, because every tool that produces a
 > fix counts rows correctly; the bug only ever rejected work. See commit `5afffcf`.
 
-### C. Needs frame forensics before a verdict — 4 charts
+### C. Needed frame forensics — done, 3 of 4 repaired (2026-09-01, batch 2)
 
-The observed run peaks already exceed `P + G`, so a counted "reset" is a misread and the
-assembled curve is fiction until the boundaries are read off frames: Love is a Danger Zone
-pt. 2 SC D23, Ignis Fatuus SC D21 (also shows missing content), Bad Apple D20, Desaparecer
-D25 (51 breaks; its assembly comes out non-monotone, which is the tell that the run structure
-itself is wrong).
+The observed run peaks exceeded `P + G`, so the assembled curves were fiction until the
+boundaries were read off frames. Reading them settled three:
 
-### D. Reachable with the current pipeline — batch of 2026-09-01: 5 of 6 repaired
+| Chart | What the frames said |
+|---|---|
+| Love is a Danger Zone pt. 2 SC D23 | the 58–64s miss cluster is four runs, not two; the 794 ending bomb rests by 68.3 = maxcombo |
+| Bad Apple D20 | dropped hundreds and a rail's leading 1 on the finale; the final run is **58**, not the 121 the reader gave |
+| Desaparecer D25 | twenty-six runs; MISS/BAD frames at 26.5, 115.2 and 128.9 and blank counters (under 4) at 52.5 and 121.9 fix the resets |
+
+**Ignis Fatuus SC D21 is not a re-tick.** Its 541-tick opening is an *instantaneous* bomb
+fired at chart 8.47s (the counter appears already reading 541, with no judgement before it),
+while the file's only opening hold is 3.00–4.16s; the file's four ending holds judge as
+nothing (the counter rests at 072 through the fade); and the clean mid-chart accounting
+observes ~125 ticks against the 189 owed, a gap this footage cannot split between phantom
+taps and blind ticks. The file does not model the game's timing gimmick, so it joins the
+extraction pile (group G) rather than getting a forced distribution.
+
+### D. Reachable with the current pipeline — batch 1 (2026-09-01): 5 of 6 repaired
 
 | Chart | Commit | What it took |
 |---|---|---|
@@ -61,6 +72,21 @@ inside blind stretches or miss clusters, priced by closure and placed by where t
 profile fell. Two lessons are recorded in [EVIDENCE-RULES.md](EVIDENCE-RULES.md): GOODs make
 slack drift down one per good, so a "minimal non-falling" solver over-asks by exactly the
 goods before a bomb; and `fit2` beat-aliased again (Mental Rider: 12.62 reported, ~8.6 real).
+
+#### Batch 2 (2026-09-01, evening): 4 of 5 repaired
+
+| Chart | What it took |
+|---|---|
+| Imagination S18 | a per-video digit atlas (`cell_reader.py`): the font did not match and a rail ran through the digits |
+| Love is a Danger Zone pt. 2 SC D23 | group C above |
+| Bad Apple D20 | group C above; the first drill chart authored from 2s windows instead of per-hold brackets |
+| Desaparecer D25 | group C above; 26 runs, 51 resets |
+| Ignis Fatuus SC D21 | **not repaired** — gimmick, see groups C and G |
+
+Drill charts changed the authoring method: a 0.1s hold cannot be bracketed by the curve, so
+`window_targets.py` reads 2s windows off the curve and `windows_to_holds.py` splits them into
+converter regions. `author_ticks` now reports authored-versus-target per region, because on
+Bad Apple a "converged" total had quietly parked 182 ticks on one 0.2s hold.
 
 ### D′. Grid OK but the holds are missing — 4 charts
 
@@ -81,11 +107,16 @@ is not there. Same capability as group A; the grid verdict just says the *taps* 
 
 New footage would move any of these into a normal group.
 
-### F. OCR-blocked — 1 chart
+### F. OCR-blocked — resolved
 
-Imagination S18. The video is legible to a human but the digit font does not match the atlas
-and a hold rail runs through the digits. Five ground-truth readings are banked in the project
-notes (148@40s, 267@60s, 386@80s, 059@100s, 179@120s) for a per-video atlas bootstrap.
+Imagination S18 was repaired in batch 2 with `cell_reader.py`: fixed-cell OCR with a
+per-video digit atlas bootstrapped from eye-read frames. The same tool read Love is a Danger
+Zone pt. 2's 2P counter. Atlases live in `tools/atlas-cell/<vid>/`.
+
+### G. Gimmick charts the file does not model — 1 chart
+
+Ignis Fatuus SC D21: instantaneous tick bombs at times where the file has no hold (see group
+C). Needs the game's actual timing data or note extraction; a tick schedule cannot express it.
 
 ## Footage policy for a Phoenix 2 validation pass
 
@@ -139,10 +170,11 @@ current state is accepted: leave them alone, and do not raise them in an audit.
 
 ## What this implies
 
-Groups A, B and D′ are 60 of the 79, and they need the same thing: **extracting the note grid
-from footage and diffing it against the file**. That capability also answers the standing
+Groups A, B, D′ and G are 61 of the 70, and they need the same thing: **extracting the note
+grid from footage and diffing it against the file**. That capability also answers the standing
 goal of validating every Phoenix 2 chart note by note, since a full-corpus validation is the
-same operation run over 4,582 charts instead of 60.
+same operation run over 4,582 charts instead of 61.
 
-Groups C and F are 5 charts of hand work reachable with the existing tooling, plus Mental
-Rider once its timing model is decided.
+Everything the current tooling could reach has been reached, except Mental Rider (timing
+model) and the eight footage-blocked charts in group E. The snapshot in `snapshots/` was
+built at 42 charts and is now nine behind; it is regenerated only when the owner asks.

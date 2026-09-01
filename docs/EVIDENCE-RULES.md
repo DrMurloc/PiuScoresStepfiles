@@ -35,10 +35,17 @@ least once before it was understood.
 | **9↔8 atlas confusion** | `890s` read as `880s`, `90x` as `80x` | Happens at confidence 0.55–0.70 over bright BGA. De-confuse by continuity, then re-run the isotonic filter. |
 | **Leading-1 rail artifact** | `20` read as `120` | A hold rail left of the digits reads as a leading 1, at *high* confidence, for whole stretches (Kasou Shinja S20). Detect by century-jump plus local trajectory. |
 | **Digit fusion** | `1876`, `5310`, values above `maxcombo` | Killed for free by the maxcombo cap. |
+| **Tens-digit 9 read as 8** | `88 -> 81, 82 .. 88 -> 100`, `288 -> 280, 284, 288 -> 300` | The run "falls back" by a few and then jumps ten past where it was. Desaparecer did this twice; a `v + 10` candidate in the segment repair fixes it. |
+| **Rail leading 1 on a rest** | finale reads `104 .. 121`, frame shows `004 .. 021` | Same rail artifact as Kasou, but on the *last* run it inflates the final peak by 100 and the closure with it. Bad Apple's final run was 58, not 121. |
+| **First read after a reset** | `107` where the run has just restarted | A run starts near zero, so the first read of a segment is the *lowest* candidate (`7`, not `107`); taking it at face value shifted a whole segment by 100 on Desaparecer. |
 
 **When peaks sum above `P + G`, at least one "reset" is a misread.** That is the signature to
 act on: rebuild the run structure, do not distribute the excess. `tools/triage.py` reports it
 as FORENSICS for exactly this reason.
+
+**A blank counter is a number too.** The game does not draw the combo below 4, so a judgement
+text with no number under it means the run has just restarted (Desaparecer 52.5, 121.9). And
+a GOOD keeps the run: `GOOD 013` at LiaDZ 63.4 is still that run, the reset came after it.
 
 **Frames are the arbiter.** Extract the boundary at 2–3 timestamps and read the counter with
 your own eyes. Never label a frame you have not looked at — an early session fabricated one
@@ -83,6 +90,24 @@ nowhere for such artifacts to hide.
 **Slack (`cum − taps`) rises on tick-heavy charts and that is healthy** — it is banking hold
 ticks. Emperor S16 climbs to +270 and is correct. What cannot happen is slack going negative:
 that says the file scheduled taps the counter never registered. See `grid_screen`.
+
+## Instantaneous tick bombs
+
+Some charts deliver a hold's ticks at one instant rather than across the hold: Ignis Fatuus SC
+D21's counter appears already reading **541** with no judgement before it, at chart 8.47s,
+while the file's only opening hold runs 3.00–4.16s — and its four ending holds judge as
+nothing at all. That is a timing gimmick the `.ssc` does not model, so it is not a re-tick:
+forcing 541 ticks into a hold four seconds away from where the game fires them would be
+count-right and shape-wrong. Recognise it by a first read that is already in the hundreds
+with an empty screen just before, and put the chart on the extraction pile.
+
+## Drill charts: windows, not brackets
+
+A 0.1s hold cannot be bracketed by a persistence-based curve — its "observed" count is 0 or
+38 depending on which anchor happens to sit next to it — but a two-second window over a
+cluster of them is read honestly. Bad Apple D20 (232 holds) and Desaparecer D25 (144) were
+authored from `window_targets` windows split into converter regions, and audited at the
+window level. The per-hold interior of a drill is unobservable; say so in the commit.
 
 ## Blind stretches are normal; fabrication is not
 
