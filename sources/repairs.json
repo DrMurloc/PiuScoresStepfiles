@@ -20,6 +20,16 @@
   "commit": "da5593f"
  },
  {
+  "chart": "Can-can ~Orpheus in The Party Mix~ - SHORT CUT - D17",
+  "key": "Can-can_Orpheus_in_The_Party_Mix_-_SHORT_CUT_-_-_Sr._Lan_Belmont_D17_SHORTCUT",
+  "ssc_rel": "14 - XX/16F2 - [Short Cut] Can-can ~Orpheus in The Party Mix~/16F2 - [Short Cut] Can-can ~Orpheus in The Party Mix~.ssc",
+  "video": "https://youtu.be/n32Sh0lzypg",
+  "judged": 678,
+  "taps": 197,
+  "ticks": 481,
+  "commit": "fff361a"
+ },
+ {
   "chart": "Can-can ~Orpheus in The Party Mix~ - SHORT CUT - D23",
   "key": "Can-can_Orpheus_in_The_Party_Mix_-_SHORT_CUT_-_-_Sr._Lan_Belmont_D23_SHORTCUT",
   "ssc_rel": "14 - XX/16F2 - [Short Cut] Can-can ~Orpheus in The Party Mix~/16F2 - [Short Cut] Can-can ~Orpheus in The Party Mix~.ssc",
@@ -27,7 +37,7 @@
   "judged": 1030,
   "taps": 254,
   "ticks": 776,
-  "commit": "23c9714"
+  "commit": "fff361a"
  },
  {
   "chart": "Chase Me S20",
