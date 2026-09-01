@@ -82,10 +82,24 @@ def main():
     original = open(path, encoding="utf-8", newline="").read()
     tuner_idx = next(i for i, t in enumerate(targets) if t.get("tuner"))
 
+    def report(ticks):
+        # A converged TOTAL says nothing about the interior: the tuner can swallow whatever the
+        # other regions could not reach (a 0.2s hold once took 182 ticks that way). Say how far
+        # each region landed from its target, and name the ones that are clearly off.
+        devs = [tk - t["target"] for tk, t in zip(ticks, targets)]
+        worst = max(range(len(devs)), key=lambda i: abs(devs[i]))
+        print(f"  authored vs target: max deviation {devs[worst]:+d} at beat {targets[worst]['b0']:.2f}; "
+              f"tuner authored {ticks[tuner_idx]} (target {targets[tuner_idx]['target']})")
+        for tk, t in zip(ticks, targets):
+            if abs(tk - t["target"]) > 2:
+                print(f"    region beat {t['b0']:.2f}..{t['b1']:.2f} target {t['target']} -> authored {tk}")
+
     rates = [max(0, round(t["target"] / max(t["b1"] - t["b0"], 0.5))) for t in targets]
     text = original
     stall = 0
     prev_resid = None
+    best = None            # (|resid|, rates, tuner split) - the state the finisher starts from
+    resids = []
     for it in range(28):
         tc = build_tickcounts(targets, rates, None)
         text, ok = patch(original, tag, tc)
@@ -98,34 +112,43 @@ def main():
             print("CONVERGED")
             for (tk, t) in zip(ticks, targets):
                 print(f"  hold beat {t['b0']:>7.2f}..{t['b1']:<7.2f} target {t['target']:>4} -> authored {tk}")
+            report(ticks)
             return
+        resid = judged - implied
+        if best is None or abs(resid) < best[0]:
+            best = (abs(resid), list(rates), targets[tuner_idx].get("split"))
+        resids.append(resid)
+        # a two-cycle (two regions flipping a rate back and forth) never settles on its own;
+        # stop chasing it and hand the best state seen to the finisher
+        if len(resids) >= 6 and resids[-1] == resids[-3] and resids[-2] == resids[-4] and resids[-1] != resids[-2]:
+            print("  two-cycle detected; handing the best state to the finisher")
+            break
         # per-hold nudge (non-tuner): rate += sign(target - derived) when off by > 1
         for i, (tk, t) in enumerate(zip(ticks, targets)):
             if i == tuner_idx:
                 continue
-            if abs(tk - t["target"]) > 1:
+            # a small target has to be exact: a 0.1s hold asked for 1 tick that gets 0 is
+            # not "within noise", it is a whole hold gone, and a drill chart has hundreds
+            if abs(tk - t["target"]) > 1 or (t["target"] <= 4 and tk != t["target"]):
                 span = max(t["b1"] - t["b0"], 0.5)
                 step = round((t["target"] - tk) / span)
-                step = max(-25, min(25, step))
+                step = max(-25, min(25, step)) or (1 if t["target"] > tk else -1)
                 rates[i] = max(0, rates[i] + step)
-            # within +/-1 of target: freeze — that is inside observation noise, and
+            # within +/-1 of target: freeze - that is inside observation noise, and
             # chasing it across many holds swamps the tuner's exact correction
         # tuner absorbs the global residue: adjust its uniform rate, then split beats
         t = targets[tuner_idx]
-        t.pop("split", None)  # rebuild fresh — a stale split freezes the tuner
+        t.pop("split", None)  # rebuild fresh - a stale split freezes the tuner
         span = t["b1"] - t["b0"]
-        resid = judged - implied
         whole = int(0.7 * resid / span)
         if whole:
             rates[tuner_idx] = max(0, rates[tuner_idx] + whole)
         else:
-            # sub-beat correction: split the tuner span into 1-beat segments and
+            # sub-beat correction: split the tuner span into segments and
             # raise/lower the first k segments by 1
             base = rates[tuner_idx]
             step_len = max((t["b1"] - t["b0"]) / 8.0, 0.05)
             n_seg = int(round((t["b1"] - t["b0"]) / step_len))
-            # bump leading sub-segments so each contributes ~1 tick of correction:
-            # delta-ticks per bumped segment = bump * step_len
             stall = stall + 1 if resid == prev_resid else 0
             prev_resid = resid
             bump_mag = 1 if step_len >= 0.5 else 8
@@ -138,32 +161,36 @@ def main():
                 segs.append((round(b, 4), max(0, base + (bump if j < k else 0))))
                 b += step_len
             t["split"] = segs
-    # last resort: brute-force a two-segment schedule on the tuner around the
-    # best rates seen — their converter's per-segment rounding creates plateaus
-    # the incremental loop cannot always cross
+    # last resort: brute-force a two-segment schedule on the tuner around the best rates
+    # seen - the converter's per-segment rounding creates plateaus the incremental loop
+    # cannot always cross. The search width follows the residue it has to cover.
     import itertools
+    rates = list(best[1])
     t = targets[tuner_idx]
     t.pop("split", None)
     base = rates[tuner_idx]
     b0, b1 = t["b0"], t["b1"]
-    for r1, r2, k in itertools.product(
-            range(max(0, base - 2), base + 3), range(max(0, base - 2), base + 3),
-            [x / 2 for x in range(0, int((b1 - b0) * 2) + 1)]):
-        t2 = dict(t)
-        t2["split"] = [(b0, r1), (min(b0 + k, b1 - 0.25), r2)] if k > 0 else None
-        if not t2["split"]:
-            t2.pop("split")
-        tgts = targets[:tuner_idx] + [t2] + targets[tuner_idx + 1:]
-        rr = list(rates)
-        rr[tuner_idx] = r2 if k > 0 else r1
-        tc = build_tickcounts(tgts, rr, None)
-        text, ok = patch(original, tag, tc)
-        open(path, "w", encoding="utf-8", newline="").write(text)
-        taps, ticks = derive(path, tag, regions=targets)
-        if taps + sum(ticks) == judged:
-            print(f"CONVERGED (brute tuner r1={r1} r2={r2} k={k})")
-            return
-    print("DID NOT CONVERGE — file restored")
+    width = max(2, int(best[0] / max(b1 - b0, 0.5)) + 2)
+    print(f"  finisher: best residue {best[0]}, tuner base rate {base}, search +/-{width}")
+    for k in [x / 2 for x in range(0, int((b1 - b0) * 2) + 1)]:
+        for r1, r2 in itertools.product(range(max(0, base - width), base + width + 1), repeat=2):
+            if k == 0 and r2 != r1:
+                continue
+            t2 = dict(t)
+            if k > 0:
+                t2["split"] = [(b0, r1), (min(b0 + k, b1 - 0.25), r2)]
+            tgts = targets[:tuner_idx] + [t2] + targets[tuner_idx + 1:]
+            rr = list(rates)
+            rr[tuner_idx] = r2 if k > 0 else r1
+            tc = build_tickcounts(tgts, rr, None)
+            text, ok = patch(original, tag, tc)
+            open(path, "w", encoding="utf-8", newline="").write(text)
+            taps, ticks = derive(path, tag, regions=targets)
+            if taps + sum(ticks) == judged:
+                print(f"CONVERGED (brute tuner r1={r1} r2={r2} k={k})")
+                report(ticks)
+                return
+    print("DID NOT CONVERGE - file restored")
     open(path, "w", encoding="utf-8", newline="").write(original)
 
 if __name__ == "__main__":
