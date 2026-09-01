@@ -1,0 +1,18 @@
+{
+ "purpose": "Charts the owner will revisit by hand. Their CURRENT state is accepted - do not re-open, re-fix, or flag these in an audit unless he asks.",
+ "recorded": "2026-09-01",
+ "charts": [
+  {
+   "chart": "Destination - SHORT CUT - D21",
+   "state": "repaired and verified exact at 1186 (Phoenix 1 note count), commit 3b5d4a1",
+   "why_revisit": "Phoenix 2 lists this chart at 826 notes - a 360-note re-step. The file is right for P1 and wrong for P2, and one .ssc cannot serve both mixes.",
+   "accepted_as_is": true
+  },
+  {
+   "chart": "Slam D24",
+   "state": "open; grid_screen says MISMATCH against Phoenix 1 footage (re-step pile)",
+   "why_revisit": "Phoenix 2 lists 704 notes against Phoenix 1's 1004 - a 300-note re-step, so the P1/P2 split is part of this chart's story too.",
+   "accepted_as_is": true
+  }
+ ]
+}

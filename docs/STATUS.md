@@ -107,6 +107,9 @@ per-mix stepfile variants, or a chart-level override that the pipeline selects b
 is a design decision for the owner, and it should be settled **before** extraction work
 starts, because it determines what extraction is even producing.
 
+**Both charts are the owner's to revisit** (`sources/owner-revisit.json`, 2026-09-01). Their
+current state is accepted: leave them alone, and do not raise them in an audit.
+
 ## What this implies
 
 Groups A and B are 65 of the 79, and they need the same thing: **extracting the note grid
