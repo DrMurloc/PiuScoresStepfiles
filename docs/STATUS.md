@@ -24,12 +24,18 @@ Two Tier A charts sit here for the opposite reason — the file has **one or two
 than the game judged (Set me up S10 at −2, Slam S5 at −1), so a phantom note has to be found
 and deleted. Same capability, different direction.
 
-### B. Confirmed re-step, not re-tick — 11 charts
+### B. Confirmed re-step, not re-tick — 2 charts
 
 `grid_screen` says the file carries taps the game never judged, so the note grid is a
-different chart revision: Trotpris SC D15, Poseidon SC S21, Another Truth D21, Can-can SC
-D17, Extravaganza SC D16, Naissance S20, Mental Rider D22, Slam D24, Conflict S22, Break it
-Down D21, Leather D22. Same extraction capability as group A.
+different chart revision: **Slam D24** and **Leather D22**. Same extraction capability as
+group A. (Slam D24 keeping this verdict is consistent with its Phoenix 2 re-step, 1,004 →
+704 notes; it is also on the owner's manual-pass list.)
+
+> This group was **eleven** charts until 2026-09-01, when an audit found the gate itself was
+> wrong: `grid_screen` counted arrows instead of steps, so every jump counted twice and
+> manufactured a deficit that looked like a bad grid. Nine charts flipped back to OK — they
+> are in group D below. The repairs were never affected, because every tool that produces a
+> fix counts rows correctly; the bug only ever rejected work. See commit `5afffcf`.
 
 ### C. Needs frame forensics before a verdict — 4 charts
 
@@ -39,9 +45,17 @@ pt. 2 SC D23, Ignis Fatuus SC D21 (also shows missing content), Bad Apple D20, D
 D25 (51 breaks; its assembly comes out non-monotone, which is the tell that the run structure
 itself is wrong).
 
-### D. Reachable with the current pipeline — 1 chart
+### D. Reachable with the current pipeline — 10 charts
 
-Can-can SC D21 (15 breaks, 23 holds, 534 ticks owed). The last of the tick-authorable pile.
+Can-can SC D21 (15 breaks, 23 holds, 534 ticks owed), plus the nine released by the
+`grid_screen` fix: Trotpris SC D15, Poseidon SC S21, Another Truth D21, Can-can SC D17,
+Extravaganza SC D16, Naissance S20, Mental Rider D22, Conflict S22, Break it Down D21.
+
+Several of these already have their run structure worked out from the earlier passes, so
+they are closer to done than a cold start. Two carry known complications worth reading the
+history on first: Trotpris SC D15 showed heavy out-of-hold accrual (395 of 439 ticks landing
+where the file has no hold, which is a missing-content signature and a separate question from
+the grid), and Poseidon SC S21's head and its maxcombo-rest tail wanted offsets ~1.2s apart.
 
 ### E. Blocked on footage — 8 charts
 
@@ -112,9 +126,10 @@ current state is accepted: leave them alone, and do not raise them in an audit.
 
 ## What this implies
 
-Groups A and B are 65 of the 79, and they need the same thing: **extracting the note grid
+Groups A and B are 56 of the 79, and they need the same thing: **extracting the note grid
 from footage and diffing it against the file**. That capability also answers the standing
 goal of validating every Phoenix 2 chart note by note, since a full-corpus validation is the
-same operation run over 4,582 charts instead of 65.
+same operation run over 4,582 charts instead of 56.
 
-Groups C, D and F are roughly ten charts of hand work with the existing tooling.
+Groups C, D and F are 15 charts of hand work reachable with the existing tooling — the
+nearest available progress, and enough to take the project past half the census.
