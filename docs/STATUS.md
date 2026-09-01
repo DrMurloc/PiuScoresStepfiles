@@ -89,6 +89,24 @@ released, so most note counts simply are not populated. Re-run the query behind
 `p2-footage-needs.json` once they are; every chart that moves out of "unknown" into
 "identical" is one more that Phoenix 1 footage covers for free.
 
+### One stepfile cannot serve both mixes for those 16
+
+`simfiles/` holds **one `.ssc` per chart**, and the annotation pipeline derives one set of
+holds, ticks and NPS from it — but the site renders that analysis for both Phoenix 1 and
+Phoenix 2. For a chart whose note count actually changed, no single file can be right for
+both mixes.
+
+This is already live, not hypothetical. **Destination SC D21 is repaired and verified exact
+at 1,186 — the Phoenix 1 count — while Phoenix 2 lists it at 826.** The repair is correct for
+P1 and wrong for P2 by 360 notes. Slam D24 (P1 1,004 → P2 704) is the other census chart in
+this group, still open.
+
+Nothing here is wrong to fix against P1 footage — that is the mix the file describes. But a
+Phoenix 2 validation pass has to decide what the corpus looks like when the mixes disagree:
+per-mix stepfile variants, or a chart-level override that the pipeline selects by mix. That
+is a design decision for the owner, and it should be settled **before** extraction work
+starts, because it determines what extraction is even producing.
+
 ## What this implies
 
 Groups A and B are 65 of the 79, and they need the same thing: **extracting the note grid
