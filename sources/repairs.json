@@ -267,7 +267,7 @@
   "judged": 1000,
   "taps": 388,
   "ticks": 612,
-  "commit": "9200d3d"
+  "commit": "788597a"
  },
  {
   "chart": "Poseidon - SHORT CUT - S11",
@@ -277,7 +277,7 @@
   "judged": 468,
   "taps": 198,
   "ticks": 270,
-  "commit": "9200d3d"
+  "commit": "788597a"
  },
  {
   "chart": "Poseidon - SHORT CUT - S14",
@@ -287,7 +287,17 @@
   "judged": 610,
   "taps": 195,
   "ticks": 415,
-  "commit": "9200d3d"
+  "commit": "788597a"
+ },
+ {
+  "chart": "Poseidon - SHORT CUT - S21",
+  "key": "Poseidon_-_SHORT_CUT_-_-_Quree_S21_SHORTCUT",
+  "ssc_rel": "14 - XX/16F5 - [Short Cut] Poseidon/16F5 - [Short Cut] Poseidon.ssc",
+  "video": "https://youtu.be/9m5buDBg4Q8",
+  "judged": 1000,
+  "taps": 389,
+  "ticks": 611,
+  "commit": "788597a"
  },
  {
   "chart": "Pumptris 8Bit ver. - SHORT CUT - D22",
