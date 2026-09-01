@@ -300,6 +300,16 @@
   "commit": "f54e1da"
  },
  {
+  "chart": "Sarabande S20",
+  "key": "Sarabande_-_MAX_S20_ARCADE",
+  "ssc_rel": "13 - PRIME 2/1516 - Sarabande/1516 - Sarabande.ssc",
+  "video": "https://youtu.be/COBESy-EzwA",
+  "judged": 1111,
+  "taps": 521,
+  "ticks": 590,
+  "commit": "9b23bea"
+ },
+ {
   "chart": "Super Fantasy - SHORT CUT - D17",
   "key": "Super_Fantasy_-_SHORT_CUT_-_-_SHK_D17_SHORTCUT",
   "ssc_rel": "12 - PRIME/14E0 - [Short Cut] Super Fantasy/14E0 - [Short Cut] Super Fantasy.ssc",

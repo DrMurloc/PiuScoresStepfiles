@@ -4,7 +4,12 @@ The zip here is the **current** full annotated batch for `/Admin/PiuCenter` uplo
 
 | Current | Generated | Contents | Notes |
 |---|---|---|---|
-| `piucenter-snapshot-083126.zip` | 2026-08-31 | 4,582 chart JSONs (P1 ∪ P2 corpus) + `page-content/` (chart-table, stepchart-skills, tierlists) + `stepfiles/` (the 658-file `.ssc` corpus) + `version.txt` = `083126` | **First batch built from this repo's `simfiles/` as the stepfile source of truth**, so it carries the 35 repaired hold-tick schedules (`sources/repairs.json`; every one verified file == shipped == judged by `tools/verify_release.py`). Hold-tick totals are identical to `082626` for all 4,539 other charts — the diff is exactly the repairs. Adds 8 charts the previous folder had never re-ingested (Come to Me S4/S6/S11, PANDORA S2/S4/S7/D6, STEP S7); drops none. `*`-restoring key fix applied (73 keys). ⚠ Upload order per the tracker project: the P2 chart-list switch (Chunk A) must be live first, and this upload is the one that owes the hold_share / arrows-payload features their data — it supersedes the never-uploaded `082626-stepfiles` zip. |
+| `piucenter-snapshot-083126.zip` | 2026-08-31 (rebuilt, release `p2-083126b`) | 4,582 chart JSONs (P1 ∪ P2 corpus) + `page-content/` (chart-table, stepchart-skills, tierlists) + `stepfiles/` (the 658-file `.ssc` corpus) + `version.txt` = `083126` | **First batch built from this repo's `simfiles/` as the stepfile source of truth**, so it carries all 42 repaired hold-tick schedules (`sources/repairs.json`; every one verified file == shipped == judged by `tools/verify_release.py`, and re-checked inside the packaged zip). Hold-tick totals are identical to `082626` for all 4,532 other charts — the diff is exactly the repairs. Adds 8 charts the previous folder had never re-ingested (Come to Me S4/S6/S11, PANDORA S2/S4/S7/D6, STEP S7); drops none. `*`-restoring key fix applied (73 keys). ⚠ Upload order per the tracker project: the P2 chart-list switch (Chunk A) must be live first, and this upload is the one that owes the hold_share / arrows-payload features their data — it supersedes the never-uploaded `082626-stepfiles` zip. |
+
+This zip was repackaged in place at the same version after seven more repairs landed. That
+is only safe because it had not been uploaded: `version.txt` is what `/Admin/PiuCenter`
+compares, a same-day rebuild cannot produce a higher MMDDYY, and re-importing an already-live
+version would be a no-op. Once a version has been uploaded, a further batch needs a new stamp.
 
 Rules: exactly one current zip at HEAD; when a new batch is packaged, add the new zip, update
 this table, delete the old one from HEAD (git history keeps it). The version string must parse
