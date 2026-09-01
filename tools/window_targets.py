@@ -66,12 +66,21 @@ def main():
     for c0, c1 in clusters:
         edges = [c0]
         cur = c0
-        while cur + win < c1 - 0.25: cur += win; edges.append(cur)
+        inside = [h for h in holds if h[0] >= c0 and h[1] <= c1]
+        while cur + win < c1 - 0.25:
+            cur += win
+            # an edge inside a hold moves to the nearest gap so no hold is cut in two
+            for h0, h1 in inside:
+                if h0 < cur < h1:
+                    cur = h0 if cur - h0 <= h1 - cur else h1
+                    break
+            if cur > edges[-1] + 0.2: edges.append(cur)
         edges.append(c1)
         for e0, e1 in zip(edges, edges[1:]):
             targets.append(dict(t0=e0, t1=e1))
     for p0, p1, n in pins:
         targets = [t for t in targets if t["t1"] <= p0 + 1e-6 or t["t0"] >= p1 - 1e-6] + [dict(t0=p0, t1=p1, pinned=n)]
+    targets = [t for t in targets if t["t1"] - t["t0"] >= 0.05 or "pinned" in t]   # a pin can leave a zero-length sliver
     targets.sort(key=lambda t: t["t0"])
     for t in targets:
         t["b0"], t["b1"] = beat_at(t["t0"]), beat_at(t["t1"])

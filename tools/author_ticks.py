@@ -88,11 +88,14 @@ def main():
         # each region landed from its target, and name the ones that are clearly off.
         devs = [tk - t["target"] for tk, t in zip(ticks, targets)]
         worst = max(range(len(devs)), key=lambda i: abs(devs[i]))
+        print(f"  regions under target: {sum(1 for d in devs if d < 0)} (sum {sum(d for d in devs if d < 0)}), "
+              f"over: {sum(1 for d in devs if d > 0)} (sum {sum(d for d in devs if d > 0)})")
         print(f"  authored vs target: max deviation {devs[worst]:+d} at beat {targets[worst]['b0']:.2f}; "
               f"tuner authored {ticks[tuner_idx]} (target {targets[tuner_idx]['target']})")
-        for tk, t in zip(ticks, targets):
-            if abs(tk - t["target"]) > 2:
-                print(f"    region beat {t['b0']:.2f}..{t['b1']:.2f} target {t['target']} -> authored {tk}")
+        off = [(tk, t) for tk, t in zip(ticks, targets) if tk != t["target"]]
+        for tk, t in off:
+            if abs(tk - t["target"]) > 2 or len(off) <= 25:
+                print(f"    region beat {t['b0']:.2f}..{t['b1']:.2f} ({t['t0']:.1f}-{t['t1']:.1f}s) target {t['target']} -> authored {tk}")
 
     rates = [max(0, round(t["target"] / max(t["b1"] - t["b0"], 0.5))) for t in targets]
     text = original
@@ -100,6 +103,8 @@ def main():
     prev_resid = None
     best = None            # (|resid|, rates, tuner split) - the state the finisher starts from
     resids = []
+    hist = [[] for _ in targets]   # per-region (rate, deviation) so an oscillating region can be
+    frozen = set()                 # locked at its better neighbour instead of stalling everyone
     for it in range(28):
         tc = build_tickcounts(targets, rates, None)
         text, ok = patch(original, tag, tc)
@@ -125,12 +130,27 @@ def main():
             break
         # per-hold nudge (non-tuner): rate += sign(target - derived) when off by > 1
         for i, (tk, t) in enumerate(zip(ticks, targets)):
-            if i == tuner_idx:
+            if i == tuner_idx or i in frozen:
+                continue
+            dev = tk - t["target"]
+            hist[i].append((rates[i], dev))
+            d = [x[1] for x in hist[i][-3:]]
+            if len(d) == 3 and d[0] * d[1] < 0 and d[1] * d[2] < 0:
+                # flipping sign on every step: the target sits between two grid values this
+                # region can reach, so lock the closer one and stop shaking the others
+                rates[i] = min(hist[i], key=lambda x: abs(x[1]))[0]
+                frozen.add(i)
                 continue
             # a small target has to be exact: a 0.1s hold asked for 1 tick that gets 0 is
             # not "within noise", it is a whole hold gone, and a drill chart has hundreds
-            if abs(tk - t["target"]) > 1 or (t["target"] <= 4 and tk != t["target"]):
-                span = max(t["b1"] - t["b0"], 0.5)
+            # ...and so does every region whose rate grid can reach it: under two beats a
+            # one-rate step moves the count by at most a tick or two, so "within +/-1" is
+            # not noise there, it is drift - and a hundred regions each a tick short pooled
+            # 41 ticks onto one tuner hold. Only a long region (two beats and up) keeps the
+            # slack, because its grid genuinely skips values.
+            span = max(t["b1"] - t["b0"], 0.5)
+            thresh = 1 if (t["b1"] - t["b0"]) >= 2.0 else 0
+            if abs(tk - t["target"]) > thresh:
                 step = round((t["target"] - tk) / span)
                 step = max(-25, min(25, step)) or (1 if t["target"] > tk else -1)
                 rates[i] = max(0, rates[i] + step)
