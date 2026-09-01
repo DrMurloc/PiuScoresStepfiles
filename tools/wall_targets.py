@@ -31,8 +31,9 @@ def main():
     for r in rows:
         t, b = float(r["Time"]), float(r["Beat"])
         times.append(t); beats.append(b)
-        n = sum(1 for ch in r["Line"].lstrip("`") if ch == "1")
-        if n: taps.append((t, n))
+        # one judged event per step row, not per arrow -- a jump is a single judgement
+        # and a single combo increment (see grid_screen for what counting '1's costs)
+        if "1" in r["Line"]: taps.append((t, 1))
     tap_t = [t for t, n in taps]
     tap_c = []
     s = 0

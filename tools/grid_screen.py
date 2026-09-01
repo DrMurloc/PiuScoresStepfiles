@@ -34,16 +34,18 @@ def main():
     key = smap[name]["key"]
     anchors = json.load(open(os.path.join(ROOT, "work", "combo", f"{vid}.{band}.anchors.json"), encoding="utf-8"))
 
-    taps = []
+    # ONE judged event per step row, not per arrow. PIU judges a timing window, so a jump on
+    # two panels is a single judgement and a single combo increment - counting the '1's
+    # instead of the rows inflates taps on jump-heavy charts and manufactures a deficit that
+    # looks exactly like a wrong grid. That false-flagged Gun Rock S20, a verified repair,
+    # at 622 taps against its real 424.
+    times = []
     with open(os.path.join(CS_DIR, key + ".csv"), encoding="utf-8") as fh:
         for r in csv.DictReader(fh):
-            n = sum(1 for ch in r["Line"].lstrip("`") if ch == "1")
-            if n:
-                taps.append((float(r["Time"]), n))
-    times, cum, s = [t for t, _ in taps], [], 0
-    for _, n in taps:
-        s += n
-        cum.append(s)
+            if "1" in r["Line"]:
+                times.append(float(r["Time"]))
+    times.sort()
+    cum = list(range(1, len(times) + 1))
     def taps_before(ct):
         i = bisect.bisect_right(times, ct)
         return cum[i - 1] if i else 0
