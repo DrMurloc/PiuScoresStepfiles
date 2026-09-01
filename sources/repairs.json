@@ -10,6 +10,16 @@
   "commit": "71f5e69"
  },
  {
+  "chart": "Bad Apple!! feat. Nomico D20",
+  "key": "Bad_Apple!!_feat._Nomico_-_Masayoshi_Minoshima_D20_ARCADE",
+  "ssc_rel": "12 - PRIME/1481 - Bad Apple!! (feat. Nomico)/1481 - Bad Apple!! (feat. Nomico).ssc",
+  "video": "https://youtu.be/ad6H__2fccI",
+  "judged": 1043,
+  "taps": 408,
+  "ticks": 635,
+  "commit": ""
+ },
+ {
   "chart": "Baroque Virus - FULL SONG - S15",
   "key": "Baroque_Virus_-_FULL_SONG_-_-_Zircon_S15_FULLSONG",
   "ssc_rel": "14 - XX/16F9 - [Full Song] Baroque Virus/16F9 - [Full Song] Baroque Virus.ssc",
@@ -98,6 +108,16 @@
   "taps": 430,
   "ticks": 870,
   "commit": "885945f"
+ },
+ {
+  "chart": "Desaparecer D25",
+  "key": "Desaparecer_-_Applessoda_vs_MAX_D25_REMIX",
+  "ssc_rel": "14 - XX/16D0 - [Remix] Desaparecer/16D0 - [Remix] Desaparecer.ssc",
+  "video": "https://youtu.be/H4H0IzzK-MQ",
+  "judged": 1600,
+  "taps": 926,
+  "ticks": 674,
+  "commit": ""
  },
  {
   "chart": "Destination - SHORT CUT - D20",
@@ -288,6 +308,16 @@
   "taps": 245,
   "ticks": 236,
   "commit": "30ab107"
+ },
+ {
+  "chart": "Love is a Danger Zone pt. 2 - SHORT CUT - D23",
+  "key": "Love_is_a_Danger_Zone_pt._2_-_SHORT_CUT_-_-_YAHPP_D23_SHORTCUT",
+  "ssc_rel": "08 - FIESTA/1052 - [Short Cut] Love is a Danger Zone 2/1052 - [Short Cut] Love is a Danger Zone 2.ssc",
+  "video": "https://youtu.be/kvHDjRuzX0Y",
+  "judged": 1244,
+  "taps": 366,
+  "ticks": 878,
+  "commit": ""
  },
  {
   "chart": "Moonlight - SHORT CUT - S19",
