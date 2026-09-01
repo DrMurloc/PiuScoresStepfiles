@@ -56,7 +56,7 @@ out-of-hold accrual near zero). Ordered by expected effort:
 | Extravaganza SC D16 | 8 | 523/535 | 8 | structure decoded (4 observed resets + 4 hidden stumbles, closure 34) |
 | Can-can SC D17 | 6 | 475/481 | 0 | Gd0 yet violation 1,872 — the hidden-run split in the segment offsets needs refining |
 | Break it Down D21 | 19 | 575/617 | 31 | heaviest run assembly in the group; Gd24 inflates violation |
-| Mental Rider D22 | 11 | — | — | over-ticked by 801 across 189 holds; only the triage assembly exists, needs a real one |
+| Mental Rider D22 | 11 | 675/694 | ~120 | **timing puzzle, parked.** Its D22 block carried an authored freeze gimmick (BPM 1.0 + a 999s stop at beat 289.7) that the converter honoured into a 17-minute final hold; that is fixed (commit below) and the chart now ends at 103.5s as the video shows. But the tick repair is blocked: the counter bursts 18–40 ticks in half-second stretches that each *trail* a cluster of 0.03s micro-holds by 0.5–1s, with no file hold underneath. Either the file's 42-entry BPM map mis-times those clusters, or the game judges micro-hold ticks on a coarser grid than the converter. Needs a timing-model decision, not a tick count. Note: this chart's `p2-082626` chartstruct CSV was regenerated locally from the fixed file so the tools could run (`.pre-timing-fix` backup kept). |
 | Can-can SC D21 | 15 | 84/740 | 1 | anchors are the survey's sparse ones (11% coverage); needs re-scan + assembly first |
 
 ### D′. Grid OK but the holds are missing — 4 charts
