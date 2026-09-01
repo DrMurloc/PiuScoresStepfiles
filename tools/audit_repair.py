@@ -95,8 +95,25 @@ def audit(r):
         # span between anchors seconds apart invents a number, so require anchors INSIDE the
         # span (and at both ends) before believing the comparison - the same guard
         # hold_observe needs for the same reason.
-        inside = sum(1 for x in mx if st <= x <= en)
-        if inside < 2 or not (mx[0] <= st and en <= mx[-1]):
+        # ...and require the anchors inside to actually MOVE. Two anchors reading the same
+        # value across a 2.8s hold means the reader lost the counter, not that the hold is
+        # empty: above roughly 30 ticks/second no value persists long enough to anchor.
+        # Xenesis S18 has a 94-tick hold at ~34/s that reads as flat, and comparing against
+        # it manufactured a 72-tick "disagreement" in a verified repair.
+        # ...and require them to SPAN the hold. Two anchors three seconds apart inside a
+        # 25-second hold means the curve is blind across the rest of it, and cum_at then
+        # extrapolates from outside the span - Like Me S14 that way produced an "observed"
+        # of MINUS 48 ticks. Demand at least three distinct values covering most of the span.
+        ins = [(x, y) for x, y in zip(mx, my) if st <= x <= en]
+        span = max(en - st, 1e-6)
+        # Above roughly 30 ticks/second no combo value persists long enough to anchor, so a
+        # bomb is unverifiable by construction and comparing against it just reports the
+        # reader's blindness (Hyperion SC S20's hold runs at 386/s, Come to Me S17's at 212/s).
+        if tk / span > 30:
+            continue
+        if (len({y for _, y in ins}) < 3 or not ins
+                or (ins[-1][0] - ins[0][0]) < 0.6 * span
+                or not (mx[0] <= st and en <= mx[-1])):
             continue
         obs = cum_at(en) - cum_at(st) - (tb(en) - tb(st))
         covered += 1

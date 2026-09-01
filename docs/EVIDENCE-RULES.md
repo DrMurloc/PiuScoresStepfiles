@@ -60,6 +60,14 @@ In rough order of trustworthiness:
 A one-sided fit *cannot* reject a wrong offset on a tick-dominated chart, which is how three
 charts shipped with false optima before `fit2` existed.
 
+**`fit2` can still beat-alias on a rhythmically regular chart.** Its windows only require the
+combo delta to equal the tap count, and on a chart of even patterns an offset shifted by a
+whole beat satisfies that just as well. Auditing Another Truth D19 in 2026-09 it reported
+16.00 with zero error over 40 windows, while the shipped 16.91 scores violation 0 against
+548-of-548 observed ticks and 16.00 scores 48 against 546. When `fit2` and the violation /
+coverage check disagree, prefer the one that observes more of the chart — and always sanity
+check against the structural anchor.
+
 ## Reading the audits honestly
 
 **Violation score is inflated by GOODs.** Each GOOD drags `cum − taps` down by one,

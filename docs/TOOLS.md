@@ -98,3 +98,20 @@ Checks a packaged release actually carries the repairs: the `.ssc` through the c
 **`rebuild_repairs.py`**
 Regenerates `sources/repairs.json` from the tree — any census chart whose file now converts to
 exactly its judged count is a repaired one. Never hand-edit the manifest; run this.
+
+**`audit_repair.py` [chart ...]**
+Re-audits a shipped repair without trusting how it was made: re-derives the offset with the
+two-sided fitter, screens the grid at that offset, and compares the file's per-hold ticks
+against what the combo curve says happened there. The total is already guaranteed by
+`tick_verify`, so this checks the *interior*.
+
+Its comparator refuses to answer more often than it answers, on purpose. A hold is only
+compared when the curve genuinely resolves it: at least three distinct anchor values spanning
+60% of the hold, and a tick rate under ~30/s. Above that rate no combo value persists long
+enough to anchor, so comparing reports the reader's blindness rather than the file's accuracy
+— before those guards were added it invented a 485-tick "disagreement" against a 386/s bomb
+and a *negative* observed count on a hold the curve had barely read.
+
+The consequence is worth knowing: on the 13 charts audited in 2026-09 only 0–3 holds per
+chart were verifiable at all. **These repairs' totals are proven and their interiors are
+largely not**, which is a standing argument for note extraction rather than more curve work.
