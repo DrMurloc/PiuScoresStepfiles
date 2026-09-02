@@ -103,6 +103,23 @@ file-only events against the counter's non-incrementing judgements is how a phan
 be found. Video time drifts against file time by ~0.1% on Slam D22 (offset 14.17 → 14.25
 over the chart), which is the file's BPM being rounded, not the video.
 
+**A run structure that closes on P+G is not thereby right.** `auto_anchors` chooses, among
+the low restarts it can see, the subset of at most B+M resets whose peaks sum to P+G. On
+Extravaganza D15 it split one continuous run at a covered-digit "1" (110 → "1" → 120 → 138,
+plainly the same run) and the five pieces still summed to 497 exactly; on Pump me Amadeus it
+merged two real resets the frames show at 56.0 and 67.8. The tool's grid verdict is a
+screen — a wrong structure usually inflates violations rather than hiding a bad grid — but
+an accrual burst it reports is **not evidence of a hold** until frames show the rail or the
+counter is read across it. Prefer structures where the tail rests at maxcombo and where the
+reads' own continuity agrees with every boundary.
+
+**The flash matcher aliases one beat late on periodic charts.** The receptor-flash offset
+sits a whole beat after the truth whenever the chart's taps repeat at the beat: Slam S18/S20
+(14.39 → 14.13), Dr. M D14 (11.72 → 11.35), Beethoven Virus D13 (15.29 → 14.87), Another
+Truth D18 (16.05 → 15.65). The tell is a rail head that lands on a file row carrying exactly
+the rail's columns at the earlier offset and on nothing at the later one. Take the offset
+from the heads when that happens; the grid passes at either alias, so it cannot decide.
+
 ## Instantaneous tick bombs
 
 Some charts deliver a hold's ticks at one instant rather than across the hold: Ignis Fatuus SC
