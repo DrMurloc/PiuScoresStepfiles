@@ -70,8 +70,13 @@ def patch(text, desc_tag, new_tc):
     sections = text.split("#NOTEDATA:;")
     for i in range(1, len(sections)):
         if re.search(rf"#DESCRIPTION:{re.escape(code)};", sections[i]):
-            sections[i] = re.sub(r"#TICKCOUNTS:.*?;", f"#TICKCOUNTS:{new_tc};", sections[i],
-                                 count=1, flags=re.S)
+            if re.search(r"#TICKCOUNTS:", sections[i]):
+                sections[i] = re.sub(r"#TICKCOUNTS:.*?;", f"#TICKCOUNTS:{new_tc};", sections[i],
+                                     count=1, flags=re.S)
+            else:
+                # a block with no schedule of its own inherits the song header's (All I Want
+                # For X-mas S5 rode a song-level "0.000=2"); give it one, after the description
+                sections[i] = re.sub(rf"(#DESCRIPTION:{re.escape(code)};)(\r?\n)", rf"\1\2#TICKCOUNTS:{new_tc};\2", sections[i], count=1)
             return "#NOTEDATA:;".join(sections), True
     return text, False
 

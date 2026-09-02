@@ -92,7 +92,10 @@ def main():
         b0, b1 = big["b0"], big["b1"]
         def write(rate):
             tc = f"0.000000=4,\n{b0:.6f}={pre},\n{burst:.6f}={rate},\n{b1:.6f}=4"
-            sec = re.sub(r"#TICKCOUNTS:.*?;", f"#TICKCOUNTS:{tc};", sections[i], count=1, flags=re.S)
+            if re.search(r"#TICKCOUNTS:", sections[i]):
+                sec = re.sub(r"#TICKCOUNTS:.*?;", f"#TICKCOUNTS:{tc};", sections[i], count=1, flags=re.S)
+            else:
+                sec = re.sub(rf"(#DESCRIPTION:{re.escape(code)};)(\r?\n)", rf"\1\2#TICKCOUNTS:{tc};\2", sections[i], count=1)
             open(ssc, "w", encoding="utf-8", newline="").write("#NOTEDATA:;".join(sections[:i] + [sec] + sections[i + 1:]))
         def implied():
             o = run(["tools/tick_verify.py", chart, str(judged)])
