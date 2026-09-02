@@ -40,6 +40,16 @@
   "commit": "da5593f"
  },
  {
+  "chart": "Beethoven Virus D13",
+  "key": "Beethoven_Virus_-_BanYa_D13_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(3) 505 - Beethoven Virus/505 - Beethoven Virus.ssc",
+  "video": "https://youtu.be/3OydW7VJG68",
+  "judged": 400,
+  "taps": 254,
+  "ticks": 146,
+  "commit": ""
+ },
+ {
   "chart": "Break it Down D21",
   "key": "Break_It_Down_-_MAZO_D21_ARCADE",
   "ssc_rel": "12 - PRIME/1497 - Break It Down/1497 - Break It Down.ssc",
@@ -158,6 +168,16 @@
   "taps": 449,
   "ticks": 737,
   "commit": "ae21ce1"
+ },
+ {
+  "chart": "Dr. M D14",
+  "key": "Dr._M_-_BanYa_D14_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 701 - Dr. M/701 - Dr. M.ssc",
+  "video": "https://youtu.be/jatpRnJNt_s",
+  "judged": 394,
+  "taps": 309,
+  "ticks": 85,
+  "commit": ""
  },
  {
   "chart": "Emperor D17",
@@ -348,6 +368,16 @@
   "taps": 286,
   "ticks": 514,
   "commit": "994f101"
+ },
+ {
+  "chart": "My Way D16",
+  "key": "My_Way_-_BanYa_D16_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 707 - My Way/707 - My Way.ssc",
+  "video": "https://youtu.be/3RtKAjQdWl0",
+  "judged": 550,
+  "taps": 394,
+  "ticks": 156,
+  "commit": ""
  },
  {
   "chart": "Oh! Rosa D11",
