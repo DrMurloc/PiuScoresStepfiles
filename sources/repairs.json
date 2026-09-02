@@ -250,6 +250,16 @@
   "commit": ""
  },
  {
+  "chart": "Dr. M D18",
+  "key": "Dr._M_-_BanYa_D18_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 701 - Dr. M/701 - Dr. M.ssc",
+  "video": "https://youtu.be/MJ6HPoYg9D4",
+  "judged": 666,
+  "taps": 464,
+  "ticks": 202,
+  "commit": ""
+ },
+ {
   "chart": "Emperor D17",
   "key": "Emperor_-_BanYa_D17_ARCADE",
   "ssc_rel": "03 - REBIRTH~PREX 3/(2) 702 - Emperor/702 - Emperor.ssc",
@@ -500,6 +510,16 @@
   "commit": "994f101"
  },
  {
+  "chart": "Mr. Larpus D18",
+  "key": "Mr._Larpus_-_BanYa_D18_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(4) 405 - Mr. Larpus/405 - Mr. Larpus.ssc",
+  "video": "https://youtu.be/6MKwujCHaBM",
+  "judged": 660,
+  "taps": 486,
+  "ticks": 174,
+  "commit": ""
+ },
+ {
   "chart": "My Way D16",
   "key": "My_Way_-_BanYa_D16_ARCADE",
   "ssc_rel": "03 - REBIRTH~PREX 3/(2) 707 - My Way/707 - My Way.ssc",
@@ -600,6 +620,16 @@
   "commit": "9b23bea"
  },
  {
+  "chart": "Set me up S10",
+  "key": "Set_Me_Up_-_BanYa_S10_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 717 - Set Me Up/717 - Set Me Up.ssc",
+  "video": "https://youtu.be/Ii5LlE3aznY",
+  "judged": 274,
+  "taps": 274,
+  "ticks": 0,
+  "commit": ""
+ },
+ {
   "chart": "She Likes Pizza D11",
   "key": "She_Likes_Pizza_-_BanYa_D11_ARCADE",
   "ssc_rel": "01 - 1ST~3RD/(1) 310 - She Likes Pizza/310 - She Likes Pizza.ssc",
@@ -647,6 +677,16 @@
   "judged": 800,
   "taps": 504,
   "ticks": 296,
+  "commit": ""
+ },
+ {
+  "chart": "Slam S5",
+  "key": "Slam_-_Novasonic_S5_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(3) 516 - Slam/516 - Slam.ssc",
+  "video": "https://youtu.be/txKtdvCPj8Q",
+  "judged": 192,
+  "taps": 192,
+  "ticks": 0,
   "commit": ""
  },
  {
