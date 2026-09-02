@@ -36,6 +36,12 @@ def main():
     if not os.path.exists(path):
         path = os.path.join(ROOT, "work", "combo", f"{vid}.C.jsonl")
     pts = sorted((t, v) for t, v, c in (json.loads(l) for l in open(path, encoding="utf-8")) if v is not None and c >= 0.6 and v <= mc)
+    # reads before the chart starts are title-card junk (We will meet again read "5" at 2.0s
+    # on a PUMP TO NX splash); the chart's first row at the offset is the earliest real one
+    import csv
+    cs_dir = "C:/Users/jonec/repos/piu-annotate/artifacts/chartstructs/p2-082626"
+    first_row = float(next(csv.DictReader(open(os.path.join(cs_dir, key + ".csv"), encoding="utf-8")))["Time"])
+    pts = [(t, v) for t, v in pts if t >= a + first_row - 0.5]
     # the run structure by closure: every low restart is a candidate reset, and the subset of
     # at most B+M of them whose peaks close on P+G wins (a candidate not chosen is a rollover
     # with the hundreds covered, and the run continues through it)

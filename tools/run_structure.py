@@ -26,6 +26,7 @@ def repair_run(pts, cap, rate_max=60.0):
     dropped hundreds restored); skip a read nothing explains. Returns [(t, v)]."""
     out, est = [], None
     pts_after = {t: pts[i + 1:i + 3] for i, (t, _) in enumerate(pts)}
+    pts_later = {t: pts[i + 1:i + 20] for i, (t, _) in enumerate(pts)}
     for t, v in pts:
         if est is None:
             w = min(fix_digits(v, cap) or {v})
@@ -38,6 +39,17 @@ def repair_run(pts, cap, rate_max=60.0):
         ok = [c for c in cands if lo <= c <= hi]
         if ok:
             pick = min(ok, key=lambda c: abs(c - est[1]))
+            if pick != v:
+                # a restored or corrected read must be CONFIRMED by what follows: a lone "1" with
+                # its tens covered would otherwise become 101 across a short gap (First Love)
+                nxt = pts_after.get(t, [])
+                fits = 0
+                for t2, v2 in nxt:
+                    hi2 = pick + rate_max * max(t2 - t, 1e-3) + 3
+                    if any(pick - 2 <= w + 100 * k <= hi2 for w in fix_digits(v2, cap) for k in range(0, 3)):
+                        fits += 1
+                if len(nxt) >= 1 and fits == 0:
+                    continue
             out.append((t, pick))
             est = (t, pick)
             continue
@@ -46,8 +58,11 @@ def repair_run(pts, cap, rate_max=60.0):
         # counter resting, not a misread, and is accepted at any rate
         alts = {w for w in fix_digits(v, cap) if w >= est[1] - 2}
         if alts:
-            nxt = {w for _, nv in pts_after.get(t, []) for w in fix_digits(nv, cap)}
-            keep = [w for w in alts if w == cap or w in nxt]
+            # persistence means a real plateau: the same value through the next quarter
+            # second, or maxcombo itself. Three frames of "81" for 61 is how an OCR
+            # confusion looks, and accepting it hijacks the estimate for the rest of the run
+            later = [nv for t2, nv in pts_later.get(t, []) if t2 - t <= 0.25]
+            keep = [w for w in alts if w == cap or (len(later) >= 4 and all(w in fix_digits(nv, cap) for nv in later))]
             if keep:
                 pick = max(keep)
                 out.append((t, pick))
