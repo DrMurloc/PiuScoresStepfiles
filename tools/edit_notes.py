@@ -63,6 +63,17 @@ def main():
     if op == "add-hold":
         set_char(measures, b1, col, "2", cols)
         set_char(measures, b2, col, "3", cols)
+        # a column cannot tap inside its own hold: the old file wrote this hold as repeated
+        # taps, and the converter refuses a hold laid over them - clear them
+        cleared = 0
+        for mi, rows in enumerate(measures):
+            for r, row in enumerate(rows):
+                beat = 4 * mi + 4 * r / len(rows)
+                if b1 + 1e-6 < beat < b2 - 1e-6 and row[col] != "0":
+                    measures[mi][r] = row[:col] + "0" + row[col + 1:]
+                    cleared += 1
+        if cleared:
+            print(f"  cleared {cleared} note(s) on col {col} inside the hold")
     elif op == "move-release":
         mi, r = beat_to_pos(measures, b1, cols)
         row = measures[mi][r]

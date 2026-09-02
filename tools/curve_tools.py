@@ -19,10 +19,21 @@ def continuity_repair(pts, rate_max=60.0, cap=10**9, confirm=3):
             out.append((t, v)); est = (t, v); continue
         dt = max(t - est[0], 1e-3)
         lo, hi = est[1] - 2, est[1] + rate_max * dt + 3
-        cands = [v + 100 * k for k in range(0, 10) if v + 100 * k <= cap]
+        # candidates: dropped hundreds restored (v+100k), a rail's leading 1 removed (v-100), and
+        # the atlas reading a 9 as a 5 - every 5 in the read may be a 9 (88, "85", 90 at each decade)
+        s = str(v)
+        fives = [i for i, ch in enumerate(s) if ch == "5"]
+        variants = {v}
+        for mask in range(1, 1 << len(fives)):
+            chars = list(s)
+            for k, i in enumerate(fives):
+                if mask >> k & 1:
+                    chars[i] = "9"
+            variants.add(int("".join(chars)))
+        cands = sorted({w + 100 * k for w in variants for k in range(0, 10) if w + 100 * k <= cap} | {w - 100 for w in variants if w >= 100})
         ok = [c for c in cands if lo <= c <= hi]
         if ok:
-            pick = min(ok); out.append((t, pick)); est = (t, pick)
+            pick = min(ok, key=lambda c: abs(c - est[1])); out.append((t, pick)); est = (t, pick)
         elif v < est[1]:
             # Reset or covered digits? Look at the next few reads: if they continue the run
             # modulo 100 (a sustained dropped-hundreds stretch, as on doubles charts where a

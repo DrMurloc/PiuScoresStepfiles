@@ -22,7 +22,8 @@ def geometry(cap, vid, n=64):
     median of the band keeps them and washes out notes and BGA. Ten evenly spaced teeth are
     fitted to the median's column profile; a tooth only scores when it sits on a local maximum,
     which is what stops a BGA-heavy stretch from selling a 53px comb on bright edges."""
-    cache = os.path.join("work", "receptor", vid + ".geometry.json")
+    band = os.environ.get("RR_BAND", "C")
+    cache = os.path.join("work", "receptor", f"{vid}.{band}.geometry.json")
     if os.path.exists(cache):
         g = json.load(open(cache)); return g["y0"], g["y1"], g["xs"], None
     dur = cap.get(cv2.CAP_PROP_FRAME_COUNT) / cap.get(cv2.CAP_PROP_FPS)
@@ -38,11 +39,12 @@ def geometry(cap, vid, n=64):
     # What is unambiguous is the field's EXTENT: the outermost strong peaks of the profile are
     # the outer borders of the first and last receptor, and ncols equal receptors fill the
     # span between them, so the pitch is that span over ncols.
-    ncols = int(os.environ.get("RR_COLS", "10"))
+    ncols = int(os.environ.get("RR_COLS", "5" if band in "LR" else "10"))
     prof = cv2.GaussianBlur(med.astype(np.float32), (0, 0), 3).mean(axis=0)
     prof = cv2.GaussianBlur(prof.reshape(1, -1), (0, 0), 3).ravel()
     prof = prof - np.percentile(prof, 30)
-    peaks = [x for x in range(8, w - 8) if prof[x] == prof[x - 8:x + 9].max() and prof[x] > 0.6 * prof.max()]
+    lo_x, hi_x = (0, w // 2) if band == "L" else (w // 2, w) if band == "R" else (0, w)
+    peaks = [x for x in range(max(8, lo_x), min(w - 8, hi_x)) if prof[x] == prof[x - 8:x + 9].max() and prof[x] > 0.6 * prof[lo_x:hi_x].max()]
     lo, hi = min(peaks), max(peaks)
     p = (hi - lo) / ncols
     xs = [int(round(lo + (k + 0.5) * p)) for k in range(ncols)]
@@ -58,9 +60,8 @@ def main():
     cap = cv2.VideoCapture(os.path.join("videos", vid + ".mp4"))
     fps = cap.get(cv2.CAP_PROP_FPS)
     y0, y1, xs, med = geometry(cap, vid)
-    print(f"fps {fps:.0f}; receptor band y {y0}-{y1}; columns x {xs}" + (f" pitch {np.mean(np.diff(xs)):.1f}" if xs else ""))
-    if len(xs) != 10:
-        print("did not find 10 evenly spaced receptors - stop"); return
+    ncols = len(xs)
+    print(f"fps {fps:.0f}; band {os.environ.get('RR_BAND', 'C')}; receptor band y {y0}-{y1}; columns x {xs}" + (f" pitch {np.mean(np.diff(xs)):.1f}" if len(xs) > 1 else ""))
     half = int(np.median(np.diff(xs)) * 0.28)
     cap.set(cv2.CAP_PROP_POS_MSEC, t0 * 1000)
     series = []
@@ -78,10 +79,10 @@ def main():
         series.append((t, [float(white[y0:y1, x - half:x + half].mean()) for x in xs], lane))
         t += 1.0 / fps
     arr = np.array([s[1] for s in series]); ts = np.array([s[0] for s in series]); lane = np.array([s[2] for s in series])
-    onsets = {c: [] for c in range(10)}
+    onsets = {c: [] for c in range(ncols)}
     heights = []
     thresh = float(os.environ.get("RR_THRESH", "40"))
-    for c in range(10):
+    for c in range(ncols):
         v = arr[:, c]
         base = np.array([np.percentile(v[max(0, i - 30):i + 1], 30) for i in range(len(v))])
         rise = v - base
@@ -98,8 +99,8 @@ def main():
                 onsets[c].append(float(ts[i])); last = float(ts[i])
     # a hold = the lane under the receptor stays occupied by a saturated bar for 0.3s or more
     occ_th = float(os.environ.get("RR_OCC", "0.45"))
-    holds_v = {c: [] for c in range(10)}
-    for c in range(10):
+    holds_v = {c: [] for c in range(ncols)}
+    for c in range(ncols):
         on = lane[:, c] > occ_th
         i = 0
         while i < len(on):
@@ -112,19 +113,19 @@ def main():
     hs = np.array(heights)
     print("peak heights over the rolling floor - percentiles 50/75/90/95/99/max:",
           " ".join(f"{np.percentile(hs, q):.0f}" for q in (50, 75, 90, 95, 99, 100)), f"| threshold {thresh:.0f}")
-    print("onsets per column:", [len(onsets[c]) for c in range(10)], "total", sum(len(o) for o in onsets.values()))
+    print("onsets per column:", [len(onsets[c]) for c in range(ncols)], "total", sum(len(o) for o in onsets.values()))
     if not key: 
-        for c in range(10): print(f"  col {c}: " + " ".join(f"{t:.2f}" for t in onsets[c][:25]))
+        for c in range(ncols): print(f"  col {c}: " + " ".join(f"{t:.2f}" for t in onsets[c][:25]))
         return
     rows = list(csv.DictReader(open(os.path.join(CS_DIR, key + ".csv"), encoding="utf-8")))
-    taps = {c: [] for c in range(10)}
+    taps = {c: [] for c in range(ncols)}
     for r in rows:
         L = r["Line"].lstrip("`")
-        for c, ch in enumerate(L[:10]):
+        for c, ch in enumerate(L[:ncols]):
             if ch in "12": taps[c].append(float(r["Time"]))
     def score(a):
         hit = 0
-        for c in range(10):
+        for c in range(ncols):
             for t in onsets[c]:
                 ct = t - a
                 i = bisect.bisect_left(taps[c], ct - 0.06)
@@ -138,9 +139,9 @@ def main():
     print(f"at offset {a:.2f}: {score(a)} of {tot} onsets sit on a file tap/hold-head (+/-60ms)")
     tol = 0.09
     print("hold candidates (video t, chart t at offset):")
-    for c in range(10):
+    for c in range(ncols):
         if holds_v[c]: print(f"  col {c}: " + "  ".join(f"{s:.2f}-{e:.2f} (chart {s-a:.2f}-{e-a:.2f}, {e-s:.2f}s)" for s, e in holds_v[c]))
-    for c in range(10):
+    for c in range(ncols):
         ft = [t for t in taps[c] if t0 - a <= t <= t1 - a]
         unmatched_file = [t for t in ft if not any(abs(o - a - t) <= tol for o in onsets[c])]
         unmatched_video = [o for o in onsets[c] if not any(abs(o - a - t) <= tol for t in ft)]

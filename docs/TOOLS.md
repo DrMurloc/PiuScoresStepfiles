@@ -44,6 +44,33 @@ bright BGA) and `RR_OCC` (rail occupancy, 0.45) tune it. Known limit: through a 
 white level clips and hits merge, so it under-counts drills — the taps are already in the
 file; what this tool is for is the holds.
 
+**`receptors.py`** (library) — the reader's functions (`geometry`, `scan`, `onsets`, `rails`,
+`chartstruct`, `match_offset`, `snap_beat`), used by the two drivers below.
+
+**`extract_holds.py "<chart>" [offset]`**
+The per-chart extraction survey: scans the whole certified video, derives the offset from the
+flashes, lists every rail inside the chart with its head flash (the head *is* a judged event,
+so its flash is the exact head time), converts to snapped beats, says whether the head lands
+on a file tap, shows what the counter accrued across the rail, and prints the `add-hold`
+commands. Then a grid line: file events without a flash and flashes without a file event.
+Layout comes from the certification (full-screen → band C; split → L/R by side; 5 or 10
+columns by chart type). Prints only.
+
+**`finale_ticks.py "<chart>" [--burst <beat>]`**
+After the edit and the regen: prices every hold region in the file by closure
+(`judged − taps`, split by length across regions), authors, verifies. `--burst` rewrites the
+block's schedule as a tail burst — rate 2 up to the beat, then a rate tuned against the
+converter to land exactly — for finales the counter shows firing in the last stretch
+(Slam D22 009 → 463 in 0.2s; S18 027 → 300; S20 006 → 295).
+
+**`auto_anchors.py "<chart>" <offset>`**
+The grid verdict without hand forensics: reads → `continuity_repair` (dropped hundreds, a
+rail's leading 1, and the atlas reading 9 as 5) → runs split at drops that persist *and*
+restart near zero → peaks scaled to close on P+G (a final run resting at maxcombo is exact)
+→ anchors → `align_schedule` + `grid_screen`. It refuses, and prints its runs, when the read
+peaks exceed P+G or there are more runs than resets — that is the FORENSICS signal, and
+frames are the answer.
+
 **`regen_chartstruct.py "<ssc>" <BLOCK> <key>`**
 After a note-grid edit, rewrites the chart's chartstruct CSV from the `.ssc` in this tree
 (keeping the pipeline's extra columns; the first run saves `<key>.csv.pre-edit`). Every
