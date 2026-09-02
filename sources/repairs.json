@@ -160,6 +160,26 @@
   "commit": "d1baa8a"
  },
  {
+  "chart": "Caprice of DJ Otada D22",
+  "key": "Caprice_of_DJ_Otada_-_Banya_Production_D22_REMIX",
+  "ssc_rel": "06 - NX ABSOLUTE/F33 - [Remix] Caprice of DJ Otada/F33 - [Remix] Caprice of DJ Otada.ssc",
+  "video": "https://youtu.be/888VuP3vbTI",
+  "judged": 1000,
+  "taps": 841,
+  "ticks": 159,
+  "commit": ""
+ },
+ {
+  "chart": "Caprice of DJ Otada S21",
+  "key": "Caprice_of_DJ_Otada_-_Banya_Production_S21_REMIX",
+  "ssc_rel": "06 - NX ABSOLUTE/F33 - [Remix] Caprice of DJ Otada/F33 - [Remix] Caprice of DJ Otada.ssc",
+  "video": "https://youtu.be/MoWM7Riiti0",
+  "judged": 904,
+  "taps": 755,
+  "ticks": 149,
+  "commit": ""
+ },
+ {
   "chart": "Chase Me S20",
   "key": "Chase_Me_-_Dreamcatcher_S20_ARCADE",
   "ssc_rel": "13 - PRIME 2/1547 - Chase Me/1547 - Chase Me.ssc",
@@ -318,6 +338,16 @@
   "taps": 285,
   "ticks": 535,
   "commit": "7f649db"
+ },
+ {
+  "chart": "Extravaganza D15",
+  "key": "Extravaganza_-_BanYa_D15_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(2) 205 - Extravaganza/205 - Extravaganza.ssc",
+  "video": "https://youtu.be/jf-5AWFVrpY",
+  "judged": 502,
+  "taps": 337,
+  "ticks": 165,
+  "commit": ""
  },
  {
   "chart": "Final Audition 2 - SHORT CUT - D19",
@@ -580,6 +610,16 @@
   "commit": ""
  },
  {
+  "chart": "Naissance S20",
+  "key": "Naissance_-_BanYa_S20_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(1) 302 - Naissance/302 - Naissance.ssc",
+  "video": "https://youtu.be/FlbgoE8L0dE",
+  "judged": 900,
+  "taps": 362,
+  "ticks": 538,
+  "commit": ""
+ },
+ {
   "chart": "Oh! Rosa D11",
   "key": "Oh!_Rosa_-_BanYa_D11_ARCADE",
   "ssc_rel": "02 - S.E.~EXTRA/(4) 401 - Oh! Rosa/401 - Oh! Rosa.ssc",
@@ -817,6 +857,16 @@
   "judged": 304,
   "taps": 285,
   "ticks": 19,
+  "commit": ""
+ },
+ {
+  "chart": "Vook D21",
+  "key": "Vook_-_Banya_D21_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 735 - Vook/735 - Vook.ssc",
+  "video": "https://youtu.be/f0Syr_zdY_0",
+  "judged": 1032,
+  "taps": 573,
+  "ticks": 459,
   "commit": ""
  },
  {
