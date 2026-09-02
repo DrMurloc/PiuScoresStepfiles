@@ -31,6 +31,10 @@ def main():
     m = re.search(r"_([SD]P?\d+(?:_[A-Z0-9]+)*?)_(ARCADE|SHORTCUT|REMIX|FULLSONG)$", key)
     block = f"{m.group(1).replace('_', ' ')}_{m.group(2)}"
     ncols = 10 if chart.split()[-1][0] == "D" else 5
+    ssc = os.path.join(ROOT, "simfiles", ssc_rel)
+    # the rows come from the chartstruct, which only mirrors the .ssc after a regen - so
+    # regenerate first, or a reverted file is read through the previous edit (Winter D17)
+    run(["tools/regen_chartstruct.py", ssc, block, key])
     rows, taps, beat_at = R.chartstruct(key, ncols)
     row_beats = {}
     for r in rows:
@@ -38,7 +42,6 @@ def main():
         for c, ch in enumerate(L[:ncols]):
             if ch in "12":
                 row_beats.setdefault(c, []).append((float(r["Time"]), float(r["Beat"])))
-    ssc = os.path.join(ROOT, "simfiles", ssc_rel)
     pins = []
     for rail in spec:
         c, ch, ct = rail["col"], rail["head"] - a, rail["tail"] - a
