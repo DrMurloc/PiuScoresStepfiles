@@ -75,6 +75,33 @@ whole beat satisfies that just as well. Auditing Another Truth D19 in 2026-09 it
 coverage check disagree, prefer the one that observes more of the chart — and always sanity
 check against the structural anchor.
 
+## Phantom rows: taps the file has that the game never judges
+
+On a (near-)perfect play the counter is an exact running count of judged events, so a file
+with more taps than the game has a **deficit that steps and stays**: with `n_lo(t)` the
+file's taps judged at least 150ms before a read, `n_lo − counter` is 0 (flickering to −1
+when the counter is a frame ahead) through a clean stretch and +1 for good from the phantom
+on. `phantom_scan.py` prints those segments from raw high-confidence reads only — no run
+repair, which is where junk gets in.
+
+Two traps, both hit on the first two charts:
+
+- **A late offset hides a phantom.** Being one tap interval late shifts `n_lo` down by one
+  and the deficit vanishes. The flash matcher's one-beat-late alias is exactly that on a
+  chart of quarter notes: Slam S5 read clean at 10.40 and +1 from the counter's first
+  readable value at the frame-verified 10.30 (132 BPM = 0.45s per beat). `--fit` chooses
+  the late alias for the same reason. Take the offset from receptor flashes in frames — a
+  flash and its increment land in the same frame — and only then read the step.
+- **The counter says when, not which.** In a drill the step lands at the last row before
+  the counter stalls, and that row is not necessarily the phantom: Set me up S10's counter
+  stalled across the closing jump of each drill, but the frames show the jump's arrows at
+  the receptors and its flash with the increment; the game simply has four notes where the
+  file has five (side/centre/side/jump), so the extra **centre** note goes. Read a strip at
+  ~15 fps across the drill and count the judgements per column before removing anything.
+
+A jump is one judged event, so removing a phantom jump means removing every column of the
+row (`edit_notes.py remove` once per column); half a jump still counts one.
+
 ## Reading the audits honestly
 
 **Violation score is inflated by GOODs.** Each GOOD drags `cum − taps` down by one,

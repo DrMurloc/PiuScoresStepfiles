@@ -138,6 +138,31 @@ of a hold (Slam D22: 009 → 463 in the last third), write the schedule as a tai
 low rate then a high one — and tune the high rate against the converter; the owner's rule
 is to model the game, not the file's shape.
 
+When the counter is readable around each rail, skip the run structure entirely:
+
+```
+$PY tools/rail_ticks.py "<chart>" <offset>            # per rail: after − before − taps inside
+$PY tools/apply_rails.py "<chart>" <offset> rails.json  # add-hold on the file's rows, regen, --pin
+```
+
+`rail_ticks` brackets every rail with the reads before its head and after its tail; a
+drop across a rail is reported, not priced, and a missing read writes the two frames for
+eye reading. Put the counts into the rails json (`null` = closure) and `apply_rails` does
+the rest; one region — the least certain — is best left to closure so the total lands.
+
+## 6c. Phantoms: taps the file has that the game does not
+
+A perfect play whose file has *more* taps than the game judged (Slam S5, Set me up S10):
+
+```
+$PY tools/phantom_scan.py "<chart>" <offset> --tail     # offset from FRAMES, never --fit
+$PY tools/edit_notes.py remove "<ssc>" <BLOCK> <col> <beat>   # once per column of the row
+```
+
+The scan says *when* the deficit appears; a frame strip across that stretch says *which*
+row (count the judgements per column). Both charts' first removals were wrong rows — see
+EVIDENCE-RULES "Phantom rows".
+
 ## 7. Commit
 
 Name the video, its result-screen numbers, the offset and how it was determined, the run

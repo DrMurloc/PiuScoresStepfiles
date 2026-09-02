@@ -4,7 +4,7 @@
 tree by `tools/rebuild_repairs.py`, so it cannot go stale. This file is the working ledger
 for what is **left**, and it is hand-kept: re-derive the counts before trusting them.
 
-As of 2026-09-03: **81 of the 121 census charts repaired**, 40 remaining. Twenty-nine of
+As of 2026-09-03: **85 of the 121 census charts repaired**, 36 remaining. Twenty-nine of
 the last thirty came through the extraction pipeline in two days (group A).
 
 ## The remaining 40, by what actually blocks them
@@ -26,7 +26,7 @@ the last thirty came through the extraction pipeline in two days (group A).
 > Surveyed and **parked** (holds the reader could not see, or a run structure the frames
 > contradict): Extravaganza D15, Final Audition Ep. 1 D15 and S17, Will-O-The-Wisp D16, She
 > Likes Pizza D18, Caprice of DJ Otada D22 (no rails visible anywhere - a different note
-> skin?), Dr. M D18, Mr. Larpus D18 and S15, Pump me Amadeus D15, Winter D17, Vook D21, Bee
+> skin?), Mr. Larpus S15, Pump me Amadeus D15, Winter D17, Vook D21, Bee
 > S17 (a mid-chart hold of ~46 plus a 381-tick finale exceed the 388 owed: the tap grid is
 > short by ~37). Grid **mismatch** (the tap grid itself is a different revision):
 > Extravaganza D18, Vook D15, Mr. Larpus D16, Winter D21 (its finale pair is plain on
@@ -38,6 +38,11 @@ the last thirty came through the extraction pipeline in two days (group A).
 > S9 (finale rails on columns the file never has; the counter drifts 146 across the middle)
 > and Caprice of DJ Otada S21 (three real mid-chart rails, but the curve over-observes by 200
 > - its structure needs frames).
+>
+> Dr. M D18 (nine rails) and Mr. Larpus D18 (four) came off the parked list with
+> `rail_ticks` — each rail priced from the two counter reads bracketing it, no run
+> structure needed; the 'reset inside' one was a leading-1 read and the '+143' a covered
+> hundred. `apply_rails` then does the edit, regen and pinned pricing in one run.
 >
 > What is left in this group is the hard residue: charts where the reader sees no rail for
 > the events owed, or the run structure will not settle without frame forensics at every
@@ -53,9 +58,15 @@ That needs a capability this repo does not yet have: reading hold starts, column
 lengths out of footage. Authoring tick counts against holds that do not exist would produce
 a file that is exactly wrong in a way that looks right.
 
-Two Tier A charts sit here for the opposite reason — the file has **one or two more** taps
-than the game judged (Set me up S10 at −2, Slam S5 at −1), so a phantom note has to be found
-and deleted. Same capability, different direction.
+Two Tier A charts sat here for the opposite reason — the file had **one or two more** taps
+than the game judged (Set me up S10 at −2, Slam S5 at −1). **Both are done** (2026-09-03):
+`phantom_scan` reads the deficit off a perfect play's raw counter (the file's taps judged
+≥150ms before a read minus the read steps to +1 for good at the phantom), and frame strips
+named the rows — Slam S5's fourth intro jump, and on Set me up S10 the extra centre note
+before each closing jump (the game's drills go side/centre/side/jump; the file had five
+rows). Both wrong rows were nearly removed first: the counter alone cannot say *which* row
+of a drill is missing, and the flash-matched offset was one beat late, which hides a
+phantom exactly. See EVIDENCE-RULES.
 
 ### B. Confirmed re-step, not re-tick — 2 charts
 

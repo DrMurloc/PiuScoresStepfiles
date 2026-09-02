@@ -56,6 +56,32 @@ commands. Then a grid line: file events without a flash and flashes without a fi
 Layout comes from the certification (full-screen → band C; split → L/R by side; 5 or 10
 columns by chart type). Prints only.
 
+**`rail_ticks.py "<chart>" <offset> [--lag 0.2]`**
+Prices every rail **locally**, with no run structure: the combo read just before the head
+and the read just after the tail bracket the hold, and `after − before − taps inside` is its
+ticks (the converter counts a hold's head as its first tick, so the head's own judgement
+stays in the count whether or not the old file had a tap there). Works wherever the counter
+is readable at both ends; a drop across the rail is reported as "a reset inside", never
+priced; a missing bracket read writes the two frames to `work/frames/rails/<vid>/` for eye
+reading. Dr. M D18's nine rails and Mr. Larpus D18's four all priced this way — including the
+"reset" that was a leading 1 (151 for 51) and the "+143" that was a covered hundred.
+
+**`apply_rails.py "<chart>" <offset> <rails.json> [--burst ...]`**
+Turns a rail list (`[{"col", "head", "tail", "ticks"|null}]`, video seconds) into the file:
+the head goes on the file's own row for that column when one sits within 120ms (the old
+files wrote hold heads as taps), else on the snapped beat; the tail on the snapped beat;
+then `regen_chartstruct` and `finale_ticks` with `--pin` for every rail whose ticks were
+read and closure for the `null` ones. One run per chart.
+
+**`phantom_scan.py "<chart>" <offset>|--fit [--conf 0.85] [--tail]`**
+The phantom hunt for a (near-)perfect play — taps the file has that the game never judges.
+Raw high-confidence reads only: at each read the taps judged ≥150ms earlier must already be
+in the counter, so `n_lo − counter` is 0 through a clean stretch and steps to +1 for good at
+the phantom. **Its `--fit` is orientation only** — the offset that zeroes the most reads is
+the *late* alias, because being one tap interval late absorbs a phantom (Slam S5 read clean
+at 10.40 and +1 from the first readable value at the frame-verified 10.30). Take the offset
+from the frames and read the step; then `edit_notes.py remove`.
+
 **`finale_ticks.py "<chart>" [--pin b0-b1=N ...] [--burst <beat> [--pre <rate>]]`**
 After the edit and the regen: prices every hold region in the file by closure
 (`judged − taps`, split by length across the unpinned regions), authors, verifies. `--pin`
@@ -171,9 +197,12 @@ region that flips sign every step is locked at its closer grid value, and the fi
 from the best state seen rather than the last.
 
 **`edit_notes.py add-hold|move-release <ssc> <BLOCK> <col> <startBeat> <endBeat>`**
+**`edit_notes.py remove <ssc> <BLOCK> <col> <beat>`**
 Surgical note-grid edits, for content the file is genuinely missing rather than mis-ticking.
-Used three times: Pop The Track's truncated finale, Like Me's missing tail, Exceed2's
-uncharted 2.2-second intro.
+`add-hold` clears the column's taps inside the span (the old files wrote holds as repeated
+taps and the converter refuses a hold laid over them). `remove` deletes a phantom — one note
+of a row; a jump row needs one call per column, because a jump is one judged event and half
+of it is still one. First uses: Slam S5's intro jump, Set me up S10's two extra drill notes.
 
 ## Verifying
 
