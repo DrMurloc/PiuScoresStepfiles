@@ -400,6 +400,16 @@
   "commit": "9b23bea"
  },
  {
+  "chart": "Slam D22",
+  "key": "Slam_-_Novasonic_D22_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(3) 516 - Slam/516 - Slam.ssc",
+  "video": "https://youtu.be/IG4XNqxVU4g",
+  "judged": 1000,
+  "taps": 505,
+  "ticks": 495,
+  "commit": ""
+ },
+ {
   "chart": "Super Fantasy - SHORT CUT - D17",
   "key": "Super_Fantasy_-_SHORT_CUT_-_-_SHK_D17_SHORTCUT",
   "ssc_rel": "12 - PRIME/14E0 - [Short Cut] Super Fantasy/14E0 - [Short Cut] Super Fantasy.ssc",
