@@ -62,8 +62,9 @@ and the read just after the tail bracket the hold, and `after − before − tap
 ticks - *every* file tap between the two reads is subtracted, not just the taps inside the
 rail's span, and the head's own row stays in (the converter counts a hold's head as its first
 tick, whether or not the old file wrote a tap there). Works wherever the counter
-is readable at both ends; a drop across the rail is reported as "a reset inside", never
-priced; a missing bracket read writes the two frames to `work/frames/rails/<vid>/` for eye
+is readable at both ends; a drop anywhere between the two reads is reported as a reset,
+never priced - a reset just *before* the head hides when the bomb outruns it (Naissance
+S20 read 110 before a MISS and 457 after the finale); a missing bracket read writes the two frames to `work/frames/rails/<vid>/` for eye
 reading. Dr. M D18's nine rails and Mr. Larpus D18's four all priced this way — including the
 "reset" that was a leading 1 (151 for 51) and the "+143" that was a covered hundred.
 

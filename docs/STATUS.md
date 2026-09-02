@@ -4,7 +4,7 @@
 tree by `tools/rebuild_repairs.py`, so it cannot go stale. This file is the working ledger
 for what is **left**, and it is hand-kept: re-derive the counts before trusting them.
 
-As of 2026-09-03: **92 of the 121 census charts repaired**, 29 remaining. Twenty-nine of
+As of 2026-09-03: **97 of the 121 census charts repaired**, 24 remaining. Twenty-nine of
 the last thirty came through the extraction pipeline in two days (group A).
 
 ## The remaining 40, by what actually blocks them
@@ -27,15 +27,22 @@ the last thirty came through the extraction pipeline in two days (group A).
 > [Another] S18 (a staggered triple), An Interesting View S13, Pump me Amadeus D15, Dr. M S9
 > (its finale pair sits on cols 1/3 where the file wrote a 0+4 jump - the row was replaced).
 > Four of those closed *exactly* on one finale hold once a single before-read was corrected
-> in a frame (a 9 read as 5: Winter D17's 155 = 195, Dr. M S9's 254 = 294).
+> in a frame (a 9 read as 5: Winter D17's 155 = 195, Dr. M S9's 254 = 294). Then Extravaganza D15
+> (the finale pair is the whole deficit; the counter resets to 4 just before it), Caprice of
+> DJ Otada S21 (three mid-chart holds off the 2P-side counter) and D22 (an *opening* pair
+> hold on the first row carrying all 158 - the counter had to be rescanned, the old scan
+> held no values), Vook D21 (a 9-tick hold early and a 436-tick finale bomb; the 44 other
+> 'rails' were the video's preview), Naissance S20 (the file's mid pair re-priced 81 from
+> frames - '52' was 92 - and a 456-event finale pair that is the entire run after a MISS).
 >
 > Surveyed and **parked** (holds the reader could not see, or a run structure the frames
-> contradict): Extravaganza D15, Final Audition Ep. 1 S17, She Likes Pizza D18, Caprice of
-> DJ Otada D22 (no rails visible anywhere - a different note skin?), Mr. Larpus S15, Vook D21
-> (44 of its 46 rails fall outside the chart window at the flash offset), We will meet again
-> S13 (perfect play, eight paired hold regions whose brackets sum to its 144, but the counter
-> matches the file's taps at no offset in the intro - the grid screen passes, the intro does
-> not add up; needs frames), Bee
+> contradict): Final Audition Ep. 1 S17, She Likes Pizza D18 (three rails price 153 of its
+> 269; the closure solver's third run was built on junk reads and the rest cannot be located
+> - a frame walk of the whole chart), Mr. Larpus S15 (frames show notes on col 1 the file
+> does not have - a re-step), We will meet again S13 (the game's intro is visibly sparser
+> than the file's 16th stream - a re-step, whatever the grid screen says), Leather D22 (31
+> rails on screen against 227 holds in the file and a 37-reset play - a re-tick job not
+> attempted), Conflict S22 (beat 5917 at 116s: a BPM gimmick), Bee
 > S17 (a mid-chart hold of ~46 plus a 381-tick finale exceed the 388 owed: the tap grid is
 > short by ~37). Grid **mismatch** (the tap grid itself is a different revision):
 > Extravaganza D18, Vook D15, Mr. Larpus D16, Winter D21 (its finale pair is plain on
@@ -43,7 +50,7 @@ the last thirty came through the extraction pipeline in two days (group A).
 >
 > The split-screen singles followed (the reader takes a half-screen band): She Likes Pizza
 > S10, A nightmare S6, All I Want For X-mas S5, Will-O-The-Wisp S16, Final Audition S18,
-> Beat of The War S16, My Way S15, Love is a Danger Zone S17. Parked from that batch: Caprice of DJ Otada S21 (three real mid-chart rails, but the curve over-observes by 200
+> Beat of The War S16, My Way S15, Love is a Danger Zone S17. Caprice of DJ Otada S21 followed once its 2P-side counter was bracketed rail by rail (three real mid-chart rails, but the curve over-observes by 200
 > - its structure needs frames).
 >
 > Dr. M D18 (nine rails) and Mr. Larpus D18 (four) came off the parked list with

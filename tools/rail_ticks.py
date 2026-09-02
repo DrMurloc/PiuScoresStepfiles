@@ -63,7 +63,11 @@ def main():
         ch, ct = head - a, tail - a
         rb, ra = read_before(head - 0.05), read_after(tail + 0.05)
         near = [t for t in taps[c] if abs(t - ch) <= 0.07]
-        if rb and ra and ra[1] >= rb[1]:
+        # a reset between the before-read and the tail hides when the bomb outruns it
+        # (Naissance S20: 110 before a MISS, 457 after the finale) - any read in between that
+        # sits well below the before-read is that reset
+        dropped = rb and ra and any(v < rb[1] - 3 for t, v in reads if rb[0] < t < ra[0])
+        if rb and ra and ra[1] >= rb[1] and not dropped:
             # every file tap judged between the two READS is in the difference, not just the
             # taps inside the rail's span (a read 0.5s before the head has the taps of that
             # half second in front of it); the head's own row is the hold's first tick when
@@ -77,7 +81,7 @@ def main():
             total += max(ticks, 0)
             what = f"counter {rb[1]}@{rb[0]:.2f} -> {ra[1]}@{ra[0]:.2f}: +{ra[1]-rb[1]} incl. {inside} taps -> {ticks} ticks"
         elif rb and ra:
-            what = f"counter DROPS across the rail ({rb[1]}@{rb[0]:.2f} -> {ra[1]}@{ra[0]:.2f}) - a reset inside, frames needed"
+            what = f"counter DROPS between the reads ({rb[1]}@{rb[0]:.2f} -> {ra[1]}@{ra[0]:.2f}) - a reset inside or just before, frames needed"
         else:
             tiles = []
             for t in (head - 0.05, tail + 0.15):

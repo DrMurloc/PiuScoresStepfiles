@@ -153,6 +153,13 @@ read 254 before a pair on a chart owed 27; the frame says 294. The atlas reads 9
 the misread table), and a single wrong digit in the read *before* a hold is the usual reason
 a local bracket disagrees with closure. Look at that frame before believing either.
 
+**A bracket can straddle a reset and still climb.** Naissance S20's finale read 110 before
+its heads and 457 after its tail, but the frames show a MISS at 105.10 and the counter at
+004 at 105.30: the run before the miss reached ~110, and the 457 is the *finale's own run*
+(1-2 taps, the heads, then ~145 ticks a second). A bomb outruns the reset it follows, so
+`after > before` proves nothing; `rail_ticks` now refuses any bracket with a lower read
+between its two ends, and the frames at the head decide.
+
 ## Instantaneous tick bombs
 
 Some charts deliver a hold's ticks at one instant rather than across the hold: Ignis Fatuus SC
