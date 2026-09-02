@@ -37,6 +37,10 @@ def repair_run(pts, cap, rate_max=60.0):
         lo, hi = est[1] - 2, est[1] + rate_max * dt + 3
         cands = {w + 100 * k for w in fix_digits(v, cap) for k in range(0, 10) if w + 100 * k <= cap}
         ok = [c for c in cands if lo <= c <= hi]
+        # a rail's leading 1 can persist for seconds ("182" for 82 across Set me up S10's
+        # bridge), and with a long enough gap 182 itself sits inside the rate window - so the
+        # hundred-less alternative competes as long as it is only a little behind the estimate
+        ok += [c for c in cands if est[1] - 8 <= c < lo and c + 100 in cands]
         if ok:
             pick = min(ok, key=lambda c: abs(c - est[1]))
             if pick != v:

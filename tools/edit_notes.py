@@ -55,7 +55,8 @@ def set_char(measures, beat, col, ch, cols):
 
 def main():
     op, path, tag, col = sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4])
-    b1, b2 = float(sys.argv[5]), float(sys.argv[6])
+    b1 = float(sys.argv[5])
+    b2 = float(sys.argv[6]) if len(sys.argv) > 6 else b1
     text = open(path, encoding="utf-8", newline="").read()
     sections, i = find_block(text, tag)
     span, measures = parse_notes(sections[i])
@@ -80,6 +81,12 @@ def main():
         assert row[col] == "3", f"no release at beat {b1} col {col} (row {row})"
         measures[mi][r] = row[:col] + "0" + row[col + 1:]
         set_char(measures, b2, col, "3", cols)
+    elif op == "remove":
+        # a phantom: a note the file has that the game never judges (Slam S5's 193rd tap)
+        mi, r = beat_to_pos(measures, b1, cols)
+        row = measures[mi][r]
+        assert len(row) > col and row[col] != "0", f"no note at beat {b1} col {col} (row {row})"
+        measures[mi][r] = row[:col] + "0" + row[col + 1:]
     else:
         raise SystemExit("unknown op")
     body = "\n,\n".join("\n".join(rows) for rows in measures)
