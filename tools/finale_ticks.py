@@ -25,6 +25,11 @@ def main():
     chart = sys.argv[1]
     burst = float(sys.argv[sys.argv.index("--burst") + 1]) if "--burst" in sys.argv else None
     pre = int(sys.argv[sys.argv.index("--pre") + 1]) if "--pre" in sys.argv else 2    # rate before the burst
+    # --pin b0-b1=N keeps an observed count on a region; the closure remainder goes to the rest
+    pins = []
+    for i, arg in enumerate(sys.argv):
+        if arg == "--pin":
+            span, n = sys.argv[i + 1].split("="); p0, p1 = span.split("-"); pins.append((float(p0), float(p1), int(n)))
     smap = {o["chart"]: o for o in json.load(open(os.path.join(ROOT, "sources", "ssc-map.json"), encoding="utf-8"))}
     key, ssc_rel = smap[chart]["key"], smap[chart]["ssc_rel"]
     raw = json.load(open(os.path.join(ROOT, "sources", "certification-2026-08-30.json"), encoding="utf-8"))
@@ -56,11 +61,21 @@ def main():
     owed = judged - taps
     if not regs:
         raise SystemExit(f"{chart}: no holds in the file - nothing to price")
-    L = sum(r[1] - r[0] for r in regs)
-    targets = [dict(t0=r[0], t1=r[1], b0=r[2], b1=r[3], target=int(owed * (r[1] - r[0]) / L)) for r in regs]
-    big = max(targets, key=lambda t: t["t1"] - t["t0"])
+    targets = [dict(t0=r[0], t1=r[1], b0=r[2], b1=r[3]) for r in regs]
+    for t in targets:
+        for p0, p1, n in pins:
+            if abs(t["b0"] - p0) < 0.3 and abs(t["b1"] - p1) < 0.3:
+                t["target"], t["pinned"] = n, True
+    unp = [t for t in targets if "pinned" not in t] or targets
+    rest = owed - sum(t.get("target", 0) for t in targets if "pinned" in t)
+    L = sum(t["t1"] - t["t0"] for t in unp)
+    for t in unp:
+        t["target"] = int(rest * (t["t1"] - t["t0"]) / L)
+    big = max(unp, key=lambda t: t["t1"] - t["t0"])
     big["target"] += owed - sum(t["target"] for t in targets)
     big["tuner"] = True
+    for t in targets:
+        t.pop("pinned", None)
     tpath = os.path.join(ROOT, "work", f"{key}-finale-targets.json")
     json.dump(targets, open(tpath, "w"))
     print(f"{chart}: taps {taps}, judged {judged}, owed {owed} over {len(regs)} hold region(s): "
