@@ -30,6 +30,16 @@
   "commit": ""
  },
  {
+  "chart": "An Interesting View S13",
+  "key": "An_Interesting_View_-_BanYa_S13_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(1) 305 - An Interesting View/305 - An Interesting View.ssc",
+  "video": "https://youtu.be/yVX4_lP7664",
+  "judged": 400,
+  "taps": 324,
+  "ticks": 76,
+  "commit": ""
+ },
+ {
   "chart": "Another Truth D18",
   "key": "Another_Truth_-_Novasonic_D18_ARCADE",
   "ssc_rel": "01 - 1ST~3RD/(3) 112 - Another Truth/112 - Another Truth.ssc",
@@ -260,6 +270,16 @@
   "commit": ""
  },
  {
+  "chart": "Dr. M S9",
+  "key": "Dr._M_-_BanYa_S9_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 701 - Dr. M/701 - Dr. M.ssc",
+  "video": "https://youtu.be/3TTn6FWDZcQ",
+  "judged": 303,
+  "taps": 272,
+  "ticks": 31,
+  "commit": ""
+ },
+ {
   "chart": "Emperor D17",
   "key": "Emperor_-_BanYa_D17_ARCADE",
   "ssc_rel": "03 - REBIRTH~PREX 3/(2) 702 - Emperor/702 - Emperor.ssc",
@@ -347,6 +367,16 @@
   "judged": 700,
   "taps": 487,
   "ticks": 213,
+  "commit": ""
+ },
+ {
+  "chart": "Final Audition Ep. 1 D15",
+  "key": "Final_Audition_Ep.1_-_BanYa_D15_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(1) 922 - Final Audition Episode 1/922 - Final Audition Episode 1.ssc",
+  "video": "https://youtu.be/GR0LvDh4EmI",
+  "judged": 500,
+  "taps": 338,
+  "ticks": 162,
   "commit": ""
  },
  {
@@ -500,6 +530,16 @@
   "commit": ""
  },
  {
+  "chart": "Love is a Danger Zone pt.2 [Another] S18",
+  "key": "Love_is_a_Danger_Zone_pt._2_another_-_BanYa_S18_ARCADE",
+  "ssc_rel": "04 - EXCEED~ZERO/(1) DC04 - Love is a Danger Zone 2 (Another)/DC04 - Love is a Danger Zone 2 (Another).ssc",
+  "video": "https://youtu.be/zJ8Wm0UYjug",
+  "judged": 764,
+  "taps": 636,
+  "ticks": 128,
+  "commit": ""
+ },
+ {
   "chart": "Moonlight - SHORT CUT - S19",
   "key": "Moonlight_-_SHORT_CUT_-_-_Banya_S19_SHORTCUT",
   "ssc_rel": "08 - FIESTA/1057 - [Short Cut] Moonlight/1057 - [Short Cut] Moonlight.ssc",
@@ -598,6 +638,16 @@
   "taps": 389,
   "ticks": 611,
   "commit": "788597a"
+ },
+ {
+  "chart": "Pump me Amadeus D15",
+  "key": "Pump_me_Amadeus_-_BanYa_D15_ARCADE",
+  "ssc_rel": "04 - EXCEED~ZERO/(3) A05 - Pump Me Amadeus/A05 - Pump Me Amadeus.ssc",
+  "video": "https://youtu.be/dLZsccXaoJQ",
+  "judged": 449,
+  "taps": 362,
+  "ticks": 87,
+  "commit": ""
  },
  {
   "chart": "Pumptris 8Bit ver. - SHORT CUT - D22",
@@ -790,6 +840,16 @@
   "commit": "4e5bc1e"
  },
  {
+  "chart": "Will-O-The-Wisp D16",
+  "key": "Will-O-The-Wisp_-_BanYa_D16_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 712 - Will O The Wisp/712 - Will O The Wisp.ssc",
+  "video": "https://youtu.be/_ddGQ6TvQA8",
+  "judged": 550,
+  "taps": 383,
+  "ticks": 167,
+  "commit": ""
+ },
+ {
   "chart": "Will-O-The-Wisp D20",
   "key": "Will-O-The-Wisp_-_BanYa_D20_ARCADE",
   "ssc_rel": "03 - REBIRTH~PREX 3/(2) 712 - Will O The Wisp/712 - Will O The Wisp.ssc",
@@ -807,6 +867,16 @@
   "judged": 500,
   "taps": 448,
   "ticks": 52,
+  "commit": ""
+ },
+ {
+  "chart": "Winter D17",
+  "key": "Winter_-_BanYa_D17_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 711 - Winter/711 - Winter.ssc",
+  "video": "https://youtu.be/CDO1dic37c4",
+  "judged": 600,
+  "taps": 470,
+  "ticks": 130,
   "commit": ""
  },
  {
