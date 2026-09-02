@@ -24,6 +24,7 @@ def run(args):
 def main():
     chart = sys.argv[1]
     burst = float(sys.argv[sys.argv.index("--burst") + 1]) if "--burst" in sys.argv else None
+    pre = int(sys.argv[sys.argv.index("--pre") + 1]) if "--pre" in sys.argv else 2    # rate before the burst
     smap = {o["chart"]: o for o in json.load(open(os.path.join(ROOT, "sources", "ssc-map.json"), encoding="utf-8"))}
     key, ssc_rel = smap[chart]["key"], smap[chart]["ssc_rel"]
     raw = json.load(open(os.path.join(ROOT, "sources", "certification-2026-08-30.json"), encoding="utf-8"))
@@ -75,7 +76,7 @@ def main():
         i = next(k for k in range(1, len(sections)) if re.search(rf"#DESCRIPTION:{re.escape(code)};", sections[k]))
         b0, b1 = big["b0"], big["b1"]
         def write(rate):
-            tc = f"0.000000=4,\n{b0:.6f}=2,\n{burst:.6f}={rate},\n{b1:.6f}=4"
+            tc = f"0.000000=4,\n{b0:.6f}={pre},\n{burst:.6f}={rate},\n{b1:.6f}=4"
             sec = re.sub(r"#TICKCOUNTS:.*?;", f"#TICKCOUNTS:{tc};", sections[i], count=1, flags=re.S)
             open(ssc, "w", encoding="utf-8", newline="").write("#NOTEDATA:;".join(sections[:i] + [sec] + sections[i + 1:]))
         def implied():
@@ -95,7 +96,7 @@ def main():
                 lo = rate + 1
             else:
                 hi = rate - 1
-        print(f"  tail burst: rate 2 from b{b0:.3f}, {rate} from b{burst:.3f} to b{b1:.3f} -> implied {v}")
+        print(f"  tail burst: rate {pre} from b{b0:.3f}, {rate} from b{burst:.3f} to b{b1:.3f} -> implied {v}")
     out = run(["tools/tick_verify.py", chart, str(judged)])
     print("  " + " ".join(l for l in out.splitlines() if "implied" in l))
 
