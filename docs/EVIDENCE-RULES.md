@@ -147,6 +147,12 @@ Truth D18 (16.05 → 15.65). The tell is a rail head that lands on a file row ca
 the rail's columns at the earlier offset and on nothing at the later one. Take the offset
 from the heads when that happens; the grid passes at either alias, so it cannot decide.
 
+**A finale bracket that over-prices the deficit has a 5 in its before-read.** Winter D17
+read 155 → 324 for a pair owed 128; the frame says 195, and 324 − 195 − 1 = 128. Dr. M S9
+read 254 before a pair on a chart owed 27; the frame says 294. The atlas reads 9 as 5 (see
+the misread table), and a single wrong digit in the read *before* a hold is the usual reason
+a local bracket disagrees with closure. Look at that frame before believing either.
+
 ## Instantaneous tick bombs
 
 Some charts deliver a hold's ticks at one instant rather than across the hold: Ignis Fatuus SC

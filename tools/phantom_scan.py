@@ -42,7 +42,10 @@ def main():
         return [(t, v, bisect.bisect_right(taps, t - a - 0.15) - v) for t, v in reads]
 
     if sys.argv[2] == "--fit":
-        best = max(((sum(1 for _, _, d in diffs(a / 100) if d == 0), a / 100) for a in range(0, 6000, 5)))
+        # --until <video s>: fit only on reads before the first hold, where the counter must
+        # equal the tap count exactly (holds make the counter run ahead and spoil the fit)
+        until = float(sys.argv[sys.argv.index("--until") + 1]) if "--until" in sys.argv else 1e9
+        best = max(((sum(1 for t, _, d in diffs(a / 100) if d == 0 and t <= until), a / 100) for a in range(0, 6000, 5)))
         a = best[1]
         print(f"  offset fit: a = {a:.2f} zeroes {best[0]} of {len(reads)} reads")
     else:

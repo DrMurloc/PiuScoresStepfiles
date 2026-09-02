@@ -59,8 +59,9 @@ columns by chart type). Prints only.
 **`rail_ticks.py "<chart>" <offset> [--lag 0.2]`**
 Prices every rail **locally**, with no run structure: the combo read just before the head
 and the read just after the tail bracket the hold, and `after − before − taps inside` is its
-ticks (the converter counts a hold's head as its first tick, so the head's own judgement
-stays in the count whether or not the old file had a tap there). Works wherever the counter
+ticks - *every* file tap between the two reads is subtracted, not just the taps inside the
+rail's span, and the head's own row stays in (the converter counts a hold's head as its first
+tick, whether or not the old file wrote a tap there). Works wherever the counter
 is readable at both ends; a drop across the rail is reported as "a reset inside", never
 priced; a missing bracket read writes the two frames to `work/frames/rails/<vid>/` for eye
 reading. Dr. M D18's nine rails and Mr. Larpus D18's four all priced this way — including the
@@ -73,14 +74,22 @@ files wrote hold heads as taps), else on the snapped beat; the tail on the snapp
 then `regen_chartstruct` and `finale_ticks` with `--pin` for every rail whose ticks were
 read and closure for the `null` ones. One run per chart.
 
-**`phantom_scan.py "<chart>" <offset>|--fit [--conf 0.85] [--tail]`**
+**`excess_scan.py "<chart>" <offset> [--conf 0.8] [--min 2]`**
+Where does the counter outrun the file's taps? Between consecutive persisting reads inside
+one run, the counter's rise minus the file's taps in that span is accrual; clusters are
+holds the file lacks. Structure-free, and the way to see that a chart's whole deficit sits
+on one finale (Pump me Amadeus D15's +86 = its 86 owed). Its numbers are still read-noisy -
+dropped hundreds show as +100 and a covered counter as +1xx - so it points, it does not price.
+
+**`phantom_scan.py "<chart>" <offset>|--fit [--until <video s>] [--conf 0.85] [--tail]`**
 The phantom hunt for a (near-)perfect play — taps the file has that the game never judges.
 Raw high-confidence reads only: at each read the taps judged ≥150ms earlier must already be
 in the counter, so `n_lo − counter` is 0 through a clean stretch and steps to +1 for good at
 the phantom. **Its `--fit` is orientation only** — the offset that zeroes the most reads is
 the *late* alias, because being one tap interval late absorbs a phantom (Slam S5 read clean
 at 10.40 and +1 from the first readable value at the frame-verified 10.30). Take the offset
-from the frames and read the step; then `edit_notes.py remove`.
+from the frames and read the step; then `edit_notes.py remove`. `--until` restricts the fit
+to the reads before the first hold, where the counter must equal the tap count exactly.
 
 **`finale_ticks.py "<chart>" [--pin b0-b1=N ...] [--burst <beat> [--pre <rate>]]`**
 After the edit and the regen: prices every hold region in the file by closure

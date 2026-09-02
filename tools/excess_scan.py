@@ -33,7 +33,10 @@ def main():
     path = os.path.join(ROOT, "work", "combo", f"{vid}.{band}.jsonl")
     if not os.path.exists(path):
         path = os.path.join(ROOT, "work", "combo", f"{vid}.C.jsonl")
-    reads = [(t, v) for t, v, c in (json.loads(l) for l in open(path, encoding="utf-8")) if v is not None and c >= conf and v <= mc]
+    allr = [(t, v) for t, v, c in (json.loads(l) for l in open(path, encoding="utf-8")) if v is not None and c >= conf and v <= mc]
+    # a value has to PERSIST (seen again within the next two reads) - single-frame reads are
+    # where the covered digits and the blank-counter "0/1" live (WotW D16: "1" then 131 = +130)
+    reads = [(t, v) for i, (t, v) in enumerate(allr) if any(v2 == v for _, v2 in allr[i + 1:i + 3])]
     # collapse repeats: keep the first time each value appears in a monotone stretch
     print(f"{chart}: {vid} band {band}, offset {a}, judged {judged}, file taps {len(taps)}, owed {judged - len(taps)}")
     total_ex = 0
