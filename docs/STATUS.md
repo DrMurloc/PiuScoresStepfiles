@@ -8,7 +8,13 @@ As of 2026-09-01 (evening): **51 of the 121 census charts repaired**, 70 remaini
 
 ## The remaining 70, by what actually blocks them
 
-### A. Missing hold notes, not missing tick counts — 54 charts
+### A. Missing hold notes, not missing tick counts — 53 charts (was 54)
+
+> **The capability now exists (2026-09-02).** `tools/receptor_reader.py` reads judged events
+> and hold rails per column off the receptors, and Slam D22 was the first of this group to
+> land: its 494 hold events were two centre-panel finale holds the footage shows plainly,
+> added with `edit_notes.py` and ticked as the counter fired them. See REPAIR-WORKFLOW §6b.
+> The rest of this group is now work, not a blocker.
 
 This is the largest group and it is **not** the work the rest of this repo describes. These
 files contain **zero hold heads** while the game judges 15–588 more events than the file has

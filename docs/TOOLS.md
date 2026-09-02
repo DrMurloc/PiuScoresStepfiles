@@ -27,6 +27,29 @@ are fixed boxes hung off the COMBO label; `--calibrate` fits the geometry from f
 occluded cell), `--scan` writes the usual `work/combo/<vid>.<side>.jsonl`. Atlases live in
 `tools/atlas-cell/<vid>/`. Never label a frame you have not looked at.
 
+**`receptor_reader.py <vid> <t0> <t1> [key] [offset]`** — note extraction
+Reads the *receptors* instead of the counter: a judgement flashes its column's receptor
+white for a few frames, and a hold's rail is a saturated *and bright* bar in the lane just
+beneath it (the BGA that fools a saturation-only test is saturated but dark). Per column it
+reports judged-event onsets (prominent peaks of the receptor's white level over its rolling
+floor, so a 16th-note drill re-peaks per hit) and hold spans (lane occupancy ≥ 0.3s). With a
+key it matches onsets against the file's taps and reports the best offset and the
+file-only / video-only events per column. Geometry — receptor band and column centres — is
+fitted once per video from the temporal median of the band (the receptors are the only
+static thing there) and cached in `work/receptor/<vid>.geometry.json`; the centres come from
+the field's extent (outermost strong profile peaks are the outer borders; `ncols` equal
+receptors fill the span), because every comb fit tried locked onto a harmonic of the
+receptors' inner ridges. `RR_COLS=5` for singles; `RR_THRESH` (flash, default 40; 60–70 on
+bright BGA) and `RR_OCC` (rail occupancy, 0.45) tune it. Known limit: through a drill the
+white level clips and hits merge, so it under-counts drills — the taps are already in the
+file; what this tool is for is the holds.
+
+**`regen_chartstruct.py "<ssc>" <BLOCK> <key>`**
+After a note-grid edit, rewrites the chart's chartstruct CSV from the `.ssc` in this tree
+(keeping the pipeline's extra columns; the first run saves `<key>.csv.pre-edit`). Every
+tool here reads that CSV and the pipeline only rewrites it on a full ingest, so an added hold
+is invisible until this runs.
+
 **`result_reader.py`**
 Certifies a video from its result screen — the `P/G/Gd/B/M` and `maxcombo` that make a video
 usable as evidence. Output is the certification ledger in `sources/`.

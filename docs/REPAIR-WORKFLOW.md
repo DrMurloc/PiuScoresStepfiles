@@ -118,6 +118,26 @@ a real bug that made two charts look impossible.
 Verify **every block in the file**, not just the one you touched, since several songs carry
 two repaired charts.
 
+## 6b. Holds the file does not have: add them from the footage
+
+Most of the remaining census charts carry **no hold heads at all**. The counter says how many
+events the holds owe; the receptors say where they are:
+
+```
+$PY tools/receptor_reader.py <vid> <t0> <t1> <key>          # per-column onsets, rails, offset
+$PY tools/edit_notes.py add-hold "<ssc>" <BLOCK> <col> <headBeat> <tailBeat>
+$PY tools/regen_chartstruct.py "<ssc>" <BLOCK> <key>         # or nothing downstream sees the edit
+```
+
+Read the rail's head and tail off frames before trusting the reader's span (its lane box
+starts a few pixels below the receptor, so it sees a rail slightly after the head passes).
+A hold head is often a **tap row in the file** — Slam D22's last row was the two centre
+panels the rails begin on — so add-hold's overwrite of that row is the intended edit. Then
+author the ticks as usual (step 5/6). Where the counter shows the ticks firing at the *end*
+of a hold (Slam D22: 009 → 463 in the last third), write the schedule as a tail burst — a
+low rate then a high one — and tune the high rate against the converter; the owner's rule
+is to model the game, not the file's shape.
+
 ## 7. Commit
 
 Name the video, its result-screen numbers, the offset and how it was determined, the run

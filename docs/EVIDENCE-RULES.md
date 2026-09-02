@@ -91,6 +91,18 @@ nowhere for such artifacts to hide.
 ticks. Emperor S16 climbs to +270 and is correct. What cannot happen is slack going negative:
 that says the file scheduled taps the counter never registered. See `grid_screen`.
 
+## What the receptors tell us
+
+The combo counter says *how many*; the receptors say *which column and when*. A judged event
+flashes its receptor white and the flash is far brighter than the receptors' beat pulse
+(peak heights split cleanly, ~30 against 80–120 over the rolling floor). A hold keeps its
+receptor lit and, more usefully, draws a rail — a saturated **and bright** bar — down the
+lane beneath it; a tap sprite passes that spot in a few frames. Misses do not flash, so the
+reader sees hits, which is fine: the file already has the taps, and cross-referencing the
+file-only events against the counter's non-incrementing judgements is how a phantom tap will
+be found. Video time drifts against file time by ~0.1% on Slam D22 (offset 14.17 → 14.25
+over the chart), which is the file's BPM being rounded, not the video.
+
 ## Instantaneous tick bombs
 
 Some charts deliver a hold's ticks at one instant rather than across the hold: Ignis Fatuus SC
