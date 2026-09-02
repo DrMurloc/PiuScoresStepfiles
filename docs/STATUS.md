@@ -4,10 +4,10 @@
 tree by `tools/rebuild_repairs.py`, so it cannot go stale. This file is the working ledger
 for what is **left**, and it is hand-kept: re-derive the counts before trusting them.
 
-As of 2026-09-02 (night): **73 of the 121 census charts repaired**, 48 remaining.
-Twenty-one of the last twenty-two came through the extraction pipeline in one day (group A).
+As of 2026-09-03: **81 of the 121 census charts repaired**, 40 remaining. Twenty-nine of
+the last thirty came through the extraction pipeline in two days (group A).
 
-## The remaining 48, by what actually blocks them
+## The remaining 40, by what actually blocks them
 
 ### A. Missing hold notes, not missing tick counts — 53 charts (was 54)
 
@@ -32,10 +32,16 @@ Twenty-one of the last twenty-two came through the extraction pipeline in one da
 > Extravaganza D18, Vook D15, Mr. Larpus D16, Winter D21 (its finale pair is plain on
 > screen, but the file carries ~40 taps the game never judged around 60-75s).
 >
-> Next in the pipeline: the ten split-screen singles with no holds (She Likes Pizza S10,
-> Dr. M S9, A nightmare S6, All I Want For X-mas S5, Will-O-The-Wisp S16, Final Audition
-> S18, Beat of The War S16, My Way S15, Caprice of DJ Otada S21, Love is a Danger Zone S17)
-> - the reader handles a half-screen band, as Slam S18/S20 showed.
+> The split-screen singles followed (the reader takes a half-screen band): She Likes Pizza
+> S10, A nightmare S6, All I Want For X-mas S5, Will-O-The-Wisp S16, Final Audition S18,
+> Beat of The War S16, My Way S15, Love is a Danger Zone S17. Parked from that batch: Dr. M
+> S9 (finale rails on columns the file never has; the counter drifts 146 across the middle)
+> and Caprice of DJ Otada S21 (three real mid-chart rails, but the curve over-observes by 200
+> - its structure needs frames).
+>
+> What is left in this group is the hard residue: charts where the reader sees no rail for
+> the events owed, or the run structure will not settle without frame forensics at every
+> reset. Every one is listed above with what it needs.
 
 This is the largest group and it is **not** the work the rest of this repo describes. These
 files contain **zero hold heads** while the game judges 15–588 more events than the file has

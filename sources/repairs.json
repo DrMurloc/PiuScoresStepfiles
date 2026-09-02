@@ -10,6 +10,16 @@
   "commit": ""
  },
  {
+  "chart": "A nightmare S6",
+  "key": "A_Nightmare_-_BanYa_S6_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(1) 306 - Nightmare/306 - Nightmare.ssc",
+  "video": "https://youtu.be/l_6Hc6DSLNc",
+  "judged": 200,
+  "taps": 169,
+  "ticks": 31,
+  "commit": ""
+ },
+ {
   "chart": "Another Truth D18",
   "key": "Another_Truth_-_Novasonic_D18_ARCADE",
   "ssc_rel": "01 - 1ST~3RD/(3) 112 - Another Truth/112 - Another Truth.ssc",
@@ -48,6 +58,16 @@
   "taps": 675,
   "ticks": 625,
   "commit": "da5593f"
+ },
+ {
+  "chart": "Beat of The War S16",
+  "key": "Beat_of_The_War_-_Banya_S16_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(1) 820 - Beat of the War/820 - Beat of the War.ssc",
+  "video": "https://youtu.be/XNMIAm04k_c",
+  "judged": 500,
+  "taps": 405,
+  "ticks": 95,
+  "commit": ""
  },
  {
   "chart": "Bee D15",
@@ -330,6 +350,16 @@
   "commit": "a2d0412"
  },
  {
+  "chart": "Final Audition S18",
+  "key": "Final_Audition_-_BanYa_S18_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(2) 204 - Final Audition/204 - Final Audition.ssc",
+  "video": "https://youtu.be/ILkwtynEdoU",
+  "judged": 601,
+  "taps": 516,
+  "ticks": 85,
+  "commit": ""
+ },
+ {
   "chart": "First Love D15",
   "key": "First_Love_-_BanYa_D15_HALFDOUBLE_ARCADE",
   "ssc_rel": "02 - S.E.~EXTRA/(4) 402 - First Love/402 - First Love.ssc",
@@ -430,6 +460,16 @@
   "commit": "30ab107"
  },
  {
+  "chart": "Love is a Danger Zone S17",
+  "key": "Love_is_a_Danger_Zone_-_BanYa_S17_INFOBAR_TITLE_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 704 - Love is a Danger Zone/704 - Love is a Danger Zone.ssc",
+  "video": "https://youtu.be/4_clp3QK814",
+  "judged": 790,
+  "taps": 432,
+  "ticks": 358,
+  "commit": ""
+ },
+ {
   "chart": "Love is a Danger Zone pt. 2 - SHORT CUT - D23",
   "key": "Love_is_a_Danger_Zone_pt._2_-_SHORT_CUT_-_-_YAHPP_D23_SHORTCUT",
   "ssc_rel": "08 - FIESTA/1052 - [Short Cut] Love is a Danger Zone 2/1052 - [Short Cut] Love is a Danger Zone 2.ssc",
@@ -457,6 +497,16 @@
   "judged": 550,
   "taps": 394,
   "ticks": 156,
+  "commit": ""
+ },
+ {
+  "chart": "My Way S15",
+  "key": "My_Way_-_BanYa_S15_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 707 - My Way/707 - My Way.ssc",
+  "video": "https://youtu.be/bXMj-YNDufs",
+  "judged": 507,
+  "taps": 368,
+  "ticks": 139,
   "commit": ""
  },
  {
@@ -547,6 +597,16 @@
   "judged": 300,
   "taps": 243,
   "ticks": 57,
+  "commit": ""
+ },
+ {
+  "chart": "She Likes Pizza S10",
+  "key": "She_Likes_Pizza_-_BanYa_S10_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(1) 310 - She Likes Pizza/310 - She Likes Pizza.ssc",
+  "video": "https://youtu.be/IyYNcWMMGjQ",
+  "judged": 303,
+  "taps": 278,
+  "ticks": 25,
   "commit": ""
  },
  {
@@ -687,6 +747,16 @@
   "judged": 801,
   "taps": 510,
   "ticks": 291,
+  "commit": ""
+ },
+ {
+  "chart": "Will-O-The-Wisp S16",
+  "key": "Will-O-The-Wisp_-_BanYa_S16_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 712 - Will O The Wisp/712 - Will O The Wisp.ssc",
+  "video": "https://youtu.be/Dkpv7LP8LGI",
+  "judged": 500,
+  "taps": 448,
+  "ticks": 52,
   "commit": ""
  },
  {
