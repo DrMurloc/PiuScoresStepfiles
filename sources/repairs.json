@@ -10,6 +10,16 @@
   "commit": ""
  },
  {
+  "chart": "Another Truth D18",
+  "key": "Another_Truth_-_Novasonic_D18_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(3) 112 - Another Truth/112 - Another Truth.ssc",
+  "video": "https://youtu.be/0AwhvEuKnSM",
+  "judged": 653,
+  "taps": 376,
+  "ticks": 277,
+  "commit": "71f5e69"
+ },
+ {
   "chart": "Another Truth D19",
   "key": "Another_Truth_-_Novasonic_D19_ARCADE",
   "ssc_rel": "01 - 1ST~3RD/(3) 112 - Another Truth/112 - Another Truth.ssc",
@@ -38,6 +48,16 @@
   "taps": 675,
   "ticks": 625,
   "commit": "da5593f"
+ },
+ {
+  "chart": "Bee D15",
+  "key": "Bee_-_BanYa_D15_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(1) 802 - Bee/802 - Bee.ssc",
+  "video": "https://youtu.be/h6hMwb60hhA",
+  "judged": 500,
+  "taps": 338,
+  "ticks": 162,
+  "commit": ""
  },
  {
   "chart": "Beethoven Virus D13",
@@ -220,6 +240,16 @@
   "commit": "7f649db"
  },
  {
+  "chart": "Final Audition 2 - SHORT CUT - D19",
+  "key": "Final_Audition_2__-_SHORT_CUT_-_-_Banya_D19_SHORTCUT",
+  "ssc_rel": "08 - FIESTA/1048 - [Short Cut] Final Audition 2/1048 - [Short Cut] Final Audition 2.ssc",
+  "video": "https://youtu.be/GDF4ndpdI30",
+  "judged": 901,
+  "taps": 313,
+  "ticks": 588,
+  "commit": "653e096"
+ },
+ {
   "chart": "Final Audition 2 - SHORT CUT - S17",
   "key": "Final_Audition_2__-_SHORT_CUT_-_-_Banya_S17_SHORTCUT",
   "ssc_rel": "08 - FIESTA/1048 - [Short Cut] Final Audition 2/1048 - [Short Cut] Final Audition 2.ssc",
@@ -250,6 +280,16 @@
   "commit": "1df1a8a"
  },
  {
+  "chart": "Final Audition D19",
+  "key": "Final_Audition_-_BanYa_D19_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(2) 204 - Final Audition/204 - Final Audition.ssc",
+  "video": "https://youtu.be/AXAYju0GBsc",
+  "judged": 700,
+  "taps": 487,
+  "ticks": 213,
+  "commit": ""
+ },
+ {
   "chart": "Final Audition Ep. 2-2 D23",
   "key": "Final_Audition_Ep._2-2_-_YAHPP_D23_ARCADE",
   "ssc_rel": "05 - NX~NX2/(2) D30 - Final Audition Episode 2-2/D30 - Final Audition Episode 2-2.ssc",
@@ -268,6 +308,16 @@
   "taps": 561,
   "ticks": 602,
   "commit": "a2d0412"
+ },
+ {
+  "chart": "First Love D15",
+  "key": "First_Love_-_BanYa_D15_HALFDOUBLE_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(4) 402 - First Love/402 - First Love.ssc",
+  "video": "https://youtu.be/cl7uy-mYWRA",
+  "judged": 450,
+  "taps": 357,
+  "ticks": 93,
+  "commit": ""
  },
  {
   "chart": "Gun Rock S20",
@@ -580,6 +630,16 @@
   "commit": ""
  },
  {
+  "chart": "We will meet again D11",
+  "key": "We_will_meet_again_-_BanYa_D11_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 715 - We Will Meet Again/715 - We Will Meet Again.ssc",
+  "video": "https://youtu.be/SqpYgEUEARk",
+  "judged": 300,
+  "taps": 181,
+  "ticks": 119,
+  "commit": ""
+ },
+ {
   "chart": "Wedding Crashers - SHORT CUT - S4",
   "key": "Wedding_Crashers_-_SHORT_CUT_-_-_SHK_S4_SHORTCUT",
   "ssc_rel": "14 - XX/16F1 - [Short Cut] Wedding Crashers/16F1 - [Short Cut] Wedding Crashers.ssc",
@@ -588,6 +648,16 @@
   "taps": 78,
   "ticks": 206,
   "commit": "4e5bc1e"
+ },
+ {
+  "chart": "Will-O-The-Wisp D20",
+  "key": "Will-O-The-Wisp_-_BanYa_D20_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 712 - Will O The Wisp/712 - Will O The Wisp.ssc",
+  "video": "https://youtu.be/VADcnBS5RDk",
+  "judged": 801,
+  "taps": 510,
+  "ticks": 291,
+  "commit": ""
  },
  {
   "chart": "Witch Doctor S19",
