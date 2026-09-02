@@ -4,10 +4,10 @@
 tree by `tools/rebuild_repairs.py`, so it cannot go stale. This file is the working ledger
 for what is **left**, and it is hand-kept: re-derive the counts before trusting them.
 
-As of 2026-09-02: **66 of the 121 census charts repaired**, 55 remaining. Fifteen of the
-last sixteen came through the extraction pipeline in one day (see group A).
+As of 2026-09-02 (night): **73 of the 121 census charts repaired**, 48 remaining.
+Twenty-one of the last twenty-two came through the extraction pipeline in one day (group A).
 
-## The remaining 55, by what actually blocks them
+## The remaining 48, by what actually blocks them
 
 ### A. Missing hold notes, not missing tick counts — 53 charts (was 54)
 
@@ -20,11 +20,22 @@ last sixteen came through the extraction pipeline in one day (see group A).
 > **last row** (the file wrote the hold as taps on exactly the rail's columns) and most fire
 > their ticks as a tail bomb. See REPAIR-WORKFLOW §6b.
 >
+> Since then: Final Audition D19, Final Audition 2 SC D19, Will-O-The-Wisp D20, Close Your
+> Eye S6, Winter S16, Beethoven Virus D21, Gun Rock D24.
+>
 > Surveyed and **parked** (holds the reader could not see, or a run structure the frames
-> contradict): Extravaganza D15, Final Audition Ep. 1 D15, Will-O-The-Wisp D16 and D20, She
+> contradict): Extravaganza D15, Final Audition Ep. 1 D15 and S17, Will-O-The-Wisp D16, She
 > Likes Pizza D18, Caprice of DJ Otada D22 (no rails visible anywhere - a different note
-> skin?), Dr. M D18, Mr. Larpus D18, Pump me Amadeus D15, Winter D17. Grid **mismatch** (the
-> tap grid itself is a different revision): Extravaganza D18, Vook D15, Mr. Larpus D16.
+> skin?), Dr. M D18, Mr. Larpus D18 and S15, Pump me Amadeus D15, Winter D17, Vook D21, Bee
+> S17 (a mid-chart hold of ~46 plus a 381-tick finale exceed the 388 owed: the tap grid is
+> short by ~37). Grid **mismatch** (the tap grid itself is a different revision):
+> Extravaganza D18, Vook D15, Mr. Larpus D16, Winter D21 (its finale pair is plain on
+> screen, but the file carries ~40 taps the game never judged around 60-75s).
+>
+> Next in the pipeline: the ten split-screen singles with no holds (She Likes Pizza S10,
+> Dr. M S9, A nightmare S6, All I Want For X-mas S5, Will-O-The-Wisp S16, Final Audition
+> S18, Beat of The War S16, My Way S15, Caprice of DJ Otada S21, Love is a Danger Zone S17)
+> - the reader handles a half-screen band, as Slam S18/S20 showed.
 
 This is the largest group and it is **not** the work the rest of this repo describes. These
 files contain **zero hold heads** while the game judges 15–588 more events than the file has
