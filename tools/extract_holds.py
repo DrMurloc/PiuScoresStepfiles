@@ -50,7 +50,7 @@ def main():
     ntaps = sum(1 for r in rows if "1" in r["Line"])          # judged events are ROWS: a jump is one
     t_first, t_last = float(rows[0]["Time"]), float(rows[-1]["Time"])
     import re
-    m = re.search(r"_([SD]P?\d+(?:_[A-Z0-9_]+?)?)_((?:HALFDOUBLE_)?(?:ARCADE|SHORTCUT|REMIX|FULLSONG))$", key)
+    m = re.search(r"_([SD]P?\d+(?:_[A-Z0-9]+)*?)_(ARCADE|SHORTCUT|REMIX|FULLSONG)$", key)   # desc words joined by spaces, suffix after the last underscore
     block = f"{m.group(1).replace('_', ' ')}_{m.group(2)}"
     if a_given is None:
         a, hit, total = R.match_offset(ons, taps)

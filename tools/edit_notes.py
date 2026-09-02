@@ -69,7 +69,7 @@ def main():
         for mi, rows in enumerate(measures):
             for r, row in enumerate(rows):
                 beat = 4 * mi + 4 * r / len(rows)
-                if b1 + 1e-6 < beat < b2 - 1e-6 and row[col] != "0":
+                if len(row) > col and b1 + 1e-6 < beat < b2 - 1e-6 and row[col] != "0":
                     measures[mi][r] = row[:col] + "0" + row[col + 1:]
                     cleared += 1
         if cleared:

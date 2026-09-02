@@ -30,7 +30,7 @@ def main():
     raw = json.load(open(os.path.join(ROOT, "sources", "certification-2026-08-30.json"), encoding="utf-8"))
     cert = raw if isinstance(raw, dict) else {c["vid"]: c for c in raw if isinstance(c, dict)}
     judged = next(int(e[(e["charts"][chart])["side"]]["judged"]) for e in cert.values() if chart in (e.get("charts") or {}))
-    m = re.search(r"_([SD]P?\d+(?:_[A-Z0-9_]+?)?)_((?:HALFDOUBLE_)?(?:ARCADE|SHORTCUT|REMIX|FULLSONG))$", key)
+    m = re.search(r"_([SD]P?\d+(?:_[A-Z0-9]+)*?)_(ARCADE|SHORTCUT|REMIX|FULLSONG)$", key)   # desc words joined by spaces, suffix after the last underscore
     block = f"{m.group(1).replace('_', ' ')}_{m.group(2)}"
     ssc = os.path.join(ROOT, "simfiles", ssc_rel)
     rows = list(csv.DictReader(open(os.path.join(CS_DIR, key + ".csv"), encoding="utf-8")))
