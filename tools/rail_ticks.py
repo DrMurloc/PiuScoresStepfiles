@@ -61,12 +61,18 @@ def main():
         head = flashes[-1] if flashes else s0 + lag
         tail = e0 + lag
         ch, ct = head - a, tail - a
-        inside = bisect.bisect_right(all_taps, ct - 0.02) - bisect.bisect_right(all_taps, ch + 0.02)
         rb, ra = read_before(head - 0.05), read_after(tail + 0.05)
         near = [t for t in taps[c] if abs(t - ch) <= 0.07]
         if rb and ra and ra[1] >= rb[1]:
-            # the converter counts a hold's head as its first tick, so the head's own judgement
-            # stays inside the count whether or not the old file had a tap there
+            # every file tap judged between the two READS is in the difference, not just the
+            # taps inside the rail's span (a read 0.5s before the head has the taps of that
+            # half second in front of it); the head's own row is the hold's first tick when
+            # the old file wrote it as a tap, so it stays in the count
+            lo_t, hi_t = rb[0] - a - 0.12, ra[0] - a - 0.12
+            between = [t for t in all_taps if lo_t < t <= hi_t]
+            if near:
+                between = [t for t in between if abs(t - ch) > 0.07]
+            inside = len(between)
             ticks = ra[1] - rb[1] - inside
             total += max(ticks, 0)
             what = f"counter {rb[1]}@{rb[0]:.2f} -> {ra[1]}@{ra[0]:.2f}: +{ra[1]-rb[1]} incl. {inside} taps -> {ticks} ticks"
