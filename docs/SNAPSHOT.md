@@ -5,6 +5,10 @@
 > A full regeneration is ~90 minutes of unattended pipeline plus a ~32 MB commit, and the
 > owner is the one who uploads the result at `/Admin/PiuCenter`. When repairs land, the right
 > move is to say *"the snapshot is now N charts behind"* and stop there.
+>
+> The owner's intended cadence (2026-09-02) is one regeneration at roughly **100 repaired
+> charts**, so a snapshot that is dozens of charts behind is the expected state, not a
+> problem to fix.
 
 ## What the zip is
 

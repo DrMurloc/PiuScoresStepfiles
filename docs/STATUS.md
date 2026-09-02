@@ -159,11 +159,13 @@ at 1,186 — the Phoenix 1 count — while Phoenix 2 lists it at 826.** The repa
 P1 and wrong for P2 by 360 notes. Slam D24 (P1 1,004 → P2 704) is the other census chart in
 this group, still open.
 
-Nothing here is wrong to fix against P1 footage — that is the mix the file describes. But a
-Phoenix 2 validation pass has to decide what the corpus looks like when the mixes disagree:
-per-mix stepfile variants, or a chart-level override that the pipeline selects by mix. That
-is a design decision for the owner, and it should be settled **before** extraction work
-starts, because it determines what extraction is even producing.
+**Settled (owner ruling, 2026-09-02): one `.ssc` per chart, at the most recent mix we have
+evidence for.** No per-mix variants and no mix-selected overrides. Phoenix 2 is the ideal and
+is not reachable until Phoenix 2 footage exists; a file at Phoenix 1 is "infinitely better"
+than one at an older mix. So Destination SC D21 at its Phoenix 1 count is correct as it
+stands, and a chart moves to its Phoenix 2 shape only when Phoenix 2 footage certifies it.
+The same ruling covers timing: model the file **as close to the game as possible**, which is
+what decides Mental Rider's timing question and any gimmick like Ignis Fatuus's.
 
 **Both charts are the owner's to revisit** (`sources/owner-revisit.json`, 2026-09-01). Their
 current state is accepted: leave them alone, and do not raise them in an audit.

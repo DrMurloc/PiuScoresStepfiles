@@ -26,6 +26,18 @@ Read [README.md](README.md) for the layout. This file holds the working rules.
    why. An exact total with a fabricated interior is still a fabrication.
 6. **Footage is never committed.** `videos/` and `work/` are gitignored.
 
+## Owner rulings (2026-09-02)
+
+- **One `.ssc` per chart, at the most recent mix we have evidence for.** No per-mix variants,
+  no mix-selected overrides. Phoenix 2 is the ideal and waits on Phoenix 2 footage; a file at
+  Phoenix 1 is "infinitely better" than one at an older mix. A chart already exact against
+  Phoenix 1 footage is correct as it stands even where Phoenix 2 changed its count.
+- **Model the file as close to the game as possible.** Where the game's timing, hold layout or
+  tick delivery disagrees with the file, the file changes — surgically, with the video as the
+  evidence — rather than the ticks being bent to fit the file's shape.
+- **The snapshot is regenerated at roughly 100 repaired charts, not per batch.** Rule 1 still
+  governs; this is the cadence the owner intends, so "N charts behind" is expected state.
+
 ## Environment
 
 All tooling runs on the piu-annotate virtualenv, which owns the converter these repairs are
