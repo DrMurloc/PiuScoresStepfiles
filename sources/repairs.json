@@ -1,5 +1,15 @@
 [
  {
+  "chart": "2006. LOVE SONG D14",
+  "key": "2006._LOVE_SONG_-_Banya_Production_D14_ARCADE",
+  "ssc_rel": "05 - NX~NX2/(2) D14 - 2006 Love Song/D14 - 2006 Love Song.ssc",
+  "video": "https://youtu.be/X6t8wL8Bkmc",
+  "judged": 401,
+  "taps": 343,
+  "ticks": 58,
+  "commit": ""
+ },
+ {
   "chart": "Another Truth D19",
   "key": "Another_Truth_-_Novasonic_D19_ARCADE",
   "ssc_rel": "01 - 1ST~3RD/(3) 112 - Another Truth/112 - Another Truth.ssc",
@@ -98,6 +108,16 @@
   "taps": 250,
   "ticks": 536,
   "commit": "11c9e8d"
+ },
+ {
+  "chart": "Csikos Post D16",
+  "key": "Csikos_Post_-_Banya_D16_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 736 - Csikos Post/736 - Csikos Post.ssc",
+  "video": "https://youtu.be/PjwAeE1sVbI",
+  "judged": 550,
+  "taps": 516,
+  "ticks": 34,
+  "commit": ""
  },
  {
   "chart": "Death Moon - SHORT CUT - D23",
@@ -330,6 +350,16 @@
   "commit": "994f101"
  },
  {
+  "chart": "Oh! Rosa D11",
+  "key": "Oh!_Rosa_-_BanYa_D11_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(4) 401 - Oh! Rosa/401 - Oh! Rosa.ssc",
+  "video": "https://youtu.be/1CZt_IOEe2w",
+  "judged": 300,
+  "taps": 269,
+  "ticks": 31,
+  "commit": ""
+ },
+ {
   "chart": "Pop The Track - SHORT CUT - D16",
   "key": "Pop_The_Track_-_SHORT_CUT_-_-_J-Mi__Midi-D__Ft._Hanna_Stockzell_D16_SHORTCUT",
   "ssc_rel": "10 - FIESTA 2/(1) 13E0 - [Short Cut] Pop The Track/13E0 - [Short Cut] Pop The Track.ssc",
@@ -400,6 +430,16 @@
   "commit": "9b23bea"
  },
  {
+  "chart": "She Likes Pizza D11",
+  "key": "She_Likes_Pizza_-_BanYa_D11_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(1) 310 - She Likes Pizza/310 - She Likes Pizza.ssc",
+  "video": "https://youtu.be/Cwt1seaJnxM",
+  "judged": 300,
+  "taps": 243,
+  "ticks": 57,
+  "commit": ""
+ },
+ {
   "chart": "Slam D22",
   "key": "Slam_-_Novasonic_D22_ARCADE",
   "ssc_rel": "02 - S.E.~EXTRA/(3) 516 - Slam/516 - Slam.ssc",
@@ -407,6 +447,26 @@
   "judged": 1000,
   "taps": 505,
   "ticks": 495,
+  "commit": ""
+ },
+ {
+  "chart": "Slam S18",
+  "key": "Slam_-_Novasonic_S18_INFOBAR_TITLE_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(3) 516 - Slam/516 - Slam.ssc",
+  "video": "https://youtu.be/0zotlsONiVU",
+  "judged": 702,
+  "taps": 420,
+  "ticks": 282,
+  "commit": ""
+ },
+ {
+  "chart": "Slam S20",
+  "key": "Slam_-_Novasonic_S20_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(3) 516 - Slam/516 - Slam.ssc",
+  "video": "https://youtu.be/0zotlsONiVU",
+  "judged": 800,
+  "taps": 504,
+  "ticks": 296,
   "commit": ""
  },
  {
@@ -478,6 +538,16 @@
   "taps": 279,
   "ticks": 789,
   "commit": "fe5f470"
+ },
+ {
+  "chart": "Turkey March D13",
+  "key": "Turkey_March_-_BanYa_D13_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(1) 303 - Turkey March/303 - Turkey March.ssc",
+  "video": "https://youtu.be/7KGWQbLGtoA",
+  "judged": 304,
+  "taps": 285,
+  "ticks": 19,
+  "commit": ""
  },
  {
   "chart": "Wedding Crashers - SHORT CUT - S4",
