@@ -4,17 +4,27 @@
 tree by `tools/rebuild_repairs.py`, so it cannot go stale. This file is the working ledger
 for what is **left**, and it is hand-kept: re-derive the counts before trusting them.
 
-As of 2026-09-01 (evening): **51 of the 121 census charts repaired**, 70 remaining.
+As of 2026-09-02: **66 of the 121 census charts repaired**, 55 remaining. Fifteen of the
+last sixteen came through the extraction pipeline in one day (see group A).
 
-## The remaining 70, by what actually blocks them
+## The remaining 55, by what actually blocks them
 
 ### A. Missing hold notes, not missing tick counts — 53 charts (was 54)
 
-> **The capability now exists (2026-09-02).** `tools/receptor_reader.py` reads judged events
-> and hold rails per column off the receptors, and Slam D22 was the first of this group to
-> land: its 494 hold events were two centre-panel finale holds the footage shows plainly,
-> added with `edit_notes.py` and ticked as the counter fired them. See REPAIR-WORKFLOW §6b.
-> The rest of this group is now work, not a blocker.
+> **The capability now exists (2026-09-02), and it runs.** `tools/extract_holds.py` surveys a
+> chart's video for rails, `finale_ticks.py` prices them by closure, `auto_anchors.py` gives
+> the grid verdict. Fifteen of this group landed in one day: Slam D22, S18, S20, 2006. LOVE
+> SONG D14, She Likes Pizza D11, Csikos Post D16, Turkey March D13, Oh! Rosa D11, Dr. M D14,
+> Beethoven Virus D13, My Way D16, We will meet again D11, First Love D15, Another Truth D18,
+> Bee D15, Final Audition D19. The shape repeats: the game's finale holds begin on the file's
+> **last row** (the file wrote the hold as taps on exactly the rail's columns) and most fire
+> their ticks as a tail bomb. See REPAIR-WORKFLOW §6b.
+>
+> Surveyed and **parked** (holds the reader could not see, or a run structure the frames
+> contradict): Extravaganza D15, Final Audition Ep. 1 D15, Will-O-The-Wisp D16 and D20, She
+> Likes Pizza D18, Caprice of DJ Otada D22 (no rails visible anywhere - a different note
+> skin?), Dr. M D18, Mr. Larpus D18, Pump me Amadeus D15, Winter D17. Grid **mismatch** (the
+> tap grid itself is a different revision): Extravaganza D18, Vook D15, Mr. Larpus D16.
 
 This is the largest group and it is **not** the work the rest of this repo describes. These
 files contain **zero hold heads** while the game judges 15–588 more events than the file has
