@@ -25,6 +25,7 @@ def repair_run(pts, cap, rate_max=60.0):
     """Within one run: pick each read's best alternative that continues the run (including
     dropped hundreds restored); skip a read nothing explains. Returns [(t, v)]."""
     out, est = [], None
+    pts_after = {t: pts[i + 1:i + 3] for i, (t, _) in enumerate(pts)}
     for t, v in pts:
         if est is None:
             w = min(fix_digits(v, cap) or {v})
@@ -39,6 +40,18 @@ def repair_run(pts, cap, rate_max=60.0):
             pick = min(ok, key=lambda c: abs(c - est[1]))
             out.append((t, pick))
             est = (t, pick)
+            continue
+        # a finale bomb outruns any rate cap (Slam S18: 027 -> 300 in 0.2s). A value that
+        # PERSISTS - the same read again within the next two, or maxcombo itself - is the
+        # counter resting, not a misread, and is accepted at any rate
+        alts = {w for w in fix_digits(v, cap) if w >= est[1] - 2}
+        if alts:
+            nxt = {w for _, nv in pts_after.get(t, []) for w in fix_digits(nv, cap)}
+            keep = [w for w in alts if w == cap or w in nxt]
+            if keep:
+                pick = max(keep)
+                out.append((t, pick))
+                est = (t, pick)
     return out
 
 def candidates(pts):
@@ -79,5 +92,8 @@ def solve(pts, resets, pg, mc, max_candidates=14):
             if best is None or score < best[0]:
                 best = (score, runs, peaks)
     if best is None or best[0] > max(3, 0.02 * pg):
+        if best is not None:
+            print("  best attempt: peaks " + str(best[2]) + f" sum {sum(best[2])} vs P+G {pg}; runs "
+                  + "  ".join(f"{r[0][0]:.1f}-{r[-1][0]:.1f}:{r[0][1]}->{max(v for _, v in r)}" for r in best[1]))
         return None
     return best[1], best[2], best[0]
