@@ -81,6 +81,10 @@ Once a version has been uploaded, a further batch **needs a new stamp**.
 
 ## Upload ordering (owner)
 
-The P2 chart-list switch must be live first. The current zip also carries the `stepfiles/`
+The importer matches this zip's keys against the **Phoenix 2** catalog
+(`PiuCenterCrawlSaga.MatchCatalog`, shipped 2026-08-26) — a key carries the chart's level and
+levels move between mixes, so a release read against Phoenix 1 mismatches every re-rated
+chart and misses P2-only songs outright. The site's P2 chart list must therefore be current
+in production. The current zip also carries the `stepfiles/`
 tree, which is what the step-chart failure map and hold-share features consume, so it is a
 single upload covering those features *and* the tick repairs.
