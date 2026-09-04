@@ -42,10 +42,25 @@ def main():
         for c, ch in enumerate(L[:ncols]):
             if ch in "12":
                 row_beats.setdefault(c, []).append((float(r["Time"]), float(r["Beat"])))
+    # the chartstruct pads a narrow style (half-double is 6 wide) to the full pad with equal
+    # zeros on both sides, so its column indices sit PAST the file's. Map back before editing.
+    body = open(ssc, encoding="utf-8", newline="").read()
+    width = ncols
+    for blk in body.split("#NOTEDATA:;")[1:]:
+        d = re.search(r"#DESCRIPTION:([^;]*);", blk)
+        if d and d.group(1) == block.rsplit("_", 1)[0]:
+            widths = {len(l.strip()) for l in blk.split("#NOTES:")[-1].splitlines()
+                      if re.fullmatch(r"[0-9MFLXW]+", l.strip())}
+            if len(widths) == 1:
+                width = widths.pop()
+            break
+    pad = (ncols - width) // 2
+    if pad:
+        print(f"  block is {width} panels wide: chartstruct column - {pad} = file column")
     pins = []
     for rail in spec:
-        c, ch, ct = rail["col"], rail["head"] - a, rail["tail"] - a
-        near = [(abs(t - ch), b) for t, b in row_beats.get(c, []) if abs(t - ch) <= 0.12]
+        c, ch, ct = rail["col"] - pad, rail["head"] - a, rail["tail"] - a
+        near = [(abs(t - ch), b) for t, b in row_beats.get(rail["col"], []) if abs(t - ch) <= 0.12]
         b0 = min(near)[1] if near else R.snap_beat(beat_at(ch))
         b1 = R.snap_beat(beat_at(ct))
         if b1 <= b0:

@@ -51,6 +51,13 @@ def beat_to_pos(measures, beat, cols):
 def set_char(measures, beat, col, ch, cols):
     mi, r = beat_to_pos(measures, beat, cols)
     row = measures[mi][r]
+    # a half-double block is SIX columns wide, and python slicing would silently APPEND
+    # rather than fail when the column is out of range - which is how First Love D15 got a
+    # hold on a seventh panel that does not exist (it crashed the pipeline's featurizer)
+    if col >= len(row):
+        raise SystemExit(f"column {col} is outside this block's {len(row)} panels (row {row!r} "
+                         f"at beat {beat}). Chartstruct columns are PADDED for narrow styles: "
+                         f"file column = chartstruct column - (10 - width) // 2.")
     measures[mi][r] = row[:col] + ch + row[col + 1:]
 
 def main():
