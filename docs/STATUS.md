@@ -237,4 +237,5 @@ same operation run over 4,582 charts instead of 61.
 
 Everything the current tooling could reach has been reached, except Mental Rider (timing
 model) and the eight footage-blocked charts in group E. The snapshot in `snapshots/` was
-built at 42 charts and is now nine behind; it is regenerated only when the owner asks.
+regenerated at 97 charts on the owner's word (2026-09-04, `piucenter-snapshot-090326.zip`,
+release `p2-090326`) and is current; it is regenerated only when the owner asks.
