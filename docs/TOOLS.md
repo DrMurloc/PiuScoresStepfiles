@@ -208,6 +208,10 @@ from the best state seen rather than the last.
 
 **`edit_notes.py add-hold|move-release <ssc> <BLOCK> <col> <startBeat> <endBeat>`**
 **`edit_notes.py remove <ssc> <BLOCK> <col> <beat>`**
+**Its `<col>` is a FILE column, not a chartstruct column** — see the padding rule in
+EVIDENCE-RULES. It now refuses a column past the row's width; before that guard, python
+slicing appended instead of failing and First Love D15 shipped a hold on a seventh panel.
+`apply_rails` takes chartstruct columns and does the mapping itself.
 Surgical note-grid edits, for content the file is genuinely missing rather than mis-ticking.
 `add-hold` clears the column's taps inside the span (the old files wrote holds as repeated
 taps and the converter refuses a hold laid over them). `remove` deletes a phantom — one note

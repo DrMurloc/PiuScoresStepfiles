@@ -160,6 +160,22 @@ its heads and 457 after its tail, but the frames show a MISS at 105.10 and the c
 `after > before` proves nothing; `rail_ticks` now refuses any bracket with a lower read
 between its two ends, and the frames at the head decide.
 
+## Narrow styles: the chartstruct pads, the file does not
+
+A `pump-halfdouble` block is **six** panels wide in the `.ssc`, and the ingest centres it in
+the ten-column pad with two zeros on each side. So a rail seen at receptor column *c* is
+file column *c − 2*, and every tool that reads a chartstruct (`rail_ticks`, `extract_holds`,
+`excess_scan`) reports columns two higher than the file uses. Verified on First Love D15 by
+diffing its raw rows against its chartstruct line for line: raw `000010` is chartstruct
+`0000001000`.
+
+The general rule is `file column = chartstruct column − (10 − width) // 2`. Getting it wrong
+does not necessarily fail loudly: the converter accepted a hold written past the end of a
+six-wide row and `tick_verify` still closed on the judged count, because the arithmetic does
+not care which panel a tick belongs to. What caught it was the annotation pipeline's
+featurizer, which refuses an inhomogeneous array — ninety minutes into a rebuild. **A total
+that closes is not evidence that the arrows are in the right place.**
+
 ## Instantaneous tick bombs
 
 Some charts deliver a hold's ticks at one instant rather than across the hold: Ignis Fatuus SC
