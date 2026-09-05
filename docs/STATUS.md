@@ -4,7 +4,7 @@
 tree by `tools/rebuild_repairs.py`, so it cannot go stale. This file is the working ledger
 for what is **left**, and it is hand-kept: re-derive the counts before trusting them.
 
-As of 2026-09-05: **99 of the 121 census charts repaired**, 22 remaining. Twenty-nine of
+As of 2026-09-05: **101 of the 121 census charts repaired**, 20 remaining. Twenty-nine of
 the last thirty came through the extraction pipeline in two days (group A).
 
 ## The remaining 40, by what actually blocks them
@@ -43,8 +43,9 @@ the last thirty came through the extraction pipeline in two days (group A).
 > than the file's 16th stream - a re-step, whatever the grid screen says), Leather D22 (31
 > rails on screen against 227 holds in the file and a 37-reset play - a re-tick job not
 > attempted), Conflict S22 (beat 5917 at 116s: a BPM gimmick), Bee
-> S17 (a mid-chart hold of ~46 plus a 381-tick finale exceed the 388 owed: the tap grid is
-> short by ~37). Grid **mismatch** (the tap grid itself is a different revision):
+> S17 — **repaired 2026-09-05**: that mid-chart hold never existed. Its whole evidence was one
+> sub-4 junk read, which ends a segment and charges the climb after it as accrual; the finale
+> alone is the 389, fired in a tenth of a second. Grid **mismatch** (the tap grid itself is a different revision):
 > Extravaganza D18, Winter D21 (its finale pair is plain on screen, but the file carries ~40
 > taps the game never judged around 60-75s). **Vook D15 and Mr. Larpus D16 came OFF this
 > list** on 2026-09-05 - both were finale holds all along. Mr. Larpus D16 is the cautionary

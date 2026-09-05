@@ -100,6 +100,16 @@
   "commit": ""
  },
  {
+  "chart": "Bee S17",
+  "key": "Bee_-_BanYa_S17_INFOBAR_TITLE_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(1) 802 - Bee/802 - Bee.ssc",
+  "video": "https://youtu.be/5xJTDl3a67s",
+  "judged": 830,
+  "taps": 441,
+  "ticks": 389,
+  "commit": ""
+ },
+ {
   "chart": "Beethoven Virus D13",
   "key": "Beethoven_Virus_-_BanYa_D13_ARCADE",
   "ssc_rel": "02 - S.E.~EXTRA/(3) 505 - Beethoven Virus/505 - Beethoven Virus.ssc",
@@ -407,6 +417,16 @@
   "judged": 500,
   "taps": 338,
   "ticks": 162,
+  "commit": ""
+ },
+ {
+  "chart": "Final Audition Ep. 1 S17",
+  "key": "Final_Audition_Ep.1_-_BanYa_S17_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(1) 922 - Final Audition Episode 1/922 - Final Audition Episode 1.ssc",
+  "video": "https://youtu.be/DgLesNMzb1w",
+  "judged": 606,
+  "taps": 443,
+  "ticks": 163,
   "commit": ""
  },
  {
