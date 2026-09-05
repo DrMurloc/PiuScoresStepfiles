@@ -445,8 +445,8 @@
   "ssc_rel": "02 - S.E.~EXTRA/(4) 402 - First Love/402 - First Love.ssc",
   "video": "https://youtu.be/cl7uy-mYWRA",
   "judged": 450,
-  "taps": 357,
-  "ticks": 93,
+  "taps": 356,
+  "ticks": 94,
   "commit": ""
  },
  {
@@ -578,6 +578,16 @@
   "taps": 286,
   "ticks": 514,
   "commit": "994f101"
+ },
+ {
+  "chart": "Mr. Larpus D16",
+  "key": "Mr._Larpus_-_BanYa_D16_ARCADE",
+  "ssc_rel": "02 - S.E.~EXTRA/(4) 405 - Mr. Larpus/405 - Mr. Larpus.ssc",
+  "video": "https://youtu.be/NhCMpQh2eaI",
+  "judged": 550,
+  "taps": 425,
+  "ticks": 125,
+  "commit": ""
  },
  {
   "chart": "Mr. Larpus D18",
@@ -857,6 +867,16 @@
   "judged": 304,
   "taps": 285,
   "ticks": 19,
+  "commit": ""
+ },
+ {
+  "chart": "Vook D15",
+  "key": "Vook_-_Banya_D15_HALFDOUBLE_ARCADE",
+  "ssc_rel": "03 - REBIRTH~PREX 3/(2) 735 - Vook/735 - Vook.ssc",
+  "video": "https://youtu.be/0EEHF-jmwBI",
+  "judged": 450,
+  "taps": 353,
+  "ticks": 97,
   "commit": ""
  },
  {

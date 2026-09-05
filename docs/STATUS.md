@@ -4,7 +4,7 @@
 tree by `tools/rebuild_repairs.py`, so it cannot go stale. This file is the working ledger
 for what is **left**, and it is hand-kept: re-derive the counts before trusting them.
 
-As of 2026-09-03: **97 of the 121 census charts repaired**, 24 remaining. Twenty-nine of
+As of 2026-09-05: **99 of the 121 census charts repaired**, 22 remaining. Twenty-nine of
 the last thirty came through the extraction pipeline in two days (group A).
 
 ## The remaining 40, by what actually blocks them
