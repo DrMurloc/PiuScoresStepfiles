@@ -45,8 +45,12 @@ the last thirty came through the extraction pipeline in two days (group A).
 > attempted), Conflict S22 (beat 5917 at 116s: a BPM gimmick), Bee
 > S17 (a mid-chart hold of ~46 plus a 381-tick finale exceed the 388 owed: the tap grid is
 > short by ~37). Grid **mismatch** (the tap grid itself is a different revision):
-> Extravaganza D18, Vook D15, Mr. Larpus D16, Winter D21 (its finale pair is plain on
-> screen, but the file carries ~40 taps the game never judged around 60-75s).
+> Extravaganza D18, Winter D21 (its finale pair is plain on screen, but the file carries ~40
+> taps the game never judged around 60-75s). **Vook D15 and Mr. Larpus D16 came OFF this
+> list** on 2026-09-05 - both were finale holds all along. Mr. Larpus D16 is the cautionary
+> one: it screened at -116 on a play with 11 misses, because its own rails cross the counter
+> and the play resets 14 times, so no curve could be built. `run_drift` measures the tap grid
+> inside single runs instead and cleared it.
 >
 > The split-screen singles followed (the reader takes a half-screen band): She Likes Pizza
 > S10, A nightmare S6, All I Want For X-mas S5, Will-O-The-Wisp S16, Final Audition S18,
