@@ -186,6 +186,23 @@ not care which panel a tick belongs to. What caught it was the annotation pipeli
 featurizer, which refuses an inhomogeneous array — ninety minutes into a rebuild. **A total
 that closes is not evidence that the arrows are in the right place.**
 
+## A sub-4 read is always junk, and it invents holds
+
+The combo counter is **blank below 4**, so any read of 0–3 is the reader finding digits in an
+empty box. One of those is not harmless noise: it ends a segment, and every tool that measures
+between segment boundaries then charges the whole climb after it as accrual. A lone `3` in
+Bee S17 invented a 37-tick mid-chart hold, which is what made its finale (381) plus that
+"hold" exceed the 388 the chart owed — and that contradiction is why the chart sat parked as
+"the tap grid must be ~37 short". It was not: the reads either side of the 3 are one apart and
+no rail is visible there. `excess_scan`, `run_drift` and `phantom_scan` all drop reads below 4.
+
+## A rail shorter than the detector's floor is still a rail
+
+`rails()` defaults to a 0.30s minimum length, which exists because flash decay can masquerade
+as a rail. It also hides real ones: Final Audition Ep. 1 S17 was parked as having *no rail
+inside the chart*, and its finale pair is 0.28s. **Before concluding a chart has no holds,
+re-scan its closing seconds at `min_len=0.15`** and check the candidates against the counter.
+
 ## Instantaneous tick bombs
 
 Some charts deliver a hold's ticks at one instant rather than across the hold: Ignis Fatuus SC
