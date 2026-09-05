@@ -39,7 +39,16 @@ the last thirty came through the extraction pipeline in two days (group A).
 > contradict): She Likes Pizza D18 — re-scanned at `min_len=0.15` it shows **15** rails, not
 > three, and they price to about 176 of its 269 (36 + 76 on the two big ones, single digits on
 > most of the rest, ~41 on the opening pair from frames). Roughly 93 events are still
-> unlocated, so it stays parked rather than ship a guessed interior. Mr. Larpus S15 (frames show notes on col 1 the file
+> unlocated, so it stays parked rather than ship a guessed interior - its opening pair reads
+> 045 in the frame, not 145, and its +99 run is a dropped hundred, so the tap grid is right
+> and the missing events are ticks the counter never showed. Mr. Larpus S15 (its 42: one
+> real hold is visible in frames - a col-2 mini-hold at beat 148 worth ~10 events, two stacked
+> arrows arriving together - and the other ~32 are not; both other excess spots are plain
+> drills the counter follows note for note, and drift shows a few extra file notes as well as
+> missing ones, so it is a small grid revision, not a hold). We will meet again S13 (a
+> different revision: the flash match is under 30% in every stretch of the chart at any
+> offset, and the counter reaches its final 510 three to four seconds before the file's last
+> row would arrive). Mr. Larpus S15 was previously listed here as (frames show notes on col 1 the file
 > does not have - a re-step), We will meet again S13 (the game's intro is visibly sparser
 > than the file's 16th stream - a re-step, whatever the grid screen says), Leather D22 (31
 > rails on screen against 227 holds in the file and a 37-reset play - a re-tick job not
