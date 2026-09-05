@@ -57,10 +57,18 @@ def main():
     runs, cur = [], []
     for i, (t, v) in enumerate(pers):
         if cur and (v < cur[-1][1] or t - cur[-1][0] > gap):
-            nxt = pers[i + 1][1] if i + 1 < len(pers) else None
-            confirmed = nxt is None or nxt <= v + 12
-            if not confirmed:
-                continue
+            # A real reset restarts at 1 and STAYS low while it climbs again. A mangled read
+            # does not: Extravaganza D18's reader intermittently drops the leading digit, so it
+            # emits 10, 111, 12, 13, 14, 15, 18, 121 where the counter reads 110..121, and
+            # every one of those lone lows looks like a fresh reset climbing. Requiring the
+            # next half second to stay near v rejects them and accepts a genuine reset (which
+            # reads 4, 5, 6, 7). Erring towards MERGING is the safe direction: a missed split
+            # only inflates the drift positively, and a large positive is already suspect and
+            # gets checked against the raw counter, whereas a false split invents evidence.
+            ahead = [w for t2, w in pers[i + 1:i + 7] if t2 <= t + 0.6]
+            if not (v <= 15 and all(w <= v + 20 for w in ahead)):
+                if v < cur[-1][1]:
+                    continue
             runs.append(cur)
             cur = []
         cur.append((t, v))

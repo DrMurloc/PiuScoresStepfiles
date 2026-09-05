@@ -112,6 +112,20 @@ When the slack is more negative than the play's miss count, suspect the curve fi
 measure locally with `run_drift`, which compares the counter's delta to the file's taps inside
 a single run and needs no structure at all.
 
+**A slack profile that falls and then recovers is broken, whatever its verdict.** Slack rises
+at holds and falls only at misses, so it cannot plunge 117 and climb 160 on a six-miss play —
+Extravaganza D18 screens +59, −58, +102, +78 across four zones, and the cause is visible in
+the run count: the solver placed 4 runs against 9 resets, and each reset it dropped moves the
+cumulative under everything after it. Read the *profile*, not just the verdict.
+
+**A mangled read imitates a reset, and a run of them imitates a reset climbing.** The reader
+drops leading digits in bursts: Extravaganza D18 emits 10, 12, 13, 14, 15, 18 where the
+counter shows 110–118, and 21 where it shows 211. Each is low, each is followed by more lows,
+and splitting a run at one charges the whole climb after it as accrual — the phantom +189 and
++99 in that chart's drift. `run_drift` demands a candidate reset stay near its value for half
+a second, which rejects most of these, but the residue is why a **large positive drift is a
+prompt to read the raw counter, never a measurement**.
+
 ## Reading the audits honestly
 
 **Violation score is inflated by GOODs.** Each GOOD drags `cum − taps` down by one,
