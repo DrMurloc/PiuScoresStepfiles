@@ -51,9 +51,11 @@ the last thirty came through the extraction pipeline in two days (group A).
 > offset, and the counter reaches its final 510 three to four seconds before the file's last
 > row would arrive). Mr. Larpus S15 was previously listed here as (frames show notes on col 1 the file
 > does not have - a re-step), We will meet again S13 (the game's intro is visibly sparser
-> than the file's 16th stream - a re-step, whatever the grid screen says), Leather D22 (31
-> rails on screen against 227 holds in the file and a 37-reset play - a re-tick job not
-> attempted), Conflict S22 (beat 5917 at 116s: a BPM gimmick), Bee
+> than the file's 16th stream - a re-step, whatever the grid screen says), Leather D22 (measured 2026-09-06: `run_drift` is +0 across its hold-free runs, so the
+> grid is right and it is a re-TICK - 620 events owed over 227 file holds; `rail_ticks` at
+> min_len 0.15 brackets ~48 rails for ~325 of them, one of those a leading-1 read, and the
+> rest sit in reset-blocked rails and holds under the detector's floor, so its interior would
+> still be a guess), Conflict S22 (beat 5917 at 116s: a BPM gimmick), Bee
 > S17 — **repaired 2026-09-05**: that mid-chart hold never existed. Its whole evidence was one
 > sub-4 junk read, which ends a segment and charges the climb after it as accrual; the finale
 > alone is the 389, fired in a tenth of a second. Grid **mismatch** (the tap grid itself is a different revision):
@@ -99,12 +101,18 @@ rows). Both wrong rows were nearly removed first: the counter alone cannot say *
 of a drill is missing, and the flash-matched offset was one beat late, which hides a
 phantom exactly. See EVIDENCE-RULES.
 
-### B. Confirmed re-step, not re-tick — 2 charts
+### B. Confirmed re-step, not re-tick — 1 chart
 
 `grid_screen` says the file carries taps the game never judged, so the note grid is a
-different chart revision: **Slam D24** and **Leather D22**. Same extraction capability as
-group A. (Slam D24 keeping this verdict is consistent with its Phoenix 2 re-step, 1,004 →
-704 notes; it is also on the owner's manual-pass list.)
+different chart revision: **Slam D24**. Same extraction capability as group A. (Slam D24
+keeping this verdict is consistent with its Phoenix 2 re-step, 1,004 → 704 notes; it is
+also on the owner's manual-pass list.)
+
+> **Leather D22 left this group on 2026-09-06.** Its -115 was the curve failing on a
+> 37-reset play, the same way Mr. Larpus D16's -116 was: `run_drift` at the swept offset
+> (11.30) is **+0** across every hold-free run, and no run drifts negative past its misses.
+> The grid is right; the 620 owed events are hold ticks over 227 file holds. It is parked
+> on that measurement (group A above), not on a verdict.
 
 > This group was **eleven** charts until 2026-09-01, when an audit found the gate itself was
 > wrong: `grid_screen` counted arrows instead of steps, so every jump counted twice and
@@ -256,3 +264,29 @@ Everything the current tooling could reach has been reached, except Mental Rider
 model) and the eight footage-blocked charts in group E. The snapshot in `snapshots/` was
 regenerated at 97 charts on the owner's word (2026-09-04, `piucenter-snapshot-090326.zip`,
 release `p2-090326`) and is current; it is regenerated only when the owner asks.
+
+## Beyond the census (sized 2026-09-06)
+
+The census was the *blatantly* wrong 121. `sources/tail-2026-09-06.json` is the rest of the
+corpus measured the same way - every block through the converter (`tick_verify`'s own rule)
+against the catalog's Phoenix note count, matched through the pack's own mix (a Rebirth-pack
+S13 is Phoenix's S17), videos from the site's banked `ChartVideo` rows (`tools/catalog_sweep.py`):
+
+- 4,581 blocks converted; 4,495 matched to a catalog chart, 62 ambiguous, 24 unmatched
+  (title variants: Allegro Piu Mosso, Bullfighting's Song, Close Your Eyes, Tream Vook of the
+  war REMIX, the Baroque Virus / Gargoyle full-song v1/v2 pairs), 37 without a count yet.
+- **2,234 exact.** 2,224 disagree: 17 census keys (the 15 open ones plus two matcher
+  artifacts - Come to Me's S13-key and XX OPENING SC S6 are exact at their video counts) and
+  **2,207 beyond the census: 1,181 within 1%, 305 within 5%, 721 further off** (370 at
+  5-20%, 348 at 20-50%, 3 past 50%). None has more taps than the game judges.
+- The 721 by shape: **447 over-ticked** (authored `#TICKCOUNTS` above the game), **217
+  under-ticked**, **22 single-region** (one hold carries the whole difference - closure would
+  price it exactly), 1 hold-less, and 34 that are the *second* corpus block of a re-rated
+  chart (an old pack's level; 11 of those have a sibling block already exact). All 721 have
+  a banked video, 663 of them Nevsister. Levels 15-24 hold 570 of them.
+
+What the census taught applies unchanged: the game's tick counts follow no per-beat rule
+(EVIDENCE-RULES, "No per-beat tick rate"), so a hold is priced by its footage or not at all.
+The 22 single-region charts are the only ones closure could price without a distribution
+guess, and even they need footage to clear the grid first. Nothing here is authored: this is
+the worklist for a scope decision, not a batch in progress.

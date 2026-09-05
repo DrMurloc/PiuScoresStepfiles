@@ -240,6 +240,14 @@ The acceptance gate. Runs piu-annotate's converter over the block in our tree an
 Checks a packaged release actually carries the repairs: the `.ssc` through the converter, the
 `Hold ticks` in the release's chart JSON, and the judged count must all agree.
 
+**`catalog_sweep.py <chart-json folder> <catalog.txt> <videos.txt> <out.json> [--pct 5]`**
+Sizes what is wrong *beyond* the census: every corpus block through the converter against the
+catalog's Phoenix note count (two sqlcmd dumps, the queries are in its header), matched
+through the pack's own mix - a Rebirth-pack S13 block is Phoenix's S17, so a key's level is
+never compared with Phoenix directly. Writes the tail past the threshold with each chart's
+shape (over-ticked / under-ticked / single-region / hold-less / duplicate block) and its banked
+video. `sources/tail-2026-09-06.json` is its output; nothing in it is authored by this tool.
+
 **`rebuild_repairs.py`**
 Regenerates `sources/repairs.json` from the tree — any census chart whose file now converts to
 exactly its judged count is a repaired one. Never hand-edit the manifest; run this.

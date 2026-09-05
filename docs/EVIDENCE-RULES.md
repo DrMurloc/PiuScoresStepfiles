@@ -227,6 +227,19 @@ forcing 541 ticks into a hold four seconds away from where the game fires them w
 count-right and shape-wrong. Recognise it by a first read that is already in the hundreds
 with an empty screen just before, and put the chart on the extraction pile.
 
+## No per-beat tick rate
+
+The game's hold ticks are authored per chart, not derived from hold length. Across the 43
+repaired charts whose single hold region carries an exact measured count, ticks per beat run
+from **3.75 to 414** (median 49): Imagination S18's ten rails over 89 beats tick at 3.75, Love
+is a Danger Zone pt.2 [Another] S18's triple over 31 beats at 4.08, and every finale is a
+designed remainder - Bee S17's 389 sit on 0.94 beats, Beethoven Virus D13's 146 on 0.37. So
+the total is a round number the step artist landed on, and the last hold absorbs whatever
+that takes. Consequences: a hold is priced by its footage or by closure over ONE region, never
+by a rate; a file whose ticks "look reasonable" per beat is not evidence of anything; and the
+2,207 beyond-census charts cannot be re-ticked from the catalog count alone unless a single
+region carries the whole difference (see STATUS, "Beyond the census").
+
 ## Drill charts: windows, not brackets
 
 A 0.1s hold cannot be bracketed by a persistence-based curve — its "observed" count is 0 or
