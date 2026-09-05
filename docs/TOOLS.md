@@ -100,7 +100,9 @@ a perfect-play counter) and sends the remainder to the rest. `--burst` rewrites 
 region's schedule as a tail burst — `--pre` per beat up to the burst beat (default 2), then a
 rate tuned against the converter to land exactly — for finales the counter shows firing in
 the last stretch (Slam D22 009 → 463 in 0.2s; FA2 SC D19 577 ticks in one frame; My Way
-D16 47 steady then 101 at once, `--burst 193 --pre 16`).
+D16 47 steady then 101 at once, `--burst 193 --pre 16`). **Not on a gimmick beat map**: Conflict
+S22 runs ~19 beats a second through its ending, and a burst there came out of the converter at
+729 ticks against 204 owed; that chart ships flat, priced by closure alone.
 
 **`auto_anchors.py "<chart>" <offset>`**
 The grid verdict without hand forensics: reads → `continuity_repair` (dropped hundreds, a
