@@ -4,7 +4,7 @@
 tree by `tools/rebuild_repairs.py`, so it cannot go stale. This file is the working ledger
 for what is **left**, and it is hand-kept: re-derive the counts before trusting them.
 
-As of 2026-09-05: **103 of the 121 census charts repaired**, 18 remaining. Twenty-nine of
+As of 2026-09-05: **105 of the 121 census charts repaired**, 16 remaining. Twenty-nine of
 the last thirty came through the extraction pipeline in two days (group A).
 
 ## The remaining 40, by what actually blocks them
@@ -36,9 +36,10 @@ the last thirty came through the extraction pipeline in two days (group A).
 > frames - '52' was 92 - and a 456-event finale pair that is the entire run after a MISS).
 >
 > Surveyed and **parked** (holds the reader could not see, or a run structure the frames
-> contradict): Final Audition Ep. 1 S17, She Likes Pizza D18 (three rails price 153 of its
-> 269; the closure solver's third run was built on junk reads and the rest cannot be located
-> - a frame walk of the whole chart), Mr. Larpus S15 (frames show notes on col 1 the file
+> contradict): She Likes Pizza D18 — re-scanned at `min_len=0.15` it shows **15** rails, not
+> three, and they price to about 176 of its 269 (36 + 76 on the two big ones, single digits on
+> most of the rest, ~41 on the opening pair from frames). Roughly 93 events are still
+> unlocated, so it stays parked rather than ship a guessed interior. Mr. Larpus S15 (frames show notes on col 1 the file
 > does not have - a re-step), We will meet again S13 (the game's intro is visibly sparser
 > than the file's 16th stream - a re-step, whatever the grid screen says), Leather D22 (31
 > rails on screen against 227 holds in the file and a 37-reset play - a re-tick job not
@@ -46,8 +47,7 @@ the last thirty came through the extraction pipeline in two days (group A).
 > S17 — **repaired 2026-09-05**: that mid-chart hold never existed. Its whole evidence was one
 > sub-4 junk read, which ends a segment and charges the climb after it as accrual; the finale
 > alone is the 389, fired in a tenth of a second. Grid **mismatch** (the tap grid itself is a different revision):
-> Winter D21 (its finale pair is plain on screen, but the file carries ~40 taps the game never
-> judged around 60-75s). **Extravaganza D18 came off this list too** - its 54 events are three
+> **Winter D21 and Extravaganza D18 came off this list too** - its 54 events are three
 > mid-chart holds in one second, and its screen verdict is refuted by its own profile
 > (+59, -58, +102, +78 cannot happen on a six-miss play). **Vook D15 and Mr. Larpus D16 came OFF this
 > list** on 2026-09-05 - both were finale holds all along. Mr. Larpus D16 is the cautionary
