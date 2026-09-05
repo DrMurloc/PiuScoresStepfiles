@@ -120,6 +120,16 @@ is invisible until this runs.
 Certifies a video from its result screen — the `P/G/Gd/B/M` and `maxcombo` that make a video
 usable as evidence. Output is the certification ledger in `sources/`.
 
+**`run_drift.py "<chart>" <offset> [--conf 0.85] [--gap 2.0]`**
+The tap-grid check that needs **no run structure**. Inside one rising stretch of the counter
+the delta must equal the file's tap rows over the same span, so a file carrying taps the game
+never judges drifts persistently NEGATIVE (past its miss count) and a file missing a hold
+drifts positive. Use it wherever `grid_screen`'s curve cannot be built — many resets, or a
+video where the rails cross the counter. Reads below 4 are dropped (the counter is blank
+there, so a sub-4 read is the reader inventing a number from an empty box, and one of those
+opens a bogus run that double-counts the climb before it); a drop only starts a new run if
+the next read continues from it. A lone `+99`/`+100` run is a dropped hundred, not evidence.
+
 ## Deciding whether a chart is fixable
 
 **`grid_screen.py "<chart>" <vid> <band> <offset>`**

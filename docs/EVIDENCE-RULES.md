@@ -102,6 +102,16 @@ Two traps, both hit on the first two charts:
 A jump is one judged event, so removing a phantom jump means removing every column of the
 row (`edit_notes.py remove` once per column); half a jump still counts one.
 
+**`grid_screen`'s verdict is only as good as its run structure.** Its slack is `cum − taps`,
+and `cum` needs every reset placed correctly. Where that reconstruction fails the verdict
+describes the failure, not the file: Mr. Larpus D16 screened as MISMATCH at −116 — "the file
+carries ~116 taps the game never judged" — on a play with **11 misses**, which is
+arithmetically impossible. Its counter is crossed by the finale rails (reads of 5657, 157,
+555, 15, 565 inside half a second) and the play resets 14 times, so no curve could be built.
+When the slack is more negative than the play's miss count, suspect the curve first and
+measure locally with `run_drift`, which compares the counter's delta to the file's taps inside
+a single run and needs no structure at all.
+
 ## Reading the audits honestly
 
 **Violation score is inflated by GOODs.** Each GOOD drags `cum − taps` down by one,
