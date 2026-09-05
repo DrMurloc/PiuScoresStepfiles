@@ -360,6 +360,16 @@
   "commit": ""
  },
  {
+  "chart": "Extravaganza D18",
+  "key": "Extravaganza_-_BanYa_D18_ARCADE",
+  "ssc_rel": "01 - 1ST~3RD/(2) 205 - Extravaganza/205 - Extravaganza.ssc",
+  "video": "https://youtu.be/xEPow4sDWbU",
+  "judged": 654,
+  "taps": 596,
+  "ticks": 58,
+  "commit": ""
+ },
+ {
   "chart": "Final Audition 2 - SHORT CUT - D19",
   "key": "Final_Audition_2__-_SHORT_CUT_-_-_Banya_D19_SHORTCUT",
   "ssc_rel": "08 - FIESTA/1048 - [Short Cut] Final Audition 2/1048 - [Short Cut] Final Audition 2.ssc",
@@ -878,6 +888,16 @@
   "taps": 279,
   "ticks": 789,
   "commit": "fe5f470"
+ },
+ {
+  "chart": "Trotpris - SHORT CUT - D15",
+  "key": "Trotpris_-_SHORT_CUT_-_-_Doin_D15_SHORTCUT",
+  "ssc_rel": "09 - FIESTA EX/1145 - [Short Cut] Trotpris/1145 - [Short Cut] Trotpris.ssc",
+  "video": "https://youtu.be/eK0DqUZg3DY",
+  "judged": 668,
+  "taps": 228,
+  "ticks": 440,
+  "commit": ""
  },
  {
   "chart": "Turkey March D13",

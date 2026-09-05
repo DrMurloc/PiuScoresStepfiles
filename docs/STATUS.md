@@ -4,7 +4,7 @@
 tree by `tools/rebuild_repairs.py`, so it cannot go stale. This file is the working ledger
 for what is **left**, and it is hand-kept: re-derive the counts before trusting them.
 
-As of 2026-09-05: **101 of the 121 census charts repaired**, 20 remaining. Twenty-nine of
+As of 2026-09-05: **103 of the 121 census charts repaired**, 18 remaining. Twenty-nine of
 the last thirty came through the extraction pipeline in two days (group A).
 
 ## The remaining 40, by what actually blocks them
@@ -46,8 +46,10 @@ the last thirty came through the extraction pipeline in two days (group A).
 > S17 — **repaired 2026-09-05**: that mid-chart hold never existed. Its whole evidence was one
 > sub-4 junk read, which ends a segment and charges the climb after it as accrual; the finale
 > alone is the 389, fired in a tenth of a second. Grid **mismatch** (the tap grid itself is a different revision):
-> Extravaganza D18, Winter D21 (its finale pair is plain on screen, but the file carries ~40
-> taps the game never judged around 60-75s). **Vook D15 and Mr. Larpus D16 came OFF this
+> Winter D21 (its finale pair is plain on screen, but the file carries ~40 taps the game never
+> judged around 60-75s). **Extravaganza D18 came off this list too** - its 54 events are three
+> mid-chart holds in one second, and its screen verdict is refuted by its own profile
+> (+59, -58, +102, +78 cannot happen on a six-miss play). **Vook D15 and Mr. Larpus D16 came OFF this
 > list** on 2026-09-05 - both were finale holds all along. Mr. Larpus D16 is the cautionary
 > one: it screened at -116 on a play with 11 misses, because its own rails cross the counter
 > and the play resets 14 times, so no curve could be built. `run_drift` measures the tap grid
