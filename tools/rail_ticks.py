@@ -22,6 +22,11 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 def main():
     chart, a = sys.argv[1], float(sys.argv[2])
     lag = float(sys.argv[sys.argv.index("--lag") + 1]) if "--lag" in sys.argv else 0.2
+    # the default 0.30s floor exists because flash decay can look like a rail, and it also
+    # hides real ones - FA Ep. 1 S17's finale pair is 0.28s. Drop it when a chart reports no
+    # rail for events it plainly owes, and check the candidates against the counter.
+    min_len = float(sys.argv[sys.argv.index("--min-len") + 1]) if "--min-len" in sys.argv else 0.30
+    occ = float(sys.argv[sys.argv.index("--occ") + 1]) if "--occ" in sys.argv else 0.40
     raw = json.load(open(os.path.join(ROOT, "sources", "certification-2026-08-30.json"), encoding="utf-8"))
     cert = raw if isinstance(raw, dict) else {c["vid"]: c for c in raw if isinstance(c, dict)}
     vid, e = next((v, e) for v, e in cert.items() if chart in (e.get("charts") or {}))
@@ -38,7 +43,7 @@ def main():
     t_first, t_last = float(rows[0]["Time"]), float(rows[-1]["Time"])
     sc = R.scan(vid, 0.5, float(e.get("t") or 150) - 0.5, band, ncols)
     ons, _ = R.onsets(sc, 60.0)
-    rl = R.rails(sc)
+    rl = R.rails(sc, occ_th=occ, min_len=min_len)
     path = os.path.join(ROOT, "work", "combo", f"{vid}.{band}.jsonl")
     if not os.path.exists(path):
         path = os.path.join(ROOT, "work", "combo", f"{vid}.C.jsonl")
