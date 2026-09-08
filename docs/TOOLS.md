@@ -246,7 +246,9 @@ catalog's Phoenix note count (two sqlcmd dumps, the queries are in its header), 
 through the pack's own mix - a Rebirth-pack S13 block is Phoenix's S17, so a key's level is
 never compared with Phoenix directly. Writes the tail past the threshold with each chart's
 shape (over-ticked / under-ticked / single-region / hold-less / duplicate block) and its banked
-video. `sources/tail-2026-09-06.json` is its output; nothing in it is authored by this tool.
+video. `--pct 0` lists every chart that disagrees at all (a one-note gap on a 2,400-note
+chart rounds to 0.0%, so the threshold is skipped rather than applied); `--pct 5` keeps only
+the large gaps. `sources/tail-2026-09-08.json` is its output; nothing in it is authored here.
 
 **`rebuild_repairs.py`**
 Regenerates `sources/repairs.json` from the tree — any census chart whose file now converts to

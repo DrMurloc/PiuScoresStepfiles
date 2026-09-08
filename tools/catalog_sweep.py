@@ -139,7 +139,11 @@ def main():
     share = match(recs, rows)
     tail = []
     for r in recs:
-        if r.get("verdict") != "mismatch" or r["key"] in smap or abs(r["pct"]) <= pct_floor:
+        # --pct 0 (or less) means every chart that disagrees at all: a one-note delta on a
+        # 2,400-note chart rounds to 0.0%, and a threshold test would silently drop it.
+        if r.get("verdict") != "mismatch" or r["key"] in smap:
+            continue
+        if pct_floor > 0 and abs(r["pct"]) <= pct_floor:
             continue
         others = [k for k in share[r["chartId"]] if k != r["key"]]
         shape = ("duplicate-block" if others else "hold-less" if not r["holds"] else "single-region" if regions(r["holds"]) == 1
@@ -161,7 +165,8 @@ def main():
                   tail=len(tail), by_shape=dict(Counter(r["shape"] for r in tail)), with_video=sum(1 for r in tail if r["video"]),
                   by_pack=dict(Counter(r["pack"] for r in tail).most_common()))
     json.dump(dict(generated=time.strftime("%Y-%m-%d"), source="tools/catalog_sweep.py",
-                   rule=f"beyond the census; |implied - catalog| > {pct_floor}%", counts=counts, charts=tail),
+                   rule="beyond the census; every chart that disagrees" if pct_floor <= 0 else f"beyond the census; |implied - catalog| > {pct_floor}%",
+                   counts=counts, charts=tail),
               open(out_path, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
     print(json.dumps(counts, indent=1))
 

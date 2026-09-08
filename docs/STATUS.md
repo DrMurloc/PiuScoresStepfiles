@@ -265,28 +265,31 @@ model) and the eight footage-blocked charts in group E. The snapshot in `snapsho
 regenerated at 97 charts on the owner's word (2026-09-04, `piucenter-snapshot-090326.zip`,
 release `p2-090326`) and is current; it is regenerated only when the owner asks.
 
-## Beyond the census (sized 2026-09-06)
+## Beyond the census (sized 2026-09-06, listed in full 2026-09-08)
 
-The census was the *blatantly* wrong 121. `sources/tail-2026-09-06.json` is the rest of the
-corpus measured the same way - every block through the converter (`tick_verify`'s own rule)
-against the catalog's Phoenix note count, matched through the pack's own mix (a Rebirth-pack
-S13 is Phoenix's S17), videos from the site's banked `ChartVideo` rows (`tools/catalog_sweep.py`):
+The census was the *blatantly* wrong 121 — its cut was narrow on purpose: taps above the
+judged total, a hold-less file against a holdy game, or a total off by more than **50%**. A
+chart off by 10% with holds in it was never in scope. `sources/tail-2026-09-08.json` is
+everything else, measured the same way by `tools/catalog_sweep.py` — every block through the
+converter (`tick_verify`'s own rule) against the catalog's Phoenix note count, matched through
+the pack's own mix (a Rebirth-pack S13 is Phoenix's S17), videos from the site's banked
+`ChartVideo` rows:
 
 - 4,581 blocks converted; 4,495 matched to a catalog chart, 62 ambiguous, 24 unmatched
   (title variants: Allegro Piu Mosso, Bullfighting's Song, Close Your Eyes, Tream Vook of the
   war REMIX, the Baroque Virus / Gargoyle full-song v1/v2 pairs), 37 without a count yet.
 - **2,234 exact.** 2,224 disagree: 17 census keys (the 15 open ones plus two matcher
   artifacts - Come to Me's S13-key and XX OPENING SC S6 are exact at their video counts) and
-  **2,207 beyond the census: 1,181 within 1%, 305 within 5%, 721 further off** (370 at
-  5-20%, 348 at 20-50%, 3 past 50%). None has more taps than the game judges.
-- The 721 by shape: **447 over-ticked** (authored `#TICKCOUNTS` above the game), **217
-  under-ticked**, **22 single-region** (one hold carries the whole difference - closure would
-  price it exactly), 1 hold-less, and 34 that are the *second* corpus block of a re-rated
-  chart (an old pack's level; 11 of those have a sibling block already exact). All 721 have
-  a banked video, 663 of them Nevsister. Levels 15-24 hold 570 of them.
+  **2,207 beyond the census — every one of them named in the file**, whatever the size of the
+  gap: 1,181 within 1% (388 are a single note), 305 at 1-5%, 370 at 5-20%, 348 at 20-50%,
+  3 past 50%. None has more taps than the game judges. All 2,207 have a banked video.
+- By shape: **1,526 over-ticked** (authored `#TICKCOUNTS` above the game), **603
+  under-ticked**, **30 single-region** (one hold carries the whole difference - closure would
+  price it exactly), 10 hold-less, and 38 that are the *second* corpus block of a re-rated
+  chart (an old pack's level). Of the 721 gaps past 5%, 570 sit at levels 15-24.
 
 What the census taught applies unchanged: the game's tick counts follow no per-beat rule
 (EVIDENCE-RULES, "No per-beat tick rate"), so a hold is priced by its footage or not at all.
-The 22 single-region charts are the only ones closure could price without a distribution
-guess, and even they need footage to clear the grid first. Nothing here is authored: this is
-the worklist for a scope decision, not a batch in progress.
+A chart with one hold region can be closed on its total alone; Everybody Got 2 Know S21 has
+**101** of them for a 131-note surplus, and splitting that without footage would be a guess.
+Nothing here is authored: this is the worklist for a scope decision, not a batch in progress.
