@@ -13,7 +13,9 @@
 # the total is exact AND the distribution is evidenced:
 #
 #   1. CERTIFIED   a result screen's P+G+Gd+B+M equals the catalog count, so the footage is
-#                  provably this chart, and the play's miss/bad/maxcombo are known.
+#                  provably this chart, and the play's miss/bad/maxcombo are known. When the
+#                  screen instead agrees with the FILE and not the catalog, the .ssc is a
+#                  faithful copy of an older revision - a footage problem, never an edit.
 #   2. GRID CLEAN  run_drift is not NEGATIVE past the play's own misses - the file carries no
 #                  taps the game refuses to judge. The test is ONE-SIDED on purpose: positive
 #                  drift is the missing holds themselves, and a dropped hundred in the counter
@@ -131,18 +133,34 @@ def certify(vmap_path):
 def survey_chart(name, entry, cert):
     """Measure one chart and say what would happen to it. Touches nothing."""
     r = dict(chart=name, chartId=entry.get("chartId"), shape=entry.get("shape"),
-             target=entry["judged"], vid=cert.get("vid"))
-    ch = (cert.get("charts") or {}).get(name) or {}
-    if ch.get("verdict") != "CERTIFIED":
-        return {**r, "verdict": "PARK", "reason": f"not certified ({cert.get('status', 'no read')})"}
-    r["side"] = ch.get("side")
-    r["band"] = band_for(cert, ch.get("side") or "1p", name)
+             target=entry["judged"], vid=cert.get("vid"), skin=cert.get("skin"))
 
+    # the file first: it costs nothing, and it is what makes an uncertified chart legible
     tv = parse_tick_verify(tool("tick_verify", name, r["target"]))
     if not tv:
         return {**r, "verdict": "PARK", "reason": "converter could not read the block"}
     r.update(file_taps=tv["taps"], file_ticks=tv["ticks"], implied=tv["implied"],
              regions=tv["regions"], deficit=r["target"] - tv["implied"])
+
+    ch = (cert.get("charts") or {}).get(name) or {}
+    if ch.get("verdict") != "CERTIFIED":
+        screen = max([v for v in (cert.get("1p", {}).get("judged"), cert.get("2p", {}).get("judged"))
+                      if v] or [0])
+        if cert.get("status") != "ok":
+            why = f"no result screen in the footage ({cert.get('status', 'no read')})"
+        elif abs(screen - tv["implied"]) <= 1:
+            # the play and our file agree, and only the catalog dissents: the .ssc is a faithful
+            # copy of an OLDER revision of this chart, which is a footage problem, not a repair
+            why = (f"the footage judges {screen} and the file implies {tv['implied']} - they agree, "
+                   f"and the catalog's {r['target']} does not. This file is an older revision and "
+                   f"needs {'Phoenix-era' if r['skin'] == 'xx' else 'newer'} footage")
+        else:
+            why = (f"contradictory evidence: the footage judges {screen}, the file implies "
+                   f"{tv['implied']}, the catalog says {r['target']}")
+        return {**r, "verdict": "PARK", "screen": screen or None, "reason": why}
+    r["side"] = ch.get("side")
+    r["band"] = band_for(cert, ch.get("side") or "1p", name)
+
     if tv["match"]:
         return {**r, "verdict": "SKIP", "reason": "already exact"}
     if tv["taps"] > r["target"]:
