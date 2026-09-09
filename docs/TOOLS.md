@@ -278,6 +278,14 @@ that loosens is the failure that actually costs something. A repaired chart stop
 exact", so its pricing is probed separately rather than left unguarded. `--record` rewrites the
 expectations - only do that when a change is *meant* to move them, and read the diff first.
 
+**`run_corpus.py <video-map.json> [--skip-download] [--no-commit]`**
+The whole pipeline as one command: fetch the footage, certify it, survey every chart, author
+what the gate allows, commit each repair, and print what it produced. Every stage skips what is
+already done, so it can be killed and restarted and picks up where it stopped. It makes no
+judgement calls of its own - the gate in `batch_repair` decides what ships and everything it
+refuses is written down with a reason. This is what a batch should be run through; the
+individual tools are for looking into a chart afterwards.
+
 **`batch_repair.py <video-map.json> --survey|--author [--commit] [--limit N] [--only "<chart>"]`**
 The closed loop. `--survey` walks a batch and classifies every chart without touching anything;
 `--author` does the edits the survey called for, re-verifies each with the real converter, and

@@ -411,3 +411,31 @@ repaired - Blazing S17, Love is a Danger Zone SC S13, Smells Like A Chocolate S3
 SONG S15, Get Your Groove On D10. Each is one hold region whose rail the counter priced within
 a couple of events of what the chart owed, and each verifies exactly against the catalog. The
 census's own 106 are already validated by their own evidence.
+
+## Where the closed loop actually stands (2026-09-09)
+
+The loop is finished: `tools/run_corpus.py` fetches, certifies, surveys, authors, commits and
+reports in one command, resumable, with no decision points. It is guarded by `selftest.py` and
+`golden.py`. Autonomy is not what is limiting this any more.
+
+**Evidence is.** The tail holds exactly **40** charts of the shapes that can be priced - one
+hold region, or no holds at all - and the first batch ran **all forty**. What is left is 2,089
+multi-region charts, and the batch went **0 for 40** on that shape. The reason is structural: a
+multi-region chart only ships when EVERY region is priced from the counter, and the counter
+sits in the middle of the play field where the rails cover it.
+
+The idea of reading a different number instead is dead - **Pump It Up shows no score during
+play**. The combo counter is the only per-judgement signal on screen, and it is the one the
+rails cover. For these charts the information needed to price the interior is not in the
+footage, and no reader improvement produces it.
+
+So the corpus run now in progress is **a certification census, not a repair drive**, and its
+value does not depend on the repair yield:
+
+- it certifies all 1,927 videos, which is what tells a broken file from a file that is simply
+  **correct for an older mix** - 19% of the first batch turned out to be that, not broken;
+- every one of those feeds the video-refresh SQL and the recording list;
+- whatever the gate can still prove, it repairs and commits on the way past.
+
+Expect very few repairs out of it. The deliverable is knowing, chart by chart, which of the
+2,206 are actually wrong.
