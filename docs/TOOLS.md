@@ -240,6 +240,36 @@ The acceptance gate. Runs piu-annotate's converter over the block in our tree an
 Checks a packaged release actually carries the repairs: the `.ssc` through the converter, the
 `Hold ticks` in the release's chart JSON, and the judged count must all agree.
 
+**`batch_repair.py <video-map.json> --survey|--author [--commit] [--limit N] [--only "<chart>"]`**
+The closed loop. `--survey` walks a batch and classifies every chart without touching anything;
+`--author` does the edits the survey called for, re-verifies each with the real converter, and
+reverts any that does not land. `--commit` commits them one chart at a time, titled like the
+census repairs. Both write `work/<tag>-report.json`, one row per chart with its measurements
+and a machine-readable reason.
+
+The gate ships a chart only when four things hold: the footage is **certified** (a result
+screen's judgement sum equals the catalog count), the **grid is clean** (`run_drift` is not
+negative past the play's own misses - one-sided, because positive drift IS the missing holds
+and a dropped hundred reads as +100), the events are **evidenced** (one hold region takes the
+remainder by closure, or every rail is priced from its own bracketing counter reads and the
+priced total equals what the chart owes), and the converter agrees **exactly**. Multi-region
+pinning is deliberately not automated: a mis-mapped pin is a wrong distribution that still
+verifies. Everything else parks - including a chart whose footage agrees with the file rather
+than the catalog, which is an older revision needing newer footage (see EVIDENCE-RULES).
+
+**`corpus_map.py`** (library)
+`chart_map()` and `certification()` merge the census's own evidence (`sources/ssc-map.json`,
+`sources/certification-2026-08-30.json`, both immutable) with whatever a batch beyond the
+census has generated under `work/`. Every analysis tool reads through it, so a chart outside
+the 121 looks up exactly like one inside it. `catalog_sweep` and `rebuild_repairs` deliberately
+do NOT use it - they need the census key set to stay the census key set.
+
+**`tail_worklist.py <tail.json> [--shape ...] [--min-pct N] [--max-pct N] [--limit N] [--out-tag T]`**
+Turns rows of the catalog sweep into the two inputs a batch needs: `work/ssc-map-tail.json`
+(always the whole sweep - it is a lookup, and a later batch must not erase an earlier one's
+entries) and `work/<tag>-video-map.json` (just this batch, in `video-map.json`'s shape, so
+`download_videos --map` and `result_reader --map` take it unchanged).
+
 **`catalog_sweep.py <chart-json folder> <catalog.txt> <videos.txt> <out.json> [--pct 5]`**
 Sizes what is wrong *beyond* the census: every corpus block through the converter against the
 catalog's Phoenix note count (two sqlcmd dumps, the queries are in its header), matched

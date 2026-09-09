@@ -227,6 +227,25 @@ forcing 541 ticks into a hold four seconds away from where the game fires them w
 count-right and shape-wrong. Recognise it by a first read that is already in the hundreds
 with an empty screen just before, and put the chart on the extraction pile.
 
+## The footage has an era, and the result screen tells you which
+
+Result screens come in more than one skin. The Phoenix one sets the judgement counts just left
+of their labels in a bold italic font; an older one puts them far left in a plain LCD font, on
+a 35px row pitch instead of 31. `result_reader` carries a profile per skin and reports which
+one it read (`skin` in the ledger).
+
+That is not a cosmetic detail, because **the skin dates the play**. In the first batch beyond
+the census, all 20 old-skin videos failed to certify - and in **15 of them the screen and our
+own file agreed exactly** while only the catalog dissented (Switronic SC S3: screen 60, file
+60, catalog 120; Miss's Story S19: screen 429, file 430, catalog 800). A file that matches an
+old play of the chart is not broken: it is a faithful copy of an **older revision**, and the
+catalog is describing the chart as it is now. The repair for those is Phoenix-era footage, and
+until that exists there is nothing to author - editing toward the catalog would replace a
+correct old chart with a guessed new one.
+
+So: a chart whose footage agrees with the file and not the catalog is a **footage problem**.
+It parks, and it is not counted against the tools.
+
 ## No per-beat tick rate
 
 The game's hold ticks are authored per chart, not derived from hold length. Across the 43

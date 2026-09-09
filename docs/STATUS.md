@@ -293,3 +293,42 @@ What the census taught applies unchanged: the game's tick counts follow no per-b
 A chart with one hold region can be closed on its total alone; Everybody Got 2 Know S21 has
 **101** of them for a 131-note surplus, and splitting that without footage would be a guess.
 Nothing here is authored: this is the worklist for a scope decision, not a batch in progress.
+
+## The closed loop, and what a first batch of 80 actually yielded (2026-09-08)
+
+`tools/batch_repair.py` runs the whole chain unattended - certify, measure, gate, author,
+verify, commit - and parks everything it cannot prove, with a machine-readable reason. It is
+real: **four charts beyond the census are repaired and committed by it** (Blazing S17, Love is
+a Danger Zone SC S13, Smells Like A Chocolate S3, 2006. LOVE SONG S15), each verified by the
+converter against the catalog count.
+
+The first batch was 80 charts chosen to be *favourable* - the 30 single-region and 10
+hold-less shapes plus 40 mid-sized gaps. `sources/tail-pilot-2026-09-08.json` is the full
+result. **3 shipped, 1 was already exact, 76 parked**, and the parks are the interesting part:
+
+| why it parked | charts |
+|---|---|
+| a hold region could not be priced from the counter | 30 |
+| the file is an older revision (footage agrees with the FILE, not the catalog) | 15 |
+| the priced total disagrees with what the chart owes | 9 |
+| three-way disagreement between footage, file and catalog | 5 |
+| no readable result screen / no offset fits the flashes | 8 |
+| the grid is a re-step, not a re-tick | 3 |
+| several hold regions need pinning - deliberately not automated | 2 |
+
+Read it as three separate problems, because they have three different fixes:
+
+- **28 of 80 are footage-limited** and no amount of tooling helps. Fifteen of those are files
+  that are simply *correct for an older mix* - the play in the video and our .ssc agree to the
+  note while only the catalog dissents. Twenty of the 79 videos are the old result-screen skin,
+  which is what dates them. Those need Phoenix-era footage, not an edit.
+- **34 are counter-limited**: the rails are visible, but the combo counter is unreadable or
+  resets somewhere around one of them, so a region cannot be priced. This is the single
+  biggest lever on throughput, and it is a reader problem, not a gate problem.
+- **2 need multi-region pinning**, which is the shape of the whole over-ticked bulk (1,526
+  charts). Blazing D21 already has every region priced and its total inside tolerance; it ships
+  the day that mapping is automated.
+
+So the loop works and is safe, and on this slice it converts about one chart in twenty. It is
+not yet "point it at two thousand charts and walk away", and the honest order of work to make
+it so is: the counter reader first, region pinning second, footage third.

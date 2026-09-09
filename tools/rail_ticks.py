@@ -49,10 +49,14 @@ def main():
         path = os.path.join(ROOT, "work", "combo", f"{vid}.C.jsonl")
     reads = sorted((t, v) for t, v, c in (json.loads(l) for l in open(path, encoding="utf-8")) if v is not None and c >= 0.6 and v <= mc)
     rt = [t for t, _ in reads]
-    def read_before(t, span=0.6):
+    # how far from the rail a bracketing read may sit. Widening it is not a loosening: every
+    # tap between the two reads is subtracted, and a reset between them is still refused - it
+    # only lets a rail be priced when the counter happened to be unreadable right beside it.
+    span = float(sys.argv[sys.argv.index("--span") + 1]) if "--span" in sys.argv else 0.6
+    def read_before(t, span=span):
         i = bisect.bisect_right(rt, t) - 1
         return reads[i] if i >= 0 and t - reads[i][0] <= span else None
-    def read_after(t, span=0.6):
+    def read_after(t, span=span):
         i = bisect.bisect_left(rt, t)
         return reads[i] if i < len(reads) and reads[i][0] - t <= span else None
     cap = cv2.VideoCapture(os.path.join(ROOT, "videos", vid + ".mp4"))

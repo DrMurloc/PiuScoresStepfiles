@@ -107,6 +107,28 @@ def parse_rails(out):
     owed = int(m.group(1)) if (m := re.search(r"owed (-?\d+) hold events", out)) else None
     return dict(rails=rails, priced=priced, owed=owed)
 
+def cluster_rails(rails):
+    """Group rails that are held at the same time into one region.
+
+    Two columns held together are ONE hold region and share one pair of bracketing counter
+    reads, so rail_ticks reports the same tick count against each of them. Adding those up
+    counts the region twice - Smells Like A Chocolate S3 reads 27 against the 13 it owes, and
+    Solitary D17 reads 282 against 122. The region is the unit that gets priced, exactly as
+    finale_ticks pins one, so a region takes ONE price and a region with no price at all is
+    what parks a chart."""
+    out = []
+    for r in sorted(rails, key=lambda x: x["head"]):
+        if out and r["head"] <= out[-1]["tail"] + 0.05:
+            out[-1]["tail"] = max(out[-1]["tail"], r["tail"])
+            out[-1]["members"].append(r)
+        else:
+            out.append(dict(head=r["head"], tail=r["tail"], members=[r]))
+    for c in out:
+        priced = [m["ticks"] for m in c["members"] if m["ticks"] is not None]
+        c["ticks"] = max(priced) if priced else None
+        c["why"] = None if priced else Counter(m["why"] for m in c["members"]).most_common(1)[0][0]
+    return out
+
 # --------------------------------------------------------------------------- prerequisites
 
 def band_for(cert, side, name):
@@ -184,37 +206,41 @@ def survey_chart(name, entry, cert):
 
     owed = r["target"] - tv["taps"]              # every hold event the game judges
     rl = parse_rails(tool("rail_ticks", name, sw["offset"], "--min-len", "0.15"))
-    priced = [x for x in rl["rails"] if x["ticks"] is not None]
-    unpriced = [x for x in rl["rails"] if x["ticks"] is None]
-    total = sum(x["ticks"] for x in priced)
+    regions = cluster_rails(rl["rails"])
+    priced = [c for c in regions if c["ticks"] is not None]
+    unpriced = [c for c in regions if c["ticks"] is None]
+    total = sum(c["ticks"] for c in priced)
     tol = max(3, round(0.03 * owed))
-    r.update(owed=owed, rails=len(rl["rails"]), rails_priced=len(priced), rails_total=total, tol=tol)
-    if not rl["rails"]:
+    r.update(owed=owed, rails=len(rl["rails"]), rail_regions=len(regions), regions_priced=len(priced),
+             rails_total=total, tol=tol)
+    if not regions:
         return {**r, "verdict": "PARK", "reason": f"owes {owed} hold events and no rail is visible"}
     if unpriced:
-        why = Counter(x["why"] for x in unpriced)
+        why = Counter(c["why"] for c in unpriced)
         return {**r, "verdict": "PARK",
-                "reason": f"{len(unpriced)} of {len(rl['rails'])} rails unpriced ({dict(why)}) - "
+                "reason": f"{len(unpriced)} of {len(regions)} hold regions unpriced ({dict(why)}) - "
                           f"the remainder would be split by guess"}
     if abs(total - owed) > tol:
         return {**r, "verdict": "PARK",
-                "reason": f"rails price to {total}, the chart owes {owed} - the events are not "
+                "reason": f"the rails price to {total}, the chart owes {owed} - the events are not "
                           f"where the file's holds are"}
     if tv["regions"] == 1 and len(priced) == 1:
         return {**r, "verdict": "SHIP", "route": "closure",
                 "reason": f"one hold region, its rail prices to {total} of {owed} owed"}
     if tv["regions"] == 0:
         return {**r, "verdict": "SHIP", "route": "rails",
-                "reason": f"file has no holds; {len(priced)} rails priced from their own brackets, "
-                          f"{total} of {owed} owed",
-                "rail_list": [dict(col=x["col"], head=x["head"], tail=x["tail"], ticks=x["ticks"]) for x in priced]}
+                "reason": f"file has no holds; {len(priced)} hold regions priced from their own "
+                          f"brackets, {total} of {owed} owed",
+                "rail_list": [dict(col=m["col"], head=m["head"], tail=m["tail"], ticks=c["ticks"])
+                              for c in priced for m in c["members"]]}
     # the file already holds in several places and every region needs its own pinned price.
     # finale_ticks can do it with --pin, but mapping a rail onto the right region by beat is
     # not automated yet, and a mis-mapped pin is a wrong distribution that still verifies.
     return {**r, "verdict": "PARK",
             "reason": f"{tv['regions']} hold regions each need their own pinned price "
-                      f"({len(priced)} rails priced, {total} of {owed} owed) - not automated",
-            "rail_list": [dict(col=x["col"], head=x["head"], tail=x["tail"], ticks=x["ticks"]) for x in priced]}
+                      f"({len(priced)} priced, {total} of {owed} owed) - not automated",
+            "rail_list": [dict(col=m["col"], head=m["head"], tail=m["tail"], ticks=c["ticks"])
+                          for c in priced for m in c["members"]]}
 
 # --------------------------------------------------------------------------------- authoring
 
