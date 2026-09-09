@@ -19,20 +19,20 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import corpus_map  # noqa: E402
 import receptors as R  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def load(chart):
-    raw = json.load(open(os.path.join(ROOT, "sources", "certification-2026-08-30.json"), encoding="utf-8"))
-    cert = raw if isinstance(raw, dict) else {c["vid"]: c for c in raw if isinstance(c, dict)}
+    cert = corpus_map.certification()
     vid, e = next((v, e) for v, e in cert.items() if chart in (e.get("charts") or {}))
     side = e["charts"][chart].get("side") or "1p"
     s = e[side]
     other = e.get("2p" if side == "1p" else "1p") or {}
     band = "C" if not other.get("judged") else ("L" if side == "1p" else "R")
     ncols = 10 if chart.split()[-1][0] == "D" else 5
-    smap = {o["chart"]: o for o in json.load(open(os.path.join(ROOT, "sources", "ssc-map.json"), encoding="utf-8"))}
+    smap = corpus_map.chart_map()
     rows, _, beat_at = R.chartstruct(smap[chart]["key"], ncols)
     notes = []
     for r in rows:

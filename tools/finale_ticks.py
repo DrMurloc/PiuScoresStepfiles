@@ -14,6 +14,9 @@ import re
 import subprocess
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import corpus_map  # noqa: E402
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PY = r"C:\Users\jonec\repos\piu-annotate\.venv\Scripts\python.exe"
 CS_DIR = r"C:\Users\jonec\repos\piu-annotate\artifacts\chartstructs\p2-082626"
@@ -30,10 +33,9 @@ def main():
     for i, arg in enumerate(sys.argv):
         if arg == "--pin":
             span, n = sys.argv[i + 1].split("="); p0, p1 = span.split("-"); pins.append((float(p0), float(p1), int(n)))
-    smap = {o["chart"]: o for o in json.load(open(os.path.join(ROOT, "sources", "ssc-map.json"), encoding="utf-8"))}
+    smap = corpus_map.chart_map()
     key, ssc_rel = smap[chart]["key"], smap[chart]["ssc_rel"]
-    raw = json.load(open(os.path.join(ROOT, "sources", "certification-2026-08-30.json"), encoding="utf-8"))
-    cert = raw if isinstance(raw, dict) else {c["vid"]: c for c in raw if isinstance(c, dict)}
+    cert = corpus_map.certification()
     judged = next(int(e[(e["charts"][chart])["side"]]["judged"]) for e in cert.values() if chart in (e.get("charts") or {}))
     m = re.search(r"_([SD]P?\d+(?:_[A-Z0-9]+)*?)_(ARCADE|SHORTCUT|REMIX|FULLSONG)$", key)   # desc words joined by spaces, suffix after the last underscore
     block = f"{m.group(1).replace('_', ' ')}_{m.group(2)}"

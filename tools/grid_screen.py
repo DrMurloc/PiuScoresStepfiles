@@ -25,12 +25,15 @@ import json
 import os
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import corpus_map  # noqa: E402
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CS_DIR = r"C:\Users\jonec\repos\piu-annotate\artifacts\chartstructs\p2-082626"
 
 def main():
     name, vid, band, a = sys.argv[1], sys.argv[2], sys.argv[3], float(sys.argv[4])
-    smap = {o["chart"]: o for o in json.load(open(os.path.join(ROOT, "sources", "ssc-map.json"), encoding="utf-8"))}
+    smap = corpus_map.chart_map()
     key = smap[name]["key"]
     anchors = json.load(open(os.path.join(ROOT, "work", "combo", f"{vid}.{band}.anchors.json"), encoding="utf-8"))
 

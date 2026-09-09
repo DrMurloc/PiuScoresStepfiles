@@ -21,6 +21,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import corpus_map  # noqa: E402
 import receptors as R  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -29,8 +30,7 @@ def main():
     chart, a = sys.argv[1], float(sys.argv[2])
     conf = float(sys.argv[sys.argv.index("--conf") + 1]) if "--conf" in sys.argv else 0.85
     gap = float(sys.argv[sys.argv.index("--gap") + 1]) if "--gap" in sys.argv else 2.0
-    raw = json.load(open(os.path.join(ROOT, "sources", "certification-2026-08-30.json"), encoding="utf-8"))
-    cert = raw if isinstance(raw, dict) else {c["vid"]: c for c in raw if isinstance(c, dict)}
+    cert = corpus_map.certification()
     vid, e = next((v, e) for v, e in cert.items() if chart in (e.get("charts") or {}))
     side = e["charts"][chart].get("side") or "1p"
     s = e[side]
@@ -38,7 +38,7 @@ def main():
     miss, bad = int(s["miss"]), int(s["bad"])
     other = e.get("2p" if side == "1p" else "1p") or {}
     band = "C" if not other.get("judged") else ("L" if side == "1p" else "R")
-    smap = {o["chart"]: o for o in json.load(open(os.path.join(ROOT, "sources", "ssc-map.json"), encoding="utf-8"))}
+    smap = corpus_map.chart_map()
     ncols = 10 if chart.split()[-1][0] == "D" else 5
     rows, _, _ = R.chartstruct(smap[chart]["key"], ncols)
     taps = sorted(float(r["Time"]) for r in rows if "1" in r["Line"])

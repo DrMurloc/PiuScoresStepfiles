@@ -14,6 +14,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import corpus_map  # noqa: E402
 import receptors as R  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -26,7 +27,7 @@ def run(args):
 def main():
     chart, a, spec = sys.argv[1], float(sys.argv[2]), json.load(open(sys.argv[3]))
     extra = sys.argv[4:]
-    smap = {o["chart"]: o for o in json.load(open(os.path.join(ROOT, "sources", "ssc-map.json"), encoding="utf-8"))}
+    smap = corpus_map.chart_map()
     key, ssc_rel = smap[chart]["key"], smap[chart]["ssc_rel"]
     m = re.search(r"_([SD]P?\d+(?:_[A-Z0-9]+)*?)_(ARCADE|SHORTCUT|REMIX|FULLSONG)$", key)
     block = f"{m.group(1).replace('_', ' ')}_{m.group(2)}"

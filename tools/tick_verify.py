@@ -13,6 +13,9 @@ sys.path.insert(0, r"C:\Users\jonec\repos\piu-annotate")
 from piu_annotate.formats.sscfile import StepchartSSC              # noqa: E402
 from piu_annotate.formats.ssc_to_chartstruct import stepchart_ssc_to_chartstruct  # noqa: E402
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import corpus_map  # noqa: E402
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def block_of(key):
@@ -46,7 +49,7 @@ if __name__ == "__main__":
     else:
         name = args[0]
         expected = int(args[1]) if len(args) > 1 else None
-        smap = {o["chart"]: o for o in json.load(open(os.path.join(ROOT, "sources", "ssc-map.json"), encoding="utf-8"))}
+        smap = corpus_map.chart_map()
         o = smap[name]
         path = os.path.join(ROOT, "simfiles", o["ssc_rel"].replace("/", os.sep))
         print(f"{name} -> {o['ssc_rel']} block {block_of(o['key'])}")

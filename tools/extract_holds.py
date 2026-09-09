@@ -13,13 +13,13 @@ import sys
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import corpus_map  # noqa: E402
 import receptors as R  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def lookup(chart):
-    raw = json.load(open(os.path.join(ROOT, "sources", "certification-2026-08-30.json"), encoding="utf-8"))
-    cert = raw if isinstance(raw, dict) else {c["vid"]: c for c in raw if isinstance(c, dict)}
+    cert = corpus_map.certification()
     for vid, e in cert.items():
         info = (e.get("charts") or {}).get(chart)
         if info:
@@ -34,7 +34,7 @@ def main():
     chart = sys.argv[1]
     a_given = float(sys.argv[2]) if len(sys.argv) > 2 else None
     vid, side, s, full, t_end = lookup(chart)
-    smap = {o["chart"]: o for o in json.load(open(os.path.join(ROOT, "sources", "ssc-map.json"), encoding="utf-8"))}
+    smap = corpus_map.chart_map()
     key, ssc_rel = smap[chart]["key"], smap[chart]["ssc_rel"]
     typ = chart.split()[-1][0]
     band = "C" if full else ("L" if side == "1p" else "R")

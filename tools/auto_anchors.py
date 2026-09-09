@@ -15,13 +15,15 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from curve_tools import build_anchors  # noqa: E402
 import run_structure  # noqa: E402
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import corpus_map  # noqa: E402
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PY = r"C:\Users\jonec\repos\piu-annotate\.venv\Scripts\python.exe"
 
 def main():
     chart, a = sys.argv[1], float(sys.argv[2])
-    raw = json.load(open(os.path.join(ROOT, "sources", "certification-2026-08-30.json"), encoding="utf-8"))
-    cert = raw if isinstance(raw, dict) else {c["vid"]: c for c in raw if isinstance(c, dict)}
+    cert = corpus_map.certification()
     vid, e = next((v, e) for v, e in cert.items() if chart in (e.get("charts") or {}))
     side = e["charts"][chart]["side"]
     s = e[side]
@@ -30,7 +32,7 @@ def main():
     resets = int(s["bad"]) + int(s["miss"])
     other = e.get("2p" if side == "1p" else "1p") or {}
     band = "C" if not other.get("judged") else ("L" if side == "1p" else "R")
-    smap = {o["chart"]: o for o in json.load(open(os.path.join(ROOT, "sources", "ssc-map.json"), encoding="utf-8"))}
+    smap = corpus_map.chart_map()
     key = smap[chart]["key"]
     path = os.path.join(ROOT, "work", "combo", f"{vid}.{band}.jsonl")
     if not os.path.exists(path):

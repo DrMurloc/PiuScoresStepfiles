@@ -50,7 +50,16 @@ def geometry(cap, vid, band="C", ncols=None, n=64):
 
 def scan(vid, t0, t1, band="C", ncols=None):
     """Per frame: the white level in each receptor box (flash) and the fraction of saturated
-    bright pixels in the lane beneath it (rail)."""
+    bright pixels in the lane beneath it (rail).
+
+    Cached per (video, band, columns, span): decoding the whole video is the expensive step and
+    a chart is scanned by flash_grid, rail_ticks and extract_holds in turn over the same span.
+    Delete work/receptor/*.scan.npz to force a re-read."""
+    ck = os.path.join("work", "receptor", f"{vid}.{band}.{ncols}.{t0:.1f}-{t1:.1f}.scan.npz")
+    if os.path.exists(ck):
+        z = np.load(ck)
+        return dict(ts=z["ts"], flash=z["flash"], lane=z["lane"], xs=list(z["xs"]),
+                    fps=float(z["fps"]), y0=int(z["y0"]), y1=int(z["y1"]))
     cap = cv2.VideoCapture(os.path.join("videos", vid + ".mp4"))
     fps = cap.get(cv2.CAP_PROP_FPS)
     y0, y1, xs = geometry(cap, vid, band, ncols)
@@ -62,18 +71,23 @@ def scan(vid, t0, t1, band="C", ncols=None):
         ok, fr = cap.read()
         if not ok:
             break
-        white = fr.min(axis=2)
-        hsv = cv2.cvtColor(fr, cv2.COLOR_BGR2HSV)
+        # only two strips of the frame are ever read - the receptor band and the lane below it -
+        # so crop before the colour convert: full-frame HSV was the whole cost of a scan
+        white = fr[y0:y1].min(axis=2)
+        hsv = cv2.cvtColor(fr[y1 + 8:y1 + 88], cv2.COLOR_BGR2HSV)
         # a rail is saturated and bright; the value floor sits low enough for the blue rails
         # (dark by nature) and still above the dimmed BGA, whose saturated blues sit under 70
         bar = (hsv[:, :, 1] > 130) & (hsv[:, :, 2] > 120)
         ts.append(t)
-        flash.append([float(white[y0:y1, x - half:x + half].mean()) for x in xs])
+        flash.append([float(white[:, x - half:x + half].mean()) for x in xs])
         # a rail is ~50px wide and can sit 15px off the receptor centre: a 40px box still
         # overlaps it by more than half
-        lane.append([float(bar[y1 + 8:y1 + 88, x - 20:x + 20].mean()) for x in xs])
+        lane.append([float(bar[:, x - 20:x + 20].mean()) for x in xs])
         t += 1.0 / fps
-    return dict(ts=np.array(ts), flash=np.array(flash), lane=np.array(lane), xs=xs, fps=fps, y0=y0, y1=y1)
+    out = dict(ts=np.array(ts), flash=np.array(flash), lane=np.array(lane), xs=xs, fps=fps, y0=y0, y1=y1)
+    os.makedirs(os.path.dirname(ck), exist_ok=True)
+    np.savez_compressed(ck, **out)
+    return out
 
 def onsets(sc, thresh=40.0):
     """Prominent peaks of each column's white level over its rolling floor: one per judgement,

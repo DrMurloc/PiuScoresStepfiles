@@ -158,12 +158,17 @@ def main():
         build_atlas(sys.argv[2], float(sys.argv[3]))
         return
     digits, anchor = load_atlas()
-    vmap = json.load(open(os.path.join(ROOT, "sources", "video-map.json"), encoding="utf-8"))
+    # --map/--ledger let a batch beyond the census certify into its own files; the census
+    # ledger and its worklist stay untouched.
+    vmap_path = sys.argv[sys.argv.index("--map") + 1] if "--map" in sys.argv         else os.path.join(ROOT, "sources", "video-map.json")
+    ledger_path = sys.argv[sys.argv.index("--ledger") + 1] if "--ledger" in sys.argv else LEDGER
+    vmap = json.load(open(vmap_path, encoding="utf-8"))
     ledger = {}
-    if os.path.exists(LEDGER):
-        ledger = json.load(open(LEDGER, encoding="utf-8"))
+    if os.path.exists(ledger_path):
+        ledger = json.load(open(ledger_path, encoding="utf-8"))
     force = "--force" in sys.argv
-    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    flagged = {sys.argv[i + 1] for i, a in enumerate(sys.argv) if a in ("--map", "--ledger")}
+    args = [a for a in sys.argv[1:] if not a.startswith("--") and a not in flagged]
     entries = [e for e in vmap if e.get("download")]
     if args:
         entries = [e for e in entries if e["vid"] in args]
@@ -177,7 +182,9 @@ def main():
         r = ledger[vid]
         totals = {s: r.get(s, {}).get("judged") for s in ("1p", "2p")} if r["status"] == "ok" else {}
         for ch in e["charts"]:
-            side = next((s for s, j in totals.items() if j == ch["judged"]), None)
+            # a re-rated chart can carry a different Phoenix 2 count; either certifies
+            expect = {ch["judged"]} | ({ch["judged_alt"]} if ch.get("judged_alt") else set())
+            side = next((s for s, j in totals.items() if j in expect), None)
             if side:
                 n_cert += 1
                 verdict = f"CERTIFIED {side}"
@@ -188,8 +195,8 @@ def main():
             ch_led = ledger[vid].setdefault("charts", {})
             ch_led[ch["chart"]] = dict(expected=ch["judged"], side=side,
                                        verdict="CERTIFIED" if side else "OPEN")
-    os.makedirs(os.path.dirname(LEDGER), exist_ok=True)
-    json.dump(ledger, open(LEDGER, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    os.makedirs(os.path.dirname(ledger_path), exist_ok=True)
+    json.dump(ledger, open(ledger_path, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print(f"\ncertified {n_cert} charts; open {n_open}")
 
 if __name__ == "__main__":

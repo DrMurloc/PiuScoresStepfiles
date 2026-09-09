@@ -1,4 +1,5 @@
-# Downloads the census source footage into videos/ (gitignored).
+# Downloads source footage into videos/ (gitignored). Default worklist is the census's
+# sources/video-map.json; --map <path> takes any batch worklist in the same shape.
 # Run with the piu-annotate venv python:
 #   ..\piu-annotate\.venv\Scripts\python.exe tools\download_videos.py
 # Idempotent: yt-dlp's --download-archive skips anything already fetched.
@@ -8,7 +9,9 @@ import json, os, subprocess, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 VIDEOS = os.path.join(ROOT, "videos")
 os.makedirs(VIDEOS, exist_ok=True)
-vmap = json.load(open(os.path.join(ROOT, "sources", "video-map.json"), encoding="utf-8"))
+# --map <path> points at a batch worklist beyond the census (tools/tail_worklist.py writes one)
+MAP = sys.argv[sys.argv.index("--map") + 1] if "--map" in sys.argv     else os.path.join(ROOT, "sources", "video-map.json")
+vmap = json.load(open(MAP, encoding="utf-8"))
 targets = [e for e in vmap if e.get("download")]
 
 # 720p-capped video-only stream (arrows stay readable, no ffmpeg merge needed);
