@@ -240,6 +240,25 @@ The acceptance gate. Runs piu-annotate's converter over the block in our tree an
 Checks a packaged release actually carries the repairs: the `.ssc` through the converter, the
 `Hold ticks` in the release's chart JSON, and the judged count must all agree.
 
+**`video_freshness.py <walk.tsv> <catalog.txt> <videos.txt> <out.json>`**
+Which charts point at footage older than what exists. Reads a channel walk (the census's cache
+under `%USERPROFILE%\.piu-score-trackerideo-backfill\walks\`) and matches every titled
+upload to a chart, because Nevsister stamps the mix on each one. Three traps it handles, all of
+which produced wrong matches first: the rerate note lives in PARENTHESES and is full of chart
+codes (`1949 D22 (pre D21 -> D22)`), `8 6 - FULL SONG -` normalises to the same name as the
+arcade `8 6` unless the song type is matched too, and the code in a Phoenix title is the
+PHOENIX level, so a chart is looked up at the level it holds in that video's own mix. Reports
+`upgrade` only where the banked video is a known-era upload OLDER than the best available -
+never where the banked era is simply unknown.
+
+**`video_refresh_sql.py <freshness.json> <catalog.txt> <out.sql> <needs.json> [--oembed ...] [--pilot ...]`**
+Writes the SQL the owner runs, and the list he records. Every UPDATE is guarded on the video it
+replaces, so the script is idempotent and cannot overwrite a hand-fix. Side comes from the new
+video (Left/Right for a split-screen singles pair, NULL when the chart has it alone), and where
+only one half of a split screen moves, the partner's Side is corrected in the same script.
+`--oembed` drops any target that no longer resolves; `--pilot` folds the repair loop's own
+"the footage is an older revision" charts into the recording list.
+
 **`batch_repair.py <video-map.json> --survey|--author [--commit] [--limit N] [--only "<chart>"]`**
 The closed loop. `--survey` walks a batch and classifies every chart without touching anything;
 `--author` does the edits the survey called for, re-verifies each with the real converter, and

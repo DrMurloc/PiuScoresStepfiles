@@ -332,3 +332,26 @@ Read it as three separate problems, because they have three different fixes:
 So the loop works and is safe, and on this slice it converts about one chart in twenty. It is
 not yet "point it at two thousand charts and walk away", and the honest order of work to make
 it so is: the counter reader first, region pinning second, footage third.
+
+## The other half of the repair: newer footage (2026-09-09)
+
+A chart pointing at pre-Phoenix footage cannot be repaired *and* shows the player the wrong
+video. Nevsister re-shot most of what changed between XX and Phoenix, so for a large group the
+fix is a newer video rather than an edited stepfile.
+
+`tools/video_freshness.py` matches the channel walk's 7,579 titled uploads against the catalog
+and finds **218 charts whose banked video is provably older footage** than what exists - 203
+XX -> Phoenix, 13 Phoenix -> Phoenix 2, 2 XX -> Phoenix 2 - over 182 videos, every one of them
+still live (checked by keyless oEmbed). `tools/video_refresh_sql.py` writes those as guarded
+UPDATEs, plus 9 side corrections where only one half of a split screen was moving.
+
+**`Downloads\chart-video-refresh-2026-09-09.sql`** - run it, then Clear Cache. Every guard was
+dry-run against the current ChartVideo rows: 218 of 218 match.
+
+Six of the fifteen charts the repair loop had stuck on old-revision footage are repaired by
+this script alone. The rest are in **`sources/footage-needed-2026-09-09.json`** - 16 charts
+nobody has posted current-mix footage for, and they are the owner's to record: 7 whose note
+count changed between Phoenix 1 and Phoenix 2 with no Phoenix 2 upload (BEMERA S24, Burn Out
+D20, Crimson Hood S24, HTTP C2, Monolith D22, Necromancy S20, Windmill D18 - the other 9 of
+those 16 changes Nevsister has already shot), and 9 whose footage and stepfile agree with each
+other against the catalog, where the newest upload is still the old-era one.

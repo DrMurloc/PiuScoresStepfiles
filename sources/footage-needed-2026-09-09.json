@@ -1,0 +1,158 @@
+{
+ "generated": "2026-09-09",
+ "source": "tools/video_refresh_sql.py",
+ "note": "charts nobody has posted current-mix footage for. Everything else that needed newer footage is in the SQL script alongside this file.",
+ "counts": {
+  "total": 16,
+  "by_reason": {
+   "note count changed Phoenix 1 -> Phoenix 2": 7,
+   "the footage and our stepfile agree with each": 9
+  }
+ },
+ "charts": [
+  {
+   "chartId": "8C89D9F4-E3ED-4082-8D90-FBC001B3498F",
+   "chart": "BEMERA S24",
+   "why": "note count changed Phoenix 1 -> Phoenix 2",
+   "p1_notes": 1757,
+   "p2_notes": 1858,
+   "delta": 101,
+   "newest_footage": "PHOENIX"
+  },
+  {
+   "chartId": "34836FE8-2801-4D9B-8534-B2958EED687C",
+   "chart": "Burn Out D20",
+   "why": "note count changed Phoenix 1 -> Phoenix 2",
+   "p1_notes": 911,
+   "p2_notes": 912,
+   "delta": 1,
+   "newest_footage": "PHOENIX"
+  },
+  {
+   "chartId": "77D7C34D-F810-4988-BBFB-641A0A450AFE",
+   "chart": "Crimson Hood S24",
+   "why": "note count changed Phoenix 1 -> Phoenix 2",
+   "p1_notes": 1445,
+   "p2_notes": 1495,
+   "delta": 50,
+   "newest_footage": "PHOENIX"
+  },
+  {
+   "chartId": "864D6818-6A02-464D-B183-F649517A4D50",
+   "chart": "HTTP C2",
+   "why": "note count changed Phoenix 1 -> Phoenix 2",
+   "p1_notes": 2100,
+   "p2_notes": 2032,
+   "delta": -68,
+   "newest_footage": "none matched"
+  },
+  {
+   "chartId": "A04C2A3A-8448-44F4-ACEF-E022563A45BF",
+   "chart": "Monolith D22",
+   "why": "note count changed Phoenix 1 -> Phoenix 2",
+   "p1_notes": 1284,
+   "p2_notes": 1276,
+   "delta": -8,
+   "newest_footage": "XX"
+  },
+  {
+   "chartId": "22EED3CE-EADE-46C6-935B-660A3DA79577",
+   "chart": "Necromancy S20",
+   "why": "note count changed Phoenix 1 -> Phoenix 2",
+   "p1_notes": 1229,
+   "p2_notes": 1228,
+   "delta": -1,
+   "newest_footage": "PHOENIX"
+  },
+  {
+   "chartId": "99BB6946-8E12-43B5-8801-5F0B3452544F",
+   "chart": "Windmill D18",
+   "why": "note count changed Phoenix 1 -> Phoenix 2",
+   "p1_notes": 884,
+   "p2_notes": 882,
+   "delta": -2,
+   "newest_footage": "PHOENIX"
+  },
+  {
+   "chartId": "ACB1BBDF-ACCB-4340-B399-333AE5A29E94",
+   "chart": "Moonlight - SHORT CUT - D20",
+   "why": "the footage and our stepfile agree with each other, not the catalog - the file is an older revision and the video is old-era too",
+   "footage_judged": 469,
+   "file_implied": 470,
+   "catalog": 815,
+   "newest_footage": "XX"
+  },
+  {
+   "chartId": "BFC840C0-2327-48FF-B6C3-D15317BE4FEA",
+   "chart": "Mission Possible S5",
+   "why": "the footage and our stepfile agree with each other, not the catalog - the file is an older revision and the video is old-era too",
+   "footage_judged": 127,
+   "file_implied": 127,
+   "catalog": 128,
+   "newest_footage": "XX"
+  },
+  {
+   "chartId": "60BF1AF5-614B-40ED-A979-403206A278B9",
+   "chart": "HTTP S2",
+   "why": "the footage and our stepfile agree with each other, not the catalog - the file is an older revision and the video is old-era too",
+   "footage_judged": 90,
+   "file_implied": 90,
+   "catalog": 91,
+   "newest_footage": "XX"
+  },
+  {
+   "chartId": "3B249B9B-B7D0-4F17-9883-2024E85A2D50",
+   "chart": "Radetzky Can Can D22",
+   "why": "the footage and our stepfile agree with each other, not the catalog - the file is an older revision and the video is old-era too",
+   "footage_judged": 850,
+   "file_implied": 850,
+   "catalog": 1010,
+   "newest_footage": "none matched"
+  },
+  {
+   "chartId": "9A43E5D9-F9A3-465C-9A57-61A424E13817",
+   "chart": "Radetzky Can Can S20",
+   "why": "the footage and our stepfile agree with each other, not the catalog - the file is an older revision and the video is old-era too",
+   "footage_judged": 766,
+   "file_implied": 766,
+   "catalog": 946,
+   "newest_footage": "none matched"
+  },
+  {
+   "chartId": "9D1597FC-0772-479C-8B4F-B3DB4DE74630",
+   "chart": "Papasito (feat.  KuTiNA) D18",
+   "why": "the footage and our stepfile agree with each other, not the catalog - the file is an older revision and the video is old-era too",
+   "footage_judged": 622,
+   "file_implied": 622,
+   "catalog": 765,
+   "newest_footage": "none matched"
+  },
+  {
+   "chartId": "52D5A53E-BDC8-4074-9CF8-5774D457E3D4",
+   "chart": "XTREE S2",
+   "why": "the footage and our stepfile agree with each other, not the catalog - the file is an older revision and the video is old-era too",
+   "footage_judged": 70,
+   "file_implied": 70,
+   "catalog": 67,
+   "newest_footage": "none matched"
+  },
+  {
+   "chartId": "A48A51F4-EDF1-4247-8535-B9EC649ED081",
+   "chart": "Top City S6",
+   "why": "the footage and our stepfile agree with each other, not the catalog - the file is an older revision and the video is old-era too",
+   "footage_judged": 192,
+   "file_implied": 192,
+   "catalog": 200,
+   "newest_footage": "XX"
+  },
+  {
+   "chartId": "ED5BC9A6-9140-4967-88B5-1D73352A6E7F",
+   "chart": "Twist of Fate (feat. Ruriling) D21",
+   "why": "the footage and our stepfile agree with each other, not the catalog - the file is an older revision and the video is old-era too",
+   "footage_judged": 892,
+   "file_implied": 892,
+   "catalog": 1104,
+   "newest_footage": "none matched"
+  }
+ ]
+}
