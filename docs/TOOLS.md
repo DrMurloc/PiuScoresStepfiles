@@ -242,7 +242,7 @@ Checks a packaged release actually carries the repairs: the `.ssc` through the c
 
 **`video_freshness.py <walk.tsv> <catalog.txt> <videos.txt> <out.json>`**
 Which charts point at footage older than what exists. Reads a channel walk (the census's cache
-under `%USERPROFILE%\.piu-score-trackerideo-backfill\walks\`) and matches every titled
+under `%USERPROFILE%\.piu-score-tracker\video-backfill\walks\`) and matches every titled
 upload to a chart, because Nevsister stamps the mix on each one. Three traps it handles, all of
 which produced wrong matches first: the rerate note lives in PARENTHESES and is full of chart
 codes (`1949 D22 (pre D21 -> D22)`), `8 6 - FULL SONG -` normalises to the same name as the
