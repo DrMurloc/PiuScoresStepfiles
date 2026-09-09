@@ -30,24 +30,17 @@ count**, so their notes are correct, plus the 106 repaired ones, all with video.
 
 | chart | file notes | extracted | recall | precision | median error |
 |---|---|---|---|---|---|
-| Dr. M D18 | 499 | 480 | **92.2%** | **95.8%** | 0.009s |
-| Bee D15 | 351 | 354 | 88.9% | 88.1% | 0.038s |
-| Bee S17 | 463 | 441 | 85.3% | 89.6% | 0.019s |
-| A nightmare S6 | 190 | 365 | 79.5% | 41.4% | 0.024s |
-| Another Truth D18 | 486 | 419 | 77.6% | 90.0% | 0.007s |
+| Bad Apple!! feat. Nomico D20 | 652 | 677 | **96.9%** | 93.4% | 0.035s |
+| Dr. M D18 | 499 | 480 | 92.2% | **95.8%** | 0.009s |
+| A nightmare S6 | 190 | 272 | 84.7% | 59.2% | 0.019s |
+| Beethoven Virus D13 | 303 | 269 | 81.8% | 92.2% | 0.016s |
 | My Way D16 | 447 | 428 | 77.2% | 80.6% | 0.027s |
-| 2006. LOVE SONG D14 | 388 | 346 | 75.0% | 84.1% | 0.031s |
-| An Interesting View S13 | 346 | 368 | 67.1% | 63.0% | 0.020s |
-| Beat of The War S16 | 497 | 432 | 64.0% | 73.6% | 0.015s |
-| Beethoven Virus D13 | 303 | 319 | 56.4% | 53.6% | 0.018s |
-| Bad Apple!! feat. Nomico D20 | 652 | 511 | 44.8% | 57.1% | 0.023s |
+| Bee S17 | 463 | 256 | 37.1% | 67.2% | 0.009s |
 
-Median around 77% recall and 80% precision, best 92/96, and the spread between charts is bigger
-than any single fix has been. Authoring a chart needs far better than this - a transcription is
-only worth having if it is very nearly perfect - so the number to drive is the WORST chart, not
-the best.
-
-Timing is not the problem any more - a matched note lands within 12-26ms, well inside a 16th.
+Bad Apple D20 was the worst chart in the corpus at 45% and is now the best at 97%. Bee S17 went
+the other way - 85% before the tuner started consulting the flashes, 37% after - and is the open
+case. The number to drive is still the worst chart: a transcription is only worth having if it
+is very nearly perfect.
 
 Three things got it from 5% to here, and each was a wrong assumption rather than a tuning knob:
 
@@ -59,6 +52,14 @@ Three things got it from 5% to here, and each was a wrong assumption rather than
 2. **A real note falls at the scroll speed; the background does not.** Filtering streaks whose
    slope disagrees with the local median took precision from 43% to 95%. It is deliberately
    LOCAL, so a chart that changes tempo is judged against its own speed at that moment.
+4. **A second, unrelated sensor settles the threshold.** Neither "find the most notes" nor
+   "find the most consistent ones" balances - the first rewards the false positives on a busy
+   stage, the second throws real notes away to look tidy. The receptor flashes are judged events
+   read at the top of the screen by completely different means, so a setting is good when the
+   two agree in both directions. That took Bad Apple D20 from 45% recall to 97%. A floor
+   (an extraction may not find far fewer notes than there were flashes) stops it collapsing to
+   a handful of perfect ones, which is what cost Beethoven Virus D13 before it was added.
+
 3. **One note can arrive as two streaks** when it is lost behind an effect and re-acquired.
    Nothing puts two notes in one column closer than 50ms, so anything nearer is one note.
 
