@@ -146,7 +146,11 @@ def ensure_combo(vid, band):
 
 def certify(vmap_path):
     """Certify every downloaded video in the batch. Ledger-cached; re-runs only what failed."""
-    out = tool("result_reader", "--all", "--map", vmap_path, "--ledger", LEDGER, timeout=7200)
+    # No timeout. Reading a result screen means seeking the tail of a video, and a corpus of
+    # two thousand of them takes many hours - a cap here does not make that faster, it just
+    # throws the work away and leaves every chart looking uncertified. It is ledger-cached, so
+    # a killed run resumes where it stopped.
+    out = tool("result_reader", "--all", "--map", vmap_path, "--ledger", LEDGER, timeout=None)
     m = re.search(r"certified (\d+) charts; open (\d+)", out)
     return (int(m.group(1)), int(m.group(2))) if m else (0, 0)
 

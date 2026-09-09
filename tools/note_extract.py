@@ -15,6 +15,7 @@
 # that recolours its notes reads the same as any other.
 #
 #   python -X utf8 tools/note_extract.py "<chart>" [--dump <file.json>] [--quiet]
+import bisect
 import json
 import os
 import sys
@@ -31,7 +32,7 @@ TOP, BOTTOM = 20, 430     # the band under the receptors that is watched, in px 
 MIN_RUN = 14              # a run of lit pixels shorter than this is not an arrow
 MIN_TRACK = 3             # frames a streak must persist to be believed
 
-def arrow_blobs(vid, band, ncols, t_end, vmin=110, smin=80):
+def arrow_blobs(vid, band, ncols, t_end, vmin=110, smin=80, white=True):
     """Every frame, the arrows on screen: which column, and where vertically.
 
     Colour alone cannot find an arrow. A bright BGA - and plenty of them are bright - passes any
@@ -53,9 +54,13 @@ def arrow_blobs(vid, band, ncols, t_end, vmin=110, smin=80):
             break
         strip = f[y1 + TOP:y1 + BOTTOM]
         hsv = cv2.cvtColor(strip, cv2.COLOR_BGR2HSV)
-        # the arrow body is coloured, its outline is near-white; either way it is BRIGHT, and
-        # taking both keeps the sprite whole so its outline does not cut it into pieces
-        lit = ((hsv[:, :, 2] > vmin) & ((hsv[:, :, 1] > smin) | (hsv[:, :, 2] > vmin + 80))).astype(np.uint8)
+        # The arrow body is coloured and its outline near-white, and taking both keeps the
+        # sprite whole. But on a chart whose art is white - Bad Apple's silhouettes - the
+        # outline clause hands the whole background to the detector, and the tuner answers by
+        # raising the brightness until the darker red panels vanish with it. So whether to
+        # trust the outline is chosen per chart, like the thresholds themselves.
+        lit = ((hsv[:, :, 2] > vmin) & ((hsv[:, :, 1] > smin) |
+                                        (white and hsv[:, :, 2] > vmin + 80))).astype(np.uint8)
         lit = cv2.morphologyEx(lit, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))
         n, lab, st, cent = cv2.connectedComponentsWithStats(lit, 8)
         per_col = [[] for _ in range(ncols)]
@@ -129,6 +134,27 @@ def notes_from_tracks(tracks, y_judge_px, fps):
                         frames=len(tr["t"]), first=float(t[0]), last=float(t[-1])))
     return out
 
+def flash_agreement(cand, flashes, lead, tol=0.07):
+    """How well an extraction lines up with the judged events seen at the receptor."""
+    if not flashes or len(cand) < 15:
+        return 0.0
+    best = 0.0
+    for off in np.arange(lead - 0.25, lead + 0.25, 0.01):
+        hit = 0
+        for c, ts_ in flashes.items():
+            got = sorted(n["t"] + off for n in cand if n["col"] == c)
+            if not got:
+                continue
+            for t in ts_:
+                i = bisect.bisect_left(got, t - tol)
+                if i < len(got) and abs(got[i] - t) <= tol:
+                    hit += 1
+        n_f = sum(len(v) for v in flashes.values())
+        if n_f:
+            p, r = hit / len(cand), hit / n_f
+            best = max(best, 2 * p * r / (p + r) if p + r else 0.0)
+    return best
+
 def extract(name, quiet=False):
     smap, cert = corpus_map.chart_map(), corpus_map.certification()
     ncols = 10 if name.split()[-1][0] == "D" else 5
@@ -144,9 +170,13 @@ def extract(name, quiet=False):
     # tuned on a slice, not the whole song - the art changes but not that much, and four extra
     # passes over a three minute video to pick one number is not a trade worth making
     probe = min(45.0, float(e.get("t") or 150))
+    sc = R.scan(vid, 0.5, probe, band, ncols)
+    flashes, _ = R.onsets(sc, 60.0)
+    lead = 0.0
     best = None
-    for vmin, smin in ((110, 80), (140, 90), (170, 110), (90, 70)):
-        ts, frames, fps, y0, y1 = arrow_blobs(vid, band, ncols, probe, vmin, smin)
+    for vmin, smin, white in ((110, 80, True), (140, 90, True), (170, 110, True), (90, 70, True),
+                             (95, 95, False), (75, 120, False)):
+        ts, frames, fps, y0, y1 = arrow_blobs(vid, band, ncols, probe, vmin, smin, white)
         y_j = (y0 + y1) / 2 - (y1 + TOP)
         cand = []
         for c in range(ncols):
@@ -158,11 +188,22 @@ def extract(name, quiet=False):
         sp = np.array([-n["v"] for n in cand])
         med = float(np.median(sp))
         agree = float(np.mean(np.abs(sp - med) <= 0.40 * med)) if med > 0 else 0.0
-        score = agree * min(len(cand), 2000) ** 0.5
+        # Neither "find the most notes" nor "find the most consistent ones" balances: the first
+        # rewards the false positives on a busy stage, the second throws away real notes to be
+        # safe. What settles it is a SECOND, unrelated sensor - the receptor flashes, which are
+        # judged events read at the top of the screen by completely different means. A setting
+        # is good when the two agree in both directions: most of what it extracted flashed, and
+        # most of what flashed was extracted. Neither sensor sees the stepfile.
+        # Every judged event flashed, so an extraction that finds far fewer notes than there
+        # were flashes has thrown real ones away however tidy the rest looks - which is exactly
+        # how a criterion that only rewards agreement collapses to a handful of perfect notes.
+        n_flash = sum(len(v) for v in flashes.values())
+        enough = len(cand) >= 0.6 * n_flash if n_flash else True
+        score = agree * flash_agreement(cand, flashes, lead) * (1.0 if enough else 0.15)
         if best is None or score > best[0]:
-            best = (score, vmin, smin, agree, len(cand))
-    vmin, smin = (best[1], best[2]) if best else (110, 80)
-    ts, frames, fps, y0, y1 = arrow_blobs(vid, band, ncols, float(e.get("t") or 150), vmin, smin)
+            best = (score, vmin, smin, agree, len(cand), white)
+    vmin, smin, white = (best[1], best[2], best[5]) if best else (110, 80, True)
+    ts, frames, fps, y0, y1 = arrow_blobs(vid, band, ncols, float(e.get("t") or 150), vmin, smin, white)
     # the judgement line is the middle of the receptor band, in the strip's own coordinates
     y_judge = (y0 + y1) / 2 - (y1 + TOP)
     notes, speeds = [], []
@@ -200,7 +241,7 @@ def extract(name, quiet=False):
         notes = keep
     if not quiet:
         print(f"{name}: {vid} band {band}, {len(ts)} frames at {fps:.0f}fps, "
-              f"brightness {vmin}/{smin}" + (f" ({best[3]:.0%} of streaks agree)" if best else ""))
+              f"brightness {vmin}/{smin}{'+outline' if white else ''}" + (f" ({best[3]:.0%} of streaks agree)" if best else ""))
         if speeds:
             print(f"  scroll {np.median(speeds):.0f} px/s "
                   f"({np.percentile(speeds, 5):.0f}-{np.percentile(speeds, 95):.0f})")
