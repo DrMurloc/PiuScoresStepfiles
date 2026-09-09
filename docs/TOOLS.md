@@ -259,6 +259,25 @@ only one half of a split screen moves, the partner's Side is corrected in the sa
 `--oembed` drops any target that no longer resolves; `--pilot` folds the repair loop's own
 "the footage is an older revision" charts into the recording list.
 
+**`selftest.py`** - the parts that need no footage
+Every case is a bug that shipped once: the pair that shared one bracket and got counted twice,
+the rerate note in parentheses read as chart codes, the full song that took the arcade song's
+video, the sweep that took the first offset instead of the best. Runs in a second, needs
+nothing. Run it after touching a regex, a parser or a matching rule.
+
+**`golden.py [--only "<chart>"] [--record]`** - the charts whose answer we know
+Re-derives seventeen charts from the footage and fails if the analysis reaches a different
+conclusion: the offset it fits, the drift it measures, the rails it prices, the verdict the
+gate reaches, and (for repaired ones) the count the converter still gets. `rebuild_repairs`
+proves the FILES are still right; this proves we can still DERIVE them, which is a different
+failure - a repair can sit correct in the tree while a change to the reader quietly stops being
+able to reach it, and the next batch parks everything.
+
+Nine of the seventeen are charts that must **NOT** ship, one per park cause, because a gate
+that loosens is the failure that actually costs something. A repaired chart stops at "already
+exact", so its pricing is probed separately rather than left unguarded. `--record` rewrites the
+expectations - only do that when a change is *meant* to move them, and read the diff first.
+
 **`batch_repair.py <video-map.json> --survey|--author [--commit] [--limit N] [--only "<chart>"]`**
 The closed loop. `--survey` walks a batch and classifies every chart without touching anything;
 `--author` does the edits the survey called for, re-verifies each with the real converter, and

@@ -1,0 +1,293 @@
+{
+ "generated": "2026-09-09",
+ "note": "Charts whose answer is known. tools/golden.py re-derives each from the footage and fails if the analysis reaches a different conclusion. More parks than ships on purpose: a loosening gate is the failure that costs something.",
+ "charts": [
+  {
+   "chart": "Blazing S17",
+   "target": 601,
+   "source": "tail",
+   "why": "repaired by closure - one region, its rail priced 92 of 94 owed",
+   "expect": {
+    "verdict": "SKIP",
+    "offset": 10.45,
+    "flash_match": 86.3,
+    "owed": 94,
+    "rail_regions": 1,
+    "regions_priced": 1,
+    "rails_total": 92,
+    "implied": 601,
+    "file_taps": 507
+   }
+  },
+  {
+   "chart": "Love is a Danger Zone - SHORT CUT - S13",
+   "target": 517,
+   "source": "tail",
+   "why": "repaired by closure - the pair that was double-counted",
+   "expect": {
+    "verdict": "SKIP",
+    "offset": 13.35,
+    "flash_match": 87.1,
+    "owed": 263,
+    "rail_regions": 1,
+    "regions_priced": 1,
+    "rails_total": 265,
+    "implied": 517,
+    "file_taps": 254
+   }
+  },
+  {
+   "chart": "Smells Like A Chocolate S3",
+   "target": 140,
+   "source": "tail",
+   "why": "repaired by closure - read 27 against 13 owed until pairs were clustered",
+   "expect": {
+    "verdict": "SKIP",
+    "offset": 9.05,
+    "flash_match": 96.1,
+    "owed": 13,
+    "rail_regions": 1,
+    "regions_priced": 1,
+    "rails_total": 15,
+    "implied": 140,
+    "file_taps": 127
+   }
+  },
+  {
+   "chart": "2006. LOVE SONG S15",
+   "target": 500,
+   "source": "tail",
+   "why": "repaired by closure",
+   "expect": {
+    "verdict": "SKIP",
+    "offset": 11.25,
+    "flash_match": 93.3,
+    "owed": 152,
+    "rail_regions": 1,
+    "regions_priced": 1,
+    "rails_total": 154,
+    "implied": 500,
+    "file_taps": 348
+   }
+  },
+  {
+   "chart": "Get Your Groove On D10",
+   "target": 200,
+   "source": "tail",
+   "why": "repaired by rails - the raw bracket read 102 against the 2 it owes",
+   "expect": {
+    "verdict": "SKIP",
+    "offset": 12.75,
+    "flash_match": 100.0,
+    "owed": 3,
+    "rail_regions": 1,
+    "regions_priced": 1,
+    "rails_total": 3,
+    "implied": 200,
+    "file_taps": 197
+   }
+  },
+  {
+   "chart": "Switronic - SHORT CUT - S3",
+   "target": 120,
+   "source": "tail",
+   "why": "MUST NOT SHIP: footage and file agree at 60, catalog says 120 - an older revision",
+   "expect": {
+    "verdict": "PARK",
+    "cause": "older revision",
+    "implied": 60,
+    "file_taps": 55
+   }
+  },
+  {
+   "chart": "2006. LOVE SONG S9",
+   "target": 253,
+   "source": "tail",
+   "why": "MUST NOT SHIP: three-way disagreement",
+   "expect": {
+    "verdict": "PARK",
+    "cause": "three-way disagreement",
+    "implied": 238,
+    "file_taps": 177
+   }
+  },
+  {
+   "chart": "404 (New Era) S3",
+   "target": 145,
+   "source": "tail",
+   "why": "MUST NOT SHIP: no readable result screen",
+   "expect": {
+    "verdict": "PARK",
+    "cause": "no result screen",
+    "implied": 137,
+    "file_taps": 128
+   }
+  },
+  {
+   "chart": "Final Audition S19",
+   "target": 715,
+   "source": "tail",
+   "why": "MUST NOT SHIP: no offset fits the flashes",
+   "expect": {
+    "verdict": "PARK",
+    "cause": "no offset fits",
+    "implied": 607,
+    "file_taps": 590
+   }
+  },
+  {
+   "chart": "Anguished Unmaking D19",
+   "target": 959,
+   "source": "tail",
+   "why": "MUST NOT SHIP: hold regions the counter cannot price",
+   "expect": {
+    "verdict": "PARK",
+    "cause": "region unpriced",
+    "offset": 11.0,
+    "flash_match": 84.0,
+    "miss": 1,
+    "drift": 6,
+    "owed": 462,
+    "rail_regions": 29,
+    "regions_priced": 22,
+    "rails_total": 588,
+    "implied": 1151,
+    "file_taps": 497
+   }
+  },
+  {
+   "chart": "Another Truth S16",
+   "target": 500,
+   "source": "tail",
+   "why": "MUST NOT SHIP: the rails price to more than the chart owes",
+   "expect": {
+    "verdict": "PARK",
+    "cause": "priced total disagrees",
+    "offset": 15.4,
+    "flash_match": 87.0,
+    "miss": 0,
+    "drift": -1,
+    "owed": 152,
+    "rail_regions": 2,
+    "regions_priced": 2,
+    "rails_total": 189,
+    "implied": 354,
+    "file_taps": 348
+   }
+  },
+  {
+   "chart": "Blazing D21",
+   "target": 800,
+   "source": "tail",
+   "why": "MUST NOT SHIP: the game holds where the file has nothing",
+   "expect": {
+    "verdict": "PARK",
+    "cause": "game holds where the file does not",
+    "offset": 9.4,
+    "flash_match": 92.3,
+    "miss": 1,
+    "drift": 387,
+    "owed": 292,
+    "rail_regions": 2,
+    "regions_priced": 2,
+    "rails_total": 287,
+    "implied": 515,
+    "file_taps": 508
+   }
+  },
+  {
+   "chart": "Naissance D12",
+   "target": 245,
+   "source": "tail",
+   "why": "MUST NOT SHIP: owes events and no rail is visible",
+   "expect": {
+    "verdict": "PARK",
+    "cause": "no rail visible",
+    "offset": 13.0,
+    "flash_match": 96.1,
+    "miss": 0,
+    "drift": 105,
+    "owed": 11,
+    "rail_regions": 0,
+    "regions_priced": 0,
+    "rails_total": 0,
+    "implied": 234,
+    "file_taps": 234
+   }
+  },
+  {
+   "chart": "Vook S10",
+   "target": 552,
+   "source": "tail",
+   "why": "MUST NOT SHIP: owes 198 events, no rail visible",
+   "expect": {
+    "verdict": "PARK",
+    "cause": "no rail visible",
+    "offset": 11.8,
+    "flash_match": 91.3,
+    "miss": 2,
+    "drift": 378,
+    "owed": 198,
+    "rail_regions": 0,
+    "regions_priced": 0,
+    "rails_total": 0,
+    "implied": 354,
+    "file_taps": 354
+   }
+  },
+  {
+   "chart": "Bee S17",
+   "target": 830,
+   "source": "census",
+   "why": "census: the finale hold is the whole deficit; must stay exact",
+   "expect": {
+    "verdict": "SKIP",
+    "offset": 12.0,
+    "flash_match": 69.3,
+    "owed": 389,
+    "rail_regions": 1,
+    "regions_priced": 1,
+    "rails_total": 380,
+    "implied": 830,
+    "file_taps": 441
+   }
+  },
+  {
+   "chart": "Leather D22",
+   "target": 1450,
+   "source": "census",
+   "why": "census: a 37-reset play where the CURVE fails and drift is +0 - the one-sided rule",
+   "expect": {
+    "verdict": "PARK",
+    "cause": "region unpriced",
+    "offset": 11.3,
+    "flash_match": 77.5,
+    "miss": 17,
+    "drift": 0,
+    "owed": 620,
+    "rail_regions": 36,
+    "regions_priced": 26,
+    "rails_total": 318,
+    "implied": 2274,
+    "file_taps": 830
+   }
+  },
+  {
+   "chart": "Mr. Larpus D16",
+   "target": 550,
+   "source": "census",
+   "why": "census: screened -116 on 11 misses; run_drift is what cleared it",
+   "expect": {
+    "verdict": "SKIP",
+    "offset": 11.65,
+    "flash_match": 85.3,
+    "owed": 125,
+    "rail_regions": 1,
+    "regions_priced": 1,
+    "rails_total": 179,
+    "implied": 550,
+    "file_taps": 425
+   }
+  }
+ ]
+}

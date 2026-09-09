@@ -386,3 +386,28 @@ where the file has nothing at all. That is a missing note, not a mis-priced one,
 If the counter is the wall, the way through is a different measurement rather than a better
 reading of the same one - the in-play SCORE display also steps on every judgement and does not
 sit under the rails. That is the next thing worth trying.
+
+## What guards the process (2026-09-09)
+
+There are now three layers, and they fail differently:
+
+| | what it proves | needs footage |
+|---|---|---|
+| `tools/selftest.py` | the parsers and title matchers still read what the tools print | no, ~1s |
+| `tools/golden.py` | seventeen known charts still *analyse* the same way | yes |
+| `tools/rebuild_repairs.py` | every census file still converts to its note count | no |
+
+The golden set is the new one, and it is deliberately **nine parks to five repairs** (plus
+three census charts whose evidence is documented and tricky - Bee S17, Leather D22's +0 drift
+on a 37-reset play, Mr. Larpus D16 which only `run_drift` could clear). A gate that loosens is
+the failure that costs something, and only a chart that must not ship can catch it.
+
+It was verified by breaking the pipeline on purpose: disabling the rule that a pair shares one
+bracket made Smells Like A Chocolate S3 fail with `rails_total: expected 15, got 27` - exactly
+the bug that rule was written for.
+
+**Charts to validate by eye**, if you want to spot-check what the loop decided: the five it
+repaired - Blazing S17, Love is a Danger Zone SC S13, Smells Like A Chocolate S3, 2006. LOVE
+SONG S15, Get Your Groove On D10. Each is one hold region whose rail the counter priced within
+a couple of events of what the chart owed, and each verifies exactly against the catalog. The
+census's own 106 are already validated by their own evidence.
