@@ -246,6 +246,29 @@ correct old chart with a guessed new one.
 So: a chart whose footage agrees with the file and not the catalog is a **footage problem**.
 It parks, and it is not counted against the tools.
 
+## Read a bracket from the window, not from one frame
+
+The counter sits in the play field, so a note or a rail parks over a digit and 113 reads as 12.
+The nearest read to a rail is as likely to be the mangled one as not, and it alone used to
+decide the rail's price. It should not: within half a second the true value barely moves, so
+the reading the frames AGREE on is the honest one. Each read in the window is pulled to
+whichever `v + 100k` sits nearest the window's median, and the value comes from the read
+closest to the rail. A window whose reads still disagree by more than the counter could have
+climbed (about 60 a second) is taken as read rather than guessed.
+
+The correction can only restore a hundred the reader dropped - never invent a value. Measured
+against every chart's owed total on the first batch, it is **never worse than the single read
+and sometimes right where that was wrong** (Get Your Groove On D10: 102 against the 2 it owes).
+
+Two things that sound like improvements and are not, both measured on the same batch:
+
+- **A running continuity repair over the whole scan** (`curve_tools.continuity_repair`) prices
+  142 more rails but **rewrites 130 that were already priced**, and leaves three charts further
+  from their owed total than the raw reads did. Its estimate can lock onto the wrong branch and
+  stay there. It is right for building a cumulative curve and wrong for pricing one rail.
+- **Lowering the confidence floor** below 0.6 makes it worse, not better: the junk reads
+  poison the window's median (Super Fantasy S16 goes from 447 against 456 owed to 1,145).
+
 ## No per-beat tick rate
 
 The game's hold ticks are authored per chart, not derived from hold length. Across the 43

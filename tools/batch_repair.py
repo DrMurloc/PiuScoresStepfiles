@@ -75,7 +75,7 @@ def parse_tick_verify(out):
         else:
             regs.append([t0, t1])
     return dict(taps=int(m.group(1)), ticks=int(m.group(2)), implied=int(m.group(3)),
-                holds=len(holds), regions=len(regs), match="MATCH" in out)
+                holds=len(holds), regions=len(regs), spans=regs, match="MATCH" in out)
 
 def parse_sweep(out):
     hits = [(int(m.group(2)), float(m.group(1)))
@@ -233,14 +233,30 @@ def survey_chart(name, entry, cert):
                           f"brackets, {total} of {owed} owed",
                 "rail_list": [dict(col=m["col"], head=m["head"], tail=m["tail"], ticks=c["ticks"])
                               for c in priced for m in c["members"]]}
-    # the file already holds in several places and every region needs its own pinned price.
-    # finale_ticks can do it with --pin, but mapping a rail onto the right region by beat is
-    # not automated yet, and a mis-mapped pin is a wrong distribution that still verifies.
-    return {**r, "verdict": "PARK",
-            "reason": f"{tv['regions']} hold regions each need their own pinned price "
-                      f"({len(priced)} priced, {total} of {owed} owed) - not automated",
-            "rail_list": [dict(col=m["col"], head=m["head"], tail=m["tail"], ticks=c["ticks"])
-                          for c in priced for m in c["members"]]}
+    # Several file regions, each needing its own price. The mapping is only allowed to be
+    # mechanical: a measured hold must land in exactly ONE of the file's regions, and every
+    # region must get one. Anything else - a hold the file does not have, or one that straddles
+    # two - is a note-placement question, and pinning through it would write a distribution
+    # that verifies and is still wrong.
+    pins, unmapped = [], 0
+    for c in priced:
+        hit = [sp for sp in tv["spans"]
+               if min(sp[1], c["tail"] - sw["offset"]) - max(sp[0], c["head"] - sw["offset"]) > -0.15]
+        if len(hit) != 1:
+            unmapped += 1
+        else:
+            pins.append(dict(t0=c["head"] - sw["offset"], t1=c["tail"] - sw["offset"], ticks=c["ticks"]))
+    covered = {i for i, sp in enumerate(tv["spans"])
+               for p in pins if min(sp[1], p["t1"]) - max(sp[0], p["t0"]) > -0.15}
+    if unmapped or len(covered) < len(tv["spans"]):
+        return {**r, "verdict": "PARK",
+                "reason": f"{tv['regions']} hold regions: {len(covered)} carry a measured hold and "
+                          f"{unmapped} measured holds match no single region - the rest would be "
+                          f"a guess"}
+    return {**r, "verdict": "SHIP", "route": "pins",
+            "reason": f"{len(tv['spans'])} hold regions, each priced from its own rails "
+                      f"({total} of {owed} owed)",
+            "pins": pins}
 
 # --------------------------------------------------------------------------------- authoring
 
@@ -253,6 +269,11 @@ def author_chart(rec, smap, commit):
     ssc = os.path.join("simfiles", smap[name]["ssc_rel"].replace("/", os.sep))
     if rec["route"] == "closure":
         tool("finale_ticks", name, timeout=3600)
+    elif rec["route"] == "pins":
+        pp = os.path.join(ROOT, "work", "rails", f"{rec['vid']}-{name.replace(' ', '_').replace('/', '_')}-pins.json")
+        os.makedirs(os.path.dirname(pp), exist_ok=True)
+        json.dump(rec["pins"], open(pp, "w", encoding="utf-8"))
+        tool("finale_ticks", name, "--pins-json", os.path.relpath(pp, ROOT), timeout=3600)
     else:
         rails = [dict(col=x["col"], head=x["head"], tail=x["tail"], ticks=x["ticks"]) for x in rec["rail_list"]]
         rp = os.path.join(ROOT, "work", "rails", f"{rec['vid']}-{name.replace(' ', '_').replace('/', '_')}.json")

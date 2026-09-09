@@ -50,6 +50,14 @@
    "ticks": 152,
    "route": "closure",
    "commit": "483db71"
+  },
+  {
+   "chart": "Get Your Groove On D10",
+   "target": 200,
+   "taps": 197,
+   "ticks": 3,
+   "route": "rails",
+   "commit": "743cd40"
   }
  ],
  "older_revision": [
@@ -168,13 +176,13 @@
    "owed": 617,
    "rails": 49,
    "rail_regions": 38,
-   "regions_priced": 21,
-   "rails_total": 160,
+   "regions_priced": 24,
+   "rails_total": 261,
    "tol": 19,
    "verdict": "PARK",
-   "reason": "17 of 38 hold regions unpriced ({'no bracket': 10, 'reset': 7}) - the remainder would be split by guess",
-   "seconds": 7.0,
-   "category": "counter: a hold region could not be priced"
+   "reason": "14 of 38 hold regions unpriced ({'no bracket': 10, 'reset': 4}) - the remainder would be split by guess",
+   "seconds": 6.8,
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "DJ Otada D22",
@@ -204,8 +212,8 @@
    "tol": 9,
    "verdict": "PARK",
    "reason": "5 of 8 hold regions unpriced ({'no bracket': 4, 'reset': 1}) - the remainder would be split by guess",
-   "seconds": 5.8,
-   "category": "counter: a hold region could not be priced"
+   "seconds": 5.6,
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "Moonlight - SHORT CUT - D20",
@@ -222,8 +230,8 @@
    "verdict": "PARK",
    "screen": 469,
    "reason": "the footage judges 469 and the file implies 470 - they agree, and the catalog's 815 does not. This file is an older revision and needs Phoenix-era footage",
-   "seconds": 0.7,
-   "category": "footage: file is an older revision"
+   "seconds": 0.6,
+   "category": "file is an older revision"
   },
   {
    "chart": "Mission Possible S5",
@@ -241,7 +249,7 @@
    "screen": 127,
    "reason": "the footage judges 127 and the file implies 127 - they agree, and the catalog's 128 does not. This file is an older revision and needs Phoenix-era footage",
    "seconds": 0.6,
-   "category": "footage: file is an older revision"
+   "category": "file is an older revision"
   },
   {
    "chart": "Beat of The War 2 - FULL SONG - D21",
@@ -266,13 +274,13 @@
    "owed": 702,
    "rails": 74,
    "rail_regions": 49,
-   "regions_priced": 32,
-   "rails_total": 354,
+   "regions_priced": 31,
+   "rails_total": 351,
    "tol": 21,
    "verdict": "PARK",
-   "reason": "17 of 49 hold regions unpriced ({'no bracket': 8, 'reset': 9}) - the remainder would be split by guess",
-   "seconds": 12.8,
-   "category": "counter: a hold region could not be priced"
+   "reason": "18 of 49 hold regions unpriced ({'no bracket': 8, 'reset': 10}) - the remainder would be split by guess",
+   "seconds": 12.6,
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "Blazing S17",
@@ -291,7 +299,7 @@
    "verdict": "SKIP",
    "reason": "already exact",
    "seconds": 0.6,
-   "category": null
+   "category": "SKIP"
   },
   {
    "chart": "Vook S10",
@@ -321,8 +329,8 @@
    "tol": 6,
    "verdict": "PARK",
    "reason": "owes 198 hold events and no rail is visible",
-   "seconds": 3.2,
-   "category": "counter: owes events but no rail is visible"
+   "seconds": 3.0,
+   "category": "owes events, no rail visible"
   },
   {
    "chart": "Final Audition EP. 2-X - SHORT CUT - D20",
@@ -352,8 +360,8 @@
    "tol": 20,
    "verdict": "PARK",
    "reason": "7 of 13 hold regions unpriced ({'reset': 2, 'no bracket': 5}) - the remainder would be split by guess",
-   "seconds": 5.9,
-   "category": "counter: a hold region could not be priced"
+   "seconds": 5.7,
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "Betrayer S9",
@@ -383,8 +391,8 @@
    "tol": 3,
    "verdict": "PARK",
    "reason": "owes 2 hold events and no rail is visible",
-   "seconds": 3.1,
-   "category": "counter: owes events but no rail is visible"
+   "seconds": 3.0,
+   "category": "owes events, no rail visible"
   },
   {
    "chart": "Csikos Post D22",
@@ -410,12 +418,12 @@
    "rails": 4,
    "rail_regions": 4,
    "regions_priced": 3,
-   "rails_total": 228,
+   "rails_total": 128,
    "tol": 9,
    "verdict": "PARK",
    "reason": "1 of 4 hold regions unpriced ({'reset': 1}) - the remainder would be split by guess",
-   "seconds": 5.3,
-   "category": "counter: a hold region could not be priced"
+   "seconds": 5.1,
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "Love is a Danger Zone - SHORT CUT - S13",
@@ -425,33 +433,16 @@
    "vid": "5bFAEeGDrv4",
    "skin": null,
    "file_taps": 254,
-   "file_ticks": 23,
-   "implied": 277,
+   "file_ticks": 263,
+   "implied": 517,
    "regions": 1,
-   "deficit": 240,
+   "deficit": 0,
    "side": "1p",
    "band": "L",
-   "offset": 13.35,
-   "flash_match": 87.1,
-   "miss": 0,
-   "bad": 0,
-   "hold_free_runs": 4,
-   "drift": 92,
-   "owed": 263,
-   "rails": 2,
-   "rail_regions": 1,
-   "regions_priced": 1,
-   "rails_total": 265,
-   "tol": 8,
-   "verdict": "SHIP",
-   "route": "closure",
-   "reason": "one hold region, its rail prices to 265 of 263 owed",
-   "seconds": 2.2,
-   "authored": true,
-   "final_taps": 254,
-   "final_ticks": 263,
-   "commit": "a459aec",
-   "category": null
+   "verdict": "SKIP",
+   "reason": "already exact",
+   "seconds": 0.6,
+   "category": "SKIP"
   },
   {
    "chart": "Cleaner - SHORT CUT - D22",
@@ -469,7 +460,7 @@
    "screen": 1510,
    "reason": "contradictory evidence: the footage judges 1510, the file implies 1513, the catalog says 1270",
    "seconds": 0.6,
-   "category": "footage: three-way disagreement"
+   "category": "three-way disagreement"
   },
   {
    "chart": "Le Grand Bleu D20",
@@ -495,12 +486,12 @@
    "rails": 54,
    "rail_regions": 40,
    "regions_priced": 19,
-   "rails_total": 347,
+   "rails_total": 447,
    "tol": 19,
    "verdict": "PARK",
    "reason": "21 of 40 hold regions unpriced ({'no bracket': 14, 'reset': 7}) - the remainder would be split by guess",
-   "seconds": 7.9,
-   "category": "counter: a hold region could not be priced"
+   "seconds": 7.8,
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "Miss's Story D19",
@@ -518,7 +509,7 @@
    "screen": null,
    "reason": "no result screen in the footage (no-result-screen)",
    "seconds": 0.6,
-   "category": "footage: no readable result screen"
+   "category": "no readable result screen"
   },
   {
    "chart": "Smells Like A Chocolate S3",
@@ -528,33 +519,16 @@
    "vid": "9BFsXKRfP18",
    "skin": null,
    "file_taps": 127,
-   "file_ticks": 14,
-   "implied": 141,
+   "file_ticks": 13,
+   "implied": 140,
    "regions": 1,
-   "deficit": -1,
+   "deficit": 0,
    "side": "1p",
    "band": "L",
-   "offset": 9.05,
-   "flash_match": 96.1,
-   "miss": 0,
-   "bad": 0,
-   "hold_free_runs": 5,
-   "drift": 200,
-   "owed": 13,
-   "rails": 2,
-   "rail_regions": 1,
-   "regions_priced": 1,
-   "rails_total": 15,
-   "tol": 3,
-   "verdict": "SHIP",
-   "route": "closure",
-   "reason": "one hold region, its rail prices to 15 of 13 owed",
-   "seconds": 2.2,
-   "authored": true,
-   "final_taps": 127,
-   "final_ticks": 13,
-   "commit": "f7c7f6b",
-   "category": null
+   "verdict": "SKIP",
+   "reason": "already exact",
+   "seconds": 0.6,
+   "category": "SKIP"
   },
   {
    "chart": "Switronic - SHORT CUT - S3",
@@ -572,7 +546,7 @@
    "screen": 60,
    "reason": "the footage judges 60 and the file implies 60 - they agree, and the catalog's 120 does not. This file is an older revision and needs Phoenix-era footage",
    "seconds": 0.6,
-   "category": "footage: file is an older revision"
+   "category": "file is an older revision"
   },
   {
    "chart": "Beat The Ghost D20",
@@ -603,7 +577,7 @@
    "verdict": "PARK",
    "reason": "3 of 11 hold regions unpriced ({'reset': 1, 'no bracket': 2}) - the remainder would be split by guess",
    "seconds": 5.5,
-   "category": "counter: a hold region could not be priced"
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "Switronic - SHORT CUT - D17",
@@ -621,7 +595,7 @@
    "screen": 402,
    "reason": "the footage judges 402 and the file implies 402 - they agree, and the catalog's 600 does not. This file is an older revision and needs Phoenix-era footage",
    "seconds": 0.6,
-   "category": "footage: file is an older revision"
+   "category": "file is an older revision"
   },
   {
    "chart": "Higgledy Piggledy S19",
@@ -646,13 +620,13 @@
    "owed": 339,
    "rails": 25,
    "rail_regions": 16,
-   "regions_priced": 12,
-   "rails_total": 191,
+   "regions_priced": 13,
+   "rails_total": 205,
    "tol": 10,
    "verdict": "PARK",
-   "reason": "4 of 16 hold regions unpriced ({'no bracket': 3, 'reset': 1}) - the remainder would be split by guess",
-   "seconds": 3.9,
-   "category": "counter: a hold region could not be priced"
+   "reason": "3 of 16 hold regions unpriced ({'no bracket': 2, 'reset': 1}) - the remainder would be split by guess",
+   "seconds": 3.8,
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "Solitary D17",
@@ -682,8 +656,8 @@
    "tol": 4,
    "verdict": "PARK",
    "reason": "the rails price to 232, the chart owes 122 - the events are not where the file's holds are",
-   "seconds": 4.9,
-   "category": "evidence: priced total disagrees with what is owed"
+   "seconds": 4.7,
+   "category": "priced total disagrees with owed"
   },
   {
    "chart": "HTTP S2",
@@ -701,7 +675,7 @@
    "screen": 90,
    "reason": "the footage judges 90 and the file implies 90 - they agree, and the catalog's 91 does not. This file is an older revision and needs Phoenix-era footage",
    "seconds": 0.6,
-   "category": "footage: file is an older revision"
+   "category": "file is an older revision"
   },
   {
    "chart": "Beat of The War 2 - FULL SONG - S21",
@@ -726,13 +700,13 @@
    "owed": 632,
    "rails": 67,
    "rail_regions": 45,
-   "regions_priced": 28,
-   "rails_total": 449,
+   "regions_priced": 29,
+   "rails_total": 450,
    "tol": 19,
    "verdict": "PARK",
-   "reason": "17 of 45 hold regions unpriced ({'no bracket': 4, 'reset': 13}) - the remainder would be split by guess",
-   "seconds": 7.7,
-   "category": "counter: a hold region could not be priced"
+   "reason": "16 of 45 hold regions unpriced ({'no bracket': 4, 'reset': 12}) - the remainder would be split by guess",
+   "seconds": 7.6,
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "Amor Fati S18",
@@ -757,13 +731,13 @@
    "owed": 671,
    "rails": 75,
    "rail_regions": 62,
-   "regions_priced": 40,
-   "rails_total": 1062,
+   "regions_priced": 39,
+   "rails_total": 1060,
    "tol": 20,
    "verdict": "PARK",
-   "reason": "22 of 62 hold regions unpriced ({'reset': 10, 'no bracket': 12}) - the remainder would be split by guess",
+   "reason": "23 of 62 hold regions unpriced ({'reset': 11, 'no bracket': 12}) - the remainder would be split by guess",
    "seconds": 5.4,
-   "category": "counter: a hold region could not be priced"
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "Chase Me D23",
@@ -788,7 +762,7 @@
    "verdict": "PARK",
    "reason": "grid drifts -18 on 13 misses - the file carries taps the game never judges, so this is a re-step",
    "seconds": 3.3,
-   "category": "grid: a re-step, not a re-tick"
+   "category": "a re-step, not a re-tick"
   },
   {
    "chart": "Final Audition S19",
@@ -806,8 +780,8 @@
    "band": "R",
    "verdict": "PARK",
    "reason": "no offset fits the flashes (50.1% matched)",
-   "seconds": 1.9,
-   "category": "footage: no offset fits the flashes"
+   "seconds": 1.8,
+   "category": "no offset fits the flashes"
   },
   {
    "chart": "Naissance 2 D20",
@@ -837,8 +811,8 @@
    "tol": 6,
    "verdict": "PARK",
    "reason": "the rails price to 33, the chart owes 196 - the events are not where the file's holds are",
-   "seconds": 5.3,
-   "category": "evidence: priced total disagrees with what is owed"
+   "seconds": 5.2,
+   "category": "priced total disagrees with owed"
   },
   {
    "chart": "%X (Percent X) D19",
@@ -855,8 +829,8 @@
    "verdict": "PARK",
    "screen": 1199,
    "reason": "contradictory evidence: the footage judges 1199, the file implies 1217, the catalog says 1018",
-   "seconds": 0.7,
-   "category": "footage: three-way disagreement"
+   "seconds": 0.6,
+   "category": "three-way disagreement"
   },
   {
    "chart": "Rave'til the earth's end S7",
@@ -874,7 +848,7 @@
    "screen": null,
    "reason": "no result screen in the footage (no-result-screen)",
    "seconds": 0.6,
-   "category": "footage: no readable result screen"
+   "category": "no readable result screen"
   },
   {
    "chart": "Solitary 2 D20",
@@ -904,8 +878,8 @@
    "tol": 11,
    "verdict": "PARK",
    "reason": "1 of 2 hold regions unpriced ({'reset': 1}) - the remainder would be split by guess",
-   "seconds": 5.1,
-   "category": "counter: a hold region could not be priced"
+   "seconds": 5.0,
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "VECTOR D24",
@@ -935,8 +909,8 @@
    "tol": 22,
    "verdict": "PARK",
    "reason": "14 of 27 hold regions unpriced ({'no bracket': 5, 'reset': 9}) - the remainder would be split by guess",
-   "seconds": 7.1,
-   "category": "counter: a hold region could not be priced"
+   "seconds": 7.0,
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "2006. LOVE SONG S9",
@@ -954,7 +928,7 @@
    "screen": 116,
    "reason": "contradictory evidence: the footage judges 116, the file implies 238, the catalog says 253",
    "seconds": 0.6,
-   "category": "footage: three-way disagreement"
+   "category": "three-way disagreement"
   },
   {
    "chart": "The End of the World ft. Skizzo S20",
@@ -985,7 +959,7 @@
    "verdict": "PARK",
    "reason": "1 of 1 hold regions unpriced ({'no bracket': 1}) - the remainder would be split by guess",
    "seconds": 5.0,
-   "category": "counter: a hold region could not be priced"
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "Money S14",
@@ -1014,23 +988,9 @@
    "rails_total": 8,
    "tol": 3,
    "verdict": "PARK",
-   "reason": "1 hold regions each need their own pinned price (2 priced, 8 of 8 owed) - not automated",
-   "rail_list": [
-    {
-     "col": 2,
-     "head": 63.22,
-     "tail": 63.73,
-     "ticks": 4
-    },
-    {
-     "col": 2,
-     "head": 108.45,
-     "tail": 108.83,
-     "ticks": 4
-    }
-   ],
-   "seconds": 3.3,
-   "category": "not automated: several regions need pinning"
+   "reason": "1 hold regions: 1 carry a measured hold and 1 measured holds match no single region - the rest would be a guess",
+   "seconds": 3.2,
+   "category": "the game holds where the file does not"
   },
   {
    "chart": "Radetzky Can Can D22",
@@ -1047,8 +1007,8 @@
    "verdict": "PARK",
    "screen": 850,
    "reason": "the footage judges 850 and the file implies 850 - they agree, and the catalog's 1010 does not. This file is an older revision and needs Phoenix-era footage",
-   "seconds": 0.8,
-   "category": "footage: file is an older revision"
+   "seconds": 0.6,
+   "category": "file is an older revision"
   },
   {
    "chart": "Final Audition 3 D19",
@@ -1079,7 +1039,7 @@
    "verdict": "PARK",
    "reason": "2 of 3 hold regions unpriced ({'no bracket': 2}) - the remainder would be split by guess",
    "seconds": 5.6,
-   "category": "counter: a hold region could not be priced"
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "Bee S10",
@@ -1103,8 +1063,8 @@
    "drift": -5,
    "verdict": "PARK",
    "reason": "grid drifts -5 on 0 misses - the file carries taps the game never judges, so this is a re-step",
-   "seconds": 1.9,
-   "category": "grid: a re-step, not a re-tick"
+   "seconds": 1.8,
+   "category": "a re-step, not a re-tick"
   },
   {
    "chart": "Maria S12",
@@ -1134,8 +1094,8 @@
    "tol": 3,
    "verdict": "PARK",
    "reason": "owes 1 hold events and no rail is visible",
-   "seconds": 3.3,
-   "category": "counter: owes events but no rail is visible"
+   "seconds": 3.2,
+   "category": "owes events, no rail visible"
   },
   {
    "chart": "Loki S21",
@@ -1153,8 +1113,8 @@
    "band": "R",
    "verdict": "PARK",
    "reason": "no offset fits the flashes (49.4% matched)",
-   "seconds": 2.0,
-   "category": "footage: no offset fits the flashes"
+   "seconds": 1.9,
+   "category": "no offset fits the flashes"
   },
   {
    "chart": "Phalanx \"RS2018 Edit\" D21",
@@ -1171,8 +1131,8 @@
    "verdict": "PARK",
    "screen": 985,
    "reason": "contradictory evidence: the footage judges 985, the file implies 1213, the catalog says 1011",
-   "seconds": 0.7,
-   "category": "footage: three-way disagreement"
+   "seconds": 0.6,
+   "category": "three-way disagreement"
   },
   {
    "chart": "Blazing D21",
@@ -1201,41 +1161,9 @@
    "rails_total": 287,
    "tol": 9,
    "verdict": "PARK",
-   "reason": "1 hold regions each need their own pinned price (2 priced, 287 of 292 owed) - not automated",
-   "rail_list": [
-    {
-     "col": 1,
-     "head": 88.87,
-     "tail": 89.37,
-     "ticks": 32
-    },
-    {
-     "col": 3,
-     "head": 106.32,
-     "tail": 107.53,
-     "ticks": 255
-    },
-    {
-     "col": 6,
-     "head": 106.32,
-     "tail": 107.53,
-     "ticks": 255
-    },
-    {
-     "col": 4,
-     "head": 106.33,
-     "tail": 107.53,
-     "ticks": 255
-    },
-    {
-     "col": 5,
-     "head": 106.33,
-     "tail": 107.53,
-     "ticks": 255
-    }
-   ],
+   "reason": "1 hold regions: 1 carry a measured hold and 1 measured holds match no single region - the rest would be a guess",
    "seconds": 4.9,
-   "category": "not automated: several regions need pinning"
+   "category": "the game holds where the file does not"
   },
   {
    "chart": "Mr. Larpus S5",
@@ -1253,7 +1181,7 @@
    "screen": null,
    "reason": "no result screen in the footage (no-result-screen)",
    "seconds": 0.6,
-   "category": "footage: no readable result screen"
+   "category": "no readable result screen"
   },
   {
    "chart": "Prime Time D23",
@@ -1278,13 +1206,13 @@
    "owed": 708,
    "rails": 79,
    "rail_regions": 57,
-   "regions_priced": 40,
-   "rails_total": 954,
+   "regions_priced": 39,
+   "rails_total": 570,
    "tol": 21,
    "verdict": "PARK",
-   "reason": "17 of 57 hold regions unpriced ({'no bracket': 9, 'reset': 8}) - the remainder would be split by guess",
-   "seconds": 149.9,
-   "category": "counter: a hold region could not be priced"
+   "reason": "18 of 57 hold regions unpriced ({'no bracket': 9, 'reset': 9}) - the remainder would be split by guess",
+   "seconds": 11.6,
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "Red Swan D22",
@@ -1314,8 +1242,8 @@
    "tol": 13,
    "verdict": "PARK",
    "reason": "3 of 9 hold regions unpriced ({'reset': 2, 'no bracket': 1}) - the remainder would be split by guess",
-   "seconds": 96.7,
-   "category": "counter: a hold region could not be priced"
+   "seconds": 5.9,
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "Toccata D18",
@@ -1345,8 +1273,8 @@
    "tol": 6,
    "verdict": "PARK",
    "reason": "5 of 19 hold regions unpriced ({'reset': 4, 'no bracket': 1}) - the remainder would be split by guess",
-   "seconds": 85.1,
-   "category": "counter: a hold region could not be priced"
+   "seconds": 5.2,
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "Radetzky Can Can S20",
@@ -1364,7 +1292,7 @@
    "screen": 766,
    "reason": "the footage judges 766 and the file implies 766 - they agree, and the catalog's 946 does not. This file is an older revision and needs Phoenix-era footage",
    "seconds": 0.6,
-   "category": "footage: file is an older revision"
+   "category": "file is an older revision"
   },
   {
    "chart": "Papasito (feat.  KuTiNA) D18",
@@ -1382,7 +1310,7 @@
    "screen": 622,
    "reason": "the footage judges 622 and the file implies 622 - they agree, and the catalog's 765 does not. This file is an older revision and needs Phoenix-era footage",
    "seconds": 0.6,
-   "category": "footage: file is an older revision"
+   "category": "file is an older revision"
   },
   {
    "chart": "Mitotsudaira D16",
@@ -1407,13 +1335,13 @@
    "owed": 539,
    "rails": 64,
    "rail_regions": 58,
-   "regions_priced": 41,
-   "rails_total": 389,
+   "regions_priced": 43,
+   "rails_total": 398,
    "tol": 16,
    "verdict": "PARK",
-   "reason": "17 of 58 hold regions unpriced ({'no bracket': 10, 'reset': 7}) - the remainder would be split by guess",
-   "seconds": 101.0,
-   "category": "counter: a hold region could not be priced"
+   "reason": "15 of 58 hold regions unpriced ({'no bracket': 10, 'reset': 5}) - the remainder would be split by guess",
+   "seconds": 7.1,
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "Switronic - SHORT CUT - S6",
@@ -1431,7 +1359,7 @@
    "screen": 136,
    "reason": "the footage judges 136 and the file implies 136 - they agree, and the catalog's 256 does not. This file is an older revision and needs Phoenix-era footage",
    "seconds": 0.6,
-   "category": "footage: file is an older revision"
+   "category": "file is an older revision"
   },
   {
    "chart": "The End of the World ft. Skizzo D22",
@@ -1457,12 +1385,12 @@
    "rails": 122,
    "rail_regions": 89,
    "regions_priced": 56,
-   "rails_total": 1015,
+   "rails_total": 969,
    "tol": 19,
    "verdict": "PARK",
    "reason": "33 of 89 hold regions unpriced ({'reset': 14, 'no bracket': 19}) - the remainder would be split by guess",
-   "seconds": 103.3,
-   "category": "counter: a hold region could not be priced"
+   "seconds": 10.1,
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "Final Audition 2 D12",
@@ -1480,8 +1408,8 @@
    "band": "C",
    "verdict": "PARK",
    "reason": "no offset fits the flashes (54.6% matched)",
-   "seconds": 83.4,
-   "category": "footage: no offset fits the flashes"
+   "seconds": 2.7,
+   "category": "no offset fits the flashes"
   },
   {
    "chart": "Final Audition Ep. 2-1 S22",
@@ -1507,12 +1435,12 @@
    "rails": 28,
    "rail_regions": 26,
    "regions_priced": 18,
-   "rails_total": 473,
+   "rails_total": 573,
    "tol": 15,
    "verdict": "PARK",
    "reason": "8 of 26 hold regions unpriced ({'no bracket': 2, 'reset': 6}) - the remainder would be split by guess",
-   "seconds": 81.4,
-   "category": "counter: a hold region could not be priced"
+   "seconds": 3.6,
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "XTREE S2",
@@ -1530,7 +1458,7 @@
    "screen": 70,
    "reason": "the footage judges 70 and the file implies 70 - they agree, and the catalog's 67 does not. This file is an older revision and needs Phoenix-era footage",
    "seconds": 0.6,
-   "category": "footage: file is an older revision"
+   "category": "file is an older revision"
   },
   {
    "chart": "Top City S6",
@@ -1548,7 +1476,7 @@
    "screen": 192,
    "reason": "the footage judges 192 and the file implies 192 - they agree, and the catalog's 200 does not. This file is an older revision and needs Phoenix-era footage",
    "seconds": 0.6,
-   "category": "footage: file is an older revision"
+   "category": "file is an older revision"
   },
   {
    "chart": "Get Your Groove On D10",
@@ -1574,12 +1502,25 @@
    "rails": 1,
    "rail_regions": 1,
    "regions_priced": 1,
-   "rails_total": 102,
+   "rails_total": 2,
    "tol": 3,
-   "verdict": "PARK",
-   "reason": "the rails price to 102, the chart owes 2 - the events are not where the file's holds are",
-   "seconds": 90.3,
-   "category": "evidence: priced total disagrees with what is owed"
+   "verdict": "SHIP",
+   "route": "rails",
+   "reason": "file has no holds; 1 hold regions priced from their own brackets, 2 of 2 owed",
+   "rail_list": [
+    {
+     "col": 2,
+     "head": 70.05,
+     "tail": 70.7,
+     "ticks": 2
+    }
+   ],
+   "seconds": 3.5,
+   "authored": true,
+   "final_taps": 197,
+   "final_ticks": 3,
+   "commit": "743cd40",
+   "category": "SHIP"
   },
   {
    "chart": "Baroque Virus - FULL SONG - D20",
@@ -1604,13 +1545,13 @@
    "owed": 813,
    "rails": 99,
    "rail_regions": 72,
-   "regions_priced": 40,
-   "rails_total": 971,
+   "regions_priced": 42,
+   "rails_total": 1007,
    "tol": 24,
    "verdict": "PARK",
-   "reason": "32 of 72 hold regions unpriced ({'no bracket': 19, 'reset': 13}) - the remainder would be split by guess",
-   "seconds": 233.1,
-   "category": "counter: a hold region could not be priced"
+   "reason": "30 of 72 hold regions unpriced ({'no bracket': 19, 'reset': 11}) - the remainder would be split by guess",
+   "seconds": 16.2,
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "Switronic - SHORT CUT - D4",
@@ -1628,7 +1569,7 @@
    "screen": 68,
    "reason": "the footage judges 68 and the file implies 68 - they agree, and the catalog's 124 does not. This file is an older revision and needs Phoenix-era footage",
    "seconds": 0.6,
-   "category": "footage: file is an older revision"
+   "category": "file is an older revision"
   },
   {
    "chart": "Anguished Unmaking D19",
@@ -1658,8 +1599,8 @@
    "tol": 14,
    "verdict": "PARK",
    "reason": "7 of 29 hold regions unpriced ({'reset': 7}) - the remainder would be split by guess",
-   "seconds": 97.6,
-   "category": "counter: a hold region could not be priced"
+   "seconds": 5.6,
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "Naissance 2 S15",
@@ -1689,8 +1630,8 @@
    "tol": 3,
    "verdict": "PARK",
    "reason": "the rails price to 55, the chart owes 63 - the events are not where the file's holds are",
-   "seconds": 76.2,
-   "category": "evidence: priced total disagrees with what is owed"
+   "seconds": 3.3,
+   "category": "priced total disagrees with owed"
   },
   {
    "chart": "Do U Know That-Old School S17",
@@ -1720,8 +1661,8 @@
    "tol": 5,
    "verdict": "PARK",
    "reason": "the rails price to 182, the chart owes 176 - the events are not where the file's holds are",
-   "seconds": 80.4,
-   "category": "evidence: priced total disagrees with what is owed"
+   "seconds": 3.1,
+   "category": "priced total disagrees with owed"
   },
   {
    "chart": "Naissance 2 D16",
@@ -1751,8 +1692,8 @@
    "tol": 3,
    "verdict": "PARK",
    "reason": "the rails price to 9, the chart owes 112 - the events are not where the file's holds are",
-   "seconds": 88.9,
-   "category": "evidence: priced total disagrees with what is owed"
+   "seconds": 5.0,
+   "category": "priced total disagrees with owed"
   },
   {
    "chart": "Free Style S13",
@@ -1782,8 +1723,8 @@
    "tol": 3,
    "verdict": "PARK",
    "reason": "the rails price to 80, the chart owes 76 - the events are not where the file's holds are",
-   "seconds": 75.6,
-   "category": "evidence: priced total disagrees with what is owed"
+   "seconds": 2.9,
+   "category": "priced total disagrees with owed"
   },
   {
    "chart": "Final Audition 3 S16",
@@ -1813,8 +1754,8 @@
    "tol": 3,
    "verdict": "PARK",
    "reason": "2 of 2 hold regions unpriced ({'reset': 1, 'no bracket': 1}) - the remainder would be split by guess",
-   "seconds": 74.6,
-   "category": "counter: a hold region could not be priced"
+   "seconds": 3.3,
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "The Festival of Ghost2 (Sneak) S20",
@@ -1844,8 +1785,8 @@
    "tol": 12,
    "verdict": "PARK",
    "reason": "4 of 13 hold regions unpriced ({'no bracket': 2, 'reset': 2}) - the remainder would be split by guess",
-   "seconds": 79.2,
-   "category": "counter: a hold region could not be priced"
+   "seconds": 4.2,
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "Naissance D12",
@@ -1875,8 +1816,8 @@
    "tol": 3,
    "verdict": "PARK",
    "reason": "owes 11 hold events and no rail is visible",
-   "seconds": 86.1,
-   "category": "counter: owes events but no rail is visible"
+   "seconds": 4.9,
+   "category": "owes events, no rail visible"
   },
   {
    "chart": "Yog-Sothoth - SHORT CUT - D21",
@@ -1906,8 +1847,8 @@
    "tol": 18,
    "verdict": "PARK",
    "reason": "1 of 5 hold regions unpriced ({'no bracket': 1}) - the remainder would be split by guess",
-   "seconds": 58.6,
-   "category": "counter: a hold region could not be priced"
+   "seconds": 4.1,
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "VECTOR S22",
@@ -1931,8 +1872,8 @@
    "drift": -27,
    "verdict": "PARK",
    "reason": "grid drifts -27 on 7 misses - the file carries taps the game never judges, so this is a re-step",
-   "seconds": 79.1,
-   "category": "grid: a re-step, not a re-tick"
+   "seconds": 2.3,
+   "category": "a re-step, not a re-tick"
   },
   {
    "chart": "Final Audition Ep.1 D23",
@@ -1957,13 +1898,13 @@
    "owed": 538,
    "rails": 73,
    "rail_regions": 21,
-   "regions_priced": 14,
-   "rails_total": 390,
+   "regions_priced": 15,
+   "rails_total": 500,
    "tol": 16,
    "verdict": "PARK",
-   "reason": "7 of 21 hold regions unpriced ({'reset': 4, 'no bracket': 3}) - the remainder would be split by guess",
-   "seconds": 85.4,
-   "category": "counter: a hold region could not be priced"
+   "reason": "6 of 21 hold regions unpriced ({'reset': 3, 'no bracket': 3}) - the remainder would be split by guess",
+   "seconds": 8.5,
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "Mad5cience S20",
@@ -1981,8 +1922,8 @@
    "band": "R",
    "verdict": "PARK",
    "reason": "no offset fits the flashes (49.9% matched)",
-   "seconds": 81.7,
-   "category": "footage: no offset fits the flashes"
+   "seconds": 2.1,
+   "category": "no offset fits the flashes"
   },
   {
    "chart": "Switronic - SHORT CUT - S17",
@@ -2000,7 +1941,7 @@
    "screen": 402,
    "reason": "the footage judges 402 and the file implies 402 - they agree, and the catalog's 602 does not. This file is an older revision and needs Phoenix-era footage",
    "seconds": 0.6,
-   "category": "footage: file is an older revision"
+   "category": "file is an older revision"
   },
   {
    "chart": "Miss's Story S19",
@@ -2018,7 +1959,7 @@
    "screen": 429,
    "reason": "the footage judges 429 and the file implies 430 - they agree, and the catalog's 800 does not. This file is an older revision and needs Phoenix-era footage",
    "seconds": 0.6,
-   "category": "footage: file is an older revision"
+   "category": "file is an older revision"
   },
   {
    "chart": "Bemera - SHORT CUT - S21",
@@ -2036,7 +1977,7 @@
    "screen": 892,
    "reason": "contradictory evidence: the footage judges 892, the file implies 895, the catalog says 1087",
    "seconds": 0.6,
-   "category": "footage: three-way disagreement"
+   "category": "three-way disagreement"
   },
   {
    "chart": "2006. LOVE SONG S15",
@@ -2046,33 +1987,16 @@
    "vid": "vtmm-Balch0",
    "skin": null,
    "file_taps": 348,
-   "file_ticks": 31,
-   "implied": 379,
+   "file_ticks": 152,
+   "implied": 500,
    "regions": 1,
-   "deficit": 121,
+   "deficit": 0,
    "side": "2p",
    "band": "R",
-   "offset": 11.25,
-   "flash_match": 93.3,
-   "miss": 0,
-   "bad": 1,
-   "hold_free_runs": 5,
-   "drift": 114,
-   "owed": 152,
-   "rails": 2,
-   "rail_regions": 1,
-   "regions_priced": 1,
-   "rails_total": 154,
-   "tol": 5,
-   "verdict": "SHIP",
-   "route": "closure",
-   "reason": "one hold region, its rail prices to 154 of 152 owed",
-   "seconds": 2.2,
-   "authored": true,
-   "final_taps": 348,
-   "final_ticks": 152,
-   "commit": "483db71",
-   "category": null
+   "verdict": "SKIP",
+   "reason": "already exact",
+   "seconds": 0.6,
+   "category": "SKIP"
   },
   {
    "chart": "2006. LOVE SONG S12",
@@ -2102,8 +2026,8 @@
    "tol": 3,
    "verdict": "PARK",
    "reason": "the rails price to 61, the chart owes 57 - the events are not where the file's holds are",
-   "seconds": 67.6,
-   "category": "evidence: priced total disagrees with what is owed"
+   "seconds": 3.0,
+   "category": "priced total disagrees with owed"
   },
   {
    "chart": "Super Fantasy S16",
@@ -2128,13 +2052,13 @@
    "owed": 456,
    "rails": 59,
    "rail_regions": 55,
-   "regions_priced": 28,
+   "regions_priced": 29,
    "rails_total": 455,
    "tol": 14,
    "verdict": "PARK",
-   "reason": "27 of 55 hold regions unpriced ({'reset': 8, 'no bracket': 19}) - the remainder would be split by guess",
-   "seconds": 266.5,
-   "category": "counter: a hold region could not be priced"
+   "reason": "26 of 55 hold regions unpriced ({'reset': 7, 'no bracket': 19}) - the remainder would be split by guess",
+   "seconds": 43.2,
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "Toccata S17",
@@ -2164,8 +2088,8 @@
    "tol": 5,
    "verdict": "PARK",
    "reason": "4 of 14 hold regions unpriced ({'reset': 4}) - the remainder would be split by guess",
-   "seconds": 71.2,
-   "category": "counter: a hold region could not be priced"
+   "seconds": 3.1,
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "Turkey March S19",
@@ -2195,8 +2119,8 @@
    "tol": 8,
    "verdict": "PARK",
    "reason": "12 of 25 hold regions unpriced ({'reset': 12}) - the remainder would be split by guess",
-   "seconds": 72.5,
-   "category": "counter: a hold region could not be priced"
+   "seconds": 3.4,
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "Another Truth S16",
@@ -2226,8 +2150,8 @@
    "tol": 5,
    "verdict": "PARK",
    "reason": "the rails price to 189, the chart owes 152 - the events are not where the file's holds are",
-   "seconds": 84.8,
-   "category": "evidence: priced total disagrees with what is owed"
+   "seconds": 3.3,
+   "category": "priced total disagrees with owed"
   },
   {
    "chart": "Betrayer S13",
@@ -2257,8 +2181,8 @@
    "tol": 3,
    "verdict": "PARK",
    "reason": "2 of 4 hold regions unpriced ({'no bracket': 2}) - the remainder would be split by guess",
-   "seconds": 70.0,
-   "category": "counter: a hold region could not be priced"
+   "seconds": 3.5,
+   "category": "a hold region the counter cannot price"
   },
   {
    "chart": "Twist of Fate (feat. Ruriling) D21",
@@ -2275,8 +2199,8 @@
    "verdict": "PARK",
    "screen": 892,
    "reason": "the footage judges 892 and the file implies 892 - they agree, and the catalog's 1104 does not. This file is an older revision and needs Phoenix-era footage",
-   "seconds": 0.7,
-   "category": "footage: file is an older revision"
+   "seconds": 0.6,
+   "category": "file is an older revision"
   },
   {
    "chart": "404 (New Era) S3",
@@ -2294,7 +2218,28 @@
    "screen": null,
    "reason": "no result screen in the footage (no-result-screen)",
    "seconds": 0.6,
-   "category": "footage: no readable result screen"
+   "category": "no readable result screen"
   }
- ]
+ ],
+ "second_pass": {
+  "date": "2026-09-09",
+  "what": "after the window bracket in rail_ticks and measured region pinning in finale_ticks",
+  "verdicts": {
+   "PARK": 75,
+   "SKIP": 4,
+   "SHIP": 1
+  },
+  "parked_by_cause": {
+   "a hold region the counter cannot price": 30,
+   "file is an older revision": 15,
+   "owes events, no rail visible": 4,
+   "three-way disagreement": 5,
+   "no readable result screen": 4,
+   "priced total disagrees with owed": 8,
+   "a re-step, not a re-tick": 3,
+   "no offset fits the flashes": 4,
+   "the game holds where the file does not": 2
+  },
+  "gained": "Get Your Groove On D10 - the raw bracket read 102 against the 2 it owes; the window agreed on 2"
+ }
 }

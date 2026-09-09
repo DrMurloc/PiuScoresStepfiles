@@ -6,7 +6,7 @@
 # tuned against the converter to land exactly - for finales the counter shows firing in
 # the last stretch of the hold (Slam: 009 -> 463 in 0.2s).
 #
-#   python -X utf8 tools/finale_ticks.py "<chart>" [--burst <beat>]
+#   python -X utf8 tools/finale_ticks.py "<chart>" [--burst <beat>] [--pins-json <file>]
 import csv
 import json
 import os
@@ -27,6 +27,7 @@ def run(args):
 def main():
     chart = sys.argv[1]
     burst = float(sys.argv[sys.argv.index("--burst") + 1]) if "--burst" in sys.argv else None
+    pins_json = sys.argv[sys.argv.index("--pins-json") + 1] if "--pins-json" in sys.argv else None
     pre = int(sys.argv[sys.argv.index("--pre") + 1]) if "--pre" in sys.argv else 2    # rate before the burst
     # --pin b0-b1=N keeps an observed count on a region; the closure remainder goes to the rest
     pins = []
@@ -68,6 +69,18 @@ def main():
         for p0, p1, n in pins:
             if abs(t["b0"] - p0) < 0.3 and abs(t["b1"] - p1) < 0.3:
                 t["target"], t["pinned"] = n, True
+    # --pins-json carries measured prices in CHART SECONDS - what rail_ticks reads off the
+    # counter - and each is matched to the region it overlaps. Several rails can land in one
+    # region (a pair, or two holds the converter merged), so their prices add.
+    if pins_json:
+        for pj in json.load(open(pins_json, encoding="utf-8")):
+            hit = [t for t in targets if min(t["t1"], pj["t1"]) - max(t["t0"], pj["t0"]) > -0.15]
+            if len(hit) != 1:
+                raise SystemExit(f"{chart}: a measured hold at {pj['t0']:.2f}-{pj['t1']:.2f}s "
+                                 f"matches {len(hit)} of the file's regions - not pinning a guess")
+            t = hit[0]
+            t["target"] = t.get("target", 0) + pj["ticks"] if t.get("pinned") else pj["ticks"]
+            t["pinned"] = True
     unp = [t for t in targets if "pinned" not in t] or targets
     rest = owed - sum(t.get("target", 0) for t in targets if "pinned" in t)
     L = sum(t["t1"] - t["t0"] for t in unp)

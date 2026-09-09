@@ -355,3 +355,34 @@ count changed between Phoenix 1 and Phoenix 2 with no Phoenix 2 upload (BEMERA S
 D20, Crimson Hood S24, HTTP C2, Monolith D22, Necromancy S20, Windmill D18 - the other 9 of
 those 16 changes Nevsister has already shot), and 9 whose footage and stepfile agree with each
 other against the catalog, where the newest upload is still the old-era one.
+
+## The counter reader was not the lever (2026-09-09)
+
+The first batch said the top blocker was the combo counter: 34 of 80 charts parked because a
+hold region could not be priced from it. Two changes went in, both measured:
+
+- **`rail_ticks` now brackets from the whole window** rather than the single nearest read (see
+  EVIDENCE-RULES). Judged against every chart's owed total: never worse than the old reading,
+  right where it was wrong once.
+- **`finale_ticks --pins-json` takes measured prices in chart seconds**, and the driver maps
+  each measured hold onto exactly one of the file's regions or parks. Multi-region charts can
+  now ship when the evidence covers every region.
+
+**They bought one chart.** Get Your Groove On D10, whose raw bracket read 102 against the 2 it
+owes. Re-running the batch: 1 new ship, 4 already exact, 75 parked - and the 30 charts blocked
+on an unpriceable region **did not move at all**.
+
+That is the finding, and it is worth more than the chart: those 30 are not a processing
+problem. The counter is genuinely unreadable beside those rails - the rail is what covers it -
+and no post-processing recovers information the frames do not contain. Two rejected approaches
+are written up in EVIDENCE-RULES so nobody spends the day again: a global continuity repair
+rewrites prices that were already right, and a lower confidence floor poisons the window.
+
+Region pinning also turned out to be aimed at the wrong thing. The two charts that reached it
+(Blazing D21, Money S14) have ONE hold region in the file and TWO on screen - the game holds
+where the file has nothing at all. That is a missing note, not a mis-priced one, and it wants
+`apply_rails` extended to a file that already holds elsewhere.
+
+If the counter is the wall, the way through is a different measurement rather than a better
+reading of the same one - the in-play SCORE display also steps on every judgement and does not
+sit under the rails. That is the next thing worth trying.

@@ -5,7 +5,7 @@
 # two reads is reported, not priced). Where a bracket read is missing, the two frames are
 # written to work/frames/rails/<vid>/ for eye reading.
 #
-#   python -X utf8 tools/rail_ticks.py "<chart>" <offset> [--lag 0.2]
+#   python -X utf8 tools/rail_ticks.py "<chart>" <offset> [--lag 0.2] [--raw]
 import bisect
 import json
 import os
@@ -47,18 +47,58 @@ def main():
     path = os.path.join(ROOT, "work", "combo", f"{vid}.{band}.jsonl")
     if not os.path.exists(path):
         path = os.path.join(ROOT, "work", "combo", f"{vid}.C.jsonl")
-    reads = sorted((t, v) for t, v, c in (json.loads(l) for l in open(path, encoding="utf-8")) if v is not None and c >= 0.6 and v <= mc)
+    # the window agreement below is what keeps a shaky read honest, so the confidence floor can
+    # sit lower than it could when a single nearest read decided a rail on its own
+    conf = float(sys.argv[sys.argv.index("--conf") + 1]) if "--conf" in sys.argv else 0.6
+    reads = sorted((t, v) for t, v, c in (json.loads(l) for l in open(path, encoding="utf-8")) if v is not None and c >= conf and v <= mc)
+
     rt = [t for t, _ in reads]
     # how far from the rail a bracketing read may sit. Widening it is not a loosening: every
     # tap between the two reads is subtracted, and a reset between them is still refused - it
     # only lets a rail be priced when the counter happened to be unreadable right beside it.
     span = float(sys.argv[sys.argv.index("--span") + 1]) if "--span" in sys.argv else 0.6
+    def bracket(t, before, span=span):
+        """The counter's value just before (or after) a moment, read from EVERY frame in the
+        window rather than the single nearest one.
+
+        The counter sits in the play field, so a note or a rail parks over a digit and 113 reads
+        as 12 - and the nearest read is as likely to be the mangled one as not. Within a window
+        this short the true value barely moves, so the honest reading is the one the frames
+        agree on: each read is pulled to whichever v + 100k sits closest to the window's median,
+        and the median of that is the bracket. A window whose reads still disagree after that is
+        refused rather than guessed, and nothing is ever invented - a correction can only restore
+        a hundred the reader dropped, never change what it saw.
+        """
+        lo, hi = (t - span, t) if before else (t, t + span)
+        win = [(tt, v) for tt, v in reads if lo <= tt <= hi]
+        if not win:
+            return None
+        med = sorted(v for _, v in win)[len(win) // 2]
+        for _ in range(2):
+            pulled = [(tt, min((v + 100 * k for k in range(0, 10) if v + 100 * k <= mc),
+                               key=lambda c: abs(c - med), default=v)) for tt, v in win]
+            med = sorted(v for _, v in pulled)[len(pulled) // 2]
+        # the counter really does climb through the window - up to about 60 a second - so the
+        # spread that condemns a window has to allow for that. Wider than the climb can explain
+        # means the frames disagree about the value itself, and the rail is refused.
+        if max(v for _, v in pulled) - min(v for _, v in pulled) > 60 * span + 10:
+            pulled = win                              # the frames disagree: take them as read
+        # the window only decides WHICH hundred; the value is the read nearest the rail, because
+        # that is the one that actually brackets it
+        return min(pulled, key=lambda p: abs(p[0] - t))
     def read_before(t, span=span):
-        i = bisect.bisect_right(rt, t) - 1
-        return reads[i] if i >= 0 and t - reads[i][0] <= span else None
+        if "--raw" in sys.argv:
+            i = bisect.bisect_right(rt, t) - 1
+            return reads[i] if i >= 0 and t - reads[i][0] <= span else None
+        return bracket(t, True, span)
     def read_after(t, span=span):
-        i = bisect.bisect_left(rt, t)
-        return reads[i] if i < len(reads) and reads[i][0] - t <= span else None
+        if "--raw" in sys.argv:
+            i = bisect.bisect_left(rt, t)
+            return reads[i] if i < len(reads) and reads[i][0] - t <= span else None
+        return bracket(t, False, span)
+    # A window that cannot agree gives the nearest read unchanged, which is what this tool always
+    # did, so the correction can only ever move a rail from wrong to right - never from priced
+    # to refused.
     cap = cv2.VideoCapture(os.path.join(ROOT, "videos", vid + ".mp4"))
     outdir = os.path.join(ROOT, "work", "frames", "rails", vid)
     os.makedirs(outdir, exist_ok=True)
@@ -75,7 +115,15 @@ def main():
         # a reset between the before-read and the tail hides when the bomb outruns it
         # (Naissance S20: 110 before a MISS, 457 after the finale) - any read in between that
         # sits well below the before-read is that reset
-        dropped = rb and ra and any(v < rb[1] - 3 for t, v in reads if rb[0] < t < ra[0])
+        # the same dropped hundred that mangles a bracket mangles the reads between them, so the
+        # reset test has to look at them the same way it looked at the brackets - otherwise
+        # restoring a hundred on the before-read makes every ordinary read after it a "drop"
+        def as_read(v):
+            if "--raw" in sys.argv or not rb:
+                return v
+            return min((v + 100 * k for k in range(0, 10) if v + 100 * k <= mc),
+                       key=lambda c: abs(c - rb[1]), default=v)
+        dropped = rb and ra and any(as_read(v) < rb[1] - 3 for t, v in reads if rb[0] < t < ra[0])
         if rb and ra and ra[1] >= rb[1] and not dropped:
             # every file tap judged between the two READS is in the difference, not just the
             # taps inside the rail's span (a read 0.5s before the head has the taps of that
