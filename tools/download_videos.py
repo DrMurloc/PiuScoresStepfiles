@@ -25,7 +25,13 @@ args = [sys.executable, "-m", "yt_dlp",
         "--no-playlist", "--retries", "3",
         "--sleep-interval", "2", "--max-sleep-interval", "5",
         "--no-progress", "--print", "after_move:%(id)s %(ext)s %(height)s",
-        ] + [f"https://www.youtube.com/watch?v={e['vid']}" for e in targets]
+        ]
+# A worklist of any size goes in a batch file: Windows caps a command line near 32k characters,
+# and 1,800 urls blow straight past it (WinError 206).
+BATCH = os.path.join(VIDEOS, ".batch.txt")
+with open(BATCH, "w", encoding="utf-8") as fh:
+    fh.write("\n".join(f"https://www.youtube.com/watch?v={e['vid']}" for e in targets))
+args += ["-a", BATCH]
 print(f"{len(targets)} videos", flush=True)
 rc = subprocess.call(args)
 have = {f.split(".")[0] for f in os.listdir(VIDEOS) if not f.startswith(".")}
