@@ -31,7 +31,7 @@ TOP, BOTTOM = 20, 430     # the band under the receptors that is watched, in px 
 MIN_RUN = 14              # a run of lit pixels shorter than this is not an arrow
 MIN_TRACK = 3             # frames a streak must persist to be believed
 
-def arrow_blobs(vid, band, ncols, t_end):
+def arrow_blobs(vid, band, ncols, t_end, vmin=110, smin=80):
     """Every frame, the arrows on screen: which column, and where vertically.
 
     Colour alone cannot find an arrow. A bright BGA - and plenty of them are bright - passes any
@@ -55,7 +55,7 @@ def arrow_blobs(vid, band, ncols, t_end):
         hsv = cv2.cvtColor(strip, cv2.COLOR_BGR2HSV)
         # the arrow body is coloured, its outline is near-white; either way it is BRIGHT, and
         # taking both keeps the sprite whole so its outline does not cut it into pieces
-        lit = ((hsv[:, :, 2] > 110) & ((hsv[:, :, 1] > 80) | (hsv[:, :, 2] > 190))).astype(np.uint8)
+        lit = ((hsv[:, :, 2] > vmin) & ((hsv[:, :, 1] > smin) | (hsv[:, :, 2] > vmin + 80))).astype(np.uint8)
         lit = cv2.morphologyEx(lit, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))
         n, lab, st, cent = cv2.connectedComponentsWithStats(lit, 8)
         per_col = [[] for _ in range(ncols)]
@@ -136,7 +136,33 @@ def extract(name, quiet=False):
     side = e["charts"][name].get("side") or "1p"
     other = e.get("2p" if side == "1p" else "1p") or {}
     band = "C" if not other.get("judged") else ("L" if side == "1p" else "R")
-    ts, frames, fps, y0, y1 = arrow_blobs(vid, band, ncols, float(e.get("t") or 150))
+    # How bright the art behind the notes is varies enormously from chart to chart, and one
+    # fixed threshold cannot serve a dark stage and a neon one. The setting is chosen per chart
+    # by a test that never looks at the stepfile: real notes all fall at the same speed, so the
+    # threshold to keep is the one whose streaks agree with each other most often while still
+    # finding a plausible number of them.
+    # tuned on a slice, not the whole song - the art changes but not that much, and four extra
+    # passes over a three minute video to pick one number is not a trade worth making
+    probe = min(45.0, float(e.get("t") or 150))
+    best = None
+    for vmin, smin in ((110, 80), (140, 90), (170, 110), (90, 70)):
+        ts, frames, fps, y0, y1 = arrow_blobs(vid, band, ncols, probe, vmin, smin)
+        y_j = (y0 + y1) / 2 - (y1 + TOP)
+        cand = []
+        for c in range(ncols):
+            for nn in notes_from_tracks(track(ts, frames, c, fps), y_j, fps):
+                nn["col"] = c
+                cand.append(nn)
+        if len(cand) < 15:
+            continue
+        sp = np.array([-n["v"] for n in cand])
+        med = float(np.median(sp))
+        agree = float(np.mean(np.abs(sp - med) <= 0.40 * med)) if med > 0 else 0.0
+        score = agree * min(len(cand), 2000) ** 0.5
+        if best is None or score > best[0]:
+            best = (score, vmin, smin, agree, len(cand))
+    vmin, smin = (best[1], best[2]) if best else (110, 80)
+    ts, frames, fps, y0, y1 = arrow_blobs(vid, band, ncols, float(e.get("t") or 150), vmin, smin)
     # the judgement line is the middle of the receptor band, in the strip's own coordinates
     y_judge = (y0 + y1) / 2 - (y1 + TOP)
     notes, speeds = [], []
@@ -173,7 +199,8 @@ def extract(name, quiet=False):
                 keep.append(n)
         notes = keep
     if not quiet:
-        print(f"{name}: {vid} band {band}, {len(ts)} frames at {fps:.0f}fps")
+        print(f"{name}: {vid} band {band}, {len(ts)} frames at {fps:.0f}fps, "
+              f"brightness {vmin}/{smin}" + (f" ({best[3]:.0%} of streaks agree)" if best else ""))
         if speeds:
             print(f"  scroll {np.median(speeds):.0f} px/s "
                   f"({np.percentile(speeds, 5):.0f}-{np.percentile(speeds, 95):.0f})")
