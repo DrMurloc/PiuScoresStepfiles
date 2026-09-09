@@ -57,6 +57,17 @@ Three bugs on the way, all of which made the numbers meaningless:
 3. Extracted times are **video** time, the file's are **chart** time, and the chart starts ten
    or more seconds in while the scorer searched ±0.2s. This one alone took Bee S17 5% -> 39%.
 
+Two changes that raise recall and were measured to be a bad trade, so they are NOT in:
+
+- **Splitting a wide blob back into the lanes it covers.** Arrows on neighbouring panels do
+  touch and merge, and a dense chart is full of them, so this looks obviously right - it takes
+  Dr. M D18 to 96% recall and My Way D16 from 58% to 80%. But precision falls to about 42%
+  whatever the speed filter is set to, because the extra events move at scroll speed like real
+  notes and cannot be filtered out afterwards. Recovering merged jumps needs the merge to be
+  resolved at detection - by shape, not by lane arithmetic.
+- **Running the continuity repair over the whole scan** before pricing (a different tool, same
+  lesson): it prices more rails and rewrites ones that were already right.
+
 My Way D16 is the open case: same settings, much lower recall, and worth understanding before
 trusting the extractor generally.
 
