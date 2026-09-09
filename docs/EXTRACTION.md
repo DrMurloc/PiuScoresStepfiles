@@ -30,9 +30,22 @@ count**, so their notes are correct, plus the 106 repaired ones, all with video.
 
 | chart | file notes | extracted | recall | precision | median error |
 |---|---|---|---|---|---|
-| Dr. M D18 | 499 | 483 | **92.0%** | **95.0%** | 0.012s |
+| Dr. M D18 | 499 | 480 | **92.2%** | **95.8%** | 0.009s |
+| Bee D15 | 351 | 354 | 88.9% | 88.1% | 0.038s |
 | Bee S17 | 463 | 441 | 85.3% | 89.6% | 0.019s |
-| My Way D16 | 447 | 376 | 58.4% | 69.4% | 0.026s |
+| A nightmare S6 | 190 | 365 | 79.5% | 41.4% | 0.024s |
+| Another Truth D18 | 486 | 419 | 77.6% | 90.0% | 0.007s |
+| My Way D16 | 447 | 428 | 77.2% | 80.6% | 0.027s |
+| 2006. LOVE SONG D14 | 388 | 346 | 75.0% | 84.1% | 0.031s |
+| An Interesting View S13 | 346 | 368 | 67.1% | 63.0% | 0.020s |
+| Beat of The War S16 | 497 | 432 | 64.0% | 73.6% | 0.015s |
+| Beethoven Virus D13 | 303 | 319 | 56.4% | 53.6% | 0.018s |
+| Bad Apple!! feat. Nomico D20 | 652 | 511 | 44.8% | 57.1% | 0.023s |
+
+Median around 77% recall and 80% precision, best 92/96, and the spread between charts is bigger
+than any single fix has been. Authoring a chart needs far better than this - a transcription is
+only worth having if it is very nearly perfect - so the number to drive is the WORST chart, not
+the best.
 
 Timing is not the problem any more - a matched note lands within 12-26ms, well inside a 16th.
 
