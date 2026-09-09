@@ -31,12 +31,20 @@ TOP, BOTTOM = 20, 430     # the band under the receptors that is watched, in px 
 MIN_RUN = 14              # a run of lit pixels shorter than this is not an arrow
 MIN_TRACK = 3             # frames a streak must persist to be believed
 
-def column_masks(vid, band, ncols, t_end):
-    """For every frame and column, the lit runs under the receptors: (top, bottom) in px."""
+def arrow_blobs(vid, band, ncols, t_end):
+    """Every frame, the arrows on screen: which column, and where vertically.
+
+    Colour alone cannot find an arrow. A bright BGA - and plenty of them are bright - passes any
+    saturation test across whole regions of the screen, which is what drowned the first attempt.
+    What separates an arrow from the art behind it is SHAPE: it is a compact blob about one lane
+    wide and as tall as it is wide, with a light outline, and it is the same size every time.
+    Connected components with a size and fill filter say that directly; a row profile cannot.
+    """
     cap = cv2.VideoCapture(os.path.join(ROOT, "videos", vid + ".mp4"))
     y0, y1, xs = R.geometry(cap, vid, band, ncols)
     fps = cap.get(cv2.CAP_PROP_FPS) or 60
-    half = int(np.median(np.diff(xs)) * 0.34)
+    pitch = float(np.median(np.diff(xs)))
+    lo, hi = pitch * 0.55, pitch * 1.25          # an arrow is about one lane across
     cap.set(cv2.CAP_PROP_POS_MSEC, 0)
     frames, ts, t = [], [], 0.0
     while t < t_end:
@@ -45,23 +53,23 @@ def column_masks(vid, band, ncols, t_end):
             break
         strip = f[y1 + TOP:y1 + BOTTOM]
         hsv = cv2.cvtColor(strip, cv2.COLOR_BGR2HSV)
-        lit = (hsv[:, :, 1] > 90) & (hsv[:, :, 2] > 120)
-        per_col = []
-        for x in xs:
-            col = lit[:, max(0, int(x) - half):int(x) + half]
-            prof = col.mean(axis=1) > 0.5          # this row of this column is covered
-            runs, s = [], None
-            for i, v in enumerate(prof):
-                if v and s is None:
-                    s = i
-                elif not v and s is not None:
-                    if i - s >= MIN_RUN:
-                        runs.append((s, i))
-                    s = None
-            if s is not None and len(prof) - s >= MIN_RUN:
-                runs.append((s, len(prof)))
-            per_col.append(runs)
-        frames.append(per_col); ts.append(t)
+        # the arrow body is coloured, its outline is near-white; either way it is BRIGHT, and
+        # taking both keeps the sprite whole so its outline does not cut it into pieces
+        lit = ((hsv[:, :, 2] > 110) & ((hsv[:, :, 1] > 80) | (hsv[:, :, 2] > 190))).astype(np.uint8)
+        lit = cv2.morphologyEx(lit, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))
+        n, lab, st, cent = cv2.connectedComponentsWithStats(lit, 8)
+        per_col = [[] for _ in range(ncols)]
+        for k in range(1, n):
+            x, y, w, h, area = st[k]
+            if not (lo <= w <= hi and lo * 0.6 <= h <= hi):
+                continue
+            if area < 0.35 * w * h:              # an arrow fills its box; a wisp of BGA does not
+                continue
+            c = int(np.argmin([abs(cent[k][0] - v) for v in xs]))
+            if abs(cent[k][0] - xs[c]) > pitch * 0.5:
+                continue
+            per_col[c].append((int(y), int(y + h)))
+        frames.append([sorted(v) for v in per_col]); ts.append(t)
         t += 1.0 / fps
     cap.release()
     return np.array(ts), frames, fps, y0, y1
@@ -128,7 +136,7 @@ def extract(name, quiet=False):
     side = e["charts"][name].get("side") or "1p"
     other = e.get("2p" if side == "1p" else "1p") or {}
     band = "C" if not other.get("judged") else ("L" if side == "1p" else "R")
-    ts, frames, fps, y0, y1 = column_masks(vid, band, ncols, float(e.get("t") or 150))
+    ts, frames, fps, y0, y1 = arrow_blobs(vid, band, ncols, float(e.get("t") or 150))
     # the judgement line is the middle of the receptor band, in the strip's own coordinates
     y_judge = (y0 + y1) / 2 - (y1 + TOP)
     notes, speeds = [], []
@@ -138,6 +146,32 @@ def extract(name, quiet=False):
             notes.append(n)
             speeds.append(-n["v"])
     notes.sort(key=lambda n: (n["t"], n["col"]))
+    # One note can be tracked, lost behind an effect and re-acquired, arriving as two streaks
+    # that extrapolate to the same instant. Nothing in this game puts two notes in ONE column
+    # closer than a 16th at 300bpm (50ms), so anything nearer than that is one note counted
+    # twice. The longer-lived streak is the one kept - it saw more of the arrow.
+    merged = {}
+    for n in notes:
+        k = n["col"]
+        prev = merged.get(k)
+        if prev and abs(n["t"] - prev[-1]["t"]) < 0.035:
+            if n["frames"] > prev[-1]["frames"]:
+                prev[-1] = n
+            continue
+        merged.setdefault(k, []).append(n)
+    notes = sorted((n for v in merged.values() for n in v), key=lambda n: (n["t"], n["col"]))
+    # Every real note falls at the scroll speed; the background does not. A streak moving at a
+    # different rate is something in the art that happened to be arrow-shaped. The comparison is
+    # LOCAL - the median of the streaks around it - so a chart that changes tempo is judged
+    # against its own speed at that moment rather than the song's average.
+    if len(notes) > 30:
+        sp = np.array([-n["v"] for n in notes])
+        keep = []
+        for i, n in enumerate(notes):
+            med = float(np.median(sp[max(0, i - 25):i + 25]))
+            if med > 0 and abs(-n["v"] - med) <= 0.40 * med:
+                keep.append(n)
+        notes = keep
     if not quiet:
         print(f"{name}: {vid} band {band}, {len(ts)} frames at {fps:.0f}fps")
         if speeds:

@@ -30,21 +30,35 @@ count**, so their notes are correct, plus the 106 repaired ones, all with video.
 
 | chart | file notes | extracted | recall | precision | median error |
 |---|---|---|---|---|---|
-| Dr. M D18 | 499 | 466 | 57.9% | 62.0% | 0.014s |
-| My Way D16 | 447 | 437 | 51.9% | 53.1% | 0.025s |
-| Bee S17 | 463 | 369 | 36.7% | 46.1% | 0.007s |
+| Dr. M D18 | 499 | 483 | **92.0%** | **95.0%** | 0.012s |
+| Bee S17 | 463 | 441 | 85.3% | 89.6% | 0.019s |
+| My Way D16 | 447 | 376 | 58.4% | 69.4% | 0.026s |
 
-**The counts are close and the timing is tight** - a matched note lands within 7-25ms, far
-inside a 16th. Half the notes are still not matched at all, which is the work in front of us.
+Timing is not the problem any more - a matched note lands within 12-26ms, well inside a 16th.
 
-Three bugs found and fixed on the way, all of which flattered or destroyed the numbers:
+Three things got it from 5% to here, and each was a wrong assumption rather than a tuning knob:
+
+1. **Colour cannot find an arrow.** Plenty of BGAs are bright and saturated across whole regions
+   of the screen, and a colour threshold reads them as notes everywhere. What separates an arrow
+   from the art behind it is SHAPE - a compact blob about one lane wide, as tall as it is wide,
+   that fills its own bounding box. Connected components with a size and fill filter took recall
+   from 37% to 94% in one change.
+2. **A real note falls at the scroll speed; the background does not.** Filtering streaks whose
+   slope disagrees with the local median took precision from 43% to 95%. It is deliberately
+   LOCAL, so a chart that changes tempo is judged against its own speed at that moment.
+3. **One note can arrive as two streaks** when it is lost behind an effect and re-acquired.
+   Nothing puts two notes in one column closer than 50ms, so anything nearer is one note.
+
+Three bugs on the way, all of which made the numbers meaningless:
 
 1. The lead was measured from the **bottom of the receptor band** instead of the judgement line
-   at its middle - a 2.25x error in the distance every arrival is extrapolated over.
-2. The scorer accepted a match up to `tol + 1` **seconds**, so early "recall" was meaningless.
-3. Extracted times are **video** time and the file's are **chart** time. The chart starts ten or
-   more seconds into the video, and the scorer was only searching ±0.2s, grading every chart
-   against a wildly wrong alignment. This one alone took Bee S17 from 5% to 39%.
+   at its middle - a 2.25x error in every extrapolation.
+2. The scorer accepted a match up to `tol + 1` **seconds**.
+3. Extracted times are **video** time, the file's are **chart** time, and the chart starts ten
+   or more seconds in while the scorer searched ±0.2s. This one alone took Bee S17 5% -> 39%.
+
+My Way D16 is the open case: same settings, much lower recall, and worth understanding before
+trusting the extractor generally.
 
 ## The charts that will break it
 
