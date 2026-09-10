@@ -171,6 +171,36 @@ landing on a line another already holds (the detector de-duplicates in seconds, 
 quarter-beat row is 100ms wide). What stops that quietly deleting real notes is the count check
 afterwards: a chart short of the catalog's number does not ship.
 
+## What density does to it
+
+The owner asked for a D26 in the verification set on the grounds that note density might cause
+extra hurdles. It does. The densest certified charts in the corpus, whole song:
+
+| chart | notes/s | recall / precision | holds |
+|---|---|---|---|
+| 1949 D28 | 12.2 | 90.1% / 88.4% | 48 of 84 |
+| ESCAPE D26 | 11.6 | 79.8% / 89.7% | 99 of 283 |
+| Brown Sky D26 | 10.9 | 90.0% / 91.2% | 107 of 191 |
+| Shub Niggurath D26 | 10.7 | 79.7% / 78.9% | 57 of 153 |
+
+against 98-100% on the sparse charts. Two separate limits, and neither is a threshold to tune:
+
+**Two arrows can be closer together than one arrow is wide.** Peak suppression is half a sprite -
+32px - and at ESCAPE's scroll speed its tightest 34ms pair is about 20px apart, so the two
+overlap by two thirds and the correlation response is one broad peak rather than two. Separating
+them needs the overlap resolved (two hypotheses fitted to one response), not a smaller
+suppression window.
+
+**Half of a dense chart's holds are shorter than two frames.** ESCAPE D26's median hold is
+**0.03 seconds** - under two frames at 60fps - because a hold that short is how a chart writer
+adds a single tick. The rail cannot resolve what the camera did not sample: at a 0.04s minimum
+the reader finds 48% of them and starts inventing rails, at 0.065s it finds 41%. This is the
+same kind of limit as a hidden hold, and the same answer applies: the count gate refuses.
+
+The rail SIGNAL is not the problem, which is worth saying because it looks like it should be:
+during ESCAPE's holds the lane reads above 0.40 on 73% of frames against 2% elsewhere - cleaner
+separation than Bad Apple D20, where the holds are found.
+
 ## Measured dead ends
 
 Kept because each one looks obviously right:
