@@ -134,11 +134,20 @@ def peaks(strip_gray, xs, tmpl, tw, th, floor):
         x0 = max(0, min(W - tw, int(round(x - tw / 2.0))))
         r = cv2.matchTemplate(strip_gray[:, x0:x0 + tw].astype(np.float32), T,
                               cv2.TM_CCOEFF_NORMED).ravel()
-        hits, k, i = [], th // 2, 0
-        while i < len(r):
-            if r[i] >= floor and r[i] == r[max(0, i - k):i + k + 1].max():
-                hits.append((i, i + th, float(r[i])))
-                i += k
-            i += 1
+        # The local maximum comes from a dilation, not a sliding Python window: the window was
+        # one numpy call per ROW per column per frame, which is most of a whole-song pass.
+        k = th // 2
+        top = cv2.dilate(r.reshape(-1, 1), np.ones((2 * k + 1, 1), np.uint8)).ravel()
+        idx = np.nonzero((r >= floor) & (r >= top - 1e-6))[0]
+        hits, last = [], -10 ** 9
+        for i in idx:                      # a plateau can hand back neighbours; keep one
+            i = int(i)
+            if i - last <= k:
+                if hits and r[i] > hits[-1][2]:
+                    hits[-1] = (i, i + th, float(r[i]))
+                    last = i
+                continue
+            hits.append((i, i + th, float(r[i])))
+            last = i
         per_col.append(hits)
     return per_col

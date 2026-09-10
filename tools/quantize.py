@@ -25,20 +25,28 @@ def grid_error(beat, grid):
     """How far off the nearest line of a 1/grid-of-a-beat lattice, in beats."""
     return abs(beat * grid - np.round(beat * grid)) / grid
 
-def fit_offset(notes, beat_at, lo=0.0, hi=60.0, step=0.002, grid=48):
+def tempo_map(rows):
+    """The chart's time-to-beat curve as two arrays, for interpolation in bulk."""
+    t = np.array([float(r["Time"]) for r in rows], dtype=float)
+    b = np.array([float(r["Beat"]) for r in rows], dtype=float)
+    keep = np.concatenate(([True], np.diff(t) > 0))     # np.interp needs a strictly rising x
+    return t[keep], b[keep]
+
+def fit_offset(notes, times, beats, lo=0.0, hi=60.0, step=0.002, grid=48):
     """video = chart + a, from the extraction and the chart's tempo map alone.
 
     Scored on a fine lattice rather than the one the chart uses, because which subdivision a
     chart is written on is not known yet and a 12th-note chart scored on 16ths would be pushed
-    onto the wrong phase.
+    onto the wrong phase. Interpolated in bulk - the same search one offset and one note at a
+    time is thirty thousand passes of a Python loop, which is minutes rather than a second.
     """
-    best = (-1.0, 0.0)
     t = np.array([n["t"] for n in notes], dtype=float)
+    best = (-1.0, 0.0)
     for k in range(int(lo / step), int(hi / step)):
         a = k * step
-        b = np.array([beat_at(x) for x in (t - a)])
-        d = np.abs(b * grid - np.round(b * grid)) / grid
-        hit = float(np.mean(d < 0.02))
+        b = np.interp(t - a, times, beats)
+        d = np.abs(b * grid - np.round(b * grid))
+        hit = float(np.mean(d < 0.02 * grid))
         if hit > best[0]:
             best = (hit, a)
     return best[1], best[0]
@@ -71,7 +79,8 @@ def main():
     notes, meta = note_extract.extract(name, quiet="--quiet" in sys.argv)
     key = corpus_map.chart_map()[name]["key"]
     rows, taps, beat_at = R.chartstruct(key, ncols)
-    a, share = fit_offset(notes, beat_at)
+    times, beats = tempo_map(rows)
+    a, share = fit_offset(notes, times, beats)
     g, on = quantise(notes, beat_at, a)
     kept = keep_on_grid(notes)
     print("  offset %+.3fs from the grid alone (%.0f%% of notes on a 48th lattice)" % (a, 100 * share))

@@ -8,7 +8,10 @@
 # what it extracted was real (precision), and the timing spread of the matches. A perfect run
 # would be 100/100 with a spread inside a 16th note.
 #
-#   python -X utf8 tools/extract_score.py "<chart>" ["<chart>" ...] [--tol 0.05] [--offset-scan]
+#   python -X utf8 tools/extract_score.py "<chart>" ["<chart>" ...] [--tol 0.05] [--cache]
+#
+# --cache keeps each chart's sprite pass under work/, so a change to anything AFTER the
+# detector - the correlation floor, the holds, the grid - is re-scored without decoding.
 import bisect
 import os
 import sys
@@ -58,6 +61,7 @@ def match(ext, notes, ncols, tol, a):
     return hit, errs
 
 def main():
+    note_extract.CACHE = "--cache" in sys.argv
     tol = float(sys.argv[sys.argv.index("--tol") + 1]) if "--tol" in sys.argv else 0.05
     names = [a for a in sys.argv[1:] if not a.startswith("--")
              and a not in {sys.argv[sys.argv.index("--tol") + 1] if "--tol" in sys.argv else None}]

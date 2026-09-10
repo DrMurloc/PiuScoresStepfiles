@@ -27,6 +27,7 @@
 import bisect
 import json
 import os
+import pickle
 import sys
 
 import cv2
@@ -45,6 +46,10 @@ MIN_TRACK = 3             # frames a streak must persist to be believed
 # runs to the wrong streaks and hands the speed filter a polluted median.
 FLOORS = (0.36, 0.44, 0.52, 0.60)
 SCALE = 0.5               # sprite matching runs at half resolution
+# The decode is the whole cost, and everything after it - which correlation to believe, the
+# holds, the grid - is post-processing worth re-running many times over the same pass. Off by
+# default: a corpus run of two thousand charts should not leave two thousand of these behind.
+CACHE = False
 
 def sprite_frames(vid, band, ncols, t_end, tmpl, floor=0.30, t0=0.0, scale=SCALE,
                   collect=None, collect_floor=0.60):
@@ -73,17 +78,22 @@ def sprite_frames(vid, band, ncols, t_end, tmpl, floor=0.30, t0=0.0, scale=SCALE
         # from the chart being wrong. Some containers report nothing, so counting is the floor.
         pos = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0
         count = t0 + i / (fps or 60.0)
-        t = pos if (i == 0 and pos >= 0) or pos > ts[-1] + 1e-6 else count
+        t = pos if (not ts and pos >= 0) or (ts and pos > ts[-1] + 1e-6) else count
         ok, f = cap.read()
         if not ok:
             break
         i += 1
         # the receptors and the lane under them come off the SAME decoded frame - reading the
         # judged events and the hold rails used to cost a second pass over the whole video
-        white = f[y0:y1].min(axis=2)
+        # the channel minimum only inside the receptor boxes. Over the full width it was 4ms a
+        # frame - more than decoding the frame - for pixels no column ever reads.
+        row = []
+        for x in xs:
+            b = f[y0:y1, x - half:x + half]
+            row.append(float(np.minimum(np.minimum(b[:, :, 0], b[:, :, 1]), b[:, :, 2]).mean()))
+        flash.append(row)
         bar = cv2.cvtColor(f[y1 + 8:y1 + 88], cv2.COLOR_BGR2HSV)
         bar = (bar[:, :, 1] > 130) & (bar[:, :, 2] > 120)
-        flash.append([float(white[:, x - half:x + half].mean()) for x in xs])
         lane.append([float(bar[:, x - 20:x + 20].mean()) for x in xs])
         strip = f[y1 + TOP:y1 + BOTTOM]
         full = cv2.cvtColor(strip, cv2.COLOR_BGR2GRAY)
@@ -280,16 +290,42 @@ def mark_holds(scan, notes, tol=0.15):
     or so before the head is judged and closes after the tail has gone by. The lag is one
     constant per video - the box height over the scroll speed - and is taken out here.
     """
-    rails = R.rails(scan)
+    # min_len is 0.05s, not the 0.30 the repair pipeline uses. That default is right there -
+    # it prices long hold REGIONS - and catastrophic here: 78% of Bad Apple D20's 232 holds run
+    # for 0.11s, so at 0.30 the rail reader saw 14 of them. At 0.05 it sees 220, and finds only
+    # 224 rails in total, so the short bar is not buying them with false ones.
+    rails = R.rails(scan, 0.40, 0.05)
     speeds = [-n["v"] for n in notes if n.get("v")]
     lag = 88.0 / float(np.median(speeds)) if speeds else 0.12
-    n_hold = 0
+    n_hold, claimed = 0, set()
     for n in notes:
-        for a, b in rails.get(n["col"], []):
-            if abs(a - n["t"]) <= tol and b - a >= 0.12:
+        for k, (a, b) in enumerate(rails.get(n["col"], [])):
+            if abs(a - n["t"]) <= tol:
                 n["hold_end"] = b - lag
                 n_hold += 1
+                claimed.add((n["col"], k))
                 break
+    # A hold is drawn head, body, TAIL CAP - and the cap is the head's own sprite, so it
+    # correlates exactly as well and arrives as a second note. It is not one: while a hold runs,
+    # its panel is held down, so the game cannot put another note in that lane. Anything inside
+    # the rail but not opening it is the hold's own artwork. On Bad Apple D20 - 232 holds
+    # against 420 taps, where every other chart measured has nine or fewer - this was 260 extra
+    # "notes" on its own.
+    #
+    # Only a rail some extracted note OPENED is trusted to swallow notes. A short bar of bright
+    # saturated art in a lane also reads as a rail, and a rail nobody arrived at is exactly what
+    # that looks like; deleting real notes inside one would be a silent, unrecoverable loss,
+    # where keeping a tail is a false positive the count gate will catch.
+    keep = []
+    for n in notes:
+        if n.get("hold_end"):
+            keep.append(n)
+            continue
+        if any(a + 0.10 < n["t"] < b - lag + 0.12
+               for k, (a, b) in enumerate(rails.get(n["col"], [])) if (n["col"], k) in claimed):
+            continue
+        keep.append(n)
+    notes[:] = keep
     return n_hold
 
 def extract(name, quiet=False):
@@ -309,7 +345,15 @@ def extract(name, quiet=False):
     anc, th, tw = anchor_set(vid, band, ncols)
     if not any(A is not None for A in anc):
         raise RuntimeError("no receptor sprites for %s band %s" % (vid, band))
-    ts, scored, fps, y0, y1, scan = sprite_frames(vid, band, ncols, dur, anc, FLOORS[0])
+    ck = os.path.join(ROOT, "work", "spritepass",
+                      "%s.%s.%d.%.2f.%.1f.pkl" % (vid, band, ncols, SCALE, dur))
+    if CACHE and os.path.exists(ck):
+        ts, scored, fps, y0, y1, scan = pickle.load(open(ck, "rb"))
+    else:
+        ts, scored, fps, y0, y1, scan = sprite_frames(vid, band, ncols, dur, anc, FLOORS[0])
+        if CACHE:
+            os.makedirs(os.path.dirname(ck), exist_ok=True)
+            pickle.dump((ts, scored, fps, y0, y1, scan), open(ck, "wb"))
     R.save_scan(vid, band, ncols, 0.5, dur, scan)
 
     # Which correlation to believe is settled by a SECOND, unrelated sensor: the receptor
