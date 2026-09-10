@@ -17,6 +17,10 @@ CENSUS_MAP = os.path.join(ROOT, "sources", "ssc-map.json")
 CENSUS_CERT = os.path.join(ROOT, "sources", "certification-2026-08-30.json")
 TAIL_MAP = os.path.join(ROOT, "work", "ssc-map-tail.json")
 TAIL_CERT = os.path.join(ROOT, "work", "certification-tail.json")
+# The corpus certification took many hours over 1,914 videos and work/ is gitignored, so the
+# ledger is also kept in sources/ as evidence. work/ wins when both exist - it is the live one
+# result_reader appends to - and the committed copy is what survives a cleaned working tree.
+CORPUS_CERT = os.path.join(ROOT, "sources", "certification-corpus-2026-09-10.json")
 
 def _load(path, default):
     if not os.path.exists(path):
@@ -35,7 +39,7 @@ def chart_map():
 def certification():
     """video id -> {vid, status, t, 1p, 2p, charts: {name: {expected, side, verdict}}}."""
     out = {}
-    for src in (TAIL_CERT, CENSUS_CERT):
+    for src in (CORPUS_CERT, TAIL_CERT, CENSUS_CERT):
         raw = _load(src, {})
         entries = raw if isinstance(raw, dict) else {c["vid"]: c for c in raw if isinstance(c, dict)}
         for vid, entry in entries.items():
