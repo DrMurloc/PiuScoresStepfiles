@@ -37,6 +37,41 @@ PAD = 6            # slack around each harvested sample, so it can be re-centred
 MIN_SAMPLES = 12   # fewer than this and the median is still mostly background
 MIN_ANCHOR = 0.45  # a refined template must still look like the receptor it came from
 
+def highpass(img, rows):
+    """Take out whatever does not change down the screen, and keep what does.
+
+    The contamination this exists for is a permanent bright SEAM where two players' fields meet:
+    each pad's field is drawn with a glowing inner edge, and on a doubles layout those two glows
+    sit side by side through the boxes of columns 4 and 5. Measured on ESCAPE D26 over 1,736
+    frames, those two columns never go dark - their dimmest tenth of frames is twice as bright
+    as any other column's - while hit explosions would show as a bright tail over a normal floor,
+    and a bright BGA would lift all ten columns together. Dr. M D18's video has no such seam, so
+    this is a property of a recording rather than of doubles.
+
+    Two ways of removing it do not work, and the third is not obvious:
+
+      across TIME, which is the first thing anyone reaches for, is wrong in principle: the seam
+      is static, and so is the receptor, so any background estimated over time contains the very
+      thing being looked for.
+
+      an isotropic BLUR cannot separate them by size: the seam is about a lane wide and so is an
+      arrow, so a filter wide enough to erase the glow erases the sprite with it.
+
+    What separates them is that the seam is a vertical band - constant down the screen - and an
+    arrow is not. So the smooth part is measured DOWN each column of pixels only, over a couple
+    of sprite heights, and subtracted. A y-invariant glow is its own local average and vanishes
+    completely; an arrow, which is small in y, keeps its shape and loses only its brightness,
+    which normalised correlation was discarding anyway.
+
+    Applied to the template and the strip alike, because a template and a search image filtered
+    differently are no longer comparable.
+    """
+    if not rows:
+        return img
+    f = img.astype(np.float32)
+    k = max(3, int(rows) | 1)
+    return f - cv2.blur(f, (1, k), borderType=cv2.BORDER_REFLECT)
+
 def size_for(pitch):
     """The sprite box, in pixels, for a field of this lane pitch. Odd so it has a centre."""
     tw = int(round(pitch * 0.86)) | 1
@@ -48,7 +83,7 @@ def crop(gray, cy, cx, th, tw, pad=PAD):
         return None
     return gray[y0:y0 + th + 2 * pad, x0:x0 + tw + 2 * pad].astype(np.float32)
 
-def anchors(path, vid, band, y0, y1, xs, th, tw, n=48, pct=50):
+def anchors(path, vid, band, y0, y1, xs, th, tw, n=96, pct=50, hp=0.0, rest=0.0):
     """The five panel shapes, read off the receptors. Cached - it costs a pass of seeks.
 
     A plain median over time, and the two pads AVERAGED, because everything cleverer was
@@ -78,7 +113,7 @@ def anchors(path, vid, band, y0, y1, xs, th, tw, n=48, pct=50):
     averaged away.
     """
     ck = os.path.join("work", "receptor",
-                      vid + "." + band + "." + str(len(xs)) + ".p%d" % pct + ".sprites.npz")
+                      vid + "." + band + "." + str(len(xs)) + ".p%d.h%.2f.r%.2f" % (pct, hp, rest) + ".sprites.npz")
     if os.path.exists(ck):
         z = np.load(ck)
         return [z["p%d" % k] if ("p%d" % k) in z else None for k in range(5)]
@@ -91,13 +126,35 @@ def anchors(path, vid, band, y0, y1, xs, th, tw, n=48, pct=50):
         if ok:
             fr.append(cv2.cvtColor(f, cv2.COLOR_BGR2GRAY))
     cap.release()
-    med = np.percentile(np.stack(fr), pct, axis=0).astype(np.float32)
+    stack = np.stack(fr)
+    cy, half = (y0 + y1) / 2.0, max(4, int(tw * 0.32))
     out = []
     for k in range(5):
-        # the two pads draw the same five sprites, so both receptors describe the same picture
-        got = [c for c in (crop(med, (y0 + y1) / 2.0, xs[i], th, tw, pad=0)
-                           for i in (k, k + 5) if i < len(xs)) if c is not None]
-        out.append(np.mean(got, axis=0).astype(np.float32) if got else None)
+        got = []
+        for i in (k, k + 5):
+            if i >= len(xs):
+                continue
+            sel = stack
+            if rest:
+                # The receptor is not one picture. It pulses on the beat, and it LIGHTS UP when
+                # its panel is stepped on - so the more a column is played, the more of its
+                # frames show a lit receptor, and a median over all of them is a picture of
+                # being hit rather than a picture of the panel. Measured on ESCAPE D26, how
+                # bright a receptor box reads over the whole song tracks how many notes that
+                # column carries at r = +0.925, and the busiest column is also the worst by
+                # recall at 58%.
+                #
+                # So each column picks its OWN frames: the dimmest share of them, which are the
+                # ones where nobody was standing on it. A quiet column loses nothing by this and
+                # a busy one gets the only frames that were ever showing the resting panel.
+                b = stack[:, y0:y1, max(0, xs[i] - half):xs[i] + half].mean(axis=(1, 2))
+                sel = stack[np.argsort(b)[:max(8, int(len(b) * rest))]]
+            m = np.percentile(sel, pct, axis=0).astype(np.float32)
+            c = crop(m, cy, xs[i], th, tw, pad=0)
+            if c is not None:
+                got.append(c)
+        T = np.mean(got, axis=0).astype(np.float32) if got else None
+        out.append(None if T is None else highpass(T, hp * th))
     os.makedirs(os.path.dirname(ck), exist_ok=True)
     np.savez(ck, **{"p%d" % k: T for k, T in enumerate(out) if T is not None})
     return out
