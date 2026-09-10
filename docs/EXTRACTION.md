@@ -212,6 +212,43 @@ The rail SIGNAL is not the problem, which is worth saying because it looks like 
 during ESCAPE's holds the lane reads above 0.40 on 73% of frames against 2% elsewhere - cleaner
 separation than Bad Apple D20, where the holds are found.
 
+## Phoenix 2 is a different picture, and every threshold here was set on Phoenix 1
+
+The six charts this detector was tuned on are all Phoenix 1-era, and Phoenix 2 does not draw
+the same screen. Its receptors are soft pastel shapes with a glow where Phoenix 1 drew hard
+white outlines - the templates come out at roughly half the contrast (36-43 against 71-74) -
+and the correlations follow. On Andamiro's own upload of **L (PIU Edit) D27**, across thirty
+seconds of dense chart, the peak correlations run **p50 0.23, p90 0.35, p99 0.48**.
+
+The lowest floor this extractor will consider is **0.36** - above the ninetieth percentile of
+everything on that screen. It reads the chart from the tail of its own distribution:
+
+| floor | notes found in 30s |
+|---|---|
+| 0.18 | 612 |
+| 0.24 | 584 |
+| 0.30 | 310 |
+| **0.36** (the current minimum) | 152 |
+| 0.44 | 44 |
+
+Over the whole 133-second video it recovered 662 notes, about what it ought to find in thirty
+seconds, and the per-column spread at 0.18 looks like a doubles chart where at 0.44 it is noise.
+
+**This is not fixed.** Two attempts are recorded here because both look obviously right:
+
+- **Replace the absolute floors with quantiles of each video's own distribution.** Self-
+  calibrating, needs no knowledge of which mix it is looking at - and it takes Bee S17, the one
+  chart that was exactly right, from 100.0%/100.0% to **95.9%**/100.0%.
+- **Add the quantiles to the absolute floors** rather than replacing them, so a Phoenix 1 video
+  can still choose the floor that suits it. Bee S17 stays at 95.9%.
+
+The second result is the informative one: since the old floors are all still candidates, the
+loss cannot be the floor that was chosen. What both changes share is dropping the DETECTION
+floor from 0.36 to 0.14 so the quantiles are computable at all - and the comment that used to
+sit on FLOORS said exactly this, that a floor below 0.36 costs recall rather than buying it,
+because the extra peaks drown the tracker. It was right and it was removed. Whatever handles
+both skins has to leave Phoenix 1 detection alone.
+
 ## Measured dead ends
 
 Kept because each one looks obviously right:

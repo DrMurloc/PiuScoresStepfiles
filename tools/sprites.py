@@ -124,10 +124,12 @@ def anchors(path, vid, band, y0, y1, xs, th, tw, n=96, pct=50, hp=0.0, rest=0.0)
         cap.set(cv2.CAP_PROP_POS_MSEC, dur * (k + 0.5) / n * 1000)
         ok, f = cap.read()
         if ok:
-            fr.append(cv2.cvtColor(f, cv2.COLOR_BGR2GRAY))
+            # only the receptor band is ever read from these, and a percentile over 96 full
+            # 720p frames is 700MB of sort that nothing looks at
+            fr.append(cv2.cvtColor(f[y0:y1], cv2.COLOR_BGR2GRAY))
     cap.release()
     stack = np.stack(fr)
-    cy, half = (y0 + y1) / 2.0, max(4, int(tw * 0.32))
+    half = max(4, int(tw * 0.32))
     out = []
     for k in range(5):
         got = []
@@ -154,10 +156,10 @@ def anchors(path, vid, band, y0, y1, xs, th, tw, n=96, pct=50, hp=0.0, rest=0.0)
                 # with the up arrows at 0-1%. Selecting properly needs the STEP TIMES rather
                 # than brightness - which is the receptor flash reader, and that turns out to
                 # recover only about half the events and invent as many again. Left off.
-                b = stack[:, y0:y1, max(0, xs[i] - half):xs[i] + half].mean(axis=(1, 2))
+                b = stack[:, :, max(0, xs[i] - half):xs[i] + half].mean(axis=(1, 2))
                 sel = stack[np.argsort(b)[:max(8, int(len(b) * rest))]]
             m = np.percentile(sel, pct, axis=0).astype(np.float32)
-            c = crop(m, cy, xs[i], th, tw, pad=0)
+            c = crop(m, (y1 - y0) / 2.0, xs[i], th, tw, pad=0)
             if c is not None:
                 got.append(c)
         T = np.mean(got, axis=0).astype(np.float32) if got else None
