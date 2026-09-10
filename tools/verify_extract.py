@@ -74,7 +74,7 @@ def main():
             if ch in "12":
                 fnotes.setdefault(c, []).append(float(r["Time"]))
     seed, _ = Q.anchor_offset(notes, fnotes, ncols)
-    a, share, rate, g = Q.fit_offset(notes, times, beats, max(0.0, seed - 0.5), seed + 0.5)
+    a, share, rate, g = Q.fit_offset(notes, times, beats, max(0.0, seed - 0.05), seed + 0.05)
     Q.quantise(notes, beat_at, a, g, rate=rate)
     off = sum(1 for n in notes if n.get("grid_err", 9) >= Q.TOL)
     v = verify(name, notes, off)

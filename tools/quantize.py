@@ -54,10 +54,8 @@ def anchor_offset(notes, fnotes, ncols, lo=0.0, hi=60.0, tol=0.08):
     lattice step and the grid fit takes it from there, and a file so wrong that even that fails
     is a file whose extraction should be refused rather than authored.
     """
-    best = (0, lo)
-    for k in range(int(lo * 100), int(hi * 100)):
-        a = k / 100.0
-        hit = 0
+    def at(a):
+        hit, err = 0, []
         for c in range(ncols):
             col = fnotes.get(c, [])
             if not col:
@@ -69,9 +67,23 @@ def anchor_offset(notes, fnotes, ncols, lo=0.0, hi=60.0, tol=0.08):
                 j = bisect.bisect_left(col, t - tol)
                 if j < len(col) and abs(col[j] - t) <= tol:
                     hit += 1
-        if hit > best[0]:
-            best = (hit, a)
-    return best[1], best[0]
+                    err.append(abs(col[j] - t))
+        return hit, (float(np.median(err)) if err else 9.9)
+
+    best = (0, 9.9, lo)
+    for k in range(int(lo * 100), int(hi * 100)):
+        a = k / 100.0
+        hit, err = at(a)
+        if (hit, -err) > (best[0], -best[1]):
+            best = (hit, err, a)
+    # then to the millisecond, because this is the only thing that knows WHERE in the song the
+    # chart starts and a lattice step of slack here is a whole chart written a step out of place
+    for k in range(-30, 31):
+        a = best[2] + k / 1000.0
+        hit, err = at(a)
+        if (hit, -err) > (best[0], -best[1]):
+            best = (hit, err, a)
+    return best[2], best[0]
 
 def fit_offset(notes, times, beats, lo=0.0, hi=60.0, step=0.002):
     """video = chart + a, and which subdivision the chart is written on, from the extraction and
@@ -158,7 +170,10 @@ def main():
             if ch in "12":
                 fnotes.setdefault(c, []).append(float(r["Time"]))
     seed, hit = anchor_offset(notes, fnotes, ncols)
-    a, share, rate, g = fit_offset(notes, times, beats, max(0.0, seed - 0.5), seed + 0.5)
+    # +-50ms around the anchor, not +-500. The grid cannot tell one lattice step from the next,
+    # so a wide window lets it walk a step away from the only evidence that knows where the song
+    # starts - and a chart written one step out of place is wrong in every single row.
+    a, share, rate, g = fit_offset(notes, times, beats, max(0.0, seed - 0.05), seed + 0.05)
     print("  anchored at %+.2fs by the file's own notes (%d of %d land on one)" % (seed, hit, len(notes)))
     _, on = quantise(notes, beat_at, a, g, rate=rate), None
     on = share
