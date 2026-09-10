@@ -52,7 +52,7 @@ SCALE = 0.5               # sprite matching runs at half resolution
 CACHE = False
 
 def sprite_frames(vid, band, ncols, t_end, tmpl, floor=0.30, t0=0.0, scale=SCALE,
-                  collect=None, collect_floor=0.60):
+                  collect=None, collect_floor=0.60, side="1p"):
     """Every frame, where each column's sprite correlates. Same shape as arrow_blobs' output,
     but each hit carries its correlation so one decode can be re-cut at several thresholds.
 
@@ -60,7 +60,7 @@ def sprite_frames(vid, band, ncols, t_end, tmpl, floor=0.30, t0=0.0, scale=SCALE
     peak lands within a pixel or two of where it would, which is a few milliseconds of scroll,
     and the crossing time is a line fitted through forty of them anyway."""
     cap = cv2.VideoCapture(os.path.join(ROOT, "videos", vid + ".mp4"))
-    y0, y1, xs = R.geometry(cap, vid, band, ncols)
+    y0, y1, xs = R.field(cap, vid, band, ncols, side)
     fps = cap.get(cv2.CAP_PROP_FPS) or 60
     tw, th = sprites.size_for(float(np.median(np.diff(xs))))
     sc = float(scale)
@@ -139,24 +139,24 @@ def colour_floor(scored, floor, strong=0.60, share=0.35):
         return 0.0
     return float(np.percentile(sats, 10)) * share
 
-def anchor_set(vid, band, ncols):
+def anchor_set(vid, band, ncols, side="1p"):
     """The five receptor sprites for this video, plus the box they are read at."""
     path = os.path.join(ROOT, "videos", vid + ".mp4")
     cap = cv2.VideoCapture(path)
-    y0, y1, xs = R.geometry(cap, vid, band, ncols)
+    y0, y1, xs = R.field(cap, vid, band, ncols, side)
     cap.release()
     tw, th = sprites.size_for(float(np.median(np.diff(xs))))
-    return sprites.anchors(path, vid, band, y0, y1, xs, th, tw), th, tw
+    return sprites.anchors(path, vid + "." + side, band, y0, y1, xs, th, tw), th, tw
 
-def harvest(vid, band, ncols, t0, t1):
+def harvest(vid, band, ncols, t0, t1, side="1p"):
     """The five sprites: the receptors, sharpened by the notes a receptor pass was surest of.
 
     The bootstrap used to run off the blob detector, which meant inheriting its blind spots and
     paying for its tuning. A receptor pass is both better and free of that: it is already the
     detector, so its own confident hits are cleaner samples than the blob detector's best."""
-    anc, th, tw = anchor_set(vid, band, ncols)
+    anc, th, tw = anchor_set(vid, band, ncols, side)
     bins = [[] for _ in range(5)]
-    sprite_frames(vid, band, ncols, t1, anc, FLOORS[0], t0, collect=bins)
+    sprite_frames(vid, band, ncols, t1, anc, FLOORS[0], t0, collect=bins, side=side)
     return sprites.build(bins, anc, th, tw)
 
 
@@ -354,19 +354,25 @@ def extract(name, quiet=False):
     other = e.get("2p" if side == "1p" else "1p") or {}
     band = "C" if not other.get("judged") else ("L" if side == "1p" else "R")
     dur = float(e.get("t") or 150)
-    anc, th, tw = anchor_set(vid, band, ncols)
+    anc, th, tw = anchor_set(vid, band, ncols, side)
     if not any(A is not None for A in anc):
         raise RuntimeError("no receptor sprites for %s band %s" % (vid, band))
     ck = os.path.join(ROOT, "work", "spritepass",
-                      "%s.%s.%d.%.2f.%.1f.pkl" % (vid, band, ncols, SCALE, dur))
+                      "%s.%s.%s.%d.%.2f.%.1f.pkl" % (vid, band, side, ncols, SCALE, dur))
     if CACHE and os.path.exists(ck):
         ts, scored, fps, y0, y1, scan = pickle.load(open(ck, "rb"))
     else:
-        ts, scored, fps, y0, y1, scan = sprite_frames(vid, band, ncols, dur, anc, FLOORS[0])
+        ts, scored, fps, y0, y1, scan = sprite_frames(vid, band, ncols, dur, anc, FLOORS[0], side=side)
         if CACHE:
             os.makedirs(os.path.dirname(ck), exist_ok=True)
             pickle.dump((ts, scored, fps, y0, y1, scan), open(ck, "wb"))
-    R.save_scan(vid, band, ncols, 0.5, dur, scan)
+    # only shared with the other tools when this video's field agrees with what geometry() would
+    # have said - on a two-player video it does not, and their thresholds are tuned to its boxes
+    cap = cv2.VideoCapture(os.path.join(ROOT, "videos", vid + ".mp4"))
+    same = R.geometry(cap, vid, band, ncols)[2] == list(scan["xs"])
+    cap.release()
+    if same:
+        R.save_scan(vid, band, ncols, 0.5, dur, scan)
 
     # Which correlation to believe is settled by a SECOND, unrelated sensor: the receptor
     # flashes, judged events read at the top of the screen by completely different means. A

@@ -48,6 +48,61 @@ def geometry(cap, vid, band="C", ncols=None, n=64):
     json.dump(dict(y0=y0, y1=y1, xs=xs, pitch=round(p, 1), band=band), open(cache, "w"))
     return y0, y1, xs
 
+def field(cap, vid, band, ncols, side="1p", n=64):
+    """Receptor band + column centres, for a video that may be showing TWO fields.
+
+    geometry() assumes the outermost strong peaks are the ends of ONE field and that ncols
+    receptors fill the span. On a two-player video of a SINGLES chart that is wrong by a factor
+    of two: 8 6 - FULL SONG - S21 came out at a 169px pitch where every other 1280-wide video
+    is 73, five lanes spread across ten receptors, and the extraction scored 10% recall. The
+    result screen cannot save us either - it is what geometry is asked to trust, and on that
+    video the second player's numbers were never read, so the code believed there was one pad.
+
+    The band itself says it plainly: two fields have a gap between them several times wider than
+    anything inside a field. Split the peaks at that gap, and 1p is the left group, 2p the right.
+    geometry() is deliberately left alone - the repair pipeline's caches and its published
+    numbers were all produced under it.
+    """
+    ck = os.path.join("work", "receptor", f"{vid}.{band}.{ncols}.{side}.field.json")
+    if os.path.exists(ck):
+        g = json.load(open(ck))
+        return g["y0"], g["y1"], g["xs"]
+    dur = cap.get(cv2.CAP_PROP_FRAME_COUNT) / cap.get(cv2.CAP_PROP_FPS)
+    frames = []
+    for k in range(n):
+        cap.set(cv2.CAP_PROP_POS_MSEC, (dur * (k + 0.5) / n) * 1000)
+        ok, fr = cap.read()
+        if ok:
+            frames.append(fr)
+    h, w = frames[0].shape[:2]
+    y0, y1 = int(h * 0.07), int(h * 0.21)
+    med = np.median(np.stack([cv2.cvtColor(f, cv2.COLOR_BGR2GRAY)[y0:y1, :] for f in frames]), axis=0)
+    prof = cv2.GaussianBlur(med.astype(np.float32), (0, 0), 3).mean(axis=0)
+    prof = cv2.GaussianBlur(prof.reshape(1, -1), (0, 0), 3).ravel()
+    prof = prof - np.percentile(prof, 30)
+    lo_x, hi_x = (0, w // 2) if band == "L" else (w // 2, w) if band == "R" else (0, w)
+    top = prof[lo_x:hi_x].max()
+    peaks = [x for x in range(max(8, lo_x), min(w - 8, hi_x))
+             if prof[x] == prof[x - 8:x + 9].max() and prof[x] > 0.6 * top]
+    groups = [[peaks[0]]]
+    gaps = np.diff(peaks)
+    wide = 2.5 * float(np.median(gaps)) if len(gaps) else 1e9
+    for x, g in zip(peaks[1:], gaps):
+        (groups[-1] if g <= wide else groups.append([]) or groups[-1]).append(x)
+    groups = [g for g in groups if len(g) >= 3]
+    if len(groups) >= 2:
+        groups.sort(key=lambda g: g[0])
+        pick = groups[0] if side == "1p" else groups[-1]
+    else:
+        pick = peaks
+    lo, hi = min(pick), max(pick)
+    p = (hi - lo) / ncols
+    xs = [int(round(lo + (k + 0.5) * p)) for k in range(ncols)]
+    os.makedirs(os.path.dirname(ck), exist_ok=True)
+    json.dump(dict(y0=y0, y1=y1, xs=xs, pitch=round(p, 1), band=band, side=side,
+                   fields=len(groups)), open(ck, "w"))
+    return y0, y1, xs
+
 def scan(vid, t0, t1, band="C", ncols=None):
     """Per frame: the white level in each receptor box (flash) and the fraction of saturated
     bright pixels in the lane beneath it (rail).
