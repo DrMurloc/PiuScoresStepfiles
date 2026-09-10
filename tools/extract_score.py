@@ -92,7 +92,11 @@ def main():
         for k in range(-60, 61):
             a = coarse + k / 500.0
             hit, errs = match(ext, notes, ncols, tol, a)
-            if hit > best[0]:
+            # Among the offsets that match the most notes, keep the one that matches them
+            # BEST. Hit count alone stops caring once everything is inside the tolerance, so a
+            # constant lead survives and gets reported as the extraction's timing error.
+            key = (hit, -(float(np.median(errs)) if errs else 9.9))
+            if key > (best[0], -(float(np.median(best[2])) if best[2] else 9.9)):
                 best = (hit, a, errs)
         hit, a, errs = best
         print("%-34s %6d %6d %6.1f%% %6.1f%%  %.3fs (lead %+.3f)"

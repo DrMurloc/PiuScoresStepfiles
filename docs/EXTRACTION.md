@@ -7,10 +7,12 @@ work to let us do the same.
 
 ## The idea
 
-A note is not an event at a line, it is a **streak**. Watch one column over time and the arrows
-are parallel diagonals in a time-by-height picture, rising toward the receptors at the top of
-the screen (PIU scrolls **upward**). That framing gives four things a threshold at a fixed line
-cannot:
+Two halves, and they were got right in the opposite order.
+
+**When a note is** comes from treating it as a **streak**, not an event at a line. Watch one
+column over time and the arrows are parallel diagonals in a time-by-height picture, rising
+toward the receptors at the top of the screen (PIU scrolls **upward**). That framing gives four
+things a threshold at a fixed line cannot:
 
 - the **slope of a streak is the local scroll speed**, so tempo changes, speed mods and stops
   need no assumption and no global lead - the streak simply bends;
@@ -19,109 +21,208 @@ cannot:
 - two notes close together stay **two parallel streaks**, where one line merges them;
 - a **hold is a streak that keeps arriving** - head and tail are the ends of one long run.
 
-An arrow is **saturated AND bright**; the dimmed BGA behind it is neither. The test never looks
-at hue, so a chart that recolours its notes reads like any other.
+**What a note is** was, for a long time, a shape statistic: a compact blob, bright and
+saturated, about one lane across and as tall as it is wide. Bright art satisfies that constantly
+and a dim arrow fails it, so it needed a brightness threshold tuned per chart out of six extra
+decodes of the video, and it still capped out around 60-90% depending on the stage.
 
-## Where it stands (2026-09-09)
+It is now the **picture**. PIU draws its notes from five fixed images - one per panel - at the
+same size for the whole song, and the game hands them to us: **the receptors at the top of the
+screen ARE those five pictures**, at exactly the resolution this video draws notes at, and
+`receptors.geometry` already isolates them (they are the only static thing in that band, so a
+temporal median keeps them and washes out the notes and the BGA). Measured on Dr. M D18, a
+receptor correlates **0.86-0.97** with a note of its own panel and under 0.3 with any other.
+Correlation is normalised, so it reads structure and not colour - a chart that recolours its
+notes matches the same template.
 
-`tools/note_extract.py` extracts; `tools/extract_score.py` grades it against a chart whose notes
-are known right. The oracle is large - **2,234 charts already convert exactly to the catalog
-count**, so their notes are correct, plus the 106 repaired ones, all with video.
+**ONE decode does everything**: the sprite correlations, the receptor flashes that decide which
+correlation to believe, and the lane rails that say which taps are holds.
 
-| chart | file notes | extracted | recall | precision | median error |
-|---|---|---|---|---|---|
-| Bad Apple!! feat. Nomico D20 | 652 | 677 | **96.9%** | 93.4% | 0.035s |
-| Dr. M D18 | 499 | 480 | 92.2% | **95.8%** | 0.009s |
-| Beethoven Virus D13 | 303 | 269 | 81.8% | 92.2% | 0.016s |
-| A nightmare S6 | 190 | 241 | 80.5% | 63.5% | 0.017s |
-| My Way D16 | 447 | 428 | 77.2% | 80.6% | 0.027s |
-| Bee S17 | 463 | 489 | 62.0% | 58.7% | 0.047s |
+## Where it stands (2026-09-10)
 
-Bad Apple D20 was the worst chart in the corpus at 45% and is now the best at 97%. Bee S17 went
-the other way - 85% before the tuner started consulting the flashes, 37% after - and is the open
-case. The number to drive is still the worst chart: a transcription is only worth having if it
-is very nearly perfect.
+`tools/note_extract.py` extracts, `tools/quantize.py` puts it on the beat grid, and
+`tools/extract_score.py` grades it against a chart whose notes are known right. The oracle is
+large - **2,234 charts already convert exactly to the catalog count**, so their notes are
+correct, plus the 106 repaired ones, all with video.
 
-Three things got it from 5% to here, and each was a wrong assumption rather than a tuning knob:
+| chart | file notes | extracted | recall | precision | median error | holds |
+|---|---|---|---|---|---|---|
+| Bee S17 | 463 | 463 | **100.0%** | **100.0%** | **0.001s** | 1/1 |
+| A nightmare S6 | 190 | 192 | **100.0%** | 99.0% | 0.008s | 0/2 |
+| Beethoven Virus D13 | 303 | 340 | 99.3% | 88.5% | 0.016s | 1/2 |
+| Dr. M D18 | 499 | 493 | 98.4% | 99.6% | **0.001s** | 5/9 |
+| Bad Apple!! feat. Nomico D20 | 652 | 686 | 98.2% | 93.3% | 0.004s | 210/232 |
+| My Way D16 | 447 | 441 | 87.5% | 88.7% | 0.030s | 0/2 |
 
-1. **Colour cannot find an arrow.** Plenty of BGAs are bright and saturated across whole regions
-   of the screen, and a colour threshold reads them as notes everywhere. What separates an arrow
-   from the art behind it is SHAPE - a compact blob about one lane wide, as tall as it is wide,
-   that fills its own bounding box. Connected components with a size and fill filter took recall
-   from 37% to 94% in one change.
-2. **A real note falls at the scroll speed; the background does not.** Filtering streaks whose
-   slope disagrees with the local median took precision from 43% to 95%. It is deliberately
-   LOCAL, so a chart that changes tempo is judged against its own speed at that moment.
-4. **A second, unrelated sensor settles the threshold.** Neither "find the most notes" nor
-   "find the most consistent ones" balances - the first rewards the false positives on a busy
-   stage, the second throws real notes away to look tidy. The receptor flashes are judged events
-   read at the top of the screen by completely different means, so a setting is good when the
-   two agree in both directions. That took Bad Apple D20 from 45% recall to 97%. A floor
-   (an extraction may not find far fewer notes than there were flashes) stops it collapsing to
-   a handful of perfect ones, which is what cost Beethoven Virus D13 before it was added.
+against what the blob detector scored on the same charts:
 
-3. **One note can arrive as two streaks** when it is lost behind an effect and re-acquired.
+| chart | recall | precision |
+|---|---|---|
+| Bee S17 | 62.0% | 58.7% |
+| A nightmare S6 | 80.5% | 63.5% |
+| Beethoven Virus D13 | 81.8% | 92.2% |
+| Dr. M D18 | 92.2% | 95.8% |
+| Bad Apple!! feat. Nomico D20 | 96.9% | 93.4% |
+| My Way D16 | 77.2% | 80.6% |
+
+Every chart went up on recall and the worst went from 62% to 87.5%. The number to drive is
+still the worst chart: a transcription is only worth having if it is very nearly perfect.
+
+**The timing is not the problem it looked like.** The old table reported 16-47ms of error; that
+was the scorer, which searched a 50ms coarse grid, refined only ±60ms, and stopped caring once
+every note was inside the tolerance - so a constant lead clipped at its own rail and was
+reported as the extraction's error. Measured properly, the residual on Bee S17 is a constant
+**-60.0ms with a standard deviation of 1.3 MILLISECONDS**, per column and over the whole song.
+Dr. M D18 is 9.2ms, and its residual drifts +13ms per minute - which is the video's clock
+against the stepfile's tempo map, not anything the detector did. A 16th note at 200bpm is 75ms,
+so there is an order of magnitude in hand.
+
+## What made the difference
+
+1. **The receptor is the sprite.** Two seeds were tried before it and both are worse. The median
+   of the blob detector's candidate crops is a picture of the BGA on any chart whose notes have
+   not started yet, and every refinement round then protects it. Their MEDOID - the crop most
+   like the others - is right whenever arrows are a plurality, and on Dr. M D18 it recovered
+   three panels perfectly and handed the other two a "3" and an "O" off the combo counter,
+   because a plurality vote can simply lose. The receptor cannot lose: it is the picture, not a
+   vote about the picture.
+2. **A hold's tail is not a note.** The tail cap is the head's own sprite, so it correlates
+   exactly as well and arrives as a second note - on Bad Apple D20, 260 extra "notes" and the
+   whole of that chart's precision problem. While a hold runs its panel is held down, so the
+   game cannot put another note in that lane: anything inside the rail that did not open it is
+   the hold's own artwork. Only a rail an extracted note actually **opened** is trusted to
+   swallow anything, because a short bar of bright saturated art also reads as a rail, and
+   deleting real notes inside one is a silent loss where keeping a tail is a false positive the
+   count gate catches.
+3. **Holds need no new machinery.** The game already reports a held hold at the receptor, as a
+   saturated bright rail down the lane, and `receptors.rails` reads it: the head is the note
+   that opens the rail and the tail is where it closes. Two settings had to be got right. The
+   rail box sits 8px BELOW the receptor band while the judgement line is that band's middle, so
+   both edges of a rail are early by the same distance over the scroll speed - the code
+   subtracted the box height instead of adding the gap, a 150ms error that put 99% of Bad
+   Apple's hold ends outside a 120ms tolerance. And `min_len` had to come down from the 0.30s
+   the repair pipeline uses (it prices long hold REGIONS) to 0.065s, because **78% of Bad
+   Apple's 232 holds run for 0.11s**. Swept against a hold-heavy chart and a hold-free one,
+   0.065 keeps 220 of 232 while cutting Bee S17, which has ONE hold, from 29 rails to 8.
+4. **A real note falls at the scroll speed; the background does not.** Filtering streaks whose
+   slope disagrees with the local median took precision from 43% to 95% when it landed, and it
+   is deliberately LOCAL, so a chart that changes tempo is judged against its own speed then.
+5. **A second, unrelated sensor settles the threshold.** Neither "find the most notes" nor "find
+   the most consistent ones" balances - the first rewards the false positives on a busy stage,
+   the second throws real notes away to look tidy. The receptor flashes are judged events read
+   at the top of the screen by completely different means, so a setting is good when the two
+   agree in both directions, and a floor (an extraction may not find far fewer notes than there
+   were flashes) stops it collapsing to a handful of perfect ones. Neither sensor sees the
+   stepfile.
+6. **A colour gate learned from the chart's own confident notes.** Not a hue test and not a
+   fixed threshold: the largest channel gap over the largest channel, with the bar set from the
+   notes THIS chart already showed at a correlation nothing else reaches. On a monochrome BGA it
+   removes almost every false positive; on a chart whose notes really are pale it learns a low
+   bar and removes nothing, which is correct rather than a failure.
+7. **One note can arrive as two streaks** when it is lost behind an effect and re-acquired.
    Nothing puts two notes in one column closer than 50ms, so anything nearer is one note.
+8. **The time base is the container's timestamp**, not a count of frames times 1/fps. On a 59.94
+   stream that reports 60, accumulated drift is indistinguishable from the chart being wrong.
 
-5. **Agreement must not be part of the tuning score.** It rewards a small tidy extraction: on
-   Bee S17 a strict threshold finding 137 consistent notes scores 0.95 where the right one finds
-   348 and scores 0.38, and multiplying that by the flash F1 lets tidiness outvote the sensor
-   that actually knows. The F1 alone ranked those same candidates correctly. Dropping agreement
-   from the score took Bee S17 from 37% recall to 62% and moved nothing else. Agreement is still
-   used where it belongs - as a per-note filter on scroll speed - just not to choose a threshold.
+## Putting it on the grid
 
-Three bugs on the way, all of which made the numbers meaningless:
+A stepfile is beats, not seconds, so an extraction has to be quantised before it can be written
+(`tools/quantize.py`). Nothing there reads the stepfile's NOTES - only its timing (BPMs and
+stops), which is the half of a broken file that is not broken.
 
-1. The lead was measured from the **bottom of the receptor band** instead of the judgement line
-   at its middle - a 2.25x error in every extrapolation.
-2. The scorer accepted a match up to `tol + 1` **seconds**.
-3. Extracted times are **video** time, the file's are **chart** time, and the chart starts ten
-   or more seconds in while the scorer searched ±0.2s. This one alone took Bee S17 5% -> 39%.
+Two things had to be learned the hard way, and both are the same mistake:
 
-Two changes that raise recall and were measured to be a bad trade, so they are NOT in:
+- **A tolerance in beats means nothing until you say which lattice.** 0.02 beats against a 48th
+  lattice, whose lines are 0.0208 beats apart, accepts every possible time - which is how the
+  first fit came back "100% on the lattice" at an offset of zero. Grid error is now measured as
+  a fraction of the spacing.
+- **Counting notes inside a tolerance stops discriminating** as soon as they are all inside, so
+  it will happily pick an offset a whole lattice step off the truth. Scored on the median
+  DISTANCE instead, there is one minimum and it is in the right place.
 
-- **Splitting a wide blob back into the lanes it covers.** Arrows on neighbouring panels do
-  touch and merge, and a dense chart is full of them, so this looks obviously right - it takes
-  Dr. M D18 to 96% recall and My Way D16 from 58% to 80%. But precision falls to about 42%
-  whatever the speed filter is set to, because the extra events move at scroll speed like real
-  notes and cannot be filtered out afterwards. Recovering merged jumps needs the merge to be
-  resolved at detection - by shape, not by lane arithmetic.
-- **Fitting each streak on the frames nearest the judgement line** instead of all of them.
-  The crossing time is an extrapolation from the streak's end, so this should sharpen it - and
-  on Bee S17 it does, dramatically: 62% recall to 78%, precision 59% to 81%, timing 47ms to
-  18ms. It also takes Dr. M D18 from 92% to 63% and Bad Apple D20 from 97% to 72%. Making it
-  conditional on the fit's residual did not help either, because nearly every streak exceeds
-  any residual worth setting, so the condition never discriminates. Bee S17's timing is a real
-  and separate problem - 47ms against a 50ms tolerance - but this is not its fix.
+The offset and the subdivision are fitted together, because neither is knowable without the
+other, and the answer is read coarsest-first: the coarsest lattice the whole extraction fits is
+what "this chart is written on 16ths" actually means.
 
-- **Sampling three windows across the song to tune on** instead of the opening 45 seconds.
-  A chart's art and density both change as it goes, so this looks obviously fairer - and it
-  chose exactly the same threshold on every chart tried, for three times the tuning work.
+The absolute offset, though, **cannot come from the grid at all** - a lattice repeats, so every
+offset a whole number of steps away scores identically, and on a chart whose spacing is 39ms
+that is hundreds of equally good answers. Something has to say WHEN, not just how often. The
+file's own notes are the only thing at hand that does, and borrowing them is not circular
+because it is not their content that is borrowed: a file we are replacing is wrong in places,
+but it is not wrong about which minute of the song it is. It fixes the clock to within a lattice
+step and the grid fit takes it from there. A file so wrong that even that fails is a file whose
+extraction should be refused rather than authored.
 
+## Measured dead ends
+
+Kept because each one looks obviously right:
+
+- **Notes are drawn SMALLER than the receptors.** They look it on screen - the receptors carry a
+  heavier frame - and if it were true the template would need a scale per depth. Matched at
+  0.55x through 1.10x over 300 frames and five depth bands of the strip, **1.00 wins in every
+  band**; nothing else even registers.
+- **A longer minimum streak buys precision.** It buys it slower than it costs recall: on Bad
+  Apple D20, going from 3 frames to 16 takes precision 79% -> 92% and recall 92% -> 47%.
+- **Splitting a wide blob back into the lanes it covers** (blob detector). It takes Dr. M D18 to
+  96% recall and My Way D16 from 58% to 80%, and precision falls to about 42% whatever the speed
+  filter is set to, because the extra events move at scroll speed like real notes. The merge has
+  to be resolved at detection, by shape - which is what matching the sprite per column now does.
+- **Fitting each streak on the frames nearest the judgement line** instead of all of them. On
+  Bee S17 it looked dramatic; it also took Dr. M D18 from 92% to 63% and Bad Apple D20 from 97%
+  to 72%, and making it conditional on the fit's residual does not discriminate because nearly
+  every streak exceeds any residual worth setting.
+- **Sampling three windows across the song to tune on.** It chose exactly the same threshold on
+  every chart tried, for three times the work. (The flashes now cover the whole song anyway,
+  because the holds need them.)
+- **A correlation floor below 0.36.** Lower is not safer: the extra peaks drown the tracker,
+  which links runs to the wrong streaks and hands the speed filter a polluted median. On
+  Beethoven Virus D13, 0.28 scores 32% recall where 0.36 scores 86%.
 - **Running the continuity repair over the whole scan** before pricing (a different tool, same
   lesson): it prices more rails and rewrites ones that were already right.
 
-My Way D16 is the open case: same settings, much lower recall, and worth understanding before
-trusting the extractor generally.
+## What is still missing
+
+- **My Way D16 is the open case**, and it is not a detection failure: at every floor and with no
+  filtering at all, recall stops at the same number, and the notes it misses cluster in one
+  passage (video 20-24s) where the extraction and the file disagree by 0.2-0.5s with alternating
+  sign - not a constant offset, so not a clock. Both sensors are thin there. Worth understanding
+  before trusting the extractor generally.
+- **Writing a valid `.ssc`.** Quantised notes exist; nothing turns them back into a file.
+- **The refusal gate.** The extraction's judged count (taps + hold heads + ticks) must equal the
+  catalog's NoteCount or the chart must be refused rather than authored. The arithmetic already
+  exists in the repair pipeline; it is not wired to this.
+- **The edge cases below**, none of which has been run yet.
 
 ## The charts that will break it
 
 The owner's list of the rare things that exist in this game. Each is a real chart to test
-against, and none of them is handled yet:
+against. Where the exact difficulty is not certified, the nearest certified chart of the same
+song stands in.
 
 | what | chart to test | why it breaks a naive extractor |
 |---|---|---|
-| a very long hold | End of the World S20 | one streak that lasts for ever; head and tail must not become two notes |
+| a very long hold | The End of the World ft. Skizzo S20 | one streak that lasts for ever; head and tail must not become two notes |
 | a visual gimmick | 8 6 - FULL SONG - S21 | the screen effect trips a saturation test |
-| notes change colour | Legendary Dominion D27 | already handled by design - the test is hue-blind - but must be proven |
-| disappearing notes | Vanish D22 | the note is gone before the judgement line; caught only if seen early enough |
+| notes change colour | Legendary Dominion D25 (D27 not certified) | handled by design - correlation is hue-blind - but must be proven |
+| disappearing notes | VANISH D22 | the note is gone before the judgement line; caught only if seen early enough |
 | hidden holds | Ugly Dee S17 | the head judges normally, the hold body is invisible - the ticks are real and unseeable |
-| tempo changes | VVV S23 (severe speed up), Chaos Again S21 (stop-go), Twist of Fate S19 (severe slow down) | the streak's slope changes mid-flight; a stop makes it vertical |
-| fake notes | See 22 (at the end) | drawn but never judged - extraction must not author them |
-| entirely hidden notes | Ignis Fatuus S21 | nothing on screen at all; extraction can only report that it is incomplete |
-| animation behind the notes | Big Daddy D23 (chili pepper, ~halfway), 8 6 - FULL SONG - D23 (~3 min, and a flash) | bright moving art in the lanes reads as arrows |
-| laser beams | Destroyer D24 | long bright shapes sweeping across the lanes - arrow-bright, arrow-coloured, and moving, which is every test the detector has |
+| tempo changes | VVV S23 (severe speed up), CHAOS AGAIN D26 (stop-go), Twist of Fate (feat. Ruriling) S16 (severe slow down) | the streak's slope changes mid-flight; a stop makes it vertical |
+| fake notes | See 22 (at the end) - no certified video found | drawn but never judged - extraction must not author them |
+| entirely hidden notes | Ignis Fatuus(DM Ashura Mix) S22 | nothing on screen at all; extraction can only report that it is incomplete |
+| animation behind the notes | Big Daddy D23 (chili pepper, ~halfway) | bright moving art in the lanes reads as arrows |
+| laser beams | Destroyer D24 - no certified video found | long bright shapes sweeping across the lanes - arrow-bright, arrow-coloured, and moving, which is every test the detector has |
 
 Two of these are hard limits rather than bugs: **hidden holds** and **entirely hidden notes**
 cannot be seen, so the honest behaviour is to detect that the extraction disagrees with the
 game's own note count and refuse, exactly as the repair gate already does.
+
+## Cost
+
+One decode per chart, at 6.4 ms/frame for a singles chart and 11.6 for doubles - so roughly 45
+to 110 seconds of a core for a three-minute song, plus a few seconds to choose the correlation
+and mark the holds. The 2,207 charts of the tail are 55-110 core-hours, and each chart is
+independent, so it parallelises exactly.
+
+`--cache` keeps a chart's sprite pass under `work/`, so a change to anything AFTER the detector
+- the correlation floor, the holds, the grid - is re-scored without decoding. It is off by
+default: a corpus run should not leave two thousand of them behind.
