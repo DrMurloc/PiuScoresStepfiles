@@ -86,6 +86,14 @@ Two changes that raise recall and were measured to be a bad trade, so they are N
   whatever the speed filter is set to, because the extra events move at scroll speed like real
   notes and cannot be filtered out afterwards. Recovering merged jumps needs the merge to be
   resolved at detection - by shape, not by lane arithmetic.
+- **Fitting each streak on the frames nearest the judgement line** instead of all of them.
+  The crossing time is an extrapolation from the streak's end, so this should sharpen it - and
+  on Bee S17 it does, dramatically: 62% recall to 78%, precision 59% to 81%, timing 47ms to
+  18ms. It also takes Dr. M D18 from 92% to 63% and Bad Apple D20 from 97% to 72%. Making it
+  conditional on the fit's residual did not help either, because nearly every streak exceeds
+  any residual worth setting, so the condition never discriminates. Bee S17's timing is a real
+  and separate problem - 47ms against a 50ms tolerance - but this is not its fix.
+
 - **Sampling three windows across the song to tune on** instead of the opening 45 seconds.
   A chart's art and density both change as it goes, so this looks obviously fairer - and it
   chose exactly the same threshold on every chart tried, for three times the tuning work.
