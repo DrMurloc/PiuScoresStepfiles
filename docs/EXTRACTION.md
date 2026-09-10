@@ -195,26 +195,39 @@ Kept because each one looks obviously right:
 
 ## The charts that will break it
 
-The owner's list of the rare things that exist in this game. Each is a real chart to test
-against. Where the exact difficulty is not certified, the nearest certified chart of the same
-song stands in.
+The owner's list of the rare things that exist in this game, and what the extractor scores on
+each. Where the exact difficulty is not certified, the nearest certified chart of the same song
+stands in.
 
-| what | chart to test | why it breaks a naive extractor |
-|---|---|---|
-| a very long hold | The End of the World ft. Skizzo S20 | one streak that lasts for ever; head and tail must not become two notes |
-| a visual gimmick | 8 6 - FULL SONG - S21 | the screen effect trips a saturation test |
-| notes change colour | Legendary Dominion D25 (D27 not certified) | handled by design - correlation is hue-blind - but must be proven |
-| disappearing notes | VANISH D22 | the note is gone before the judgement line; caught only if seen early enough |
-| hidden holds | Ugly Dee S17 | the head judges normally, the hold body is invisible - the ticks are real and unseeable |
-| tempo changes | VVV S23 (severe speed up), CHAOS AGAIN D26 (stop-go), Twist of Fate (feat. Ruriling) S16 (severe slow down) | the streak's slope changes mid-flight; a stop makes it vertical |
-| fake notes | See 22 (at the end) - no certified video found | drawn but never judged - extraction must not author them |
-| entirely hidden notes | Ignis Fatuus(DM Ashura Mix) S22 | nothing on screen at all; extraction can only report that it is incomplete |
-| animation behind the notes | Big Daddy D23 (chili pepper, ~halfway) | bright moving art in the lanes reads as arrows |
-| laser beams | Destroyer D24 - no certified video found | long bright shapes sweeping across the lanes - arrow-bright, arrow-coloured, and moving, which is every test the detector has |
+| what | chart | recall / precision | holds |
+|---|---|---|---|
+| a very long hold | The End of the World ft. Skizzo S20 | **99.1% / 97.5%** | 25 of 27 |
+| tempo change (severe speed up) | VVV S23 | **99.0% / 98.5%** | 33 of 39 |
+| disappearing notes | VANISH D22 | 94.9% / 83.6% | 84 of 189 |
+| entirely hidden notes | Ignis Fatuus(DM Ashura Mix) S22 | 93.7% / 99.3% | 18 of 27 |
+| hidden holds | Ugly Dee S17 | **17.0% / 22.4%** | 0 of 52 |
 
-Two of these are hard limits rather than bugs: **hidden holds** and **entirely hidden notes**
-cannot be seen, so the honest behaviour is to detect that the extraction disagrees with the
-game's own note count and refuse, exactly as the repair gate already does.
+The first four are effectively solved, and two of them are the cases that were supposed to be
+hardest. **A severe speed change costs nothing at all** - which is the streak model earning its
+keep: the slope of a streak IS the local scroll speed, so a chart that speeds up simply draws
+steeper diagonals and no assumption anywhere has to change.
+
+**Ugly Dee S17 is the one that stands.** It is 212 notes carrying 597 judged events - 385 of
+them hold ticks from bodies that are not drawn - and the second sensor is no help precisely
+because of that: the receptor flashes are mostly ticks, so flash agreement bottoms out at 0.18
+and the correlation floor gets chosen badly. This is the hard limit the design predicted, and
+the honest behaviour is what the count gate already does: refuse.
+
+The other five on the list are **not measurable yet, and that is a footage problem rather than
+an extractor problem**: Legendary Dominion D25, CHAOS AGAIN D26, Big Daddy D23, Twist of Fate
+(feat. Ruriling) S16 and 8 6 - FULL SONG - S21 are all `verdict: OPEN` - no readable result
+screen, so nothing establishes that the video IS that chart, and nothing says which pad was
+played. Run anyway they scored 17-69%, against 94-99% for the four certified ones, and the
+extractor now refuses them rather than reporting a number: on a two-player video, guessing the
+pad reads the wrong half of the screen.
+
+Two entries have no certified video at all and could not be tested: **See 22** (fake notes) and
+**Destroyer D24** (laser beams).
 
 ## Cost
 

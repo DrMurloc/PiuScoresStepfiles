@@ -350,6 +350,14 @@ def extract(name, quiet=False):
     cert = corpus_map.certification()
     ncols = 10 if name.split()[-1][0] == "D" else 5
     vid, e = next((v, e) for v, e in cert.items() if name in (e.get("charts") or {}))
+    # An UNCERTIFIED video has not been shown to be this chart, and worse, nothing says WHICH
+    # PAD was played - so the field to read is a guess, and on a two-player video a guess is
+    # the wrong half of the screen. Five of the ten edge-case charts scored 17-69% this way and
+    # every one of them was OPEN; the four certified ones scored 94-99%. Refusing is not
+    # caution, it is the difference between a measurement and a number.
+    if e["charts"][name].get("verdict") != "CERTIFIED":
+        raise RuntimeError("%s is %s on %s - no certified result screen, so neither the chart "
+                           "nor the pad is established" % (name, e["charts"][name].get("verdict"), vid))
     side = e["charts"][name].get("side") or "1p"
     other = e.get("2p" if side == "1p" else "1p") or {}
     band = "C" if not other.get("judged") else ("L" if side == "1p" else "R")

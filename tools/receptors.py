@@ -97,6 +97,15 @@ def field(cap, vid, band, ncols, side="1p", n=64):
         pick = peaks
     lo, hi = min(pick), max(pick)
     p = (hi - lo) / ncols
+    # A lane is about 5.7% of the frame's width, and it does not matter whether the chart is
+    # singles or doubles: the receptors are the same size either way, so twice as many of them
+    # cover twice the span. Measured over 119 fitted videos the ratio runs 0.043 to 0.058 and
+    # nothing sits between there and the 0.132 a doubled-up field produces. A fit outside the
+    # band is not a chart to guess at - it is a chart to report, because the alternative is a
+    # silent 10% extraction that looks like a hard chart.
+    if not 0.035 <= p / w <= 0.080:
+        raise ValueError("%s %s: lane pitch %.0fpx is %.1f%% of a %dpx frame, which is not a "
+                         "%d-lane field" % (vid, band, p, 100 * p / w, w, ncols))
     xs = [int(round(lo + (k + 0.5) * p)) for k in range(ncols)]
     os.makedirs(os.path.dirname(ck), exist_ok=True)
     json.dump(dict(y0=y0, y1=y1, xs=xs, pitch=round(p, 1), band=band, side=side,
