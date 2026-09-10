@@ -150,8 +150,19 @@ def scan(vid, t0, t1, band="C", ncols=None):
         t += 1.0 / fps
     out = dict(ts=np.array(ts), flash=np.array(flash), lane=np.array(lane), xs=xs, fps=fps, y0=y0, y1=y1)
     os.makedirs(os.path.dirname(ck), exist_ok=True)
-    np.savez_compressed(ck, **out)
+    _atomic_savez(ck, out)
     return out
+
+def _atomic_savez(ck, out):
+    """Write the cache under a private name and rename it into place.
+
+    A video can serve several charts, so two workers can decide to build the same scan at the
+    same moment. Writing straight to the shared path leaves a half-written .npz that every later
+    reader trips over; a rename is atomic, so the loser's work is simply discarded.
+    """
+    tmp = "%s.%d.tmp.npz" % (ck, os.getpid())
+    np.savez_compressed(tmp, **out)
+    os.replace(tmp, ck)
 
 def scan_path(vid, band, ncols, t0, t1):
     return os.path.join("work", "receptor", f"{vid}.{band}.{ncols}.{t0:.1f}-{t1:.1f}.scan.npz")
@@ -163,7 +174,7 @@ def save_scan(vid, band, ncols, t0, t1, out):
     if os.path.exists(ck):
         return
     os.makedirs(os.path.dirname(ck), exist_ok=True)
-    np.savez_compressed(ck, **out)
+    _atomic_savez(ck, out)
 
 def onsets(sc, thresh=40.0):
     """Prominent peaks of each column's white level over its rolling floor: one per judgement,

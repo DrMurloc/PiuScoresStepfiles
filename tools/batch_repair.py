@@ -3,6 +3,7 @@
 # at later or never.
 #
 #   python -X utf8 tools/batch_repair.py <video-map.json> --survey [--limit N] [--only "<chart>"]
+#                                        [--shard i/n]   (n copies, one report each)
 #   python -X utf8 tools/batch_repair.py <video-map.json> --author [--limit N] [--commit]
 #
 # --survey measures and classifies, touching nothing. --author edits, verifies and (with
@@ -309,12 +310,22 @@ def main():
         n_cert, n_open = certify(vmap_path)
         print(f"certification: {n_cert} charts certified, {n_open} open\n", flush=True)
         ledger.update(json.load(open(LEDGER, encoding="utf-8")) if os.path.exists(LEDGER) else {})
-    only, limit = arg("--only"), arg("--limit")
+    only, limit, shard = arg("--only"), arg("--limit"), arg("--shard")
     jobs = [(c["chart"], c, ledger.get(e["vid"], dict(vid=e["vid"])))
             for e in vmap for c in e["charts"] if not only or c["chart"] == only]
     if limit:
         jobs = jobs[:int(limit)]
-    report_path = os.path.join(ROOT, "work", f"{tag}-report.json")
+    # --shard i/n runs every nth chart, so n copies cover the corpus between them and each
+    # writes its own report. A survey of the tail is 2,206 charts at a minute or two each, which
+    # is two days in one process and a few hours across the cores this machine actually has.
+    # Interleaved rather than blocked, so every shard sees the same mix of easy and hard charts
+    # and they finish together.
+    suffix = ""
+    if shard:
+        i, n = (int(x) for x in shard.split("/"))
+        jobs = jobs[i::n]
+        suffix = ".%d" % i
+    report_path = os.path.join(ROOT, "work", f"{tag}-report{suffix}.json")
     authoring = "--author" in sys.argv
     prior = {r["chart"]: r for r in json.load(open(report_path, encoding="utf-8"))}         if authoring and os.path.exists(report_path) else {}
     smap = corpus_map.chart_map()
