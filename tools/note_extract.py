@@ -44,7 +44,22 @@ MIN_TRACK = 3             # frames a streak must persist to be believed
 # Measured across six charts: 0.44-0.52 is the sweet spot everywhere and a floor BELOW 0.36
 # costs recall rather than buying it - the extra peaks drown the tracker, which then links
 # runs to the wrong streaks and hands the speed filter a polluted median.
+#
+# But those six charts all came from ONE uploader, and a correlation is not comparable across
+# footage of different contrast. Sampled over sixteen videos the two sources in this corpus do
+# not overlap: NEVSISTER's templates average 70.9 and the official channel's 44.6. So the
+# numbers above are read as belonging to footage of REFERENCE contrast, and scaled to whatever
+# is in front of us - the templates' own standard deviation, which is known before a single
+# frame of play is decoded. Footage as crisp as the charts these were tuned on keeps them
+# exactly; Andamiro's L (PIU Edit) D27, whose templates read 37, gets 0.19 instead of 0.36 and
+# can finally see its notes (152 in thirty seconds at 0.36, 612 at 0.18).
+#
+# The alternative - one adaptive rule for everyone, floors as quantiles of each video's own
+# peaks - is in EXTRACTION.md as a measured failure. It cost Bee S17 four points of recall
+# whether the quantiles replaced the old floors or were merely added to them, because both
+# versions had to drop the DETECTION floor for everybody to compute a quantile at all.
 FLOORS = (0.36, 0.44, 0.52, 0.60)
+REFERENCE = 70.0          # template contrast the floors above were measured at
 SCALE = 0.5               # sprite matching runs at half resolution
 SEP = 0.5                 # peaks nearer than this many sprite-heights are one arrow
 ANCHOR = 50               # percentile over time the receptor picture is read at
@@ -406,15 +421,20 @@ def _read(vid, band, ncols, side, dur, quiet):
     anc, th, tw = anchor_set(vid, band, ncols, side)
     if not any(A is not None for A in anc):
         raise RuntimeError("no receptor sprites for %s band %s" % (vid, band))
+    # how sharp this footage is, before anything is decoded, capped so a crisper-than-reference
+    # video is never asked for a HIGHER floor than the one that was measured
+    sharp = float(np.mean([A.std() for A in anc if A is not None]))
+    scale = min(1.0, sharp / REFERENCE)
+    floors = [round(f * scale, 3) for f in FLOORS]
     if REFINE:
         anc, kept = harvest(vid, band, ncols, 0.5, min(60.0, dur), side)
     ck = os.path.join(ROOT, "work", "spritepass",
-                      "%s.%s.%s.%d.%.2f.%.2f.%d.h%.2f.r%.2f.%.1f%s.pkl" % (vid, band, side, ncols, SCALE, SEP,
-                                          ANCHOR, HIPASS, REST, dur, ".ref" if REFINE else ""))
+                      "%s.%s.%s.%d.%.2f.%.2f.%d.h%.2f.r%.2f.s%.2f.%.1f%s.pkl" % (vid, band, side, ncols, SCALE, SEP,
+                                          ANCHOR, HIPASS, REST, scale, dur, ".ref" if REFINE else ""))
     if CACHE and os.path.exists(ck):
         ts, scored, fps, y0, y1, scan = pickle.load(open(ck, "rb"))
     else:
-        ts, scored, fps, y0, y1, scan = sprite_frames(vid, band, ncols, dur, anc, FLOORS[0], side=side)
+        ts, scored, fps, y0, y1, scan = sprite_frames(vid, band, ncols, dur, anc, floors[0], side=side)
         if CACHE:
             os.makedirs(os.path.dirname(ck), exist_ok=True)
             pickle.dump((ts, scored, fps, y0, y1, scan), open(ck, "wb"))
@@ -438,10 +458,10 @@ def _read(vid, band, ncols, side, dur, quiet):
     fl, _ = R.onsets(scan, 60.0)
     flashes = {c: sorted(v) for c, v in fl.items()}
     n_flash = sum(len(v) for v in flashes.values())
-    gate = colour_floor(scored, FLOORS[0])
+    gate = colour_floor(scored, floors[0])
     best = None
     for sat in (0.0, gate):
-        for floor in FLOORS:
+        for floor in floors:
             cand = _clean(_cand(ts, at_floor(scored, floor, sat), ncols, y0, y1, fps))
             if len(cand) < 15:
                 continue
@@ -452,12 +472,12 @@ def _read(vid, band, ncols, side, dur, quiet):
         if gate <= 0.0:
             break
     if best is None:
-        best = (0.0, 0.44, 0.0, _clean(_cand(ts, at_floor(scored, 0.44), ncols, y0, y1, fps)))
+        best = (0.0, floors[1], 0.0, _clean(_cand(ts, at_floor(scored, floors[1]), ncols, y0, y1, fps)))
     sc, floor, sat, notes = best
     if not quiet:
         speeds = [-n["v"] for n in notes]
-        print("%s band %s/%s, %d frames at %.0ffps, correlation %.2f%s (flash F1 %.2f)"
-              % (vid, band, side, len(ts), fps, floor,
+        print("%s band %s/%s, %d frames at %.0ffps, sharpness %.0f, correlation %.2f%s (flash F1 %.2f)"
+              % (vid, band, side, len(ts), fps, sharp, floor,
                  (", colour %.3f" % sat) if sat > 0 else "", sc))
         if speeds:
             print("  scroll %.0f px/s (%.0f-%.0f)" % (np.median(speeds), np.percentile(speeds, 5),

@@ -212,13 +212,28 @@ The rail SIGNAL is not the problem, which is worth saying because it looks like 
 during ESCAPE's holds the lane reads above 0.40 on 73% of frames against 2% elsewhere - cleaner
 separation than Bad Apple D20, where the holds are found.
 
-## Phoenix 2 is a different picture, and every threshold here was set on Phoenix 1
+## Different footage, different correlation scale - and every threshold here is absolute
 
-The six charts this detector was tuned on are all Phoenix 1-era, and Phoenix 2 does not draw
-the same screen. Its receptors are soft pastel shapes with a glow where Phoenix 1 drew hard
-white outlines - the templates come out at roughly half the contrast (36-43 against 71-74) -
-and the correlations follow. On Andamiro's own upload of **L (PIU Edit) D27**, across thirty
-seconds of dense chart, the peak correlations run **p50 0.23, p90 0.35, p99 0.48**.
+The six charts this detector was tuned on all came from one uploader. Footage from elsewhere
+does not have the same contrast, and the correlations follow it. Sampling sixteen videos, the
+two sources this corpus draws on do not overlap at all:
+
+| source | n | mean template contrast | range |
+|---|---|---|---|
+| NEVSISTER | 8 | 70.9 | 67.0-74.6 |
+| PUMP IT UP Official | 8 | **44.6** | 30.8-50.1 |
+
+**What causes that is not established.** Channel, mix era and upload pipeline are confounded,
+and the `skin` field cannot arbitrate because it is read off a result screen that official
+uploads do not have - it says `phoenix` for all eight NEVSISTER videos and `None` for all eight
+official ones, which is only a restatement of which group is which. The Phoenix 2 screen does
+look different - soft pastel receptors with a glow against Phoenix 1's hard white outlines -
+but one video is not a demonstration that the mix is the cause.
+
+What IS established is the part that matters: a video's correlation scale varies by about 1.6x
+between sources, and every threshold here is an absolute number. On Andamiro's upload of
+**L (PIU Edit) D27**, across thirty seconds of dense chart, the peaks run **p50 0.23, p90 0.35,
+p99 0.48**.
 
 The lowest floor this extractor will consider is **0.36** - above the ninetieth percentile of
 everything on that screen. It reads the chart from the tail of its own distribution:
