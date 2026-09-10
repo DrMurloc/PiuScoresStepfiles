@@ -118,7 +118,7 @@ def colourfulness(bgr, y, x, th, tw):
     mx = box.max(axis=2)
     return float(np.mean((mx - box.min(axis=2)) / np.maximum(mx, 1.0)))
 
-def peaks(strip_gray, xs, tmpl, tw, th, floor):
+def peaks(strip_gray, xs, tmpl, tw, th, floor, sep=None):
     """Per column: where this frame's sprite correlations peak, and how strongly.
 
     A note is a single peak, so the response is thinned to local maxima - without that, one
@@ -136,7 +136,7 @@ def peaks(strip_gray, xs, tmpl, tw, th, floor):
                               cv2.TM_CCOEFF_NORMED).ravel()
         # The local maximum comes from a dilation, not a sliding Python window: the window was
         # one numpy call per ROW per column per frame, which is most of a whole-song pass.
-        k = th // 2
+        k = sep if sep else th // 2
         top = cv2.dilate(r.reshape(-1, 1), np.ones((2 * k + 1, 1), np.uint8)).ravel()
         idx = np.nonzero((r >= floor) & (r >= top - 1e-6))[0]
         hits, last = [], -10 ** 9

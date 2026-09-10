@@ -46,6 +46,8 @@ MIN_TRACK = 3             # frames a streak must persist to be believed
 # runs to the wrong streaks and hands the speed filter a polluted median.
 FLOORS = (0.36, 0.44, 0.52, 0.60)
 SCALE = 0.5               # sprite matching runs at half resolution
+SEP = 0.5                 # peaks nearer than this many sprite-heights are one arrow
+MERGE = 0.015             # two detections nearer than this in one column are one note
 # The decode is the whole cost, and everything after it - which correlation to believe, the
 # holds, the grid - is post-processing worth re-running many times over the same pass. Off by
 # default: a corpus run of two thousand charts should not leave two thousand of these behind.
@@ -99,7 +101,8 @@ def sprite_frames(vid, band, ncols, t_end, tmpl, floor=0.30, t0=0.0, scale=SCALE
         full = cv2.cvtColor(strip, cv2.COLOR_BGR2GRAY)
         gray = cv2.resize(full, None, fx=sc, fy=sc, interpolation=cv2.INTER_AREA) if sc != 1.0 else full
         pk = []
-        for c, col in enumerate(sprites.peaks(gray, sxs, by_col, stw, sth, floor)):
+        for c, col in enumerate(sprites.peaks(gray, sxs, by_col, stw, sth, floor,
+                                              max(2, int(round(sth * SEP))))):
             row = []
             for a, _, q in col:
                 yy = int(round(a / sc))
@@ -250,9 +253,15 @@ def _clean(notes):
     """The two filters every detector's output goes through, in one place.
 
     One note can be tracked, lost behind an effect and re-acquired, arriving as two streaks that
-    extrapolate to the same instant. Nothing in this game puts two notes in ONE column closer
-    than a 16th at 300bpm, so anything nearer is one note counted twice; the longer-lived streak
-    is kept, because it saw more of the arrow.
+    extrapolate to the same instant - so the nearer of two detections in one column is dropped.
+    How near is MEASURED, not assumed. The assumption used to be "nothing in this game puts two
+    notes in one column closer than a 16th at 300bpm", and across 2,326 charts that is false on
+    11.5% of them; the 35ms this code actually used is false on 121 charts, 5.2%. Both were
+    quietly deleting real notes on exactly the dense charts where every note is hardest to see.
+    15ms is safe: two streaks that are the same arrow re-acquired share a trajectory and
+    extrapolate to within a couple of milliseconds of each other, while the tightest real pair
+    in the corpus is 34ms apart. Anything the time domain cannot separate is separated later on
+    the beat grid, where a lattice line knows what a millisecond does not.
 
     Then: every real note falls at the scroll speed and the background does not, so a streak
     moving at a different rate is something in the art that happened to be arrow-shaped. The
@@ -263,7 +272,7 @@ def _clean(notes):
     merged = {}
     for n in notes:
         prev = merged.get(n["col"])
-        if prev and abs(n["t"] - prev[-1]["t"]) < 0.035:
+        if prev and abs(n["t"] - prev[-1]["t"]) < MERGE:
             if n["frames"] > prev[-1]["frames"]:
                 prev[-1] = n
             continue
@@ -366,7 +375,7 @@ def extract(name, quiet=False):
     if not any(A is not None for A in anc):
         raise RuntimeError("no receptor sprites for %s band %s" % (vid, band))
     ck = os.path.join(ROOT, "work", "spritepass",
-                      "%s.%s.%s.%d.%.2f.%.1f.pkl" % (vid, band, side, ncols, SCALE, dur))
+                      "%s.%s.%s.%d.%.2f.%.2f.%.1f.pkl" % (vid, band, side, ncols, SCALE, SEP, dur))
     if CACHE and os.path.exists(ck):
         ts, scored, fps, y0, y1, scan = pickle.load(open(ck, "rb"))
     else:
