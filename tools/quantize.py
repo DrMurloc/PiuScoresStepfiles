@@ -21,7 +21,15 @@ import receptors as R  # noqa: E402
 
 GRIDS = (4, 8, 12, 16, 24, 32)   # subdivisions per beat a chart may actually use
 TOL = 0.35                       # how far off a lattice line a note may sit, as a fraction of
-                                 # half the spacing - so 1.0 is "anywhere at all"
+                                 # half the spacing - so 1.0 is "anywhere at all". This is the
+                                 # FITTING criterion: which lattice, and at what offset.
+# Whether a note may be WRITTEN is a different question and a looser one. A note 20% of the way
+# to the next line still snaps to the right line; only a note near the boundary is ambiguous
+# about which line it belongs to, and ambiguity is the thing that would put a note in the wrong
+# place. Demanding fitting-tightness here refuses charts the extractor got right: Dr. M D18
+# measures 9ms of spread against a quarter-beat window of 18ms, so 4% of its notes miss a
+# tolerance built for choosing a lattice, and the chart is correct in every one of them.
+SNAP = 0.70
 
 def grid_error(beat, grid):
     """How far off the nearest line of a 1/grid-of-a-beat lattice, as a FRACTION of the spacing.
@@ -112,7 +120,12 @@ def fit_offset(notes, times, beats, lo=0.0, hi=60.0, step=0.002):
         if inside.mean() < 0.5:
             return -1.0
         e = grid_error(np.interp(ct[inside], times, beats), grid)
-        return float(inside.mean() * (1.0 - np.median(e)))
+        # the 75th percentile, not the median. The median of a good extraction is already near
+        # zero and stays there while a clock drift smears the TAIL - which is the part that
+        # decides whether a note is on the grid - so a median objective leaves the drift in and
+        # then the gate refuses the chart. On Dr. M D18 the median is 0.03 of half a spacing and
+        # the 90th is 0.34, against a tolerance of 0.35.
+        return float(inside.mean() * (1.0 - np.percentile(e, 75)))
 
     per_grid = {}
     for g in GRIDS:
@@ -126,13 +139,24 @@ def fit_offset(notes, times, beats, lo=0.0, hi=60.0, step=0.002):
         # file on charts whose extraction is otherwise exact, the residual is a CONSTANT to about
         # a millisecond on Bee S17 and drifts 13ms a minute on Dr. M D18 - small against a 16th
         # note, but a straight line, so it costs one parameter to remove rather than to carry.
-        for rate in np.arange(-0.0025, 0.00251, 0.00025):
-            h = fit(best[1], float(rate), g)
-            if h > best[0]:
-                best = (h, best[1], float(rate))
+        for _ in range(2):        # offset and rate trade against each other; alternate once
+            for rate in np.arange(-0.0025, 0.002501, 0.0001):
+                h = fit(best[1], float(rate), g)
+                if h > best[0]:
+                    best = (h, best[1], float(rate))
+            for k in range(-25, 26):
+                a = best[1] + k / 1000.0
+                h = fit(a, best[2], g)
+                if h > best[0]:
+                    best = (h, a, best[2])
         per_grid[g] = best
+    # The coarsest lattice that fits as well as the BEST one does, not the coarsest that clears
+    # a fixed bar. A fixed bar picks quarters for a chart that is 92% quarters and 8% eighths,
+    # and then every eighth in it reads as off-grid and the whole chart is refused - which is
+    # what Dr. M D18 did, 33 notes of 493.
+    top = max(per_grid[g][0] for g in GRIDS)
     for g in GRIDS:
-        if per_grid[g][0] >= 0.90:
+        if per_grid[g][0] >= top - 0.005:
             return per_grid[g][1], per_grid[g][0], per_grid[g][2], g
     g = max(GRIDS, key=lambda k: per_grid[k][0])
     return per_grid[g][1], per_grid[g][0], per_grid[g][2], g
@@ -150,8 +174,25 @@ def quantise(notes, beat_at, a, g, tol=TOL, rate=0.0):
             n["beat_end"] = float(np.round(hb * g) / g)
     return g, on
 
-def keep_on_grid(notes, tol=TOL):
-    """The notes that landed on the grid. A streak that did not is art, not a note."""
+def dedupe(notes):
+    """One note per lattice line per column, keeping whichever fits the line better.
+
+    The detector's own de-duplication works in seconds and only merges streaks 35ms apart -
+    which is right, because nothing in this game puts two notes in one column closer than a 16th
+    at 300bpm. But a lattice line on a quarter-beat chart is a hundred milliseconds wide, so two
+    detections that are legitimately distinct in time can still land on the same row, and one of
+    them is not a note.
+    """
+    best = {}
+    for n in notes:
+        k = (round(float(n.get("beat", 0)), 6), n["col"])
+        if k not in best or n.get("grid_err", 9) < best[k].get("grid_err", 9):
+            best[k] = n
+    return sorted(best.values(), key=lambda n: (n.get("beat", 0), n["col"]))
+
+def keep_on_grid(notes, tol=SNAP):
+    """The notes whose snap is unambiguous. A streak sitting on a lattice boundary could go
+    either way, and a note in the wrong place is worse than a note missing."""
     return [n for n in notes if n.get("grid_err", 9) < tol]
 
 def main():

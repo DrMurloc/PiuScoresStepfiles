@@ -124,34 +124,52 @@ so there is an order of magnitude in hand.
 8. **The time base is the container's timestamp**, not a count of frames times 1/fps. On a 59.94
    stream that reports 60, accumulated drift is indistinguishable from the chart being wrong.
 
-## Putting it on the grid
+## Putting it on the grid, and writing it back
 
-A stepfile is beats, not seconds, so an extraction has to be quantised before it can be written
-(`tools/quantize.py`). Nothing there reads the stepfile's NOTES - only its timing (BPMs and
-stops), which is the half of a broken file that is not broken.
+A stepfile is beats, not seconds. `tools/quantize.py` fits the offset and the subdivision,
+`tools/author_notes.py` writes the note grid back into the .ssc, and `tools/diff_notes.py`
+compares what came out against what was there - in BEATS, so a measure written on 16ths and the
+same measure written on 48ths compare equal, which they should. Nothing reads the stepfile's
+NOTES except the offset anchor below; BPMS, STOPS, TICKCOUNTS, the description and the other
+difficulties are not touched, because none of them is what was wrong.
 
-Two things had to be learned the hard way, and both are the same mistake:
+Read off the video and written back out, against the charts the repo already believes:
+
+| chart | events in the file | authored | identical |
+|---|---|---|---|
+| Bee S17 | 464 | 464 | **463 (99.8%)** |
+| A nightmare S6 | 192 | 192 | 186 (96.9%) |
+| Dr. M D18 | 508 | 502 | 486 (95.7%) |
+
+Bee's single difference is its one hold's TAIL, one grid step out, which is the rail end's known
+accuracy. Everything else - every tap, in every column, at every beat - matches.
+
+Four things had to be learned to get there, and three of them are the same mistake:
 
 - **A tolerance in beats means nothing until you say which lattice.** 0.02 beats against a 48th
   lattice, whose lines are 0.0208 beats apart, accepts every possible time - which is how the
-  first fit came back "100% on the lattice" at an offset of zero. Grid error is now measured as
-  a fraction of the spacing.
-- **Counting notes inside a tolerance stops discriminating** as soon as they are all inside, so
-  it will happily pick an offset a whole lattice step off the truth. Scored on the median
-  DISTANCE instead, there is one minimum and it is in the right place.
+  first fit came back "100% on the lattice" at an offset of zero. Grid error is a fraction of
+  the spacing now.
+- **Counting things inside a tolerance stops discriminating** as soon as they are all inside.
+  The grid fit picked an offset a whole lattice step off the truth, the offset anchor did the
+  same, and `extract_score` reported a constant lead as the extraction's timing error - three
+  tools, one mistake. All three now break the tie on how WELL things fit, not how many do.
+- **The lattice repeats, so it cannot say where the song starts.** Every offset a whole number
+  of steps away scores identically, and on a chart whose spacing is 39ms that is hundreds of
+  equally good answers - the first authored chart came out one quarter-beat late in EVERY row.
+  The file's own notes are the anchor: borrowing them is not circular, because it is not their
+  content that is borrowed. A file we are replacing is wrong in places; it is not wrong about
+  which minute of the song it is. The grid fit is then confined to ±50ms around it.
+- **Fitting tolerance and writing tolerance are different questions.** A note 20% of the way to
+  the next line still snaps to the right line; only a note near the boundary is ambiguous. Using
+  the fitting tolerance to decide what may be WRITTEN refused charts that were right - Dr. M D18
+  measures 9ms of spread against an 18ms quarter-beat window, so 4% of its notes missed a
+  tolerance built for choosing a lattice and the chart was correct in every one of them.
 
-The offset and the subdivision are fitted together, because neither is knowable without the
-other, and the answer is read coarsest-first: the coarsest lattice the whole extraction fits is
-what "this chart is written on 16ths" actually means.
-
-The absolute offset, though, **cannot come from the grid at all** - a lattice repeats, so every
-offset a whole number of steps away scores identically, and on a chart whose spacing is 39ms
-that is hundreds of equally good answers. Something has to say WHEN, not just how often. The
-file's own notes are the only thing at hand that does, and borrowing them is not circular
-because it is not their content that is borrowed: a file we are replacing is wrong in places,
-but it is not wrong about which minute of the song it is. It fixes the clock to within a lattice
-step and the grid fit takes it from there. A file so wrong that even that fails is a file whose
-extraction should be refused rather than authored.
+A note whose snap IS ambiguous is dropped rather than guessed at, and so is a second detection
+landing on a line another already holds (the detector de-duplicates in seconds, at 35ms, and a
+quarter-beat row is 100ms wide). What stops that quietly deleting real notes is the count check
+afterwards: a chart short of the catalog's number does not ship.
 
 ## Measured dead ends
 

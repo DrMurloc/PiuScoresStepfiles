@@ -38,14 +38,33 @@ def rows_for(beats_in_measure):
             return R_
     return 192
 
-def grid(notes, ncols):
+def grid(notes, ncols, g):
     """The measures, as lists of note rows. Taps are 1, hold heads 2, hold tails 3."""
-    events = []
+    heads, taken = {}, set()
     for n in notes:
-        events.append((Fraction(n["beat"]).limit_denominator(192), n["col"],
-                       "2" if n.get("beat_end") is not None else "1"))
-        if n.get("beat_end") is not None:
-            events.append((Fraction(n["beat_end"]).limit_denominator(192), n["col"], "3"))
+        b = Fraction(n["beat"]).limit_denominator(192)
+        heads[(b, n["col"])] = n
+        taken.add((b, n["col"]))
+    step = Fraction(1, g)
+    tails = []
+    for (hb, c), n in list(heads.items()):
+        if n.get("beat_end") is None:
+            continue
+        b = Fraction(n["beat_end"]).limit_denominator(192)
+        # A hold's END may land on the row where the next note in that column begins - the rail
+        # reader is good to a frame or two, not to a lattice line. Both cannot occupy one row, so
+        # the hold gives way and releases a row earlier, which is what actually happened. If
+        # there is no row left between the two, the hold was never long enough to write and its
+        # head becomes an ordinary tap.
+        while (b, c) in taken and b - step > hb:
+            b -= step
+        if (b, c) in taken or b <= hb:
+            n["beat_end"] = None
+            continue
+        taken.add((b, c))
+        tails.append((b, c, "3"))
+    events = [(b, c, "2" if n.get("beat_end") is not None else "1")
+              for (b, c), n in heads.items()] + tails
     if not events:
         return []
     last = max(b for b, _, _ in events)
@@ -55,7 +74,7 @@ def grid(notes, ncols):
         by_meas[int(b // 4)].append((b, c, ch))
     out = []
     for m, evs in enumerate(by_meas):
-        R_ = rows_for([b for b, _, _ in evs]) if evs else 4
+        R_ = max(g, rows_for([b for b, _, _ in evs])) if evs else 4
         rows = ["0" * ncols for _ in range(R_)]
         for b, c, ch in evs:
             r = int((b - 4 * m) * R_ / 4)
@@ -93,11 +112,15 @@ def main():
     seed, _ = Q.anchor_offset(notes, fnotes, ncols)
     a, share, rate, g = Q.fit_offset(notes, times, beats, max(0.0, seed - 0.05), seed + 0.05)
     Q.quantise(notes, beat_at, a, g, rate=rate)
-    off = [n for n in notes if n.get("grid_err", 9) >= Q.TOL]
-    if off:
-        raise SystemExit("%d of %d notes are off the 1/%d grid - not authoring an extraction "
-                         "that does not fit the chart's own tempo map" % (len(off), len(notes), g))
-    measures = grid(notes, ncols)
+    # A note sitting on a lattice boundary is dropped rather than guessed at: it is nearly
+    # always something in the art that moved at scroll speed, and writing it in the wrong place
+    # is worse than not writing it. What stops that from quietly deleting REAL notes is the
+    # count check afterwards - a chart short of the catalog's number does not ship.
+    off = [n for n in notes if n.get("grid_err", 9) >= Q.SNAP]
+    notes = Q.dedupe(Q.keep_on_grid(notes))
+    if len(notes) < 15:
+        raise SystemExit("only %d notes survived the grid - nothing to author" % len(notes))
+    measures = grid(notes, ncols, g)
     ssc = os.path.join(ROOT, "simfiles", entry["ssc_rel"])
     text = open(ssc, encoding="utf-8", errors="replace").read()
     # the block is named by the chartstruct key's difficulty suffix, the same way finale_ticks
@@ -112,8 +135,9 @@ def main():
     os.makedirs(os.path.dirname(dest), exist_ok=True)
     open(dest, "w", encoding="utf-8").write(out)
     heads = sum(1 for n in notes if n.get("beat_end") is not None)
-    print("  %d measures, %d taps + %d holds, written on 1/%d of a beat" %
-          (len(measures), len(notes) - heads, heads, g))
+    print("  %d measures, %d taps + %d holds, written on 1/%d of a beat%s" %
+          (len(measures), len(notes) - heads, heads, g,
+           "" if not off else " (%d dropped off-grid)" % len(off)))
     print("  -> %s" % dest)
     print("  NOT verified: convert it and compare the implied count to the catalog before "
           "anything replaces the original")

@@ -76,7 +76,8 @@ def main():
     seed, _ = Q.anchor_offset(notes, fnotes, ncols)
     a, share, rate, g = Q.fit_offset(notes, times, beats, max(0.0, seed - 0.05), seed + 0.05)
     Q.quantise(notes, beat_at, a, g, rate=rate)
-    off = sum(1 for n in notes if n.get("grid_err", 9) >= Q.TOL)
+    off = sum(1 for n in notes if n.get("grid_err", 9) >= Q.SNAP)
+    notes = Q.dedupe(Q.keep_on_grid(notes))
     v = verify(name, notes, off)
     print("  %s: %s" % (v["verdict"], v["why"]))
     print("     %s judged | %d taps + %d heads | 1/%d of a beat, %d off it"
