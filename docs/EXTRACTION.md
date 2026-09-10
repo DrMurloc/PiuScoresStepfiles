@@ -32,10 +32,10 @@ count**, so their notes are correct, plus the 106 repaired ones, all with video.
 |---|---|---|---|---|---|
 | Bad Apple!! feat. Nomico D20 | 652 | 677 | **96.9%** | 93.4% | 0.035s |
 | Dr. M D18 | 499 | 480 | 92.2% | **95.8%** | 0.009s |
-| A nightmare S6 | 190 | 272 | 84.7% | 59.2% | 0.019s |
 | Beethoven Virus D13 | 303 | 269 | 81.8% | 92.2% | 0.016s |
+| A nightmare S6 | 190 | 241 | 80.5% | 63.5% | 0.017s |
 | My Way D16 | 447 | 428 | 77.2% | 80.6% | 0.027s |
-| Bee S17 | 463 | 256 | 37.1% | 67.2% | 0.009s |
+| Bee S17 | 463 | 489 | 62.0% | 58.7% | 0.047s |
 
 Bad Apple D20 was the worst chart in the corpus at 45% and is now the best at 97%. Bee S17 went
 the other way - 85% before the tuner started consulting the flashes, 37% after - and is the open
@@ -63,6 +63,13 @@ Three things got it from 5% to here, and each was a wrong assumption rather than
 3. **One note can arrive as two streaks** when it is lost behind an effect and re-acquired.
    Nothing puts two notes in one column closer than 50ms, so anything nearer is one note.
 
+5. **Agreement must not be part of the tuning score.** It rewards a small tidy extraction: on
+   Bee S17 a strict threshold finding 137 consistent notes scores 0.95 where the right one finds
+   348 and scores 0.38, and multiplying that by the flash F1 lets tidiness outvote the sensor
+   that actually knows. The F1 alone ranked those same candidates correctly. Dropping agreement
+   from the score took Bee S17 from 37% recall to 62% and moved nothing else. Agreement is still
+   used where it belongs - as a per-note filter on scroll speed - just not to choose a threshold.
+
 Three bugs on the way, all of which made the numbers meaningless:
 
 1. The lead was measured from the **bottom of the receptor band** instead of the judgement line
@@ -79,6 +86,10 @@ Two changes that raise recall and were measured to be a bad trade, so they are N
   whatever the speed filter is set to, because the extra events move at scroll speed like real
   notes and cannot be filtered out afterwards. Recovering merged jumps needs the merge to be
   resolved at detection - by shape, not by lane arithmetic.
+- **Sampling three windows across the song to tune on** instead of the opening 45 seconds.
+  A chart's art and density both change as it goes, so this looks obviously fairer - and it
+  chose exactly the same threshold on every chart tried, for three times the tuning work.
+
 - **Running the continuity repair over the whole scan** before pricing (a different tool, same
   lesson): it prices more rails and rewrites ones that were already right.
 
@@ -101,6 +112,7 @@ against, and none of them is handled yet:
 | fake notes | See 22 (at the end) | drawn but never judged - extraction must not author them |
 | entirely hidden notes | Ignis Fatuus S21 | nothing on screen at all; extraction can only report that it is incomplete |
 | animation behind the notes | Big Daddy D23 (chili pepper, ~halfway), 8 6 - FULL SONG - D23 (~3 min, and a flash) | bright moving art in the lanes reads as arrows |
+| laser beams | Destroyer D24 | long bright shapes sweeping across the lanes - arrow-bright, arrow-coloured, and moving, which is every test the detector has |
 
 Two of these are hard limits rather than bugs: **hidden holds** and **entirely hidden notes**
 cannot be seen, so the honest behaviour is to detect that the extraction disagrees with the

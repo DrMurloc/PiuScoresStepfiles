@@ -32,7 +32,7 @@ TOP, BOTTOM = 20, 430     # the band under the receptors that is watched, in px 
 MIN_RUN = 14              # a run of lit pixels shorter than this is not an arrow
 MIN_TRACK = 3             # frames a streak must persist to be believed
 
-def arrow_blobs(vid, band, ncols, t_end, vmin=110, smin=80, white=True):
+def arrow_blobs(vid, band, ncols, t_end, vmin=110, smin=80, white=True, t0=0.0):
     """Every frame, the arrows on screen: which column, and where vertically.
 
     Colour alone cannot find an arrow. A bright BGA - and plenty of them are bright - passes any
@@ -46,8 +46,8 @@ def arrow_blobs(vid, band, ncols, t_end, vmin=110, smin=80, white=True):
     fps = cap.get(cv2.CAP_PROP_FPS) or 60
     pitch = float(np.median(np.diff(xs)))
     lo, hi = pitch * 0.55, pitch * 1.25          # an arrow is about one lane across
-    cap.set(cv2.CAP_PROP_POS_MSEC, 0)
-    frames, ts, t = [], [], 0.0
+    cap.set(cv2.CAP_PROP_POS_MSEC, t0 * 1000)
+    frames, ts, t = [], [], t0
     while t < t_end:
         ok, f = cap.read()
         if not ok:
@@ -169,20 +169,30 @@ def extract(name, quiet=False):
     # finding a plausible number of them.
     # tuned on a slice, not the whole song - the art changes but not that much, and four extra
     # passes over a three minute video to pick one number is not a trade worth making
+    # Tuned on one slice. Sampling three windows spread through the song was measured and chose
+    # exactly the same thresholds for three times the work, so the opening is representative
+    # enough for this decision.
     probe = min(45.0, float(e.get("t") or 150))
-    sc = R.scan(vid, 0.5, probe, band, ncols)
-    flashes, _ = R.onsets(sc, 60.0)
+    wins = [(0.5, probe)]
     lead = 0.0
     best = None
+    flashes = {}
+    for a, b in wins:
+        fl, _ = R.onsets(R.scan(vid, a, b, band, ncols), 60.0)
+        for c, v in fl.items():
+            flashes.setdefault(c, []).extend(v)
+    for c in flashes:
+        flashes[c].sort()
     for vmin, smin, white in ((110, 80, True), (140, 90, True), (170, 110, True), (90, 70, True),
                              (95, 95, False), (75, 120, False)):
-        ts, frames, fps, y0, y1 = arrow_blobs(vid, band, ncols, probe, vmin, smin, white)
-        y_j = (y0 + y1) / 2 - (y1 + TOP)
         cand = []
-        for c in range(ncols):
-            for nn in notes_from_tracks(track(ts, frames, c, fps), y_j, fps):
-                nn["col"] = c
-                cand.append(nn)
+        for a, b in wins:
+            ts, frames, fps, y0, y1 = arrow_blobs(vid, band, ncols, b, vmin, smin, white, a)
+            y_j = (y0 + y1) / 2 - (y1 + TOP)
+            for c in range(ncols):
+                for nn in notes_from_tracks(track(ts, frames, c, fps), y_j, fps):
+                    nn["col"] = c
+                    cand.append(nn)
         if len(cand) < 15:
             continue
         sp = np.array([-n["v"] for n in cand])
@@ -199,7 +209,12 @@ def extract(name, quiet=False):
         # how a criterion that only rewards agreement collapses to a handful of perfect notes.
         n_flash = sum(len(v) for v in flashes.values())
         enough = len(cand) >= 0.6 * n_flash if n_flash else True
-        score = agree * flash_agreement(cand, flashes, lead) * (1.0 if enough else 0.15)
+        # Agreement is NOT part of the score. It rewards a small tidy extraction - a strict
+        # threshold that finds 137 consistent notes scores 0.95 where the right one finds 348
+        # and scores 0.38 - and multiplying it by the flash F1 lets that tidiness outvote the
+        # sensor that actually knows. On Bee S17 it picked 28% recall over 69%. The F1 alone
+        # ranks those candidates correctly, so the F1 alone decides.
+        score = flash_agreement(cand, flashes, lead) * (1.0 if enough else 0.15)
         if best is None or score > best[0]:
             best = (score, vmin, smin, agree, len(cand), white)
     vmin, smin, white = (best[1], best[2], best[5]) if best else (110, 80, True)
