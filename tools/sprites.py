@@ -48,9 +48,37 @@ def crop(gray, cy, cx, th, tw, pad=PAD):
         return None
     return gray[y0:y0 + th + 2 * pad, x0:x0 + tw + 2 * pad].astype(np.float32)
 
-def anchors(path, vid, band, y0, y1, xs, th, tw, n=48):
-    """The five panel shapes, read off the receptors. Cached - it costs a pass of seeks."""
-    ck = os.path.join("work", "receptor", vid + "." + band + "." + str(len(xs)) + ".sprites.npz")
+def anchors(path, vid, band, y0, y1, xs, th, tw, n=48, pct=50):
+    """The five panel shapes, read off the receptors. Cached - it costs a pass of seeks.
+
+    A plain median over time, and the two pads AVERAGED, because everything cleverer was
+    measured and every one of them is worse.
+
+    A receptor is only ever spoiled by something BRIGHTER than itself - it lights up when it is
+    hit, a hit explosion lingers, the stage flares between the pads - and the spoiling is local.
+    ESCAPE D26's band has a flare sitting on columns 4 and 5, which are exactly the columns
+    pooled into its two worst panels: down-right 60% recall and down-left 84%, against 97% for
+    the up arrows, which pool clean columns. So three ways of not averaging the spoiled one in
+    were tried on that chart, and all three lose:
+
+      a dimmer percentile     p35 78.8%, p50 78.6%, p70 73.2%. The flare is in most frames, so
+                              no percentile escapes it, and 0.2% is noise.
+      the pixel-wise MINIMUM  66.1%, down-right collapsing to 7%. The two pads' receptors are
+                              not aligned to the pixel, so min() erodes the shape rather than
+                              rejecting the flare.
+      auditioning the two     75.4% scoring each candidate on both its columns - which FIXES
+                              down-right, 60% to 85%, and breaks down-left and centre - and
+                              64.4% cross-validated on the other pad only. Normalised
+                              correlation rewards a FLAT template, because a low-variance patch
+                              correlates spuriously well with anything, so an audition scored on
+                              correlation prefers the very flare it was meant to reject.
+
+    The diagnosis is right and none of the cures is. What would work is a template that is not
+    one picture: learned from notes rather than receptors, with the flare modelled rather than
+    averaged away.
+    """
+    ck = os.path.join("work", "receptor",
+                      vid + "." + band + "." + str(len(xs)) + ".p%d" % pct + ".sprites.npz")
     if os.path.exists(ck):
         z = np.load(ck)
         return [z["p%d" % k] if ("p%d" % k) in z else None for k in range(5)]
@@ -63,7 +91,7 @@ def anchors(path, vid, band, y0, y1, xs, th, tw, n=48):
         if ok:
             fr.append(cv2.cvtColor(f, cv2.COLOR_BGR2GRAY))
     cap.release()
-    med = np.median(np.stack(fr), axis=0).astype(np.float32)
+    med = np.percentile(np.stack(fr), pct, axis=0).astype(np.float32)
     out = []
     for k in range(5):
         # the two pads draw the same five sprites, so both receptors describe the same picture

@@ -47,6 +47,7 @@ MIN_TRACK = 3             # frames a streak must persist to be believed
 FLOORS = (0.36, 0.44, 0.52, 0.60)
 SCALE = 0.5               # sprite matching runs at half resolution
 SEP = 0.5                 # peaks nearer than this many sprite-heights are one arrow
+ANCHOR = 50               # percentile over time the receptor picture is read at
 MERGE = 0.015             # two detections nearer than this in one column are one note
 # The decode is the whole cost, and everything after it - which correlation to believe, the
 # holds, the grid - is post-processing worth re-running many times over the same pass. Off by
@@ -152,7 +153,8 @@ def anchor_set(vid, band, ncols, side="1p"):
     y0, y1, xs = R.field(cap, vid, band, ncols, side)
     cap.release()
     tw, th = sprites.size_for(float(np.median(np.diff(xs))))
-    return sprites.anchors(path, vid + "." + side, band, y0, y1, xs, th, tw), th, tw
+    return sprites.anchors(path, vid + "." + side, band, y0, y1, xs, th, tw,
+                           pct=ANCHOR), th, tw
 
 def harvest(vid, band, ncols, t0, t1, side="1p"):
     """The five sprites: the receptors, sharpened by the notes a receptor pass was surest of.
@@ -380,8 +382,8 @@ def extract(name, quiet=False):
     if REFINE:
         anc, kept = harvest(vid, band, ncols, 0.5, min(60.0, dur), side)
     ck = os.path.join(ROOT, "work", "spritepass",
-                      "%s.%s.%s.%d.%.2f.%.2f.%.1f%s.pkl" % (vid, band, side, ncols, SCALE, SEP, dur,
-                                                       ".ref" if REFINE else ""))
+                      "%s.%s.%s.%d.%.2f.%.2f.%d.%.1f%s.pkl" % (vid, band, side, ncols, SCALE, SEP,
+                                          ANCHOR, dur, ".ref" if REFINE else ""))
     if CACHE and os.path.exists(ck):
         ts, scored, fps, y0, y1, scan = pickle.load(open(ck, "rb"))
     else:
