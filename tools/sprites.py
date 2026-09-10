@@ -144,9 +144,16 @@ def anchors(path, vid, band, y0, y1, xs, th, tw, n=96, pct=50, hp=0.0, rest=0.0)
                 # column carries at r = +0.925, and the busiest column is also the worst by
                 # recall at 58%.
                 #
-                # So each column picks its OWN frames: the dimmest share of them, which are the
-                # ones where nobody was standing on it. A quiet column loses nothing by this and
-                # a busy one gets the only frames that were ever showing the resting panel.
+                # So each column picks its OWN frames: the dimmest share of them, meant to be
+                # the ones where nobody was standing on it. MEASURED, THIS DOES NOT WORK, and
+                # the reason is worth keeping. Brightness picks dark SCENES, not unlit
+                # receptors: the dimmest frames of a song are its fades and its black passages,
+                # where the receptor is barely drawn at all, so the template loses its contrast
+                # and the matcher loses everything. On ESCAPE D26, keeping half the frames is a
+                # wash (78.9% against 78.2%), a quarter collapses to 44%, and an eighth to 30%
+                # with the up arrows at 0-1%. Selecting properly needs the STEP TIMES rather
+                # than brightness - which is the receptor flash reader, and that turns out to
+                # recover only about half the events and invent as many again. Left off.
                 b = stack[:, y0:y1, max(0, xs[i] - half):xs[i] + half].mean(axis=(1, 2))
                 sel = stack[np.argsort(b)[:max(8, int(len(b) * rest))]]
             m = np.percentile(sel, pct, axis=0).astype(np.float32)

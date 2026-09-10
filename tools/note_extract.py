@@ -359,8 +359,27 @@ def mark_holds(scan, notes, tol=0.15):
     notes[:] = keep
     return n_hold
 
+def extract_video(vid, ncols, side="1p", band="C", dur=None, quiet=False):
+    """Read a chart off a video this repo knows nothing else about.
+
+    Everything else here starts from a chart NAME and works back to footage through the
+    certification ledger, because it exists to repair files we already hold. This goes the other
+    way, and it is the direction that matters most: Andamiro post an official video of a chart
+    the day it ships, long before anyone writes a stepfile for it. Those uploads are AUTOPLAY -
+    the game steps exactly on every arrow, so there are no misses, no mis-steps and no note that
+    nobody hit - which is the best footage this detector will ever be given. They also carry NO
+    RESULT SCREEN, all 477 of them in the corpus, so the certification gate that guards the
+    repair path can never pass one. Identity comes from Andamiro's own title on the upload
+    instead, which is the publisher naming their own chart.
+    """
+    if dur is None:
+        cap = cv2.VideoCapture(os.path.join(ROOT, "videos", vid + ".mp4"))
+        dur = cap.get(cv2.CAP_PROP_FRAME_COUNT) / (cap.get(cv2.CAP_PROP_FPS) or 60)
+        cap.release()
+    return _read(vid, band, ncols, side, float(dur), quiet)
+
 def extract(name, quiet=False):
-    """Every tap the screen shows, as (video time, column).
+    """Every tap the screen shows, as (video time, column), for a chart we already hold.
 
     ONE decode of the video. The sprite matcher needs no brightness threshold to tune, so the
     six extra passes the blob detector cost are gone; what is left to choose is how strong a
@@ -373,14 +392,17 @@ def extract(name, quiet=False):
     # PAD was played - so the field to read is a guess, and on a two-player video a guess is
     # the wrong half of the screen. Five of the ten edge-case charts scored 17-69% this way and
     # every one of them was OPEN; the four certified ones scored 94-99%. Refusing is not
-    # caution, it is the difference between a measurement and a number.
+    # caution, it is the difference between a measurement and a number. extract_video is the
+    # way in for footage that carries its identity some other way.
     if e["charts"][name].get("verdict") != "CERTIFIED":
         raise RuntimeError("%s is %s on %s - no certified result screen, so neither the chart "
                            "nor the pad is established" % (name, e["charts"][name].get("verdict"), vid))
     side = e["charts"][name].get("side") or "1p"
     other = e.get("2p" if side == "1p" else "1p") or {}
     band = "C" if not other.get("judged") else ("L" if side == "1p" else "R")
-    dur = float(e.get("t") or 150)
+    return _read(vid, band, ncols, side, float(e.get("t") or 150), quiet)
+
+def _read(vid, band, ncols, side, dur, quiet):
     anc, th, tw = anchor_set(vid, band, ncols, side)
     if not any(A is not None for A in anc):
         raise RuntimeError("no receptor sprites for %s band %s" % (vid, band))
@@ -434,8 +456,8 @@ def extract(name, quiet=False):
     sc, floor, sat, notes = best
     if not quiet:
         speeds = [-n["v"] for n in notes]
-        print("%s: %s band %s, %d frames at %.0ffps, correlation %.2f%s (flash F1 %.2f)"
-              % (name, vid, band, len(ts), fps, floor,
+        print("%s band %s/%s, %d frames at %.0ffps, correlation %.2f%s (flash F1 %.2f)"
+              % (vid, band, side, len(ts), fps, floor,
                  (", colour %.3f" % sat) if sat > 0 else "", sc))
         if speeds:
             print("  scroll %.0f px/s (%.0f-%.0f)" % (np.median(speeds), np.percentile(speeds, 5),
