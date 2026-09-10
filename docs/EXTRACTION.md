@@ -185,11 +185,22 @@ extra hurdles. It does. The densest certified charts in the corpus, whole song:
 
 against 98-100% on the sparse charts. Two separate limits, and neither is a threshold to tune:
 
-**Two arrows can be closer together than one arrow is wide.** Peak suppression is half a sprite -
-32px - and at ESCAPE's scroll speed its tightest 34ms pair is about 20px apart, so the two
-overlap by two thirds and the correlation response is one broad peak rather than two. Separating
-them needs the overlap resolved (two hypotheses fitted to one response), not a smaller
-suppression window.
+**It is not the tight pairs, and it is not peak suppression.** That was the obvious theory -
+suppression is half a sprite, 32px, and a 34ms pair at ESCAPE's scroll speed is 20px apart, so
+two arrows that close should merge into one peak. Both halves are measurable and both are wrong.
+Loosening suppression from half a sprite to a quarter changes ESCAPE's recall by **nothing at
+all** (79.7% at 0.50, 0.35 and 0.25 alike; only precision falls), and ESCAPE contains exactly
+**one note** inside 35ms of a same-column predecessor - 0.1% of the chart - while it is missing
+20%. Brown Sky D26 has none at all and still stops at 90%.
+
+Priced across the whole corpus, the two-frame blind spot is not a general ceiling either: it
+costs 3,059 notes of 1,549,070, **0.20%**. What it is instead is a per-chart disqualifier - 23
+charts lose more than 5% of themselves to it, and one loses half - which is a thing to DETECT
+rather than to fix, and the count gate detects it.
+
+What the dense charts actually lose is panel-shaped. ESCAPE's recall by panel: **up-left and
+up-right 94-100%, centre 74-76%, down-left 73-86%, down-right 58-74%**. A miss that sorts by
+which picture is being matched is a template problem, not a density problem.
 
 **Half of a dense chart's holds are shorter than two frames.** ESCAPE D26's median hold is
 **0.03 seconds** - under two frames at 60fps - because a hold that short is how a chart writer

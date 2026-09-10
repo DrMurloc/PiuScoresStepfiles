@@ -52,6 +52,9 @@ MERGE = 0.015             # two detections nearer than this in one column are on
 # holds, the grid - is post-processing worth re-running many times over the same pass. Off by
 # default: a corpus run of two thousand charts should not leave two thousand of these behind.
 CACHE = False
+# Sharpen the receptor into the note the game actually draws, from the notes a receptor
+# pass was surest of. Costs a second decode, so it is a choice rather than the default.
+REFINE = False
 
 def sprite_frames(vid, band, ncols, t_end, tmpl, floor=0.30, t0=0.0, scale=SCALE,
                   collect=None, collect_floor=0.60, side="1p"):
@@ -374,8 +377,11 @@ def extract(name, quiet=False):
     anc, th, tw = anchor_set(vid, band, ncols, side)
     if not any(A is not None for A in anc):
         raise RuntimeError("no receptor sprites for %s band %s" % (vid, band))
+    if REFINE:
+        anc, kept = harvest(vid, band, ncols, 0.5, min(60.0, dur), side)
     ck = os.path.join(ROOT, "work", "spritepass",
-                      "%s.%s.%s.%d.%.2f.%.2f.%.1f.pkl" % (vid, band, side, ncols, SCALE, SEP, dur))
+                      "%s.%s.%s.%d.%.2f.%.2f.%.1f%s.pkl" % (vid, band, side, ncols, SCALE, SEP, dur,
+                                                       ".ref" if REFINE else ""))
     if CACHE and os.path.exists(ck):
         ts, scored, fps, y0, y1, scan = pickle.load(open(ck, "rb"))
     else:
