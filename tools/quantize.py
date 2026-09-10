@@ -41,19 +41,31 @@ def fit_offset(notes, times, beats, lo=0.0, hi=60.0, step=0.002, grid=48):
     time is thirty thousand passes of a Python loop, which is minutes rather than a second.
     """
     t = np.array([n["t"] for n in notes], dtype=float)
-    best = (-1.0, 0.0)
+    best = (-1.0, 0.0, 0.0)
     for k in range(int(lo / step), int(hi / step)):
         a = k * step
         b = np.interp(t - a, times, beats)
         d = np.abs(b * grid - np.round(b * grid))
         hit = float(np.mean(d < 0.02 * grid))
         if hit > best[0]:
-            best = (hit, a)
-    return best[1], best[0]
+            best = (hit, a, 0.0)
+    # A video's clock and a stepfile's tempo map are not the same clock. Measured against the
+    # file on charts whose extraction is otherwise exact, the residual is a CONSTANT to about a
+    # millisecond on Bee S17 and drifts 13ms a minute on Dr. M D18 - small against a 16th note,
+    # but it is a straight line, so it costs one more parameter to remove rather than to carry.
+    a = best[1]
+    for rate in np.arange(-0.0025, 0.00251, 0.00025):
+        tt = (t - a) * (1.0 + rate)
+        b = np.interp(tt, times, beats)
+        d = np.abs(b * grid - np.round(b * grid))
+        hit = float(np.mean(d < 0.02 * grid))
+        if hit > best[0]:
+            best = (hit, a, float(rate))
+    return best[1], best[0], best[2]
 
-def quantise(notes, beat_at, a, tol=0.03):
+def quantise(notes, beat_at, a, tol=0.03, rate=0.0):
     """Snap to the coarsest grid the chart actually fits, and say who did not land on it."""
-    b = [beat_at(n["t"] - a) for n in notes]
+    b = [beat_at((n["t"] - a) * (1.0 + rate)) for n in notes]
     for g in GRIDS:
         on = float(np.mean([grid_error(x, g) < tol for x in b]))
         if on > 0.97:
@@ -63,7 +75,7 @@ def quantise(notes, beat_at, a, tol=0.03):
         n["beat"] = float(np.round(x * g) / g)
         n["grid_err"] = float(grid_error(x, g))
         if n.get("hold_end"):
-            hb = beat_at(n["hold_end"] - a)
+            hb = beat_at((n["hold_end"] - a) * (1.0 + rate))
             n["beat_end"] = float(np.round(hb * g) / g)
     return g, on
 
@@ -80,10 +92,11 @@ def main():
     key = corpus_map.chart_map()[name]["key"]
     rows, taps, beat_at = R.chartstruct(key, ncols)
     times, beats = tempo_map(rows)
-    a, share = fit_offset(notes, times, beats)
-    g, on = quantise(notes, beat_at, a)
+    a, share, rate = fit_offset(notes, times, beats)
+    g, on = quantise(notes, beat_at, a, rate=rate)
     kept = keep_on_grid(notes)
-    print("  offset %+.3fs from the grid alone (%.0f%% of notes on a 48th lattice)" % (a, 100 * share))
+    print("  offset %+.3fs, clock %+.3f%% (%.0f%% of notes on a 48th lattice), from the grid alone"
+          % (a, 100 * rate, 100 * share))
     print("  chart is written on 1/%d of a beat: %.1f%% of the extraction lands on it" % (g, 100 * on))
     print("  %d notes kept, %d discarded as off-grid" % (len(kept), len(notes) - len(kept)))
     # what the same grid says about the file we are replacing

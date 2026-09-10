@@ -83,9 +83,13 @@ def main():
             hit, errs = match(ext, notes, ncols, 0.08, a)
             if hit > best[0]:
                 best = (hit, a, errs)
+        # +-120ms, not +-60. The coarse pass lands on a 50ms grid and the extraction can sit a
+        # constant lead off it, so a narrow refine clips at its own rail and reports that rail
+        # as the timing error: Bee S17 read as 44ms of error when its residuals are a constant
+        # -60.0ms with a standard deviation of 1.3ms.
         coarse = best[1]
         best = (0, coarse, [])
-        for k in range(-30, 31):
+        for k in range(-60, 61):
             a = coarse + k / 500.0
             hit, errs = match(ext, notes, ncols, tol, a)
             if hit > best[0]:

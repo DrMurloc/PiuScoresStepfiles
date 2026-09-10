@@ -290,21 +290,36 @@ def mark_holds(scan, notes, tol=0.15):
     or so before the head is judged and closes after the tail has gone by. The lag is one
     constant per video - the box height over the scroll speed - and is taken out here.
     """
-    # min_len is 0.05s, not the 0.30 the repair pipeline uses. That default is right there -
-    # it prices long hold REGIONS - and catastrophic here: 78% of Bad Apple D20's 232 holds run
-    # for 0.11s, so at 0.30 the rail reader saw 14 of them. At 0.05 it sees 220, and finds only
-    # 224 rails in total, so the short bar is not buying them with false ones.
-    rails = R.rails(scan, 0.40, 0.05)
+    # min_len is 0.065s, not the 0.30 the repair pipeline uses. That default is right there - it
+    # prices long hold REGIONS - and catastrophic here: 78% of Bad Apple D20's 232 holds run for
+    # 0.11s, so at 0.30 the rail reader saw 14 of them. Swept against both a hold-heavy chart
+    # and a hold-free one: 0.065 keeps 220 of Bad Apple's 232 while cutting Bee S17, which has
+    # ONE hold, from 29 rails to 8. Below that the floor itself is what most rails are - three
+    # frames of a bright lane, which any number of things can be.
+    rails = R.rails(scan, 0.40, 0.065)
     speeds = [-n["v"] for n in notes if n.get("v")]
-    lag = 88.0 / float(np.median(speeds)) if speeds else 0.12
-    n_hold, claimed = 0, set()
-    for n in notes:
-        for k, (a, b) in enumerate(rails.get(n["col"], [])):
-            if abs(a - n["t"]) <= tol:
-                n["hold_end"] = b - lag
-                n_hold += 1
-                claimed.add((n["col"], k))
-                break
+    # The rail is read in a box 8px BELOW the receptor band, and the judgement line is the
+    # middle of that band - so the box sees the hold while it is still short of being judged,
+    # and BOTH edges of a rail are early by the same distance over the scroll speed. Getting
+    # this wrong is not a small error: measured against Bad Apple D20's hold ends, subtracting
+    # the box height instead of adding the gap put 99% of them outside a 120ms tolerance.
+    d = ((scan["y1"] - scan["y0"]) / 2.0 + 8.0) / float(np.median(speeds)) if speeds else 0.06
+    # A rail is claimed by exactly ONE note - the one nearest its start. Letting every note in
+    # range claim it made the hold's own tail a second HEAD (on a 0.11s hold the tail is inside
+    # any tolerance wide enough to catch the head), which then protected it from the suppression
+    # below: 232 real holds came back as 400.
+    n_hold, claimed = 0, {}
+    for c, spans in rails.items():
+        col = [n for n in notes if n["col"] == c]
+        for k, (a, b) in enumerate(spans):
+            win = min(tol, max(0.05, 0.6 * (b - a)))
+            near = [n for n in col if abs(a + d - n["t"]) <= win]
+            if not near:
+                continue
+            head = min(near, key=lambda n: abs(a + d - n["t"]))
+            head["hold_end"] = b + d
+            claimed[(c, k)] = head
+            n_hold += 1
     # A hold is drawn head, body, TAIL CAP - and the cap is the head's own sprite, so it
     # correlates exactly as well and arrives as a second note. It is not one: while a hold runs,
     # its panel is held down, so the game cannot put another note in that lane. Anything inside
@@ -318,10 +333,7 @@ def mark_holds(scan, notes, tol=0.15):
     # where keeping a tail is a false positive the count gate will catch.
     keep = []
     for n in notes:
-        if n.get("hold_end"):
-            keep.append(n)
-            continue
-        if any(a + 0.10 < n["t"] < b - lag + 0.12
+        if any(claimed.get((n["col"], k)) is not n and a + d + 0.02 < n["t"] < b + d + 0.08
                for k, (a, b) in enumerate(rails.get(n["col"], [])) if (n["col"], k) in claimed):
             continue
         keep.append(n)
