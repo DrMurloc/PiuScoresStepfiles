@@ -89,6 +89,18 @@ def scan(vid, t0, t1, band="C", ncols=None):
     np.savez_compressed(ck, **out)
     return out
 
+def scan_path(vid, band, ncols, t0, t1):
+    return os.path.join("work", "receptor", f"{vid}.{band}.{ncols}.{t0:.1f}-{t1:.1f}.scan.npz")
+
+def save_scan(vid, band, ncols, t0, t1, out):
+    """Write a scan another reader produced into the shared cache, so the tools that only need
+    flashes and rails do not decode the video again."""
+    ck = scan_path(vid, band, ncols, t0, t1)
+    if os.path.exists(ck):
+        return
+    os.makedirs(os.path.dirname(ck), exist_ok=True)
+    np.savez_compressed(ck, **out)
+
 def onsets(sc, thresh=40.0):
     """Prominent peaks of each column's white level over its rolling floor: one per judgement,
     70ms apart at least (a 16th-note drill at 60fps still re-peaks 6+ frames apart)."""

@@ -90,6 +90,20 @@ def main():
         print("%-34s %6d %6d %6.1f%% %6.1f%%  %.3fs (lead %+.3f)"
               % (name[:34], n_file, len(ext), 100.0 * hit / max(n_file, 1),
                  100.0 * hit / max(len(ext), 1), float(np.median(errs)) if errs else float("nan"), a))
+        n_h = sum(len(v) for v in holds.values())
+        if n_h:
+            got = [n for n in ext if n.get("hold_end")]
+            ok = ends = 0
+            for c, spans in holds.items():
+                mine = sorted((n["t"] - a, n["hold_end"] - a) for n in got if n["col"] == c)
+                for s0, s1 in spans:
+                    m = [x for x in mine if abs(x[0] - s0) <= 0.08]
+                    if m:
+                        ok += 1
+                        if abs(m[0][1] - s1) <= 0.12:
+                            ends += 1
+            print("%-34s %6d %6d %6.1f%% %6.1f%%  holds: heads found / ends within 120ms"
+                  % ("", n_h, len(got), 100.0 * ok / n_h, 100.0 * ends / n_h))
 
 if __name__ == "__main__":
     main()
