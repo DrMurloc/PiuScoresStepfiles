@@ -251,6 +251,23 @@ taps and the converter refuses a hold laid over them). `remove` deletes a phanto
 of a row; a jump row needs one call per column, because a jump is one judged event and half
 of it is still one. First uses: Slam S5's intro jump, Set me up S10's two extra drill notes.
 
+**`author_new.py <vid> --title "<title>" --level <n> --cols 10 [--ticks 4] [--combo <combo.jsonl>] [--cache]`**
+Writes a stepfile for a chart the repo has no file for - a song Andamiro has just released - from
+its video alone, into `work/authored-new/`. It re-times every note at the local scroll speed
+(lanes under the judgement text lose half of each streak and read late), fits ONE BPM from how
+well the rows align with a twelfth-of-a-beat lattice and refuses a chart whose two halves want
+different tempos, takes out a video clock that drifts against the song (the median distance from
+that lattice over ten seconds at a time), chooses the lattice by how many notes it holds within
+the fitting tolerance and reports a finer one that would put notes between its lines, puts beat
+0 where the rows land on the coarsest subdivisions, writes one empty
+measure before the first row - a choice, since nothing in the footage says which beat starts a
+measure - and sets `#OFFSET` so beat 0 falls at its video time. With `--combo`, a jump of the
+counter in the video's last frames is read as the rest of a hold the video faded out on, and the
+last hold is lengthened by it. It ends by running `tick_verify` against the counter's final value
+and printing the difference; it does not tune `#TICKCOUNTS`. **piu-annotate's converter ignores
+`#OFFSET`**: a converted row's time counts from beat 0, so add the offset back before laying a
+converted file against the counter.
+
 ## Verifying
 
 **`tick_verify.py "<chart>" [expected]`**

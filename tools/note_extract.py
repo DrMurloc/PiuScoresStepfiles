@@ -246,8 +246,12 @@ def notes_from_tracks(tracks, y_judge_px, fps):
         t_hit = (y_judge_px - c) / v
         # a hold keeps feeding the column: the run stays tall long after the head goes by
         tall = max(b - a for a, b in tr["run"])
+        # the streak's centroid and the line it is extrapolated to travel with it, so a note can be
+        # re-timed at the scroll speed around it instead of its own slope - author_new.retime does
+        # that for a chart it writes; the extractor itself does not (EXTRACTION.md says why)
         out.append(dict(t=float(t_hit), v=float(v), tall=int(tall),
-                        frames=len(tr["t"]), first=float(t[0]), last=float(t[-1])))
+                        frames=len(tr["t"]), first=float(t[0]), last=float(t[-1]),
+                        mt=float(t.mean()), my=float(y.mean()), yj=float(y_judge_px), fps=float(fps)))
     return out
 
 def flash_agreement(cand, flashes, lead, tol=0.07):

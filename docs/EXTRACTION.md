@@ -452,19 +452,48 @@ Kept because each one looks obviously right:
   passage (video 20-24s) where the extraction and the file disagree by 0.2-0.5s with alternating
   sign - not a constant offset, so not a clock. Both sensors are thin there. Worth understanding
   before trusting the extractor generally.
-- **A chart for a song this repo has no file for.** `author_notes.py` writes notes into a file
-  the repo already holds, borrowing its tempo map; a new song has no tempo map to borrow, no song
-  header and no block. L (PIU Edit) D27 already has what one would need: a constant **155.005
-  BPM** fitted from its own rows (alignment with a twelfth-of-a-beat lattice 0.805, against 0.105
-  for the next tempo tried; its two halves fit 155.025 and 154.996; drift under a tenth of a
-  millisecond a minute), written in 16ths and 16th-triplets, and **4 ticks a beat** from its
-  counter over the intro's holds. The gate for it is the converter - `tick_verify.py --file` -
-  against the counter's final 1500.
+- **A chart for a song this repo has no file for** is now written by `author_new.py`, and L (PIU
+  Edit) D27 comes to **1,454 judged events against its counter's 1,500**. Its tempo is a constant
+  155 BPM fitted from its own rows (their alignment with a twelfth-of-a-beat lattice 0.92 against
+  0.57 for the next tempo tried; the two halves fit 155.03 and 155.00), written in 16ths and
+  16th-triplets. Before 80 seconds the file agrees with the counter stretch by stretch - the
+  intro's holds over-count by six, nothing else is off by more than one. 1,266 of its 1,272 notes
+  are written (the other six were two detections on one lattice line) and all 68 holds. The 46
+  still missing are hold ticks in two places: the stretches between 96 and 124 seconds (21) and
+  the part of the last hold the video shows (about 29). No single change of `#TICKCOUNTS`
+  explains both - the best fit to the stretches overshoots the total by 15, the best fit to the
+  total leaves the stretches as they were - and the stretches holding exactly one hold, where a
+  hold's length could be read off the counter, are all before 92 seconds. Those holds are where
+  the frames get looked at. The first look, at 103-109 seconds where the file is five short,
+  finds every row where the file has it and one hold - column 8 at 108.3s - drawn about 80ms
+  longer than its rail read it: a tick, not five. So hold ends may read early, and nothing yet
+  says that is the whole of it.
 - **The middle lanes are timed late where the judgement text covers them.** On the D27, columns 4
   and 5 keep only 8-11 frames of most streaks where every other column keeps 18 or more; those
   streaks fit 1.5-4% slow and cross the judgement line up to 10ms late (p90), where the outer
   columns sit within 3ms. At a twelfth of a 155bpm beat that is enough for 41 real notes - all
   but two of them in columns 4 and 5 - to be refused as off the grid when the chart is authored.
+  What was seen of each arrow is still where it was; only the slope is wrong, so re-timing a note
+  from its streak's centroid at the local scroll speed puts them back (49 off the D27's lattice
+  before, 0 after). That is **not** in the extractor. Tried there on the short streaks only, and
+  on short streaks that also run slow, and replayed over the fifteen published charts at the
+  floors they are read at, every version cost VANISH D22 four real notes and Brown Sky D26 about
+  5.5ms of median timing (Shub Niggurath D26 2-6ms), against gains such as ESCAPE D26's timing
+  going from 29.8ms to 23.0. `author_new.py` applies it to a chart it writes at one tempo and
+  checks against that chart's own counter.
+- **A lattice read off footage can be too coarse, and then triplets are written on the wrong
+  rows.** The subdivision a chart is written on is inferred from the extraction's own timing. On
+  the repair path that inference disagrees with the file's own subdivision on 8 of the 15
+  published charts: VVV S23 (written in 24ths), Bad Apple!! D20 and Ignis Fatuus S22 (12ths) all
+  read as quarter-beats; ESCAPE D26, Brown Sky D26, The End of the World S20, VANISH D22 and Ugly
+  Dee S17 (16ths) read as 24ths, 32nds, 8ths, 8ths and 32nds. The snap that follows accepts a
+  triplet a twelfth of a beat from a 16th line (0.67 of half a spacing, under SNAP's 0.70), so a
+  chart on too coarse a lattice gets its triplets on the wrong rows and nothing is refused - and
+  no count can see a note in the wrong row. Choosing by how many notes a lattice holds within the
+  fitting tolerance, rather than `fit_offset`'s 75th percentile, recovers VANISH and Ugly Dee and
+  is what `author_new.py` uses; the other six ask for timing their footage does not give.
+  `author_notes.py` has only been round-tripped on charts written in quarter-beats (Bee S17, A
+  nightmare S6, Dr. M D18).
 - **An official video's hold stretches are not judged.** The counter says how many judged events
   each one holds; which share of them is ticks is the converter's to say, once there is a file.
 - The receptor-flash floor choice is still the one thing here that looks at a sensor measuring
