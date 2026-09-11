@@ -318,6 +318,32 @@ def _clean(notes):
             if med > 0 and abs(-n["v"] - med) <= 0.40 * med:
                 keep.append(n)
         notes = keep
+    # A note lost behind an effect and re-acquired can also come back as a SHORT, SLOW streak
+    # beside the long one: past the merge, because it extrapolates 30ms away rather than 2, and
+    # past the speed filter, because 20% slow is inside 40%. On L (PIU Edit) D27 the combo counter
+    # found exactly two false notes in its hold-free stretches and both were this - three frames,
+    # 13-20% below scroll speed, 29 and 35ms behind a longer streak in the same column. Measured
+    # across the fifteen published charts, dropping a streak of at most 4 frames that runs more
+    # than 12% slow within 60ms of a longer one in its column deletes no real note, and 5 false.
+    if len(notes) > 30:
+        sp = np.array([-n["v"] for n in notes])
+        cols = {}
+        for i, n in enumerate(notes):
+            cols.setdefault(n["col"], []).append(i)
+        times = {c: [notes[i]["t"] for i in idx] for c, idx in cols.items()}
+        drop = set()
+        for i, n in enumerate(notes):
+            if n["frames"] > 4:
+                continue
+            med = float(np.median(sp[max(0, i - 25):i + 25]))
+            if med <= 0 or sp[i] > 0.88 * med:
+                continue
+            idx, tt = cols[n["col"]], times[n["col"]]
+            for j in range(bisect.bisect_left(tt, n["t"] - 0.060), bisect.bisect_right(tt, n["t"] + 0.060)):
+                if idx[j] != i and notes[idx[j]]["frames"] > n["frames"]:
+                    drop.add(i)
+                    break
+        notes = [n for i, n in enumerate(notes) if i not in drop]
     return notes
 
 def mark_holds(scan, notes, tol=0.15):

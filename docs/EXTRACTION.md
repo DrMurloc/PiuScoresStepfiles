@@ -348,6 +348,11 @@ re-acquired, getting past both the 15ms merge and the speed filter; the frames s
 each time. Nine stretches that did contain a rail matched exactly as well, so those rails carried
 no ticks.
 
+`_clean` now drops exactly that: a streak of at most 4 frames running more than 12% slow within
+60ms of a longer streak in its column. Measured before it went in, it deletes no real note on any
+of the fifteen published charts - recall is unchanged on every one, and five false notes go (1949
+D28, ESCAPE D26, Brown Sky D26) - and the D27 then matches its counter on all 29 stretches.
+
 That is the review loop in one example: the extractor did the work, the counter pointed at one
 second of a two-minute D27, and four frames settled it.
 
@@ -455,10 +460,11 @@ Kept because each one looks obviously right:
   millisecond a minute), written in 16ths and 16th-triplets, and **4 ticks a beat** from its
   counter over the intro's holds. The gate for it is the converter - `tick_verify.py --file` -
   against the counter's final 1500.
-- **Duplicate streaks.** The one false note the counter found on the D27, and a second one a
-  0.001-lower floor admits in the same second, are both a 3-frame streak moving 13-20% below
-  scroll speed, 29-35ms behind a longer streak in the same column. A rule for exactly that
-  deletes no real note across the fifteen published charts; it is measured, not yet in.
+- **The middle lanes are timed late where the judgement text covers them.** On the D27, columns 4
+  and 5 keep only 8-11 frames of most streaks where every other column keeps 18 or more; those
+  streaks fit 1.5-4% slow and cross the judgement line up to 10ms late (p90), where the outer
+  columns sit within 3ms. At a twelfth of a 155bpm beat that is enough for 41 real notes - all
+  but two of them in columns 4 and 5 - to be refused as off the grid when the chart is authored.
 - **An official video's hold stretches are not judged.** The counter says how many judged events
   each one holds; which share of them is ticks is the converter's to say, once there is a file.
 - The receptor-flash floor choice is still the one thing here that looks at a sensor measuring
