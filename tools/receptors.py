@@ -48,6 +48,27 @@ def geometry(cap, vid, band="C", ncols=None, n=64):
     json.dump(dict(y0=y0, y1=y1, xs=xs, pitch=round(p, 1), band=band), open(cache, "w"))
     return y0, y1, xs
 
+def _mirror_axis(med, c0, half, w):
+    """The column a receptor band is mirror-symmetric about, to half a pixel, looked for near c0.
+
+    A receptor row is its own reflection - down-left against down-right, up-left against up-right,
+    the centre against itself - whether it is one pad or two. Measured on Dr. M D18 and Bee S17,
+    whose lanes are right, the band correlates with its reflection at 0.99 about exactly the
+    centre their fit found; on L (PIU Edit) D27 it does so at 640.5, 22px from where its fit put
+    the centre, which is how that fit was found to be wrong. Returns (axis, correlation)."""
+    best = (-2.0, c0)
+    for c2 in range(int(2 * (c0 - 0.3 * half)), int(2 * (c0 + 0.3 * half)) + 1):
+        r_ = int(min(c2 / 2.0 - 1, w - 2 - c2 / 2.0, half * 1.05))
+        if r_ < 40:
+            continue
+        # the pixel columns mirrored about c2/2 are (c2-1)//2 - j and c2//2 + 1 + j, whether the
+        # axis falls on a pixel or between two
+        j = np.arange(0, r_ - 1)
+        r = float(np.corrcoef(med[:, (c2 - 1) // 2 - j].ravel(), med[:, c2 // 2 + 1 + j].ravel())[0, 1])
+        if r > best[0]:
+            best = (r, c2 / 2.0)
+    return best[1], best[0]
+
 def field(cap, vid, band, ncols, side="1p", n=64):
     """Receptor band + column centres, for a video that may be showing TWO fields.
 
@@ -63,7 +84,9 @@ def field(cap, vid, band, ncols, side="1p", n=64):
     geometry() is deliberately left alone - the repair pipeline's caches and its published
     numbers were all produced under it.
     """
-    ck = os.path.join("work", "receptor", f"{vid}.{band}.{ncols}.{side}.field.json")
+    # ".sym": fitted with the symmetric-border check below. The older caches are kept, not reused -
+    # they are what a lopsided fit is compared against.
+    ck = os.path.join("work", "receptor", f"{vid}.{band}.{ncols}.{side}.sym.field.json")
     if os.path.exists(ck):
         g = json.load(open(ck))
         return g["y0"], g["y1"], g["xs"]
@@ -96,6 +119,25 @@ def field(cap, vid, band, ncols, side="1p", n=64):
     else:
         pick = peaks
     lo, hi = min(pick), max(pick)
+    # The span is two threshold calls, and either can miss. On Andamiro's L (PIU Edit) D27 the
+    # outer border of the right-hand pad peaked just under the 0.6 cut, so the span stopped one
+    # ridge short: the pitch came out 69.5 where the full span gives 73.9, and each lane landed
+    # further off its receptor than the last - 46px by column 9, which put two lanes' notes in
+    # one strip and averaged the centre panel's template with a crop of the gap between two
+    # receptors. 69.5 is an ordinary pitch, so the guard below cannot see it.
+    # The picture can: a field is its own reflection, so its real borders are a PAIR of peaks
+    # standing symmetric about the axis. A span that already is one is left exactly as it was,
+    # and only a lopsided one is re-read, from peaks allowed to be weaker than the cut.
+    c, sym = _mirror_axis(med, (lo + hi) / 2.0, (hi - lo) / 2.0, w)
+    if sym >= 0.8 and abs((lo + hi) / 2.0 - c) > 2.0:
+        p0 = (hi - lo) / ncols
+        loose = [x for x in range(max(8, lo_x, int(lo - 1.5 * p0)), min(w - 8, hi_x, int(hi + 1.5 * p0)))
+                 if prof[x] == prof[x - 8:x + 9].max() and prof[x] > 0.35 * top]
+        pairs = [(b - a, a, b) for a in loose for b in loose
+                 if a < c < b and abs((a + b) / 2.0 - c) <= 2.0
+                 and 0.035 <= (b - a) / ncols / w <= 0.080]
+        if pairs:
+            _, lo, hi = max(pairs)
     p = (hi - lo) / ncols
     # A lane is about 5.7% of the frame's width, and it does not matter whether the chart is
     # singles or doubles: the receptors are the same size either way, so twice as many of them
@@ -109,7 +151,7 @@ def field(cap, vid, band, ncols, side="1p", n=64):
     xs = [int(round(lo + (k + 0.5) * p)) for k in range(ncols)]
     os.makedirs(os.path.dirname(ck), exist_ok=True)
     json.dump(dict(y0=y0, y1=y1, xs=xs, pitch=round(p, 1), band=band, side=side,
-                   fields=len(groups)), open(ck, "w"))
+                   fields=len(groups), axis=c, symmetry=round(sym, 3)), open(ck, "w"))
     return y0, y1, xs
 
 def scan(vid, t0, t1, band="C", ncols=None):

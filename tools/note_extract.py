@@ -428,9 +428,14 @@ def _read(vid, band, ncols, side, dur, quiet):
     floors = [round(f * scale, 3) for f in FLOORS]
     if REFINE:
         anc, kept = harvest(vid, band, ncols, 0.5, min(60.0, dur), side)
+    # the lanes are in the key for the reason they are in the template cache's: a pass read through
+    # the wrong lanes is a different pass, and a key without them hands it back after a refit
+    cap = cv2.VideoCapture(os.path.join(ROOT, "videos", vid + ".mp4"))
+    fxs = R.field(cap, vid, band, ncols, side)[2]
+    cap.release()
     ck = os.path.join(ROOT, "work", "spritepass",
-                      "%s.%s.%s.%d.%.2f.%.2f.%d.h%.2f.r%.2f.s%.2f.%.1f%s.pkl" % (vid, band, side, ncols, SCALE, SEP,
-                                          ANCHOR, HIPASS, REST, scale, dur, ".ref" if REFINE else ""))
+                      "%s.%s.%s.%d.%.2f.%.2f.%d.h%.2f.r%.2f.s%.2f.%.1f.x%d-%d%s.pkl" % (vid, band, side, ncols, SCALE, SEP,
+                                          ANCHOR, HIPASS, REST, scale, dur, fxs[0], fxs[-1], ".ref" if REFINE else ""))
     if CACHE and os.path.exists(ck):
         ts, scored, fps, y0, y1, scan = pickle.load(open(ck, "rb"))
     else:

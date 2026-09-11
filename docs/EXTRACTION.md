@@ -212,6 +212,53 @@ The rail SIGNAL is not the problem, which is worth saying because it looks like 
 during ESCAPE's holds the lane reads above 0.40 on 73% of frames against 2% elsewhere - cleaner
 separation than Bad Apple D20, where the holds are found.
 
+## The lanes, and a threshold that can miss by a whole receptor
+
+Before anything is matched, `receptors.field` decides where the lanes are: the median receptor
+band, its column profile, and the outermost strong peaks of that profile taken as the field's two
+outer borders, with the lanes spaced evenly between. On Andamiro's upload of **L (PIU Edit) D27**
+the right-hand border peaked just under the 0.6 cut, so the span stopped one ridge short. The
+pitch came out 69.5 where the full span gives 73.9, and each lane sat further off its receptor
+than the last - **46px by column 9**, most of a receptor's width. Everything measured on that
+video before the fix was measured through the wrong lanes: the centre panel's template was
+averaged with a crop of the gap between two receptors, column 2 found **8 notes** where its
+mirror column 7 found 280, and the whole song came to 1,181 notes and 11 holds.
+
+69.5 is an ordinary pitch, so the guard on pitch could not see it. The picture could. A receptor
+row is its own reflection - down-left against down-right, up-left against up-right, the centre
+against itself, on one pad or two - and the band correlates with its reflection at **0.99** about
+its true axis. So the fit now measures that axis first, and a span that is not symmetric about it
+is re-read as the outermost PAIR of peaks that is, from peaks allowed to be weaker than the cut. A
+span that already is symmetric is left exactly as it was.
+
+Through the right lanes the same D27 reads **1,365 notes and 58 holds**, per column
+`[23, 33, 142, 203, 279, 308, 193, 141, 25, 18]` - a doubles chart's shape, each column within a
+few notes of its mirror.
+
+It was not one video. Every cached fit was checked against two things that need no stepfile - the
+two pads' receptors are the same picture, and the field is its own reflection:
+
+| fits | checked | centre off the mirror axis | agreement on the good fits (twin / mirror) | on the lopsided ones |
+|---|---|---|---|---|
+| extractor (`field`) | 36 | **5**, by 21-36px | - / 0.97 median | mirror 0.10-0.17 |
+| repair pipeline (`geometry`) | 214 | **8**, by 21-36px | 0.95 / 0.98 median | mirror 0.10-0.24 |
+
+Re-fitting the 36 extractor fields under the new rule moves exactly those five and returns the
+other 31 unchanged, Bee S17 and Dr. M D18 among them - their templates regenerate byte-identical
+and their scores do not move. None of the five is a certified chart, so no published extraction
+number changes: they are Fracture Temporelle D23, Highway Chaser D22, Legendary Dominion S20 and
+S16, Big Daddy D23, and the D27.
+
+The repair pipeline's `geometry()` is deliberately left alone, and six of its lopsided fits
+belong to certified charts: VECTOR S22, Conflict S22, KUGUTSU S25, Monkey Fingers 2 S17,
+Solitary D17 and 2006. LOVE SONG S12 (that video's left field; its S15 was played on the right).
+Their flashes and rails were read through the wrong lanes. One has a shipped repair - Conflict
+S22, whose finale pair was re-priced in `a35085e` - and it passed the count gate, which is
+strong evidence for its total and none at all for its columns.
+
+Both caches keyed on a video now carry the lanes (the receptor templates and the sprite pass), so
+a corrected fit can never be handed the picture read through the old one.
+
 ## Different footage, different correlation scale - and every threshold here is absolute
 
 The six charts this detector was tuned on all came from one uploader. Footage from elsewhere

@@ -112,8 +112,11 @@ def anchors(path, vid, band, y0, y1, xs, th, tw, n=96, pct=50, hp=0.0, rest=0.0)
     one picture: learned from notes rather than receptors, with the flare modelled rather than
     averaged away.
     """
+    # the lanes are part of the key: a template cut at the wrong x is a different template, and a
+    # key without them hands the old picture back after the geometry under it has been corrected
     ck = os.path.join("work", "receptor",
-                      vid + "." + band + "." + str(len(xs)) + ".p%d.h%.2f.r%.2f" % (pct, hp, rest) + ".sprites.npz")
+                      vid + "." + band + "." + str(len(xs)) + ".p%d.h%.2f.r%.2f" % (pct, hp, rest)
+                      + ".x%d-%d" % (xs[0], xs[-1]) + ".sprites.npz")
     if os.path.exists(ck):
         z = np.load(ck)
         return [z["p%d" % k] if ("p%d" % k) in z else None for k in range(5)]
