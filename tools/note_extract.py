@@ -51,8 +51,14 @@ MIN_TRACK = 3             # frames a streak must persist to be believed
 # numbers above are read as belonging to footage of REFERENCE contrast, and scaled to whatever
 # is in front of us - the templates' own standard deviation, which is known before a single
 # frame of play is decoded. Footage as crisp as the charts these were tuned on keeps them
-# exactly; Andamiro's L (PIU Edit) D27, whose templates read 37, gets 0.19 instead of 0.36 and
-# can finally see its notes (152 in thirty seconds at 0.36, 612 at 0.18).
+# exactly - and all fifteen published charts measure at full scale, so none of them can test it.
+#
+# The evidence that motivated it is WITHDRAWN. Andamiro's L (PIU Edit) D27 read 37 and found 152
+# notes in thirty seconds at 0.36 against 612 at 0.18 - through lanes fitted 46px wrong. Through
+# the corrected lanes its templates read 49, the extraction barely moves between 0.34 and 0.52
+# (1,275-1,285 notes), and its own combo counter says every floor from 0.48 up is exact on each
+# hold-free stretch: higher than the 0.42 this scaling lets it reach. It stays until a genuinely
+# soft official video is measured, because removing it untested would be the same mistake again.
 #
 # The alternative - one adaptive rule for everyone, floors as quantiles of each video's own
 # peaks - is in EXTRACTION.md as a measured failure. It cost Bee S17 four points of recall
@@ -60,6 +66,7 @@ MIN_TRACK = 3             # frames a streak must persist to be believed
 # versions had to drop the DETECTION floor for everybody to compute a quantile at all.
 FLOORS = (0.36, 0.44, 0.52, 0.60)
 REFERENCE = 70.0          # template contrast the floors above were measured at
+TIE = 0.005               # flash scores this close to the best are a tie, won by the strictest floor
 SCALE = 0.5               # sprite matching runs at half resolution
 SEP = 0.5                 # peaks nearer than this many sprite-heights are one arrow
 ANCHOR = 50               # percentile over time the receptor picture is read at
@@ -464,18 +471,28 @@ def _read(vid, band, ncols, side, dur, quiet):
     flashes = {c: sorted(v) for c, v in fl.items()}
     n_flash = sum(len(v) for v in flashes.values())
     gate = colour_floor(scored, floors[0])
-    best = None
+    cands = []
     for sat in (0.0, gate):
         for floor in floors:
             cand = _clean(_cand(ts, at_floor(scored, floor, sat), ncols, y0, y1, fps))
             if len(cand) < 15:
                 continue
             enough = len(cand) >= 0.6 * n_flash if n_flash else True
-            sc = flash_agreement(cand, flashes, 0.0) * (1.0 if enough else 0.15)
-            if best is None or sc > best[0]:
-                best = (sc, floor, sat, cand)
+            cands.append((flash_agreement(cand, flashes, 0.0) * (1.0 if enough else 0.15), floor, sat, cand))
         if gate <= 0.0:
             break
+    # Among the floors the flashes cannot tell apart, the STRICTEST. A lower floor only ever adds
+    # detections, so when those do not make the extraction agree measurably better with the
+    # second sensor, they are not evidence of notes. Through the inset lanes Bee S17 scored 0.514
+    # at 0.36 and 0.512 at 0.44, 0.52 and 0.60 - and 0.36 was the one carrying 13 false notes,
+    # 100/97.3 where the other three are 100/100. Replayed over the fifteen published charts,
+    # taking the highest floor within TIE of the best score lifts mean F1 from 94.98 to 95.07 and
+    # puts Bee back at 100/100; a margin of 0.01 does no better on average and costs The End of
+    # the World its precision (98.6/96.1 against 98.6/98.6).
+    best = None
+    if cands:
+        top = max(c[0] for c in cands)
+        best = max((c for c in cands if c[0] >= top - TIE), key=lambda c: (c[1], -c[2]))
     if best is None:
         best = (0.0, floors[1], 0.0, _clean(_cand(ts, at_floor(scored, floors[1]), ncols, y0, y1, fps)))
     sc, floor, sat, notes = best

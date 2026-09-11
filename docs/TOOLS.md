@@ -11,13 +11,34 @@ they print what they did and expect a human reading the output.
 
 ## Reading footage
 
-**`combo_reader.py --scan <vid> side=<L|R|C>`**
+**`combo_reader.py --scan <vid> side=<L|R|C> [atlas=tools/atlas-combo-p2]`**
 OCRs the in-game combo counter frame by frame into `work/combo/<vid>.<band>.jsonl` as
 `[time, value, confidence]`. Finds the COMBO *label* first and hangs the digit window off it,
 which is what stops a BGA's own numbers being read as combo (Tales of Pumpnia's RPG damage
 popups). A digit-sized unknown glyph voids the read rather than truncating it; only
 sub-digit-width edge fragments are dropped. Unknown glyphs are dumped to `work/combo-unknown/`
 for atlas work.
+
+`atlas=` picks the counter's font. Phoenix 2 redrew it - solid italics where Phoenix 1 has a
+hollow outline - and the original atlas reads none of it: 0 of 14 held-out frames of L (PIU
+Edit) D27, where `tools/atlas-combo-p2` reads 13 exactly and abstains on the fourteenth. A scan
+with another font's atlas writes `work/combo/<vid>.<band>.<atlas>.jsonl` beside the default one.
+`--bootstrap <vid> atlas=<dir> <t>=<digits> ...` harvests glyphs from frames whose value was read
+by eye - never label a frame you have not looked at - and carries on numbering from what the
+atlas already holds. A frame is skipped unless it splits into exactly as many glyphs as its
+value has digits, which is what a note scrolling past the digits usually prevents.
+
+**`combo_check.py <combo.jsonl> <notes.json> [<notes.json> ...] [--pass <sprite pass .pkl>] [--span 0] [--list]`**
+Checks an extraction against the combo counter on autoplay footage, one quiet stretch at a time.
+Between two instants where the counter reads the same value, the rows the extraction found (a
+jump is ONE judgement, so rows, not arrows) must equal how far the counter moved. The stretches
+come from the counter alone, so every extraction of a video is judged on the same ones and two
+correlation floors can be compared. A stretch that holds something is reported, not judged - its
+count includes hold ticks - and `--pass` decides which stretches those are from the pass's lane
+rails, which are the same for every floor, rather than from each extraction's own holds.
+`--span 0` uses every quiet stretch rather than ones at least two seconds long. With a single
+notes file, or `--list`, it prints every stretch and marks the ones to look at (`LOOK +n`). A
+notes file is the list `note_extract` returns, written out with `json.dump`.
 
 **`cell_reader.py --calibrate|--bootstrap|--scan <vid> <side> ...`**
 Fixed-cell OCR for videos whose digit font the shared atlas cannot read (Imagination S18) or

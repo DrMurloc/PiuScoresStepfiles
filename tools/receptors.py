@@ -69,6 +69,8 @@ def _mirror_axis(med, c0, half, w):
             best = (r, c2 / 2.0)
     return best[1], best[0]
 
+INSET = 0.093   # how far inside the field's edge, in lanes, its outermost profile peak sits
+
 def field(cap, vid, band, ncols, side="1p", n=64):
     """Receptor band + column centres, for a video that may be showing TWO fields.
 
@@ -84,9 +86,9 @@ def field(cap, vid, band, ncols, side="1p", n=64):
     geometry() is deliberately left alone - the repair pipeline's caches and its published
     numbers were all produced under it.
     """
-    # ".sym": fitted with the symmetric-border check below. The older caches are kept, not reused -
-    # they are what a lopsided fit is compared against.
-    ck = os.path.join("work", "receptor", f"{vid}.{band}.{ncols}.{side}.sym.field.json")
+    # ".inset": borders checked for symmetry, lanes spread from the field's edges rather than its
+    # peaks. Older caches (plain, ".sym") are kept, not reused - they are what a fit is compared to.
+    ck = os.path.join("work", "receptor", f"{vid}.{band}.{ncols}.{side}.inset.field.json")
     if os.path.exists(ck):
         g = json.load(open(ck))
         return g["y0"], g["y1"], g["xs"]
@@ -138,7 +140,14 @@ def field(cap, vid, band, ncols, side="1p", n=64):
                  and 0.035 <= (b - a) / ncols / w <= 0.080]
         if pairs:
             _, lo, hi = max(pairs)
-    p = (hi - lo) / ncols
+    # The two peaks are not the field's edges. They are the bright outer ridges of the first and
+    # last receptor, which sit inside the lane boundary - so ncols lanes spread evenly between
+    # them come out packed too tight, by a constant share of a lane. Measured on all 125 centred
+    # doubles fits in the corpus: the two pads' receptor rows repeat at exactly 1.019x the pitch
+    # the span implied (tenth percentile, median and ninetieth alike), which puts each ridge 0.093
+    # of a lane inside its edge. Widening ESCAPE D26's lanes by that much took its recall from
+    # 80.5% to 86.4% and Dr. M D18's from 98.8% to 99.2%; it moves an outer lane about 6px.
+    p = (hi - lo) / (ncols - 2 * INSET)
     # A lane is about 5.7% of the frame's width, and it does not matter whether the chart is
     # singles or doubles: the receptors are the same size either way, so twice as many of them
     # cover twice the span. Measured over 119 fitted videos the ratio runs 0.043 to 0.058 and
@@ -148,7 +157,8 @@ def field(cap, vid, band, ncols, side="1p", n=64):
     if not 0.035 <= p / w <= 0.080:
         raise ValueError("%s %s: lane pitch %.0fpx is %.1f%% of a %dpx frame, which is not a "
                          "%d-lane field" % (vid, band, p, 100 * p / w, w, ncols))
-    xs = [int(round(lo + (k + 0.5) * p)) for k in range(ncols)]
+    # lane k's centre is half a lane past the field's edge, which is INSET lanes outside the peak
+    xs = [int(round(lo + (k + 0.5 - INSET) * p)) for k in range(ncols)]
     os.makedirs(os.path.dirname(ck), exist_ok=True)
     json.dump(dict(y0=y0, y1=y1, xs=xs, pitch=round(p, 1), band=band, side=side,
                    fields=len(groups), axis=c, symmetry=round(sym, 3)), open(ck, "w"))

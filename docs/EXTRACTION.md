@@ -38,7 +38,7 @@ notes matches the same template.
 **ONE decode does everything**: the sprite correlations, the receptor flashes that decide which
 correlation to believe, and the lane rails that say which taps are holds.
 
-## Where it stands (2026-09-10)
+## Where it stands (2026-09-11)
 
 `tools/note_extract.py` extracts, `tools/quantize.py` puts it on the beat grid, and
 `tools/extract_score.py` grades it against a chart whose notes are known right. The oracle is
@@ -48,11 +48,14 @@ correct, plus the 106 repaired ones, all with video.
 | chart | file notes | extracted | recall | precision | median error | holds |
 |---|---|---|---|---|---|---|
 | Bee S17 | 463 | 463 | **100.0%** | **100.0%** | **0.001s** | 1/1 |
-| A nightmare S6 | 190 | 192 | **100.0%** | 99.0% | 0.008s | 0/2 |
-| Beethoven Virus D13 | 303 | 340 | 99.3% | 88.5% | 0.016s | 1/2 |
-| Dr. M D18 | 499 | 493 | 98.4% | 99.6% | **0.001s** | 5/9 |
-| Bad Apple!! feat. Nomico D20 | 652 | 686 | 98.2% | 93.3% | 0.004s | 210/232 |
-| My Way D16 | 447 | 441 | 87.5% | 88.7% | 0.030s | 0/2 |
+| A nightmare S6 | 190 | 193 | **100.0%** | 98.4% | 0.008s | 0/2 |
+| Beethoven Virus D13 | 303 | 306 | 99.7% | 98.7% | 0.016s | 2/2 |
+| Dr. M D18 | 499 | 502 | 99.2% | 98.6% | **0.001s** | 8/9 |
+| Bad Apple!! feat. Nomico D20 | 652 | 664 | **100.0%** | 98.2% | 0.004s | 226/232 |
+| My Way D16 | 447 | 457 | 89.9% | 88.0% | 0.031s | 0/2 |
+
+Through the corrected lanes and the tie-broken floor choice, both described under "The lanes"
+below; every chart on this page was re-measured under that code on the same day.
 
 against what the blob detector scored on the same charts:
 
@@ -176,14 +179,17 @@ afterwards: a chart short of the catalog's number does not ship.
 The owner asked for a D26 in the verification set on the grounds that note density might cause
 extra hurdles. It does. The densest certified charts in the corpus, whole song:
 
-| chart | notes/s | recall / precision | holds |
+| chart | notes/s | recall / precision | hold heads found |
 |---|---|---|---|
-| 1949 D28 | 12.2 | 90.1% / 88.4% | 48 of 84 |
-| ESCAPE D26 | 11.6 | 79.8% / 89.7% | 99 of 283 |
-| Brown Sky D26 | 10.9 | 90.0% / 91.2% | 107 of 191 |
-| Shub Niggurath D26 | 10.7 | 79.7% / 78.9% | 57 of 153 |
+| 1949 D28 | 12.2 | 92.7% / 95.3% | 55 of 84 |
+| ESCAPE D26 | 11.6 | 86.5% / 92.5% | 108 of 283 |
+| Brown Sky D26 | 10.9 | 97.0% / 88.3% | 121 of 191 |
+| Shub Niggurath D26 | 10.7 | 83.8% / 87.4% | 49 of 153 |
 
-against 98-100% on the sparse charts. Two separate limits, and neither is a threshold to tune:
+against 99-100% on the sparse charts (My Way D16 aside - it is its own case, below). Before the
+lanes were corrected these four read 90.1/88.4, 79.8/89.7, 90.0/91.2 and 79.7/78.9: a good part
+of what this section used to call the density penalty was the lanes. What is left is still two
+separate limits, and neither is a threshold to tune:
 
 **It is not the tight pairs, and it is not peak suppression.** That was the obvious theory -
 suppression is half a sprite, 32px, and a 34ms pair at ESCAPE's scroll speed is 20px apart, so
@@ -200,7 +206,9 @@ rather than to fix, and the count gate detects it.
 
 What the dense charts actually lose is panel-shaped. ESCAPE's recall by panel: **up-left and
 up-right 94-100%, centre 74-76%, down-left 73-86%, down-right 58-74%**. A miss that sorts by
-which picture is being matched is a template problem, not a density problem.
+which picture is being matched is a template problem, not a density problem. (Measured through the
+old lanes and not re-measured since: every template was cut up to 6px off its receptor then, and
+by different amounts per column, so some of that shape may have been the lanes.)
 
 **Half of a dense chart's holds are shorter than two frames.** ESCAPE D26's median hold is
 **0.03 seconds** - under two frames at 60fps - because a hold that short is how a chart writer
@@ -259,7 +267,101 @@ strong evidence for its total and none at all for its columns.
 Both caches keyed on a video now carry the lanes (the receptor templates and the sprite pass), so
 a corrected fit can never be handed the picture read through the old one.
 
+**The peaks are not the edges, either.** Even a symmetric span was packed too tight. The two
+outermost profile peaks are the bright outer ridges of the first and last receptor, and those sit
+inside the lane boundary, so spreading the lanes evenly between them squeezes every fit - a little,
+and by the same share every time. The census shows it without a stepfile: on all 125 centred
+doubles fits, the two pads' receptor rows repeat at exactly **1.019x** the pitch the span implied
+(tenth percentile, median and ninetieth alike), which puts each ridge 0.093 of a lane inside its
+edge. The lanes are now spread from the edges (`INSET`). On the D27 that puts the two centre
+receptors at 452 and 829px, where the picture has them at 452 and 829.5; and a singles field and a
+doubles field off the same footage now agree on how wide a receptor is (75.8 and 75.5px, where
+the old fit said 73.0 and 74.1). An outer lane moves about 6px.
+
+Every published chart, the same day, before and after:
+
+| chart | before | after |
+|---|---|---|
+| 1949 D28 | 90.4 / 88.5 | **92.7 / 95.3** |
+| Brown Sky D26 | 89.6 / 88.4 | **97.0 / 88.3** |
+| ESCAPE D26 | 80.5 / 90.7 | **86.5 / 92.5** |
+| Shub Niggurath D26 | 80.4 / 83.5 | **83.8 / 87.4** |
+| Bad Apple!! feat. Nomico D20 | 99.2 / 93.2 | **100.0 / 98.2** |
+| Beethoven Virus D13 | 99.3 / 88.3 | **99.7 / 98.7** |
+| VANISH D22 | 94.6 / 87.6 | **100.0** / 85.4 |
+| Dr. M D18 | 98.8 / 98.4 | 99.2 / 98.6 |
+| My Way D16 | 89.7 / 85.5 | 89.9 / 88.0 |
+| VVV S23 | 99.0 / 97.4 | 99.0 / 98.0 |
+| A nightmare S6 | 100.0 / 97.9 | 100.0 / 98.4 |
+| Bee S17 | 100.0 / 100.0 | 100.0 / 100.0 |
+| Ignis Fatuus(DM Ashura Mix) S22 | 94.2 / 99.6 | 94.1 / 99.5 |
+| The End of the World ft. Skizzo S20 | 99.1 / 97.0 | 98.6 / 98.6 |
+| Ugly Dee S17 | 15.1 / 21.3 | 17.0 / 38.3 |
+
+"Before" is symmetric borders with the floor chosen by flash agreement alone; "after" is `INSET`
+with the tie rule below.
+
+**Bee S17 is why this did not ship on its first run.** Through the new lanes its precision fell to
+97.3% - thirteen false notes, all on the centre panel. The lanes were not the cause: through them,
+floors 0.44, 0.52 and 0.60 all read Bee at 100/100, and the extractor picked 0.36 because its
+receptor-flash agreement came out 0.514 against 0.512. A second sensor that cannot tell floors
+apart is not choosing between them, so a tie now goes to the strictest floor (`TIE = 0.005`): a
+lower floor only ever adds detections, and when those do not make the flashes agree measurably
+better, they are not notes. Replayed over all fifteen charts from their cached passes, that lifts
+mean F1 from 94.98 to 95.07 and puts Bee back at 100/100; a margin of 0.01 does no better on
+average and costs The End of the World its precision.
+
+## Checking an official video against its own counter
+
+Andamiro's uploads carry no result screen, so the certification gate that guards the repair path
+can never pass one. What they carry instead is autoplay: the game hits every note, nothing breaks
+the combo, and the counter goes up by exactly one for every judged event. `tools/combo_check.py`
+turns that into a check that runs one stretch of the song at a time.
+
+Two things had to be right first.
+
+**The counter has to be read in Phoenix 2's font.** Phoenix 2 redrew it - solid silver italics
+where Phoenix 1 has a hollow outline - and the original atlas reads none of it: on 14 held-out
+frames of L (PIU Edit) D27 it found no label on nine and returned five values, all wrong (393,
+379, 938, 800, 800). `tools/atlas-combo-p2` reads 13 of the 14 exactly and abstains on the last.
+Scanned whole, the D27 reads on 55% of its frames, and the longest never-decreasing run of
+confident reads climbs from 4 to **1500** - 1436 at 129.98s, 1500 from 130.02s, as the video
+fades out on a hold in column 0.
+
+**A judged event is a row, not an arrow.** A jump is one judgement (EVIDENCE-RULES.md). Across
+stretches where the D27's counter moved 180, the extraction held 206 arrows and 183 rows.
+
+The stretches come from the counter alone. Two reads of the same value mean nothing was judged
+between them, however many frames in between went unread, so a quiet instant is the middle of any
+such pair at least 0.15s apart. The stretches are then the same for every extraction of a video,
+which is what lets two correlation floors be judged on the same evidence. A stretch with a hold
+rail in it is reported and not judged: the counter there carries hold ticks, a per-hold tick
+model was measured and failed (`verify_extract.py`), and the converter's implied count is the
+authority for those.
+
+On the D27, through the corrected lanes and at the floor the extractor chose (0.419): 57
+stretches, 29 with no rail, **27 of them exact** - and both misses fall in one second. Counter +1
+against two rows at 94.50-94.69s and +2 against three at 94.69-95.09s: each holds one false note,
+a three-frame streak moving at 840 and 780 px/s where every real note that second moved at
+953-983, 29 and 35ms behind a real note in the same column. Each is that arrow lost and
+re-acquired, getting past both the 15ms merge and the speed filter; the frames show one arrow
+each time. Nine stretches that did contain a rail matched exactly as well, so those rails carried
+no ticks.
+
+That is the review loop in one example: the extractor did the work, the counter pointed at one
+second of a two-minute D27, and four frames settled it.
+
 ## Different footage, different correlation scale - and every threshold here is absolute
+
+> **Correction, 2026-09-11: the D27 evidence in this section was measured through lanes fitted
+> 46px wrong** (see "The lanes" above), and the two-source contrast sample predates the lane fix
+> too. Through the corrected lanes the D27's templates read 49, not 37; its extraction barely
+> moves between floors 0.34 and 0.52 (1,275-1,285 notes); and its own combo counter says every
+> floor from 0.48 up is exact on each hold-free stretch - higher than the 0.42 that scaling the
+> floors by sharpness lets it reach. All fifteen published charts measure at full scale, so none
+> of them can test the scaling in either direction. It stays in the code until a genuinely soft
+> official video is measured, because removing it untested would be the same mistake again. What
+> follows is kept as the record of what was believed and why.
 
 The six charts this detector was tuned on all came from one uploader. Footage from elsewhere
 does not have the same contrast, and the correlations follow it. Sampling sixteen videos, the
@@ -345,11 +447,22 @@ Kept because each one looks obviously right:
   passage (video 20-24s) where the extraction and the file disagree by 0.2-0.5s with alternating
   sign - not a constant offset, so not a clock. Both sensors are thin there. Worth understanding
   before trusting the extractor generally.
-- **Writing a valid `.ssc`.** Quantised notes exist; nothing turns them back into a file.
-- **The refusal gate.** The extraction's judged count (taps + hold heads + ticks) must equal the
-  catalog's NoteCount or the chart must be refused rather than authored. The arithmetic already
-  exists in the repair pipeline; it is not wired to this.
-- **The edge cases below**, none of which has been run yet.
+- **A chart for a song this repo has no file for.** `author_notes.py` writes notes into a file
+  the repo already holds, borrowing its tempo map; a new song has no tempo map to borrow, no song
+  header and no block. L (PIU Edit) D27 already has what one would need: a constant **155.005
+  BPM** fitted from its own rows (alignment with a twelfth-of-a-beat lattice 0.805, against 0.105
+  for the next tempo tried; its two halves fit 155.025 and 154.996; drift under a tenth of a
+  millisecond a minute), written in 16ths and 16th-triplets, and **4 ticks a beat** from its
+  counter over the intro's holds. The gate for it is the converter - `tick_verify.py --file` -
+  against the counter's final 1500.
+- **Duplicate streaks.** The one false note the counter found on the D27, and a second one a
+  0.001-lower floor admits in the same second, are both a 3-frame streak moving 13-20% below
+  scroll speed, 29-35ms behind a longer streak in the same column. A rule for exactly that
+  deletes no real note across the fifteen published charts; it is measured, not yet in.
+- **An official video's hold stretches are not judged.** The counter says how many judged events
+  each one holds; which share of them is ticks is the converter's to say, once there is a file.
+- The receptor-flash floor choice is still the one thing here that looks at a sensor measuring
+  STEPS; on official footage the counter is the better chooser, and nothing uses it for that yet.
 
 ## The charts that will break it
 
@@ -359,11 +472,14 @@ stands in.
 
 | what | chart | recall / precision | holds |
 |---|---|---|---|
-| a very long hold | The End of the World ft. Skizzo S20 | **99.1% / 97.5%** | 25 of 27 |
-| tempo change (severe speed up) | VVV S23 | **99.0% / 98.5%** | 33 of 39 |
-| disappearing notes | VANISH D22 | 94.9% / 83.6% | 84 of 189 |
-| entirely hidden notes | Ignis Fatuus(DM Ashura Mix) S22 | 93.7% / 99.3% | 18 of 27 |
-| hidden holds | Ugly Dee S17 | **17.0% / 22.4%** | 0 of 52 |
+| a very long hold | The End of the World ft. Skizzo S20 | **98.6% / 98.6%** | 27 of 27 |
+| tempo change (severe speed up) | VVV S23 | **99.0% / 98.0%** | 34 of 39 |
+| disappearing notes | VANISH D22 | **100.0%** / 85.4% | 90 of 189 |
+| entirely hidden notes | Ignis Fatuus(DM Ashura Mix) S22 | 94.1% / 99.5% | 19 of 27 |
+| hidden holds | Ugly Dee S17 | **17.0% / 38.3%** | 0 of 52 |
+
+(Hold heads found, of the file's holds. Through the corrected lanes; before them these read
+99.1/97.0, 99.0/97.4, 94.6/87.6, 94.2/99.6 and 15.1/21.3.)
 
 The first four are effectively solved, and two of them are the cases that were supposed to be
 hardest. **A severe speed change costs nothing at all** - which is the streak model earning its
@@ -382,7 +498,9 @@ an extractor problem**: Legendary Dominion D25, CHAOS AGAIN D26, Big Daddy D23, 
 screen, so nothing establishes that the video IS that chart, and nothing says which pad was
 played. Run anyway they scored 17-69%, against 94-99% for the four certified ones, and the
 extractor now refuses them rather than reporting a number: on a two-player video, guessing the
-pad reads the wrong half of the screen.
+pad reads the wrong half of the screen. Big Daddy D23's video is also one of the five whose lanes
+were fitted lopsided (see "The lanes"), so its number from that run was taken through the wrong
+lanes as well.
 
 Two entries have no certified video at all and could not be tested: **See 22** (fake notes) and
 **Destroyer D24** (laser beams).
