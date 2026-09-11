@@ -90,13 +90,19 @@ def norm_glyph(mask, box):
 
 LABEL_BAND = (310, 400)
 
-def load_atlas():
+def load_atlas(atlas=ATLAS):
+    """Digit templates from ONE atlas, and COMBO label templates from it too if it has any.
+
+    One atlas per counter font: Phoenix 2 redrew the digits, so its glyphs live in their own
+    directory rather than beside the originals, where every read would weigh both fonts against
+    each other. The label only says WHERE the counter is, so an atlas without its own falls back
+    to the original's."""
     out = {}
-    for p in glob.glob(os.path.join(ATLAS, "d*.png")):
+    for p in glob.glob(os.path.join(atlas, "d*.png")):
         d = os.path.basename(p)[1]
         out.setdefault(d, []).append(cv2.imread(p, cv2.IMREAD_GRAYSCALE))
-    labels = [cv2.imread(p, cv2.IMREAD_GRAYSCALE)
-              for p in glob.glob(os.path.join(ATLAS, "label_*.png"))]
+    lp = glob.glob(os.path.join(atlas, "label_*.png")) or glob.glob(os.path.join(ATLAS, "label_*.png"))
+    labels = [cv2.imread(p, cv2.IMREAD_GRAYSCALE) for p in lp]
     return out, labels
 
 def find_label(frame, side, labels):
@@ -159,37 +165,49 @@ def read_frame(frame, side, atlas, labels):
         return None, worst
     return int("".join(d for d, _ in reads)), worst
 
-def bootstrap(vid, pairs):
-    os.makedirs(ATLAS, exist_ok=True)
+def bootstrap(vid, pairs, atlas=ATLAS):
+    os.makedirs(atlas, exist_ok=True)
     cap = cv2.VideoCapture(video_path(vid))
+    # numbering carries on from what the atlas already holds - starting at 1 on every run writes
+    # a new harvest straight over the glyphs an earlier one kept
     counts = {}
+    for p in glob.glob(os.path.join(atlas, "d*_*.png")):
+        stem = os.path.splitext(os.path.basename(p))[0]
+        if stem.split("_", 1)[1].isdigit():
+            counts[stem[1]] = max(counts.get(stem[1], 0), int(stem.split("_", 1)[1]))
+    _, labels = load_atlas(atlas)
     for t, truth, side in pairs:
         cap.set(cv2.CAP_PROP_POS_MSEC, t * 1000)
         ok, frame = cap.read()
-        _, labels = load_atlas()
         hit = find_label(frame, side, labels)
         if hit is None:
             print(f"t={t}: NO LABEL"); continue
         cx, ly = hit
-        mask, row = digit_boxes(frame, max(0, int(cx - 185)), min(frame.shape[1], int(cx + 185)),
-                                int(ly + 24), min(frame.shape[0], int(ly + 100)))
-        print(f"t={t}: {len(row)} boxes for truth {truth} ({[b[2:] for b in row]})")
+        x0 = max(0, int(cx - 185))
+        # the same window read_frame uses, centred on the label: without it a note scrolling past
+        # beside the digits is a glyph-sized box too, and the frame is thrown away for a count
+        # that no longer matches its truth
+        mask, row = digit_boxes(frame, x0, min(frame.shape[1], int(cx + 185)),
+                                int(ly + 24), min(frame.shape[0], int(ly + 100)), cx_local=cx - x0)
+        print(f"t={t}: {len(row)} boxes for truth {truth} ({[tuple(int(v) for v in b[2:]) for b in row]})")
         if len(row) != len(truth):
             continue
         for ch, b in zip(truth, row):
             counts[ch] = counts.get(ch, 0) + 1
-            cv2.imwrite(os.path.join(ATLAS, f"d{ch}_{counts[ch]}.png"), norm_glyph(mask, b))
-    print("atlas now:", sorted({os.path.basename(p)[1] for p in glob.glob(os.path.join(ATLAS, 'd*.png'))}))
+            cv2.imwrite(os.path.join(atlas, f"d{ch}_{counts[ch]}.png"), norm_glyph(mask, b))
+    print("atlas now:", sorted({os.path.basename(p)[1] for p in glob.glob(os.path.join(atlas, 'd*.png'))}))
 
-def scan(vid, side, t0, t1):
-    atlas, labels = load_atlas()
+def scan(vid, side, t0, t1, atlas_dir=ATLAS):
+    atlas, labels = load_atlas(atlas_dir)
     cap = cv2.VideoCapture(video_path(vid))
     fps = cap.get(cv2.CAP_PROP_FPS)
     dur = cap.get(cv2.CAP_PROP_FRAME_COUNT) / fps
     t1 = min(t1, dur)
     cap.set(cv2.CAP_PROP_POS_MSEC, t0 * 1000)
     os.makedirs(os.path.join(ROOT, "work", "combo"), exist_ok=True)
-    out_path = os.path.join(ROOT, "work", "combo", f"{vid}.{side}.jsonl")
+    # a read with another font's atlas is a different file, not a replacement for this one
+    tag = "" if os.path.abspath(atlas_dir) == os.path.abspath(ATLAS) else "." + os.path.basename(atlas_dir)
+    out_path = os.path.join(ROOT, "work", "combo", f"{vid}.{side}{tag}.jsonl")
     n_read = n_none = 0
     unk = 0
     with open(out_path, "w", encoding="utf-8") as out:
@@ -206,17 +224,21 @@ def scan(vid, side, t0, t1):
     print(f"{out_path}: {n_read} read, {n_none} none, {unk} unknown glyph dumps")
 
 if __name__ == "__main__":
+    # atlas=<dir> picks the counter font; the default is the original atlas
+    atlas = next((os.path.join(ROOT, a[6:]) for a in sys.argv[3:] if a.startswith("atlas=")), ATLAS)
     if sys.argv[1] == "--bootstrap":
         vid = sys.argv[2]
         pairs = []
         side = "C"
         for a in sys.argv[3:]:
+            if a.startswith("atlas="):
+                continue
             if a.startswith("side="):
                 side = a[5:]
             else:
                 t, v = a.split("=")
                 pairs.append((float(t), v, side))
-        bootstrap(vid, pairs)
+        bootstrap(vid, pairs, atlas)
     elif sys.argv[1] == "--scan":
         vid = sys.argv[2]
         side = "C"
@@ -225,4 +247,4 @@ if __name__ == "__main__":
             if a.startswith("side="): side = a[5:]
             if a.startswith("from="): t0 = float(a[5:])
             if a.startswith("to="): t1 = float(a[3:])
-        scan(vid, side, t0, t1)
+        scan(vid, side, t0, t1, atlas)
