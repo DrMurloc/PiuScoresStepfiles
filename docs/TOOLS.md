@@ -9,6 +9,28 @@ C:\Users\jonec\repos\piu-annotate\.venv\Scripts\python.exe -X utf8 tools/<script
 Scratch output lands in `work/` (gitignored). Scripts are operator tools, not a library —
 they print what they did and expect a human reading the output.
 
+## Checking upstream for new steps
+
+**`resistance_packs.py list | changelog <pack> | recent <pack> --since <date> | get <pack> <entry> --out <dir>`**
+**The one tool here that runs on the SYSTEM python, not the venv** — the packs are AES zips and
+`pyzipper` is installed only there. Looks inside The Resistance's MediaFire songpacks without
+downloading them: the direct links honour HTTP Range, so it reads a pack's directory and then
+only the entries asked for (the 1 GB PHOENIX pack gives up one stepfile for under 1 MB).
+`list` shows the hub with upload dates — a changed date is the signal; `changelog` prints the
+pack's `WHAT'S NEW AND CHANGELOG.txt`; `recent` lists entries by modified date, which catches
+edits the changelog was written before (entry times are the packer's local clock); `get`
+extracts `.ssc` entries to a scratch folder. `changelog` and `get` need the pack password The
+Resistance publish with each release, from `--password` or `RESISTANCE_PACK_PASSWORD` — it is
+theirs to hand out, so it is not in this repo. What it fetches is evidence, never a commit:
+their credits ask that the packs not be redistributed.
+
+The order that found the v1.01.0 update (2026-09-21): `git fetch` in `../PIU-Simfiles` for new
+songs the public mirror has taken → `list` and `changelog` for what the mirror does not carry
+(fixes to charts already published) → `recent` on the other packs → `get` the fixed files →
+`apply_upstream_fix.py` (under Authoring) → `tick_verify --file`. Most of what `recent` turns
+up in the older packs is relabelling — Phoenix 2 re-rates, "NEW" markers, community UCS — so
+compare blocks by their notes, not their labels, before calling anything new.
+
 ## Reading footage
 
 **`combo_reader.py --scan <vid> side=<L|R|C> [atlas=tools/atlas-combo-p2]`**

@@ -30,8 +30,10 @@ mirror differing only in slot labels and in tagging two charts half-double.
 **Checking for the next one**: `git fetch` in the `../PIU-Simfiles` clone and diff
 `17 - PHOENIX 2` against the last imported commit. That mirror carries new arcade songs only —
 a fix The Resistance makes to a chart already published reaches their MediaFire songpack and
-its `WHAT'S NEW AND CHANGELOG.txt`, not the mirror, so read that changelog too. Such a fix is
-evidence like any other: apply it to the block here, in place, and cite it.
+its `WHAT'S NEW AND CHANGELOG.txt`, not the mirror, so read that changelog too
+(`../tools/resistance_packs.py`, which reads a pack without downloading it). Such a fix is
+evidence like any other: apply it to the block here, in place
+(`../tools/apply_upstream_fix.py`), and cite it.
 
 ## Changing a file
 
