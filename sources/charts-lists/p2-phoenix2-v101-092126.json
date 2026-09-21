@@ -1,0 +1,657 @@
+{
+ "page": 1,
+ "count": 59,
+ "totalResults": 59,
+ "note": "Phoenix 2 v1.01 additions (the 2026-09-03 catalog batch: six songs, 59 charts), in the api/charts shape. Built from the /Admin/BulkAddCharts batch JSON rather than the API, so id and imagePath are null - the ingest reads only song name, song type, chart type and level.",
+ "results": [
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S1",
+   "level": 1,
+   "song": {
+    "name": "CALL ME BACK",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S3",
+   "level": 3,
+   "song": {
+    "name": "CALL ME BACK",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S5",
+   "level": 5,
+   "song": {
+    "name": "CALL ME BACK",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S8",
+   "level": 8,
+   "song": {
+    "name": "CALL ME BACK",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S14",
+   "level": 14,
+   "song": {
+    "name": "CALL ME BACK",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S16",
+   "level": 16,
+   "song": {
+    "name": "CALL ME BACK",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S20",
+   "level": 20,
+   "song": {
+    "name": "CALL ME BACK",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D6",
+   "level": 6,
+   "song": {
+    "name": "CALL ME BACK",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D15",
+   "level": 15,
+   "song": {
+    "name": "CALL ME BACK",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D18",
+   "level": 18,
+   "song": {
+    "name": "CALL ME BACK",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D22",
+   "level": 22,
+   "song": {
+    "name": "CALL ME BACK",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S4",
+   "level": 4,
+   "song": {
+    "name": "Can I friend you on Bassbook? lol",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S7",
+   "level": 7,
+   "song": {
+    "name": "Can I friend you on Bassbook? lol",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S11",
+   "level": 11,
+   "song": {
+    "name": "Can I friend you on Bassbook? lol",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S17",
+   "level": 17,
+   "song": {
+    "name": "Can I friend you on Bassbook? lol",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S19",
+   "level": 19,
+   "song": {
+    "name": "Can I friend you on Bassbook? lol",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S22",
+   "level": 22,
+   "song": {
+    "name": "Can I friend you on Bassbook? lol",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D11",
+   "level": 11,
+   "song": {
+    "name": "Can I friend you on Bassbook? lol",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D20",
+   "level": 20,
+   "song": {
+    "name": "Can I friend you on Bassbook? lol",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D25",
+   "level": 25,
+   "song": {
+    "name": "Can I friend you on Bassbook? lol",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S3",
+   "level": 3,
+   "song": {
+    "name": "DIE ANOTHER DAY",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S5",
+   "level": 5,
+   "song": {
+    "name": "DIE ANOTHER DAY",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S9",
+   "level": 9,
+   "song": {
+    "name": "DIE ANOTHER DAY",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S15",
+   "level": 15,
+   "song": {
+    "name": "DIE ANOTHER DAY",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S17",
+   "level": 17,
+   "song": {
+    "name": "DIE ANOTHER DAY",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S20",
+   "level": 20,
+   "song": {
+    "name": "DIE ANOTHER DAY",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D11",
+   "level": 11,
+   "song": {
+    "name": "DIE ANOTHER DAY",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D16",
+   "level": 16,
+   "song": {
+    "name": "DIE ANOTHER DAY",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D19",
+   "level": 19,
+   "song": {
+    "name": "DIE ANOTHER DAY",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D23",
+   "level": 23,
+   "song": {
+    "name": "DIE ANOTHER DAY",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S11",
+   "level": 11,
+   "song": {
+    "name": "Ghost Bloody Train",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S15",
+   "level": 15,
+   "song": {
+    "name": "Ghost Bloody Train",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S18",
+   "level": 18,
+   "song": {
+    "name": "Ghost Bloody Train",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S21",
+   "level": 21,
+   "song": {
+    "name": "Ghost Bloody Train",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S23",
+   "level": 23,
+   "song": {
+    "name": "Ghost Bloody Train",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D17",
+   "level": 17,
+   "song": {
+    "name": "Ghost Bloody Train",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D20",
+   "level": 20,
+   "song": {
+    "name": "Ghost Bloody Train",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D23",
+   "level": 23,
+   "song": {
+    "name": "Ghost Bloody Train",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D25",
+   "level": 25,
+   "song": {
+    "name": "Ghost Bloody Train",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S12",
+   "level": 12,
+   "song": {
+    "name": "L (PIU Edit)",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S18",
+   "level": 18,
+   "song": {
+    "name": "L (PIU Edit)",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S22",
+   "level": 22,
+   "song": {
+    "name": "L (PIU Edit)",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S24",
+   "level": 24,
+   "song": {
+    "name": "L (PIU Edit)",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D19",
+   "level": 19,
+   "song": {
+    "name": "L (PIU Edit)",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D24",
+   "level": 24,
+   "song": {
+    "name": "L (PIU Edit)",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D27",
+   "level": 27,
+   "song": {
+    "name": "L (PIU Edit)",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S2",
+   "level": 2,
+   "song": {
+    "name": "The Stranger",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S4",
+   "level": 4,
+   "song": {
+    "name": "The Stranger",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S6",
+   "level": 6,
+   "song": {
+    "name": "The Stranger",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S9",
+   "level": 9,
+   "song": {
+    "name": "The Stranger",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S15",
+   "level": 15,
+   "song": {
+    "name": "The Stranger",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S18",
+   "level": 18,
+   "song": {
+    "name": "The Stranger",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S20",
+   "level": 20,
+   "song": {
+    "name": "The Stranger",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S22",
+   "level": 22,
+   "song": {
+    "name": "The Stranger",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D10",
+   "level": 10,
+   "song": {
+    "name": "The Stranger",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D16",
+   "level": 16,
+   "song": {
+    "name": "The Stranger",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D19",
+   "level": 19,
+   "song": {
+    "name": "The Stranger",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D22",
+   "level": 22,
+   "song": {
+    "name": "The Stranger",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D25",
+   "level": 25,
+   "song": {
+    "name": "The Stranger",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  }
+ ]
+}

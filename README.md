@@ -24,7 +24,7 @@ Start with [CLAUDE.md](CLAUDE.md) — the working rules — then:
 
 | Path | What |
 |---|---|
-| `simfiles/` | **The canonical .ssc corpus** (658 files, pack-relative `<pack>/<song>/<file>.ssc`, covering all 4,574 matched official charts P1∪P2). Seeded unmodified from public [rayden-61/PIU-Simfiles](https://github.com/rayden-61/PIU-Simfiles) @ `cff495bd` (packs 01–17; the Phoenix 2 files are the Resistance's, published through that repo). Fixes edit in place — `git diff` is the review surface. See `simfiles/README.md`. |
+| `simfiles/` | **The canonical .ssc corpus** (664 files, pack-relative `<pack>/<song>/<file>.ssc`, covering all 4,641 matched official charts P1∪P2). Seeded unmodified from public [rayden-61/PIU-Simfiles](https://github.com/rayden-61/PIU-Simfiles) @ `cff495bd` (packs 01–17; the Phoenix 2 files are the Resistance's, published through that repo), with the six Phoenix 2 v1.01 songs added from the same mirror @ `bf5ed8a7`. Fixes edit in place — `git diff` is the review surface. See `simfiles/README.md`. |
 | `snapshots/` | The current upload zip + its provenance note. Exactly one "current" zip; superseded ones are deleted from HEAD (history keeps them). |
 | `sources/` | Evidence and worklists: the corpus manifest, the 121-chart repair census (`stepfile-video-census-*.csv`, `ssc-map.json`), footage worklist (`video-map.json`), and the per-chart certification ledger. |
 | `tools/` | Operator scripts: footage downloader, result-screen certifier, extraction tooling. Run with the `../piu-annotate/.venv` Python. |

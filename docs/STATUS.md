@@ -262,8 +262,74 @@ same operation run over 4,582 charts instead of 61.
 
 Everything the current tooling could reach has been reached, except Mental Rider (timing
 model) and the eight footage-blocked charts in group E. The snapshot in `snapshots/` was
-regenerated at 97 charts on the owner's word (2026-09-04, `piucenter-snapshot-090326.zip`,
-release `p2-090326`) and is current; it is regenerated only when the owner asks.
+regenerated on the owner's word on 2026-09-21 (`piucenter-snapshot-092126.zip`, release
+`p2-092126`) and is current: all 106 census repairs, the five tail repairs, the six Phoenix 2
+v1.01 songs (59 charts) and The Resistance's three v1.01.0 fixes. Nothing repaired is waiting
+on a regenerate. It is regenerated only when the owner asks.
+
+## Upstream, as of 2026-09-21
+
+The corpus follows two upstream sources and they are not the same thing
+(`simfiles/README.md`, `tools/resistance_packs.py`): the public mirror brings new arcade
+songs, and The Resistance's MediaFire packs are the only place their fixes to charts already
+published appear. Both were read on 2026-09-21, and everything The Resistance's v1.01.0
+update changed in an official chart is in the tree: all 354 official blocks of the 46
+stepfiles in their Phoenix 2 pack were compared with ours by their notes, and with the three
+fixes applied the only differences left are the twelve described below. The two charts
+the mirror re-tags half-double (CALL ME BACK D6, L (PIU Edit) D19) are the pack's centre six
+columns row for row, and the pack has nothing on the outer four panels there.
+
+Seen and deliberately not taken, all from the packs:
+
+- **Community UCS** on sixteen songs — the ingest filters UCS.
+- **Relabels** in the PHOENIX, XX and PRIME 2 packs: Phoenix 2 re-rates (Passacaglia S8 → s7,
+  Katkoi S11 → s10, Yoropiku Pikuyoro! S10 → s9, Asterios S10 → S11, All I Want For X-Mas
+  S5 → s6 …) and "NEW" markers. Matched block to block on their notes they are the charts
+  already here; this corpus keeps Phoenix 1 meters on purpose, because the charts lists match
+  on the meter.
+- **Asterios -ReEntry- S4** (PRIME 2 pack, entry dated 2026-08-25): same 120 taps and 8 holds,
+  but re-timed — a different `#BPMS`/`#SCROLLS` map over 33 measures instead of 17. No
+  changelog line explains it and no note count can judge it, so it was left; it wants footage.
+- **Twist of Fate D21**: an `#ATTACKS` time moved from 50.000 to 51.163 — a display modifier,
+  nothing the converter reads.
+
+Fracture Temporelle D23 (1349 of 1350) and S15/S21 (one and three over) are still off after
+the D26 fix; the pack's blocks are identical to ours there, so upstream has nothing for them.
+
+### A lead for the tail: the mirror is not The Resistance's current file everywhere
+
+That same comparison turned up 12 official blocks across seven songs — two of the pack's own
+Phoenix 2 songs and five older ones it ships as steps-only companions — where the mirror this
+corpus was seeded from and The Resistance's own current file disagree. Six of the seven
+files are unchanged since the August pack, so those differences were there at the seed and are
+not v1.01; Chase Me's file is new to the pack, so its difference cannot be dated. On
+DESTRUCIMATE the catalog can judge, and their file is far closer on all four charts and exact
+on one:
+
+| Chart | ours | their current file | catalog |
+|---|---|---|---|
+| DESTRUCIMATE S19 | 1478 | **1200** | 1200 |
+| DESTRUCIMATE S21 (their S22) | 1527 | 1372 | 1362 |
+| DESTRUCIMATE D19 | 1405 | 1153 | 941 |
+| DESTRUCIMATE D23 (their D24) | 1543 | 1407 | 1400 |
+
+It is a re-encoding of the whole gimmick map (`#BPMS`, `#WARPS`, `#FAKES`, `#SCROLLS`), not a
+row fix, so `apply_upstream_fix.py` cannot carry it. Vanish 2 D18 is re-encoded the same way at
+an unchanged count (831 both ways, catalog 830), and Hymn of Golden Glory S22 differs in 124
+rows and its timing tags with neither side right (1330 ours, 1336 theirs, catalog 1333). The
+rest are one to six rows at equal counts: Chase Me S17/D18 (one hold tail a row earlier), Enjoy
+the Show D25, SUPER☆HARAGURO☆POP D24, Destr0yer S22/D24.
+
+(Compare half-double blocks by CELL, not by character: a `{…}` cell makes a row 22 or 26
+characters wide, and slicing characters reported The Last Rebellion D21 as a thirteenth
+difference. Tokenised, it is the pack's centre six columns on every row.)
+
+Nothing here was changed — it is outside what was asked, and all of it sits in the tail, whose
+scope is the owner's call. But it is cheap evidence that was never looked at: the Phoenix 2
+pack only shows the older songs that happen to carry a new UCS. `resistance_packs.py get` can
+pull every stepfile out of the PHOENIX, XX and PRIME 2 packs for a few tens of megabytes, and
+the same notes-against-notes comparison, arbitrated by `catalog_sweep`'s counts, would say how
+many of the 2,207 tail charts The Resistance have already fixed.
 
 ## Beyond the census (sized 2026-09-06, listed in full 2026-09-08)
 
