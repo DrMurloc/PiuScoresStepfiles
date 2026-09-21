@@ -312,6 +312,17 @@ The acceptance gate. Runs piu-annotate's converter over the block in our tree an
 Checks a packaged release actually carries the repairs: the `.ssc` through the converter, the
 `Hold ticks` in the release's chart JSON, and the judged count must all agree.
 
+**`blast_radius.py <new_release> <old_release> <previous snapshot commit>`**
+Which charts a new release actually changed, answerable minutes into the pipeline — it reads
+only the chartstruct CSVs the ingest stage writes. Compares every shared chart's step grid,
+timing and hold ticks, then holds that against `git diff <commit> HEAD -- simfiles`: a chart
+that moved with no stepfile edit behind it is the pipeline or the corpus drifting, and an
+edited stepfile that moved nothing is a repair the release did not pick up (both the ingest
+and limb prediction skip a chart whose output already exists, so a reused folder serves the
+stale one). `verify_release` cannot see either: it checks the charts in `repairs.json`, not
+the other four and a half thousand. Exits non-zero on a dropped chart, a stray or a silent
+edit.
+
 **`video_freshness.py <walk.tsv> <catalog.txt> <videos.txt> <out.json>`**
 Which charts point at footage older than what exists. Reads a channel walk (the census's cache
 under `%USERPROFILE%\.piu-score-tracker\video-backfill\walks\`) and matches every titled
