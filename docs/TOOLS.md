@@ -251,6 +251,18 @@ taps and the converter refuses a hold laid over them). `remove` deletes a phanto
 of a row; a jump row needs one call per column, because a jump is one judged event and half
 of it is still one. First uses: Slam S5's intro jump, Set me up S10's two extra drill notes.
 
+**`apply_upstream_fix.py --ours <ssc> --new <upstream_fixed.ssc> --block <DESC> [--old <upstream_before.ssc>] [--tags TICKCOUNTS,...] [--apply]`**
+Transplants a fix the upstream transcribers made to one block into our copy of the file, and
+nothing else: only the note rows that differ are rewritten, in place, and only the differing
+entries of the tags named. The other blocks, our own repairs, the line endings and the tags the
+public mirror adds all stay byte for byte, so `git diff` shows the fix alone. It reports without
+`--apply`. With `--old` it refuses when our block is no longer the upstream block the fix was
+made to - a repair of ours would otherwise be overwritten by a file that never had it. It
+refuses a measure whose row count changes, because then which row moved is a judgement and
+belongs to `edit_notes.py`. Finish with `tick_verify --file`. First uses: The Resistance's
+v1.01.0 fixes to Fracture Temporelle D26, Digitalis D24 and 404 (New Era) S16 - fixes that
+reach their MediaFire songpack and never the public mirror (see `simfiles/README.md`).
+
 **`author_new.py <vid> --title "<title>" --level <n> --cols 10 [--ticks 4] [--combo <combo.jsonl>] [--cache]`**
 Writes a stepfile for a chart the repo has no file for - a song Andamiro has just released - from
 its video alone, into `work/authored-new/`. It re-times every note at the local scroll speed
