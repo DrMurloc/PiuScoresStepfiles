@@ -7,10 +7,10 @@ as a commit that names its evidence.
 
 ## What's here
 
-The 658 .ssc files (pack-relative layout, `<pack>/<song>/<file>.ssc`) that the current
-annotation corpus reads — every file referenced by the p2-082626 chartstruct release, covering
-all 4,574 matched official charts (Phoenix 1 ∪ Phoenix 2). Enumerated in
-`../sources/corpus-manifest.json`.
+The 664 .ssc files (pack-relative layout, `<pack>/<song>/<file>.ssc`) that the current
+annotation corpus reads — the 658 files referenced by the p2-082626 chartstruct release, plus
+the six Phoenix 2 v1.01 songs added on 2026-09-21 — covering every matched official chart
+(Phoenix 1 ∪ Phoenix 2). Enumerated in `../sources/corpus-manifest.json`.
 
 **Seed provenance**: imported unmodified from the public community repo
 [rayden-61/PIU-Simfiles](https://github.com/rayden-61/PIU-Simfiles) (branch `stepp1-phoenix`,
@@ -18,6 +18,20 @@ commit `cff495bd`) — packs `01 - 1ST~3RD` through `17 - PHOENIX 2` (the Phoeni
 Resistance's, published through that same repo). The community's work is the seed; thanks to
 The Resistance and rayden. From this point the trees diverge deliberately: theirs stays faithful
 to its own history, ours converges on what the game ships.
+
+**Phoenix 2 v1.01 (added 2026-09-21)**: the six songs of the game's first content update —
+Ghost Bloody Train, The Stranger, CALL ME BACK, DIE ANOTHER DAY, L (PIU Edit) and Can I friend
+you on Bassbook? lol, 59 official charts — imported unmodified from the same branch at commit
+`bf5ed8a7` ("Phnx2 1.01 charts (ac mix only)", 2026-09-20), which mirrors The Resistance's
+v1.01.0 songpack of 2026-09-18. The files are blob-identical to upstream, and every official
+block's notes and timing tags were also compared against the pack itself: identical, the
+mirror differing only in slot labels and in tagging two charts half-double.
+
+**Checking for the next one**: `git fetch` in the `../PIU-Simfiles` clone and diff
+`17 - PHOENIX 2` against the last imported commit. That mirror carries new arcade songs only —
+a fix The Resistance makes to a chart already published reaches their MediaFire songpack and
+its `WHAT'S NEW AND CHANGELOG.txt`, not the mirror, so read that changelog too. Such a fix is
+evidence like any other: apply it to the block here, in place, and cite it.
 
 ## Changing a file
 
