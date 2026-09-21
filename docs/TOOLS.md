@@ -312,6 +312,18 @@ The acceptance gate. Runs piu-annotate's converter over the block in our tree an
 Checks a packaged release actually carries the repairs: the `.ssc` through the converter, the
 `Hold ticks` in the release's chart JSON, and the judged count must all agree.
 
+**`verify_zip.py <snapshot.zip> [--old <previous.zip>]`**
+Checks the PACKAGED zip, the thing that gets uploaded. `verify_release` reads the release
+folder; packaging then rewrites keys (the `*` restoration), walks `simfiles/` a second time and
+stamps a version, and nothing looked at the result. It checks the version stamp against the
+file name and the previous zip, that chart-table names exactly the chart entries, that
+`stepfiles/` is `simfiles/` byte for byte with nothing missing, that every chart json's
+`ssc_file` is in the zip (the import joins on that path), that every entry name is the key its
+own metadata rebuilds, and that every repair in `repairs.json` ships its tick total **read out
+of the zip**. With `--old`: no chart dropped, and the added ones by song. Proven by pointing it
+at `090326` after the tree had moved on: it named the 6 missing files, the 17 changed stepfiles
+and the 9 repairs that zip predates, and passed every structural check.
+
 **`blast_radius.py <new_release> <old_release> <previous snapshot commit>`**
 Which charts a new release actually changed, answerable minutes into the pipeline — it reads
 only the chartstruct CSVs the ingest stage writes. Compares every shared chart's step grid,
