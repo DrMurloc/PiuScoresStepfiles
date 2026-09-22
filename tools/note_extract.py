@@ -389,6 +389,12 @@ def mark_holds(scan, notes, tol=0.15):
                 continue
             head = min(near, key=lambda n: abs(a + d - n["t"]))
             head["hold_end"] = b + d
+            # what the rail looked like, for whoever has to decide whether to believe it: how
+            # long it ran and how solidly the lane read as held over that time. A hold the game
+            # draws fills the lane; a bright patch of art under one receptor does not.
+            i0, i1 = np.searchsorted(scan["ts"], a), max(np.searchsorted(scan["ts"], b), np.searchsorted(scan["ts"], a) + 1)
+            head["rail_len"] = float(b - a)
+            head["rail_occ"] = float(np.mean(scan["lane"][i0:i1, c])) if i1 > i0 else 0.0
             claimed[(c, k)] = head
             n_hold += 1
     # A hold is drawn head, body, TAIL CAP - and the cap is the head's own sprite, so it
@@ -538,8 +544,11 @@ def _read(vid, band, ncols, side, dur, quiet):
     n_hold = mark_holds(scan, notes)
     if not quiet:
         print("  %d of them hold" % n_hold)
+    # the receptor flashes ride along: they are the second sensor, and a caller deciding whether
+    # to believe a note the file lacks can ask whether the game lit the receptor for it
     return notes, dict(vid=vid, band=band, fps=fps, floor=floor, colour=sat, holds=n_hold,
-                       y_judge=(y0 + y1) / 2 - (y1 + TOP))
+                       y_judge=(y0 + y1) / 2 - (y1 + TOP),
+                       flashes={c: [float(t) for t in v] for c, v in flashes.items()})
 
 def main():
     notes, meta = extract(sys.argv[1], quiet="--quiet" in sys.argv)

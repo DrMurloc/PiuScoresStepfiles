@@ -359,6 +359,28 @@ the Bassbook row. The 22 closer were not — none reaches the count, and closer 
 characters wide, and slicing characters once reported The Last Rebellion D21 as a difference.
 Tokenised, it is the pack's centre six columns on every row — the census does this.)
 
+## The extraction loop (2026-09-22)
+
+`tools/extract_repair.py` is the note-level loop the counter loop could not be: it reads each
+certified chart off its footage, diffs it against the file, applies what the screen shows —
+holds the file wrote as taps, releases in the wrong place, the odd missing note — and ships
+only at the certified count (TOOLS.md has the rules). Proven before it ran: the five charts the
+counter loop made exact came back untouched, and six manual repairs re-derived from their seed
+files found the same holds in the same columns — Another Truth D18 all nine, Slam D22 640 of
+642 events identical — parking only because their counts close on tick bursts the loop does
+not author.
+
+Two things it noticed on the way, both count-neutral under a closure-priced hold and both
+for the frames to settle: the manual finale repairs on Csikos Post D16, Turkey March D13 and
+2006. LOVE SONG D14 start their hold a row or a fraction of a beat *earlier* than the arrow
+crosses on screen, and Get Your Groove On D10's hold head sits a quarter-beat later on screen
+than the counter loop placed it.
+
+First run: the 1,342 certified tail charts (under-ticked first, then hold-less, single-region,
+over-ticked; duplicate blocks skipped) in four shards from the evening of 2026-09-22 — the
+results go here when it finishes. YouTube fetches are still refused from this network; the run
+reads the 2,025 cached videos.
+
 ## Beyond the census (sized 2026-09-06, listed in full 2026-09-08)
 
 The census was the *blatantly* wrong 121 — its cut was narrow on purpose: taps above the

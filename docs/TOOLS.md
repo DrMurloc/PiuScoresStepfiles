@@ -49,6 +49,37 @@ among them. Newer is not better: their current file drifted off an exact count o
 their notes, never by their labels — a label-keyed diff hides exactly the blocks whose labels
 changed, and a half-double block is compared by cell, since a `{…}` cell is one column.
 
+## The extraction loop
+
+**`extract_repair.py survey [--shard i/n] [--only "<chart>"] [--shapes a,b] [--cache] [--redo] [--ssc <alt.ssc> --expected N]`**
+**`extract_repair.py commit [--dry-run] [--only "<chart>"]`**
+The note-level successor to `batch_repair.py`, for the two thousand charts the counter cannot
+price. It reads each certified chart off its footage (`note_extract`), aligns the extraction to
+the file's own notes — an anchor, then a straight line for the video's clock — matches note for
+note in seconds, and classifies every difference: tap→hold, a moved release, an added hold or
+tap, a hold read as a tap, a note the reader did not find. Only the first four are ever applied,
+and each has to earn it. A hold needs a rail at least 0.15 s long that read as held on 55% of
+its frames (real holds measured 0.65–2.3 s at 0.59–0.69; the false ones — a drill read as one
+rail, bright art under a receptor — ≤ 0.10 s at ≤ 0.52) and may not span notes the file has in
+that column. An addition needs the receptor to have flashed for it, a streak at least 0.6 of
+the chart's typical one, no file note within 35 ms in its column (the same note seen twice) and
+no missed file note within 60 ms in any column (a drill note read in the neighbouring lane);
+additions are capped at 2% of the chart. A chart the extraction recalls or precisions below 93%
+against its file is parked unread. The candidate is written under `work/extract-loop/`,
+converted, and ships only at the certified count exactly. `commit` is a separate serial pass
+over every shard's report that re-runs `tick_verify` in place before each commit, one commit
+per chart carrying every edit. `note_extract` now hands back its receptor flashes in `meta`
+and each rail's length and occupancy on the note, which is what these rules read.
+
+Proven before it ran (2026-09-22): the five charts the counter loop made exact came back with
+no edit at all (before the rules they drew 4, 3, 6 and 8 stray additions), and six manual
+repairs re-derived from their seed files found the same holds in the same columns — Another
+Truth D18 all nine, Slam D22 640 of 642 events identical — parking only because their counts
+close on tick bursts this loop does not author, which is the counter loop's job.
+`--ssc`/`--expected` run the survey against another file for exactly that kind of proof.
+`--cache` keeps the sprite passes (a few MB a chart) so a rule change re-scores without
+decoding; the first corpus run kept them.
+
 ## Reading footage
 
 **`combo_reader.py --scan <vid> side=<L|R|C> [atlas=tools/atlas-combo-p2]`**
