@@ -302,6 +302,15 @@ refuses a measure whose row count changes, because then which row moved is a jud
 belongs to `edit_notes.py`. Finish with `tick_verify --file`. First uses: The Resistance's
 v1.01.0 fixes to Fracture Temporelle D26, Digitalis D24 and 404 (New Era) S16 - fixes that
 reach their MediaFire songpack and never the public mirror (see `simfiles/README.md`).
+`--whole-block` takes their entire block instead, for a fix that re-encodes the timing map and
+so has no row-for-row form: their notes and every timing, scroll and metadata tag come across,
+while the tags that name the chart — DESCRIPTION, METER, DIFFICULTY, CHARTNAME — stay ours, so
+the chart keeps its key and the ingest still matches it on the meter (`--new-block` names their
+label where a re-rate moved it: our Conflict D25 is their D24), as do the mirror's
+CHARTSTYLE/LASTSECONDHINT and any tag only our block carries. After writing, it re-reads both
+files with the pipeline's parser and restores our bytes unless the block's judged events and
+six converter tags equal theirs. That mode runs on the venv. First uses: DESTRUCIMATE S19,
+Asterios -ReEntry- S4 and Conflict D25, the three the census found exact upstream.
 
 **`author_new.py <vid> --title "<title>" --level <n> --cols 10 [--ticks 4] [--combo <combo.jsonl>] [--cache]`**
 Writes a stepfile for a chart the repo has no file for - a song Andamiro has just released - from

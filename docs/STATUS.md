@@ -263,9 +263,10 @@ same operation run over 4,582 charts instead of 61.
 Everything the current tooling could reach has been reached, except Mental Rider (timing
 model) and the eight footage-blocked charts in group E. The snapshot in `snapshots/` was
 regenerated on the owner's word on 2026-09-21 (`piucenter-snapshot-092126.zip`, release
-`p2-092126`) and is current: all 106 census repairs, the five tail repairs, the six Phoenix 2
-v1.01 songs (59 charts) and The Resistance's three v1.01.0 fixes. Nothing repaired is waiting
-on a regenerate. It is regenerated only when the owner asks.
+`p2-092126`): all 106 census repairs, the five tail repairs, the six Phoenix 2 v1.01 songs (59
+charts) and The Resistance's three v1.01.0 fixes. The four charts taken from their current
+files the same evening (the census, below) came after it, so the snapshot is **four charts
+behind**. It is regenerated only when the owner asks.
 
 ## Upstream, as of 2026-09-21
 
@@ -349,8 +350,9 @@ pack was **re-uploaded on 2026-09-21** (new quickkey, changelog unchanged) with 
 Can I friend you on Bassbook? lol D25 moves a two-arrow row at beat 66.25 one panel to the
 right (`0000001100` → `0000000110`), count unchanged. The mirror does not have it.
 
-Nothing in `simfiles/` was changed by the census. Taking the three fixes, the Bassbook row, or
-any of the 22 is the owner's call.
+Taken the same evening, on the owner's word: the three, as whole-block transplants
+(`apply_upstream_fix.py --whole-block`, each gated by `tick_verify` at the catalog's count), and
+the Bassbook row. The 22 closer were not — none reaches the count, and closer is not a repair.
 
 (Compare half-double blocks by CELL, not by character: a `{…}` cell makes a row 22 or 26
 characters wide, and slicing characters once reported The Last Rebellion D21 as a difference.
