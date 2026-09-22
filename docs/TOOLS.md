@@ -26,10 +26,28 @@ their credits ask that the packs not be redistributed.
 
 The order that found the v1.01.0 update (2026-09-21): `git fetch` in `../PIU-Simfiles` for new
 songs the public mirror has taken → `list` and `changelog` for what the mirror does not carry
-(fixes to charts already published) → `recent` on the other packs → `get` the fixed files →
-`apply_upstream_fix.py` (under Authoring) → `tick_verify --file`. Most of what `recent` turns
-up in the older packs is relabelling — Phoenix 2 re-rates, "NEW" markers, community UCS — so
-compare blocks by their notes, not their labels, before calling anything new.
+(fixes to charts already published) → `pack_census.py` for everything the changelog does not
+say → `get` the fixed files → `apply_upstream_fix.py` (under Authoring) → `tick_verify --file`.
+
+**`pack_census.py fetch`** (system python) **/ `pack_census.py compare [--out <json>]`** (venv python)
+The whole-corpus answer to "what does their current file say that ours does not": `fetch` pulls,
+out of every pack on the hub, only the `.ssc` entries whose file name is one of ours (840 entries
+for the 664 files, ~50 MB, resumable, into `work/packs/`); `compare` reads every official block
+on both sides as the set of its judged events plus the six tags the converter reads, pairs blocks
+identical-first and then by events, meter and overlap (so a re-rate or an old-mix label still
+meets its own chart), converts every differing pair with the pipeline's converter, and judges
+each against the catalog — the 2026-09-08 sweep's reference, a census chart's judged count, the
+certification ledger, or `sources/p1-note-counts-2026-07-04.json` (the Phoenix 1 catalog count
+per chart, exported from the owner's compiled Phoenix 2 chart list so the census does not need
+the database up). Verdicts: theirs exact / theirs closer / both exact / same distance / ours
+closer / ours exact. First run: `sources/resistance-diff-2026-09-21.json` — 519 of 664 files
+identical, 4,393 of 4,689 blocks; of the 2,207 tail charts their current files fix **three**
+(DESTRUCIMATE S19, Asterios -ReEntry- S4, Conflict D25, each re-checked with `tick_verify` on
+the pack copy) and come closer on 22; ours is exact where theirs is off on 119, our 111 repairs
+among them. Newer is not better: their current file drifted off an exact count on eight charts
+(Maria D21 1000 → 769, Club Night D12 605 → 665, Scorpion King D16 810 → 845). Compare blocks by
+their notes, never by their labels — a label-keyed diff hides exactly the blocks whose labels
+changed, and a half-double block is compared by cell, since a `{…}` cell is one column.
 
 ## Reading footage
 
