@@ -264,9 +264,10 @@ Everything the current tooling could reach has been reached, except Mental Rider
 model) and the eight footage-blocked charts in group E. The snapshot in `snapshots/` was
 regenerated on the owner's word on 2026-09-21 (`piucenter-snapshot-092126.zip`, release
 `p2-092126`): all 106 census repairs, the five tail repairs, the six Phoenix 2 v1.01 songs (59
-charts) and The Resistance's three v1.01.0 fixes. The four charts taken from their current
-files the same evening (the census, below) came after it, so the snapshot is **four charts
-behind**. It is regenerated only when the owner asks.
+charts) and The Resistance's three v1.01.0 fixes; then again the same evening as
+`piucenter-snapshot-092226.zip` (release `p2-092226`, built on `092126`'s predictions) for the
+four charts taken from their current files (the census, below). The snapshot is current. It is
+regenerated only when the owner asks.
 
 ## Upstream, as of 2026-09-21
 

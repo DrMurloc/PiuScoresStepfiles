@@ -75,6 +75,30 @@ Before the long run, convert the new blocks once with `stepchart_ssc_to_chartstr
 check each comes out at one row width. A block with a stray row is accepted by the converter
 and by `tick_verify` and then kills limb prediction an hour in (First Love D15, `090326`).
 
+### Rebuilding for a handful of charts
+
+A release folder that already holds predictions reuses them, so a rebuild for a few changed
+charts need not re-predict 4,600 limbs. `092226` — four charts on top of `092126` — was built
+this way:
+
+1. Copy the previous release's chartstruct CSVs at **both** levels, `<release>/*.csv` and
+   `<release>/lgbm-120524/*.csv`, plus the two `__cs_to_manual_json.yaml` files, into the new
+   folder. Do not copy `chart-json/` or `page-content/`; stages 8–9 regenerate them.
+2. Delete the changed charts' CSVs at both levels. The ingest and limb prediction both skip a
+   chart whose output already exists, so a CSV left behind ships the **old** chart with no
+   error anywhere — the `090326` crash resumed into exactly that.
+3. Run the union pipeline as usual: the ingest converts only the deleted charts, prediction
+   predicts only them, and stages 4–9 run over the whole corpus, which the corpus-relative
+   badges need anyway.
+4. `blast_radius.py` must then name exactly the changed charts, and the zip-against-zip
+   comparison must show limb labels unchanged everywhere else — guaranteed for the reused
+   charts, whose predictions are the previous release's own files.
+
+`092226` took 58 minutes this way, against 2 h 52 min for the clean `092126` on the same
+machine the same day; `blast_radius` named the four and nothing else, and on the other 4,637
+charts the shipped JSON came out identical to `092126`, `stepchart-skills.json` and
+`tierlists.json` included. The launcher is `../piu-annotate/run-092226.sh`.
+
 ### The blast radius can be checked as soon as stage 1 ends
 
 ```
