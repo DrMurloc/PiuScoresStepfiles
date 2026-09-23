@@ -4,9 +4,10 @@ The zip here is the **current** full annotated batch for `/Admin/PiuCenter` uplo
 
 | Current | Generated | Contents | Notes |
 |---|---|---|---|
-| `piucenter-snapshot-092226.zip` | 2026-09-21, evening (release `p2-092226`, built on `p2-092126`'s predictions with the four changed charts re-done) | 4,641 chart JSONs (P1 ∪ P2 corpus) + `page-content/` (chart-table, stepchart-skills, tierlists) + `stepfiles/` (the 664-file `.ssc` corpus) + `version.txt` = `092226` | Everything `092126` carried — the six Phoenix 2 v1.01 songs (59 charts, their first analysis anywhere), all **106** census repairs, the five tail repairs, The Resistance's three v1.01.0 fixes — **plus the four charts taken from The Resistance's current files** the same evening: DESTRUCIMATE S19 (1478 → 1200), Asterios -ReEntry- S4 (144 → 160), Conflict D25 (1499 → 1500) and Can I friend you on Bassbook? lol D25 (a row moved, 1385 unchanged). Built in 58 minutes by reusing `092126`'s chartstructs and limb predictions for every other chart ([docs/SNAPSHOT.md](../docs/SNAPSHOT.md), "Rebuilding for a handful of charts"), so on the 4,637 others the shipped JSON is identical to `092126` — positions, limbs, hold ticks, segments — and `stepchart-skills.json` and `tierlists.json` are identical files. Verified: `blast_radius` 4 of 4,641 moved, 0 dropped, 0 added, none stray; `verify_release` 106/106; `verify_zip` CLEAN; the four read back out of the zip at their new tick totals. 32.6 MB. `*`-restoring key fix applied (73 keys). A simulation of `PiuCenterCrawlSaga.TryMatch` over the uploaded catalog batch auto-matches all 59 v1.01 keys, so no alias work is expected. ⚠ The importer matches every key against the **Phoenix 2** catalog, so the six songs must be in production's chart list before this is uploaded — they are the 2026-09-03 catalog batch, which the owner uploaded on 2026-09-12. |
+| `piucenter-snapshot-092326.zip` | 2026-09-23 (release `p2-092326`, built on `p2-092226`'s predictions with the 89 changed charts re-done, **the first release whose hold ticks are counted by the tick lattice** - piu-annotate `piuscores-windows-port` commit `e01246d`) | 4,641 chart JSONs (P1 ∪ P2 corpus) + `page-content/` (chart-table, stepchart-skills, tierlists) + `stepfiles/` (the 664-file `.ssc` corpus) + `version.txt` = `092326` | Every chart's `Hold ticks` is now the game's arithmetic ([docs/EVIDENCE-RULES.md](../docs/EVIDENCE-RULES.md), "A staggered release is not a tick"): hold-tick totals moved on 1,778 charts, 1,766 of them by the converter alone (1,423 down, 343 up, median -2; Conflict D26 from 23,477 ticks inside a BPM gimmick to 402, exact). Of the 992 certified charts whose shipped ticks changed, 634 now derive their judged count exactly, 273 are closer, 84 are farther (files short on ticks that the old over-count had hidden). It also carries the 72 re-authored and 12 reverted repairs, and the loops' ten new fixes (eight extraction, two tick loop). Arrows and limbs changed only on the 13 charts whose notes were edited; eNPS on 9; skills on one chart-table row; `tierlists.json` identical. Verified: `blast_radius` 72 of 4,641 moved, none without an edit (the 11 edited files that moved nothing are schedules re-authored to keep their counts, re-ingested and checked); `verify_release` 107/107; `verify_zip --ticks` CLEAN - every chart's hold ticks equal the lattice converter's own derivation from the banked stepfile, segment by segment. 32.6 MB, 73 `*` keys restored. Built in 48 minutes via `tools/snapshot_reuse.py`. |
 
-`092126` (the morning's full clean rebuild, 2 h 52 min) was pushed and superseded the same
+`092226` (2026-09-21, the old hold-tick arithmetic) is superseded by `092326`; whichever of them
+went up last, `092326`'s stamp exceeds it. `092126` (the morning's full clean rebuild, 2 h 52 min) was pushed and superseded the same
 day; whether it was uploaded in between is not known here, so `092226` carries a higher stamp
 rather than a rebuild in place — `version.txt` is what `/Admin/PiuCenter` compares, and it
 must exceed whatever went up last. `090326` was uploaded on 2026-09-05. (`083126` never was,
@@ -17,6 +18,10 @@ this table, delete the old one from HEAD (git history keeps it). The version str
 as a decimal and exceed the previous (MMDDYY convention: 083126 > 082626 > 050726).
 
 ## Rebuilding
+
+Build from piu-annotate's `piuscores-windows-port` branch: since `092326` the converter counts hold ticks by the
+tick lattice, and a release built from upstream piu-annotate would carry the old arithmetic on every chart.
+`tools/snapshot_reuse.py` prepares a release that reuses the previous one's predictions (docs/SNAPSHOT.md).
 
 ```
 cd ../piu-annotate

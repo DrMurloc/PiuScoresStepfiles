@@ -503,6 +503,11 @@ tick loop now reads a region only from readings within 0.6 s of it (TOOLS.md).
 After both: **738 of the 1,479 certified charts derive their judged count exactly** (116 under
 the old arithmetic before any of this), and the census ledger stands at 107.
 
+Snapshot **`092326`** carries all of it — the first release whose hold ticks are counted by the lattice: of the
+992 certified charts whose shipped ticks changed, 634 are now exact, 273 closer and 84 farther (files short on
+ticks the old over-count had hidden). It is built, verified tick by tick against the converter, and waiting for
+the owner's upload (snapshots/README.md).
+
 ## Beyond the census (sized 2026-09-06, listed in full 2026-09-08)
 
 The census was the *blatantly* wrong 121 — its cut was narrow on purpose: taps above the
