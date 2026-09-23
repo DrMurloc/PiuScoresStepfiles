@@ -7,7 +7,8 @@
   "judged": 401,
   "taps": 343,
   "ticks": 58,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "5f9c315"
  },
  {
   "chart": "A nightmare S6",
@@ -17,7 +18,8 @@
   "judged": 200,
   "taps": 169,
   "ticks": 31,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "3eb91d4"
  },
  {
   "chart": "All I Want For X-mas S5",
@@ -27,7 +29,8 @@
   "judged": 200,
   "taps": 166,
   "ticks": 34,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "4119291"
  },
  {
   "chart": "An Interesting View S13",
@@ -37,7 +40,8 @@
   "judged": 400,
   "taps": 324,
   "ticks": 76,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "182f8ad"
  },
  {
   "chart": "Another Truth D18",
@@ -47,7 +51,8 @@
   "judged": 653,
   "taps": 376,
   "ticks": 277,
-  "commit": "71f5e69"
+  "upstream_exact": false,
+  "commit": "3618751"
  },
  {
   "chart": "Another Truth D19",
@@ -57,7 +62,8 @@
   "judged": 715,
   "taps": 167,
   "ticks": 548,
-  "commit": "71f5e69"
+  "upstream_exact": false,
+  "commit": "6dcf1ea"
  },
  {
   "chart": "Another Truth D21",
@@ -67,7 +73,8 @@
   "judged": 1021,
   "taps": 347,
   "ticks": 674,
-  "commit": "71f5e69"
+  "upstream_exact": false,
+  "commit": "9e9678e"
  },
  {
   "chart": "Bad Apple!! feat. Nomico D20",
@@ -77,7 +84,8 @@
   "judged": 1043,
   "taps": 408,
   "ticks": 635,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "0786e6d"
  },
  {
   "chart": "Baroque Virus - FULL SONG - S15",
@@ -87,7 +95,8 @@
   "judged": 1300,
   "taps": 675,
   "ticks": 625,
-  "commit": "da5593f"
+  "upstream_exact": false,
+  "commit": "7542b78"
  },
  {
   "chart": "Beat of The War S16",
@@ -97,7 +106,8 @@
   "judged": 500,
   "taps": 405,
   "ticks": 95,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "b43e732"
  },
  {
   "chart": "Bee D15",
@@ -107,7 +117,8 @@
   "judged": 500,
   "taps": 338,
   "ticks": 162,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "6aa187d"
  },
  {
   "chart": "Bee S17",
@@ -117,7 +128,8 @@
   "judged": 830,
   "taps": 441,
   "ticks": 389,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "5fb33c0"
  },
  {
   "chart": "Beethoven Virus D13",
@@ -127,7 +139,8 @@
   "judged": 400,
   "taps": 254,
   "ticks": 146,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "f3cd7f7"
  },
  {
   "chart": "Beethoven Virus D21",
@@ -137,7 +150,8 @@
   "judged": 1000,
   "taps": 493,
   "ticks": 507,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "a41e1c1"
  },
  {
   "chart": "Break it Down D21",
@@ -147,7 +161,8 @@
   "judged": 1000,
   "taps": 383,
   "ticks": 617,
-  "commit": "ac7eb8c"
+  "upstream_exact": false,
+  "commit": "371283c"
  },
  {
   "chart": "Can-can ~Orpheus in The Party Mix~ - SHORT CUT - D17",
@@ -157,7 +172,8 @@
   "judged": 678,
   "taps": 197,
   "ticks": 481,
-  "commit": "d1baa8a"
+  "upstream_exact": false,
+  "commit": "760c126"
  },
  {
   "chart": "Can-can ~Orpheus in The Party Mix~ - SHORT CUT - D21",
@@ -167,7 +183,8 @@
   "judged": 1000,
   "taps": 260,
   "ticks": 740,
-  "commit": "d1baa8a"
+  "upstream_exact": false,
+  "commit": "5379330"
  },
  {
   "chart": "Can-can ~Orpheus in The Party Mix~ - SHORT CUT - D23",
@@ -177,7 +194,8 @@
   "judged": 1030,
   "taps": 254,
   "ticks": 776,
-  "commit": "d1baa8a"
+  "upstream_exact": false,
+  "commit": "d03d4ba"
  },
  {
   "chart": "Caprice of DJ Otada D22",
@@ -187,7 +205,8 @@
   "judged": 1000,
   "taps": 841,
   "ticks": 159,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "d19d9cf"
  },
  {
   "chart": "Caprice of DJ Otada S21",
@@ -197,7 +216,8 @@
   "judged": 904,
   "taps": 755,
   "ticks": 149,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "369b2a4"
  },
  {
   "chart": "Chase Me S20",
@@ -207,7 +227,8 @@
   "judged": 1077,
   "taps": 608,
   "ticks": 469,
-  "commit": "63e3451"
+  "upstream_exact": false,
+  "commit": "bc30f3d"
  },
  {
   "chart": "Chimera S18",
@@ -217,7 +238,8 @@
   "judged": 1000,
   "taps": 508,
   "ticks": 492,
-  "commit": "5524bc9"
+  "upstream_exact": false,
+  "commit": "76459e7"
  },
  {
   "chart": "Close Your Eye S6",
@@ -227,7 +249,8 @@
   "judged": 201,
   "taps": 140,
   "ticks": 61,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "0bad749"
  },
  {
   "chart": "Come to Me S17",
@@ -237,7 +260,19 @@
   "judged": 786,
   "taps": 250,
   "ticks": 536,
-  "commit": "11c9e8d"
+  "upstream_exact": false,
+  "commit": "32d9e93"
+ },
+ {
+  "chart": "Conflict D26",
+  "key": "Conflict_-_Siromaru_+_Cranky_D26_ARCADE",
+  "ssc_rel": "14 - XX/1676 - Conflict/1676 - Conflict.ssc",
+  "video": "https://youtu.be/moHDv2w9y3U",
+  "judged": 1600,
+  "taps": 1198,
+  "ticks": 402,
+  "upstream_exact": true,
+  "commit": ""
  },
  {
   "chart": "Conflict S22",
@@ -247,6 +282,7 @@
   "judged": 1400,
   "taps": 1196,
   "ticks": 204,
+  "upstream_exact": true,
   "commit": ""
  },
  {
@@ -257,7 +293,8 @@
   "judged": 550,
   "taps": 516,
   "ticks": 34,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "2355389"
  },
  {
   "chart": "Death Moon - SHORT CUT - D23",
@@ -267,7 +304,8 @@
   "judged": 1300,
   "taps": 430,
   "ticks": 870,
-  "commit": "885945f"
+  "upstream_exact": false,
+  "commit": "bf08ef8"
  },
  {
   "chart": "Desaparecer D25",
@@ -277,7 +315,8 @@
   "judged": 1600,
   "taps": 926,
   "ticks": 674,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "4dafe35"
  },
  {
   "chart": "Destination - SHORT CUT - D20",
@@ -287,7 +326,8 @@
   "judged": 803,
   "taps": 278,
   "ticks": 525,
-  "commit": "ae21ce1"
+  "upstream_exact": false,
+  "commit": "f8f0699"
  },
  {
   "chart": "Destination - SHORT CUT - D21",
@@ -297,7 +337,8 @@
   "judged": 1186,
   "taps": 449,
   "ticks": 737,
-  "commit": "ae21ce1"
+  "upstream_exact": false,
+  "commit": "34a6ea8"
  },
  {
   "chart": "Dr. M D14",
@@ -307,7 +348,8 @@
   "judged": 394,
   "taps": 309,
   "ticks": 85,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "d18f1c2"
  },
  {
   "chart": "Dr. M D18",
@@ -317,7 +359,8 @@
   "judged": 666,
   "taps": 464,
   "ticks": 202,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "9187cf1"
  },
  {
   "chart": "Dr. M S9",
@@ -327,7 +370,8 @@
   "judged": 303,
   "taps": 272,
   "ticks": 31,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "06ce197"
  },
  {
   "chart": "Emperor D17",
@@ -337,7 +381,8 @@
   "judged": 708,
   "taps": 414,
   "ticks": 294,
-  "commit": "5a2050e"
+  "upstream_exact": false,
+  "commit": "c0c3b0f"
  },
  {
   "chart": "Emperor S16",
@@ -347,7 +392,8 @@
   "judged": 713,
   "taps": 417,
   "ticks": 296,
-  "commit": "5a2050e"
+  "upstream_exact": false,
+  "commit": "6476cd4"
  },
  {
   "chart": "Exceed2 Opening - SHORT CUT - S16",
@@ -357,7 +403,8 @@
   "judged": 578,
   "taps": 139,
   "ticks": 439,
-  "commit": "3610e97"
+  "upstream_exact": false,
+  "commit": "430dc12"
  },
  {
   "chart": "Extravaganza - SHORT CUT - D16",
@@ -367,7 +414,8 @@
   "judged": 820,
   "taps": 285,
   "ticks": 535,
-  "commit": "7f649db"
+  "upstream_exact": false,
+  "commit": "5ad4e64"
  },
  {
   "chart": "Extravaganza D15",
@@ -377,7 +425,8 @@
   "judged": 502,
   "taps": 337,
   "ticks": 165,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "5fd61be"
  },
  {
   "chart": "Extravaganza D18",
@@ -387,7 +436,8 @@
   "judged": 654,
   "taps": 596,
   "ticks": 58,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "b47ecfe"
  },
  {
   "chart": "Final Audition 2 - SHORT CUT - D19",
@@ -397,7 +447,8 @@
   "judged": 901,
   "taps": 313,
   "ticks": 588,
-  "commit": "653e096"
+  "upstream_exact": false,
+  "commit": "bb0b906"
  },
  {
   "chart": "Final Audition 2 - SHORT CUT - S17",
@@ -407,7 +458,8 @@
   "judged": 931,
   "taps": 277,
   "ticks": 654,
-  "commit": "653e096"
+  "upstream_exact": false,
+  "commit": "3221b69"
  },
  {
   "chart": "Final Audition 3 - SHORT CUT - D18",
@@ -417,7 +469,8 @@
   "judged": 981,
   "taps": 361,
   "ticks": 620,
-  "commit": "1df1a8a"
+  "upstream_exact": false,
+  "commit": "f4a400d"
  },
  {
   "chart": "Final Audition 3 - SHORT CUT - S18",
@@ -427,7 +480,8 @@
   "judged": 983,
   "taps": 364,
   "ticks": 619,
-  "commit": "1df1a8a"
+  "upstream_exact": false,
+  "commit": "a4a0f58"
  },
  {
   "chart": "Final Audition D19",
@@ -437,7 +491,8 @@
   "judged": 700,
   "taps": 487,
   "ticks": 213,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "ecfb7bc"
  },
  {
   "chart": "Final Audition Ep. 1 D15",
@@ -447,7 +502,8 @@
   "judged": 500,
   "taps": 338,
   "ticks": 162,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "9925a7d"
  },
  {
   "chart": "Final Audition Ep. 1 S17",
@@ -457,7 +513,8 @@
   "judged": 606,
   "taps": 443,
   "ticks": 163,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "05410d4"
  },
  {
   "chart": "Final Audition Ep. 2-2 D23",
@@ -467,7 +524,8 @@
   "judged": 1213,
   "taps": 520,
   "ticks": 693,
-  "commit": "a2d0412"
+  "upstream_exact": false,
+  "commit": "a32deed"
  },
  {
   "chart": "Final Audition Ep. 2-2 S21",
@@ -477,7 +535,8 @@
   "judged": 1163,
   "taps": 561,
   "ticks": 602,
-  "commit": "a2d0412"
+  "upstream_exact": false,
+  "commit": "042a2af"
  },
  {
   "chart": "Final Audition S18",
@@ -487,7 +546,8 @@
   "judged": 601,
   "taps": 516,
   "ticks": 85,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "147905e"
  },
  {
   "chart": "First Love D15",
@@ -497,7 +557,8 @@
   "judged": 450,
   "taps": 356,
   "ticks": 94,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "abcf274"
  },
  {
   "chart": "Gun Rock D24",
@@ -507,7 +568,8 @@
   "judged": 1000,
   "taps": 528,
   "ticks": 472,
-  "commit": "bbe2d0b"
+  "upstream_exact": false,
+  "commit": "0beddea"
  },
  {
   "chart": "Gun Rock S20",
@@ -517,6 +579,7 @@
   "judged": 900,
   "taps": 424,
   "ticks": 476,
+  "upstream_exact": false,
   "commit": "bbe2d0b"
  },
  {
@@ -527,7 +590,8 @@
   "judged": 793,
   "taps": 372,
   "ticks": 421,
-  "commit": "2980a82"
+  "upstream_exact": false,
+  "commit": "ebbaeac"
  },
  {
   "chart": "Hyperion - SHORT CUT - S20",
@@ -537,7 +601,8 @@
   "judged": 1032,
   "taps": 372,
   "ticks": 660,
-  "commit": "2980a82"
+  "upstream_exact": false,
+  "commit": "b967fe5"
  },
  {
   "chart": "Imagination S18",
@@ -547,7 +612,8 @@
   "judged": 721,
   "taps": 386,
   "ticks": 335,
-  "commit": "d2c7daf"
+  "upstream_exact": false,
+  "commit": "e2b2e77"
  },
  {
   "chart": "K.O.A : Alice in Wonderworld - SHORT CUT - D18",
@@ -557,7 +623,8 @@
   "judged": 973,
   "taps": 327,
   "ticks": 646,
-  "commit": "89a1a6c"
+  "upstream_exact": false,
+  "commit": "c8d499c"
  },
  {
   "chart": "Kasou Shinja - SHORT CUT - D21",
@@ -567,7 +634,8 @@
   "judged": 1014,
   "taps": 327,
   "ticks": 687,
-  "commit": "5cc3eb4"
+  "upstream_exact": false,
+  "commit": "58e03fb"
  },
  {
   "chart": "Kasou Shinja - SHORT CUT - S20",
@@ -577,7 +645,8 @@
   "judged": 1023,
   "taps": 360,
   "ticks": 663,
-  "commit": "5cc3eb4"
+  "upstream_exact": false,
+  "commit": "0f6801e"
  },
  {
   "chart": "Like Me S14",
@@ -587,7 +656,8 @@
   "judged": 481,
   "taps": 245,
   "ticks": 236,
-  "commit": "30ab107"
+  "upstream_exact": false,
+  "commit": "8f2eea6"
  },
  {
   "chart": "Love is a Danger Zone S17",
@@ -597,7 +667,8 @@
   "judged": 790,
   "taps": 432,
   "ticks": 358,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "50c3644"
  },
  {
   "chart": "Love is a Danger Zone pt. 2 - SHORT CUT - D23",
@@ -607,7 +678,8 @@
   "judged": 1244,
   "taps": 366,
   "ticks": 878,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "0d0aebd"
  },
  {
   "chart": "Love is a Danger Zone pt.2 [Another] S18",
@@ -617,7 +689,8 @@
   "judged": 764,
   "taps": 636,
   "ticks": 128,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "e500200"
  },
  {
   "chart": "Moonlight - SHORT CUT - S19",
@@ -627,7 +700,8 @@
   "judged": 800,
   "taps": 286,
   "ticks": 514,
-  "commit": "994f101"
+  "upstream_exact": false,
+  "commit": "bb4a7be"
  },
  {
   "chart": "Mr. Larpus D16",
@@ -637,7 +711,8 @@
   "judged": 550,
   "taps": 425,
   "ticks": 125,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "4c90227"
  },
  {
   "chart": "Mr. Larpus D18",
@@ -647,7 +722,8 @@
   "judged": 660,
   "taps": 486,
   "ticks": 174,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "3a845fb"
  },
  {
   "chart": "My Way D16",
@@ -657,7 +733,8 @@
   "judged": 550,
   "taps": 394,
   "ticks": 156,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "c5b01f7"
  },
  {
   "chart": "My Way S15",
@@ -667,7 +744,8 @@
   "judged": 507,
   "taps": 368,
   "ticks": 139,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "98b326b"
  },
  {
   "chart": "Naissance S20",
@@ -677,7 +755,8 @@
   "judged": 900,
   "taps": 362,
   "ticks": 538,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "c22a4e1"
  },
  {
   "chart": "Oh! Rosa D11",
@@ -687,7 +766,8 @@
   "judged": 300,
   "taps": 269,
   "ticks": 31,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "7d24c86"
  },
  {
   "chart": "Pop The Track - SHORT CUT - D16",
@@ -697,7 +777,8 @@
   "judged": 882,
   "taps": 282,
   "ticks": 600,
-  "commit": "61fd902"
+  "upstream_exact": false,
+  "commit": "542dfd1"
  },
  {
   "chart": "Poseidon - SHORT CUT - D21",
@@ -707,7 +788,8 @@
   "judged": 1000,
   "taps": 388,
   "ticks": 612,
-  "commit": "788597a"
+  "upstream_exact": false,
+  "commit": "56dcc47"
  },
  {
   "chart": "Poseidon - SHORT CUT - S11",
@@ -717,7 +799,8 @@
   "judged": 468,
   "taps": 198,
   "ticks": 270,
-  "commit": "788597a"
+  "upstream_exact": false,
+  "commit": "f99548b"
  },
  {
   "chart": "Poseidon - SHORT CUT - S14",
@@ -727,7 +810,8 @@
   "judged": 610,
   "taps": 195,
   "ticks": 415,
-  "commit": "788597a"
+  "upstream_exact": false,
+  "commit": "1f9b3e9"
  },
  {
   "chart": "Poseidon - SHORT CUT - S21",
@@ -737,7 +821,8 @@
   "judged": 1000,
   "taps": 389,
   "ticks": 611,
-  "commit": "788597a"
+  "upstream_exact": false,
+  "commit": "29ca18d"
  },
  {
   "chart": "Pump me Amadeus D15",
@@ -747,7 +832,8 @@
   "judged": 449,
   "taps": 362,
   "ticks": 87,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "ff2a005"
  },
  {
   "chart": "Pumptris 8Bit ver. - SHORT CUT - D22",
@@ -757,7 +843,8 @@
   "judged": 1043,
   "taps": 346,
   "ticks": 697,
-  "commit": "f54e1da"
+  "upstream_exact": false,
+  "commit": "a19076d"
  },
  {
   "chart": "Sarabande S20",
@@ -767,7 +854,8 @@
   "judged": 1111,
   "taps": 521,
   "ticks": 590,
-  "commit": "9b23bea"
+  "upstream_exact": true,
+  "commit": ""
  },
  {
   "chart": "Set me up S10",
@@ -777,7 +865,8 @@
   "judged": 274,
   "taps": 274,
   "ticks": 0,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "b44b591"
  },
  {
   "chart": "She Likes Pizza D11",
@@ -787,7 +876,8 @@
   "judged": 300,
   "taps": 243,
   "ticks": 57,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "f0e67be"
  },
  {
   "chart": "She Likes Pizza S10",
@@ -797,7 +887,8 @@
   "judged": 303,
   "taps": 278,
   "ticks": 25,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "0514303"
  },
  {
   "chart": "Slam D22",
@@ -807,7 +898,8 @@
   "judged": 1000,
   "taps": 505,
   "ticks": 495,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "9e4ca39"
  },
  {
   "chart": "Slam S18",
@@ -817,7 +909,8 @@
   "judged": 702,
   "taps": 420,
   "ticks": 282,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "5d5fb08"
  },
  {
   "chart": "Slam S20",
@@ -827,7 +920,8 @@
   "judged": 800,
   "taps": 504,
   "ticks": 296,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "4a81c55"
  },
  {
   "chart": "Slam S5",
@@ -837,7 +931,8 @@
   "judged": 192,
   "taps": 192,
   "ticks": 0,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "9aadd15"
  },
  {
   "chart": "Super Fantasy - SHORT CUT - D17",
@@ -847,7 +942,8 @@
   "judged": 831,
   "taps": 252,
   "ticks": 579,
-  "commit": "3848136"
+  "upstream_exact": false,
+  "commit": "8cbb7a5"
  },
  {
   "chart": "Super Fantasy - SHORT CUT - S19",
@@ -857,7 +953,8 @@
   "judged": 829,
   "taps": 252,
   "ticks": 577,
-  "commit": "3848136"
+  "upstream_exact": false,
+  "commit": "b91cc01"
  },
  {
   "chart": "Switronic - SHORT CUT - S9",
@@ -867,7 +964,8 @@
   "judged": 434,
   "taps": 171,
   "ticks": 263,
-  "commit": "ac5d6cb"
+  "upstream_exact": false,
+  "commit": "a9faeae"
  },
  {
   "chart": "Tales of Pumpnia D18",
@@ -877,7 +975,8 @@
   "judged": 1052,
   "taps": 119,
   "ticks": 933,
-  "commit": "fe5f470"
+  "upstream_exact": false,
+  "commit": "897ccea"
  },
  {
   "chart": "Tales of Pumpnia D21",
@@ -887,7 +986,8 @@
   "judged": 1125,
   "taps": 295,
   "ticks": 830,
-  "commit": "fe5f470"
+  "upstream_exact": false,
+  "commit": "63caaef"
  },
  {
   "chart": "Tales of Pumpnia S17",
@@ -897,7 +997,8 @@
   "judged": 1023,
   "taps": 118,
   "ticks": 905,
-  "commit": "fe5f470"
+  "upstream_exact": false,
+  "commit": "0b22b42"
  },
  {
   "chart": "Tales of Pumpnia S20",
@@ -907,7 +1008,8 @@
   "judged": 1068,
   "taps": 279,
   "ticks": 789,
-  "commit": "fe5f470"
+  "upstream_exact": false,
+  "commit": "d3eaed4"
  },
  {
   "chart": "Trotpris - SHORT CUT - D15",
@@ -917,7 +1019,8 @@
   "judged": 668,
   "taps": 228,
   "ticks": 440,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "212c14f"
  },
  {
   "chart": "Turkey March D13",
@@ -927,7 +1030,8 @@
   "judged": 304,
   "taps": 285,
   "ticks": 19,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "0cc04f7"
  },
  {
   "chart": "Vook D15",
@@ -937,7 +1041,8 @@
   "judged": 450,
   "taps": 353,
   "ticks": 97,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "b9fb60b"
  },
  {
   "chart": "Vook D21",
@@ -947,7 +1052,8 @@
   "judged": 1032,
   "taps": 573,
   "ticks": 459,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "c598ae4"
  },
  {
   "chart": "We will meet again D11",
@@ -957,7 +1063,8 @@
   "judged": 300,
   "taps": 181,
   "ticks": 119,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "dcaa60b"
  },
  {
   "chart": "Wedding Crashers - SHORT CUT - S4",
@@ -967,7 +1074,8 @@
   "judged": 284,
   "taps": 78,
   "ticks": 206,
-  "commit": "4e5bc1e"
+  "upstream_exact": false,
+  "commit": "a219a8d"
  },
  {
   "chart": "Will-O-The-Wisp D16",
@@ -977,7 +1085,8 @@
   "judged": 550,
   "taps": 383,
   "ticks": 167,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "7d6d58d"
  },
  {
   "chart": "Will-O-The-Wisp D20",
@@ -987,7 +1096,8 @@
   "judged": 801,
   "taps": 510,
   "ticks": 291,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "5a3ad8b"
  },
  {
   "chart": "Will-O-The-Wisp S16",
@@ -997,7 +1107,8 @@
   "judged": 500,
   "taps": 448,
   "ticks": 52,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "ba995d7"
  },
  {
   "chart": "Winter D17",
@@ -1007,7 +1118,8 @@
   "judged": 600,
   "taps": 470,
   "ticks": 130,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "fe76aaa"
  },
  {
   "chart": "Winter D21",
@@ -1017,7 +1129,8 @@
   "judged": 800,
   "taps": 504,
   "ticks": 296,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "50d7dfc"
  },
  {
   "chart": "Winter S16",
@@ -1027,7 +1140,8 @@
   "judged": 540,
   "taps": 471,
   "ticks": 69,
-  "commit": ""
+  "upstream_exact": false,
+  "commit": "17a0dfb"
  },
  {
   "chart": "Witch Doctor S19",
@@ -1037,7 +1151,8 @@
   "judged": 981,
   "taps": 372,
   "ticks": 609,
-  "commit": "d3357e2"
+  "upstream_exact": false,
+  "commit": "62c1182"
  },
  {
   "chart": "XX OPENING - SHORT CUT - S6",
@@ -1047,7 +1162,8 @@
   "judged": 325,
   "taps": 88,
   "ticks": 237,
-  "commit": "85a0101"
+  "upstream_exact": false,
+  "commit": "867205c"
  },
  {
   "chart": "Xenesis S18",
@@ -1057,6 +1173,7 @@
   "judged": 873,
   "taps": 413,
   "ticks": 460,
-  "commit": "ceed360"
+  "upstream_exact": false,
+  "commit": "3cbb67a"
  }
 ]
