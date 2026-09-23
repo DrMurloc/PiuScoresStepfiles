@@ -4,9 +4,11 @@
 tree by `tools/rebuild_repairs.py`, so it cannot go stale. This file is the working ledger
 for what is **left**, and it is hand-kept: re-derive the counts before trusting them.
 
-As of 2026-09-06: **106 of the 121 census charts repaired**, 15 remaining - 11 of them
-blocked by footage or design, 4 parked on measurements (below). Twenty-nine of
-the last thirty came through the extraction pipeline in two days (group A).
+As of 2026-09-23: **107 of the 121 census charts derive their judged count exactly**, graded by
+the converter's tick lattice (below, "Hold ticks are counted by the tick lattice") - 104 of them
+our repairs, three exact with their upstream block untouched. 14 remain. (As of 2026-09-06 the
+count was 106 of 121 under the old arithmetic; twenty-nine of the thirty before that came
+through the extraction pipeline in two days, group A.)
 
 ## The remaining 40, by what actually blocks them
 
@@ -424,60 +426,82 @@ What the parks say, which is the census the loop was also for:
 Snapshot `092226` is now **13 charts behind**; it is regenerated only when the owner asks.
 YouTube fetches are still refused from this network; the run read the 2,025 cached videos.
 
-## The converter counts a release tick on every release row (2026-09-23)
+## Hold ticks are counted by the tick lattice (2026-09-23)
 
-Pricing the first near miss from the counter (ASDF D10, below) found a pair of holds at beats
-260–267 that the converter derives as 16 ticks and the game judged as 15: the converter closes
-a segment on each release row and adds a tick for it, so a pair whose holds let go on
-different rows derives one tick per extra row, where the game judges the tick lattice once.
-Counted over the whole certified corpus (1,479 charts, `work/stagger-corpus.*.json`):
+Pricing the first near miss from the counter (ASDF D10) found a pair of holds at beats 260–267
+that piu-annotate's converter derived as 16 ticks and the game judged as 15: the converter
+closed a segment on each release row and added a tick for it, so a pair whose holds let go on
+different rows derived one tick per extra row, where the game judges the tick lattice once. It
+also rounded rate × beats where the game counts whole lattice points (Cutie Song S11, Pumping Up
+S10, ASDF D10's finale — each one tick over, each right as written). Counted over the 1,479
+certified charts, 542 of the 1,364 off the count were over it by exactly their staggered release
+rows, and the only exact charts carrying such rows were files we had fitted to the converter.
+
+The model that carries both is the **beat-grid tick lattice** (EVIDENCE-RULES.md, "A staggered
+release is not a tick", has the rule and the semantics the corpus settled). On the owner's go
+the converter now counts by it — piu-annotate `piuscores-windows-port` commit `e01246d`,
+`HOLD_TICK_MODEL = "lattice"`, the old counts still available as `hold_ticks="legacy"`:
+
+| | old arithmetic | tick lattice |
+|---|---|---|
+| certified charts exact, of 1,479 (before any file changed) | 116 | **654** |
+| charts the lattice broke that the old arithmetic had exact | — | 78 + 6 census-phase — every one a file we had fitted to the old arithmetic |
+| hold regions the combo counter priced on full-combo plays (738) it agrees with | 698 | **719** — and 22 of the 23 where the two differ |
+
+Every grading tool here now refuses a converter that does not count by the lattice, and a
+snapshot built with upstream piu-annotate would carry the old counts (SNAPSHOT.md).
+
+What it did to our own repairs (`tools/lattice_reauthor.py`, one commit per chart):
 
 | | charts |
 |---|---|
-| certified charts off the count | 1,364 |
-| of them over the count by **exactly** their staggered release rows | **542** (191 at +1, 95 at +2, 53 at +3, 43 at +4, 27 at +5, 133 beyond) |
-| over by more than that count (the rule explains part) | 282 |
-| exact charts that carry staggered releases | 16 — every one a file we authored to the converter's arithmetic |
-| upstream (The Resistance) exact charts with staggered releases | 0 |
+| reverted — the untouched upstream block is exact under the lattice (among them Conflict S22 and Sarabande S20, which the old arithmetic put 1,369 and 1,006 over) | 8 |
+| reverted — a note-only repair that no longer closes, back to the loops (Higgledy Piggledy S15 and S16, Cleaner D26, Love is a Danger Zone pt. 2 S11) | 4 |
+| re-authored — every region keeps its recorded count; only the regions the lattice counts differently get a new rate over their own span | 72 |
+| of those, holds the repair had recorded below their own heads (zero events, possible only under the old arithmetic), raised to their heads with the difference taken off the closure they were priced from | 937 holds on 42 charts (508 on the four Tales of Pumpnia blocks) |
 
-That is one half of the converter's arithmetic; the other is that it rounds rate × beats where
-the game counts whole lattice points (Cutie Song S11, Pumping Up S10, ASDF D10's finale — each
-one tick over, each right as written). The model that carries both, the **beat-grid tick
-lattice** (`tools/tick_model.py`, EVIDENCE-RULES.md "A staggered release is not a tick"), was
-measured three ways the same day:
+`sources/repairs.json` keeps every repair: **107 census charts exact** (106 before), Conflict
+D26 joining on its untouched upstream block. Of the extraction loop's 13 ships of 2026-09-22,
+nine were among the reverts — releases moved within the rail reader's tolerance that closed
+only on the old arithmetic's staggered-release tick — and four stand (PaPa Gonzales S16, Native
+S17, Maria S12, With my Lover S12).
 
-| | converter | tick lattice |
+## Both loops again, under the lattice (2026-09-23)
+
+**The extraction loop's second corpus run** (`sources/extract-loop-2026-09-23.json`) re-graded
+run 1's 1,342 tail charts and the census charts, reading footage only for charts not already
+exact (`--exact-first`); the stepf2 files are read now too. On run 1's own charts:
+
+| | run 1 (old arithmetic) | run 2 (lattice) |
 |---|---|---|
-| certified charts exact, of 1,479 | 116 | **645** |
-| charts broken that the converter had exact | — | 79 — every one a file we authored to the converter's arithmetic |
-| charts fixed that the converter has wrong | — | 608 |
-| clusters the combo counter priced (738, full-combo plays) it agrees with | 698 | **719** — and 22 of the 23 it and the converter disagree on |
-| certified charts still within ±5 of the count under it | 493 | 148 |
+| exact without an edit | 7 | **632** |
+| shipped — closed exactly and committed | 13 | 8 |
+| parked | 1,322 | 702 |
+| parks within ±5 of the count | 516 | **98** |
+| of them at exactly ±1 | 228 | 37 |
+| parks: notes match the screen, the count is ticks | 286 | 133 |
+| parks: stepf2 cells not read | 49 | 0 |
 
-The change is two conditions in `ssc_to_chartstruct.py`: add the release tick only when no
-hold remains active after the row, and count the lattice points inside a segment instead of
-rounding. It re-grades the 79 files we fitted to the old arithmetic (the counter loop's
-targets and the extraction loop's releases are on record, so they re-author), and it is a
-change to the converter the snapshot is built with — so it is the owner's decision. Nothing
-in piu-annotate has been touched, and no tick-loop repair is committed until it is settled:
-a rate solved under the old arithmetic is exactly the kind of fit the change would undo.
+The eight (`2c374be`..`755b51a`): Imagination S12, Wedding Crashers S10, Fires of Destiny D22,
+Star Command D22, Final Audition Ep. 2-X S17, Houseplan S17, Gun Rock D18 and Selfishness D18 —
+releases moved later to where the rail ends, a tap or two each flashed at its receptor, one
+hold the file wrote as a tap. Two of them (Imagination S12, Houseplan S17) are the same edits
+run 1 proposed and parked at +2 and +3: under the lattice they land exactly.
 
-## The tick loop (2026-09-23)
+**The tick loop's first run under the lattice** (`sources/tick-loop-2026-09-23.json`) took the
+78 above-bar parks within ±10 of their count (420 under the old arithmetic) and shipped two,
+each region re-ticked from counter plateaus within 0.6 s of it on both sides: Love is a Danger
+Zone S11 (`8ee5b6b`; six regions each one event short, the running error stepping 0, -1 … -6
+across them and flat in between) and YOU AND I D20 (`85c1edd`; the opening pair region, 48
+judged where the file derives 53, read on sixteen of sixteen frames after it). 65 parks are
+readings that do not sum to the deficit — the rest of the difference is in regions the counter
+could not bracket, or in taps — 4 are plays with breaks where a region went unread, 4 had no
+readable region. A first pass shipped three more and was stopped: one (Conflict S6) had priced
+its last hold from a plateau 11 s earlier, carrying every tap between into the price, and the
+tick loop now reads a region only from readings within 0.6 s of it (TOOLS.md).
 
-`tools/tick_repair.py` is the counter loop's pricing aimed with the extraction loop's
-alignment (TOOLS.md has the method): every hold region of a near-miss file priced from the
-counter's readings either side of it, each reading held to the file's own running count, the
-counter filtered to the non-decreasing chain a full-combo play can show, and only a region the
-counter measured — and the lattice does not already explain — is authored: a single rate over
-its span, or a release moved a row toward the rail. Full-combo plays (result-screen maxcombo
-equal to the judged count) are read first, because on those a partial accounting closes; a
-play with breaks needs every region read. Its first run, over the 420 above-bar parks within
-±10 of the count, is what produced the counter's verdict in the table above; its reports
-(`work/tick-loop-report.*.json`) carry every reading, and its ships wait on the decision.
-What it also found on the way: the counter reader confuses a units 9 for a 5 often enough
-(Cleaner S13, Iolite Sky D21, Headless Chicken S10) that a plateau is only believed when the
-next one agrees with it — two adjacent clusters priced opposite ways are a misread, not two
-errors.
+After both: **738 of the 1,479 certified charts derive their judged count exactly** (116 under
+the old arithmetic before any of this), and the census ledger stands at 107.
 
 ## Beyond the census (sized 2026-09-06, listed in full 2026-09-08)
 

@@ -49,6 +49,11 @@ C:\Users\jonec\repos\piu-annotate\.venv\Scripts\python.exe -X utf8 tools/<script
 
 `-X utf8` is required — the scripts print chart names, and Windows defaults to cp1252.
 
+The clone must be on its `piuscores-windows-port` branch: since 2026-09-23 its converter counts
+hold ticks by the tick lattice (`HOLD_TICK_MODEL = "lattice"`, commit `e01246d`), and every
+repair here is graded by that arithmetic. The grading tools refuse to run against a converter
+without it. See docs/EVIDENCE-RULES.md, "A staggered release is not a tick".
+
 ## Where to start
 
 | You want to | Read |

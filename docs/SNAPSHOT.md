@@ -43,6 +43,18 @@ output in a log (`> pipeline-<name>.log 2>&1`) and watch the log, not the proces
 `PIU-Simfiles` clone, which is the seed, not the source of truth — pointing at it silently
 ships unrepaired stepfiles.
 
+**Build from the clone's `piuscores-windows-port` branch.** Since 2026-09-23 its converter
+counts hold ticks by the tick lattice (commit `e01246d`; EVIDENCE-RULES.md, "A staggered release
+is not a tick"). Upstream piu-annotate still counts them the old way; a snapshot built from it
+would carry the old arithmetic's hold ticks for every chart and undo the re-authoring of our
+repairs, which are now fitted to the lattice. Stage 4 (`update_chartstruct_holdticks_metadata
+--rerun_all True`) re-derives every chart's `Hold ticks` from its `.ssc` with whatever converter
+is installed, so a converter change needs no re-ingest: the reuse path below carries it to
+every chart, and only charts whose notes changed need their CSVs deleted. `blast_radius.py`
+compares hold ticks as well as grids and timing, so a release built across a converter change
+moves every chart whose ticks the change moved; read its grid and timing verdicts for the
+note-level blast radius, and check the ticks against the converter instead (`verify_zip.py`).
+
 ### Ingest the union of charts lists, not one list
 
 A release's coverage is every accessible-stepcharts list ever ingested into its folder, not
@@ -87,6 +99,12 @@ this way:
 2. Delete the changed charts' CSVs at both levels. The ingest and limb prediction both skip a
    chart whose output already exists, so a CSV left behind ships the **old** chart with no
    error anywhere — the `090326` crash resumed into exactly that.
+
+`tools/snapshot_reuse.py <previous snapshot commit> <previous release> <new release>` does both
+steps from git: it leaves out, at both levels, every chart whose stepfile block differs by any
+byte from the block at the previous snapshot's commit (`--dry-run` lists them without copying),
+and names any changed block that has no chart in the release. `092326` was prepared with it
+(`../piu-annotate/run-092326.sh`); `092226` named its four by hand.
 3. Run the union pipeline as usual: the ingest converts only the deleted charts, prediction
    predicts only them, and stages 4–9 run over the whole corpus, which the corpus-relative
    badges need anyway.

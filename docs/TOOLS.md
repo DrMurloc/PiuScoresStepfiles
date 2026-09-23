@@ -84,6 +84,9 @@ which the applier and `load_block`'s width now go through, so the 49 files that 
 cells are read and edited like any other (their fake-flagged cells and `F` letters are also
 handed to the matcher as *drawn but never judged*, so an extracted note on one is that fake,
 not an addition — `--redo-reason stepf2` re-runs the charts a report parked for that reason).
+`--exact-first` grades the file before reading any footage and records an exact chart as EXACT
+unread — for a re-grade (the second corpus run, after the converter changed), not for a census
+of the reader.
 
 Proven before it ran (2026-09-22): the five charts the counter loop made exact came back with
 no edit at all (before the rules they drew 4, 3, 6 and 8 stray additions), and six manual
@@ -102,14 +105,15 @@ candidate ran to +1.3 million ticks inside a BPM gimmick before the gate refused
 
 ## The tick loop
 
-**`tick_repair.py survey [--shard i/n] [--only "<chart>"] [--limit N] [--near N] [--redo] [--redo-verdict V,V] [--no-scan]`**
-**`tick_repair.py commit [--dry-run] [--only "<chart>"]`**
+**`tick_repair.py survey [--shard i/n] [--only "<chart>"] [--limit N] [--near N] [--census <file>] [--redo] [--redo-verdict V,V] [--redo-reason <text>] [--no-scan]`**
+**`tick_repair.py commit [--dry-run] [--only "<chart>"] [--census <file>]`**
 Where the extraction loop found the screen showing the file's notes and holds and the count
 still off, this prices every hold region of the file from the combo counter and authors only
-what the counter measured. Its worklist is the extraction loop's census: the parks whose
-extraction cleared the bar, nearest the count first (`--near`, default 10), full-combo plays
-before plays with breaks; a chart whose extraction candidate applied edits is priced and
-authored on that candidate, so one commit carries both.
+what the counter measured. Its worklist is the extraction loop's census (`--census`, else the
+newest `sources/extract-loop-*.json`): the parks whose extraction cleared the bar, nearest the
+count first (`--near`, default 10), full-combo plays before plays with breaks; a chart whose
+extraction candidate applied edits is priced and authored on that candidate, so one commit
+carries both.
 
 How a region is read. The counter is a running count of judged events, so on a play that
 counted every event, a read minus the file's own count up to the same instant is the file's
@@ -136,23 +140,42 @@ gets the single integer `#TICKCOUNTS` rate over its own span under which the con
 N (found by bisection against the real converter; the file's rate returns at the region's end,
 entries inside the span go); where no rate reaches N and the region ends on one release row,
 the release moves by one of the block's own rows, or the half-row between, toward N — only if
-the rail the extraction saw ends on that side of the file's release. Before any of that, every
-priced cluster is also derived under the tick lattice (`tick_model.py`, below): a cluster the
-lattice prices as the counter does, while the converter does not, is tagged with the pattern
-in [EVIDENCE-RULES.md](EVIDENCE-RULES.md) ("A staggered release is not a tick") and is **not**
-authored around — that difference is the converter's, not the file's. A window of more than
-four regions or four seconds priced as one is not authored either: its total is measured, its
-interior is not. Two adjacent clusters priced opposite ways share a misread plateau and both
-are refused, and a gap read from both ends must give the same constant.
+the rail the extraction saw ends on that side of the file's release. Every priced cluster is
+also derived by `tick_model.py`'s independent implementation of the tick lattice; since the
+converter counts by the lattice itself (2026-09-23) the two agree, and a cluster where the
+model matches the counter and the converter does not would be tagged and never authored
+around. A window of more than four regions or four seconds priced as one is not authored: its
+total is measured, its interior is not. Two adjacent clusters priced opposite ways share a
+misread plateau and both are refused, and a gap read from both ends must give the same
+constant.
 
-**`tick_model.py test`** / **`tick_model.py census [--shard i/n]`**
-The hold-tick count as the game judges it, against the converter's arithmetic. `test` derives
-every cluster the tick loop's reports have priced under three rules — the converter's, the
-beat-grid tick lattice, a lattice anchored at each hold's head — and says which the counter
-agreed with; `census` derives every certified chart under the three and counts the exact
-ones, what each rule breaks that the converter had exact, and what it fixes
-(`work/tick-model-census.*.json`). The numbers that came out are in EVIDENCE-RULES.md; the
-beat-grid lattice is the one the counter and the corpus both side with.
+**`tick_model.py test`** / **`tick_model.py census [--shard i/n]`** / **`tick_model.py summary`**
+The hold-tick count as the game judges it, against the converter's old arithmetic. `census`
+runs every certified chart through the real converter under the old arithmetic and the lattice
+with its variants (points inside FAKES judged or not, a head under TICKCOUNTS 0 judged or not)
+and through an independent implementation of the lattice on the converter's own rows, and
+counts the exact ones, what each breaks that the old arithmetic had exact, what it fixes, and
+where the converter and the model disagree region by region (`work/tick-model-census.*.json`;
+`summary` totals the shards). `test` checks every cluster the tick loop's reports have priced
+against the counter. The numbers, and the semantics they settled, are in EVIDENCE-RULES.md.
+
+**`lattice_reauthor.py survey`** / **`lattice_reauthor.py apply [--only "<chart>"] [--dry-run]`**
+Our repairs, re-graded under the lattice. `survey` finds every certified chart (the corpus
+ledger and `census-final.json`) whose block our commits changed since the seed (`a23cee5`) and
+grades the block and its untouched upstream version under both arithmetics
+(`work/lattice-reauthor.json`). `apply` puts each repair the lattice breaks back on its own
+evidence, one commit per chart: a block whose upstream version is exact under the lattice is
+reverted to it; a repair that only edited notes and no longer closes is reverted for the loops
+to survey again; a repair that authored its `#TICKCOUNTS` keeps every region's recorded count
+(read back under the old arithmetic) and only the regions the lattice counts differently get a
+new rate over their own span — the full rate range scanned, then two rates split on a
+sixteenth-beat grid between the pair whose counts bracket the target — with the rate after
+each region left as it was. A region recorded below its own heads is raised to them and the
+difference comes off the closure it was priced from (the region carrying half the chart's hold
+events, else one event at a time from the largest regions within three seconds). It counts
+candidate schedules with the converter's own post-loop step (`context=` hands it the segments,
+which do not depend on TICKCOUNTS), and writes a block only when the full converter re-derives
+every region and the total, and `tick_verify` agrees in place.
 
 The gate: the priced clusters' differences must sum to the file's whole deficit (so every edit
 is a measured number and the unread regions are, in total, right as they stand); on a play
@@ -455,8 +478,19 @@ The acceptance gate. Runs piu-annotate's converter over the block in our tree an
 Checks a packaged release actually carries the repairs: the `.ssc` through the converter, the
 `Hold ticks` in the release's chart JSON, and the judged count must all agree.
 
-**`verify_zip.py <snapshot.zip> [--old <previous.zip>]`**
-Checks the PACKAGED zip, the thing that gets uploaded. `verify_release` reads the release
+**`snapshot_reuse.py <previous snapshot commit> <previous release> <new release> [--dry-run]`**
+Prepares a release folder for SNAPSHOT.md's reuse path: copies the previous release's
+chartstruct CSVs at both levels and the manual-annotation yamls, and leaves out every chart
+whose stepfile block differs from the previous snapshot's commit, so ingest and limb prediction
+redo exactly those. It matches a CSV to its block by the stepfile path and the DESCRIPTION and
+SONGTYPE in its metadata, reading a tag a block does not carry from the song header as the
+chartstruct does, and names any changed block with no chart in the release.
+
+**`verify_zip.py <snapshot.zip> [--old <previous.zip>] [--ticks]`**
+Checks the PACKAGED zip, the thing that gets uploaded. `--ticks` also re-derives every chart's
+`Hold ticks` from the stepfile the zip banks with the installed (lattice) converter and requires
+the chart json to match segment by segment — the check that a release built across a converter
+change carries the new arithmetic on every chart, not only on the repairs (several minutes). `verify_release` reads the release
 folder; packaging then rewrites keys (the `*` restoration), walks `simfiles/` a second time and
 stamps a version, and nothing looked at the result. It checks the version stamp against the
 file name and the previous zip, that chart-table names exactly the chart entries, that

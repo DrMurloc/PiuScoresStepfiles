@@ -351,14 +351,54 @@ case that row is the event. Measured three ways on 2026-09-23:
 | clusters the combo counter priced on full-combo plays (738, the tick loop's first 35 charts) it agrees with | 698 | **719** | 700 |
 | of the 23 clusters where converter and lattice disagree, the counter sides with | 1 | **22** | — |
 
-So the arithmetic is the beat grid's — StepMania's checkpoint positions — and the two
-conditions to change in `ssc_to_chartstruct.py` are: add the release tick only when no hold
-remains active after the row, and count the lattice points inside a segment rather than
-rounding rate × beats. Under it the near-miss tail all but disappears: of the 834 certified
-charts still off, 686 are off by six or more (the counter loop's re-ticks and finales) and
-148 sit within ±5. It is a change to the converter the snapshot is built with and it
-re-grades every file we authored against the old arithmetic (79 to re-author from their own
-evidence), so it is the owner's call. Until it is made, `tick_repair.py` tags a cluster the
-lattice prices as the counter does with the pattern and refuses to author around it — a rate
-bent to absorb the converter's tick would have to be unbent the day the converter is
-corrected, and a release moved to land on the count would be a grid edit against the video.
+So the arithmetic is the beat grid's — StepMania's checkpoint positions.
+
+**The converter counts by the lattice since 2026-09-23** (the owner's go; piu-annotate
+`piuscores-windows-port` commit `e01246d`, `HOLD_TICK_MODEL = "lattice"`). The accrual loop
+still decides the segments — their times and everything downstream that reads them are
+unchanged — and each segment's count is recomputed from the judged holds, the rows and
+TICKCOUNTS. `hold_ticks="legacy"` gives the old counts back, and every grading tool in this
+repo refuses to run against a converter without the lattice. Three semantics had to be
+settled, each by the corpus rather than by argument:
+
+- **Lattice points inside a WARP or a FAKES range are not judged** (StepMania's
+  `IsJudgableAtRow`). Judging them puts Dement ~After Legend~ D26 444 over its count and
+  S23 542 over; excluding them makes D26 exact and takes S23 to +100.
+- **A hold's head is judged whatever its TICKCOUNT.** The old accrual let a rate-0 hold count
+  nothing; requiring a rate above 0 for the head loses six certified charts, and in all ten
+  upstream charts where a rate-0 head decides the count (%X D13, the four Nyarlathotep
+  blocks, BSPower Explosion S16, both Skeptic blocks, Destr0yer S18, Wedding Crashers S16),
+  judging it is the exact reading.
+- A beat is the exact fraction it was written as: row beats are stored as floats and timing
+  tags to six decimals, so both are read as the nearest fraction with a small denominator
+  (7.083333 is the row at 7 + 1/12).
+
+Through the real converter on 2026-09-23, before any file changed: **116 certified charts
+exact under the old arithmetic, 654 under the lattice**; the 78 it broke were every one a file
+we had fitted to the old arithmetic (six more census-phase repairs turned up in
+`census-final.json`, outside the corpus ledger). The independent model in `tick_model.py`
+agrees with the converter region for region except where it cannot see a release written
+inside a warp or fake row, and there the converter is the exact one on seven charts.
+
+What it meant for our repairs (`tools/lattice_reauthor.py`, one commit per chart):
+
+- **12 reverted to the upstream block.** For eight — among them Conflict S22 and Sarabande
+  S20, "wild totals" the old arithmetic put 1,369 and 1,006 ticks over — the untouched
+  upstream file is exact under the lattice: the repair was compensating the converter. Four
+  more (Higgledy Piggledy S15 and S16, Cleaner D26, Love is a Danger Zone pt. 2 S11) only
+  edited notes and no longer close; they go back to the loops.
+- **72 re-authored.** Each keeps the per-region counts its repair recorded, read back under
+  the old arithmetic; only the regions the lattice counts differently get a new rate over
+  their own span. Where a repair had recorded a hold below its own heads (zero events — a
+  rate-0 hold, possible only under the old arithmetic; 937 holds on 42 charts, mostly the
+  counter loop's blind pools and storm closures, 508 of them on the four Tales of Pumpnia
+  blocks), the hold is raised to its heads and the difference comes
+  off the closure it was priced from: the region carrying half the chart's hold events if
+  there is one, otherwise one event at a time from the largest regions within three seconds.
+- The census ledger (`sources/repairs.json`) keeps every repair: 107 exact (106 before), with
+  Conflict D26 joining on its untouched upstream block.
+
+Of the certified charts still off under the lattice, most are off by six or more — the
+counter loop's re-ticks and finales — and a small tail sits within ±5 (148 before the
+re-grading), where the tick loop now prices regions with no converter artifact left to mistake
+for a tick.
