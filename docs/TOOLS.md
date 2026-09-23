@@ -78,7 +78,13 @@ Truth D18 all nine, Slam D22 640 of 642 events identical — parking only becaus
 close on tick bursts this loop does not author, which is the counter loop's job.
 `--ssc`/`--expected` run the survey against another file for exactly that kind of proof.
 `--cache` keeps the sprite passes (a few MB a chart) so a rule change re-scores without
-decoding; the first corpus run kept them.
+decoding; the first corpus run kept them. `--redo-verdict FAIL` re-runs only those charts
+from a shard's report; `--tail-tol` and `--precision-bar` override the two thresholds for an
+experiment, and two were run from cache after the first corpus pass, both negative: a 25 ms
+release threshold (against the 60 ms default) shipped 2 of 48 near misses but moved 33 of
+them *further* from the count — the rail's last frame is noise at that scale, and one
+candidate ran to +1.3 million ticks inside a BPM gimmick before the gate refused it — and an
+85% precision bar (against 93%) shipped 0 of 24 precision-limited parks. Both defaults stay.
 
 ## Reading footage
 

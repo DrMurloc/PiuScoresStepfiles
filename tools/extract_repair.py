@@ -4,7 +4,7 @@
 # price; this reads the notes themselves, which is the other two thousand.
 #
 #   python -X utf8 tools/extract_repair.py survey [--shard i/n] [--only "<chart>"] [--limit N]
-#          [--shapes under-ticked,hold-less,single-region,over-ticked] [--cache] [--redo]
+#          [--shapes under-ticked,hold-less,single-region,over-ticked] [--cache] [--redo] [--redo-verdict FAIL,PARK]
 #          [--ssc <alt .ssc> --expected N]      (a proof: run against another file, ship nothing)
 #   python -X utf8 tools/extract_repair.py commit [--dry-run] [--only "<chart>"]
 #
@@ -72,7 +72,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PY = r"C:\Users\jonec\repos\piu-annotate\.venv\Scripts\python.exe"
 OUT = os.path.join(ROOT, "work", "extract-loop")
 TOL = 0.045          # s: an extracted note and a file note this close are the same note
-TAIL_TOL = 0.060     # s: a release this far from the file's is a different release
+TAIL_TOL = 0.060     # s: a release this far from the file's is a different release (--tail-tol overrides)
 SNAP_TOL = 0.020     # s: an added note snaps to the coarsest lattice line this close
 RECALL_BAR = 0.93    # the extraction must see this share of the file's notes to be believed
 PRECISION_BAR = 0.93 # and this share of what it extracted must be in the file
@@ -92,6 +92,10 @@ TRAILER = "\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 
 def arg(name, default=None):
     return sys.argv[sys.argv.index(name) + 1] if name in sys.argv else default
+
+
+TAIL_TOL = float(arg("--tail-tol", TAIL_TOL))
+PRECISION_BAR = float(arg("--precision-bar", PRECISION_BAR))
 
 
 def block_tag(key):
@@ -386,15 +390,15 @@ def apply(text, tag, edits, pad, width):
                 old = float(Fraction(e["old"])); tail = float(Fraction(e["tail"]))
                 mi, r = edit_notes.beat_to_pos(measures, old, cols)
                 row = measures[mi][r]
-                if row[col] != "3":
+                if len(row) <= col or row[col] != "3":
                     skipped.append({**e, "why": "no release at the old beat"}); continue
                 measures[mi][r] = row[:col] + "0" + row[col + 1:]
                 edit_notes.set_char(measures, tail, col, "3", cols)
                 cleared += clear_between(col, head, tail)
             elif e["kind"] == "add-tap":
                 mi, r = edit_notes.beat_to_pos(measures, head, cols)
-                if measures[mi][r][col] != "0":
-                    skipped.append({**e, "why": "the row is taken"}); continue
+                if len(measures[mi][r]) <= col or measures[mi][r][col] != "0":
+                    skipped.append({**e, "why": "the row is taken or narrower than the column"}); continue
                 edit_notes.set_char(measures, head, col, "1", cols)
             if not sound(col):
                 measures[:] = before
@@ -497,6 +501,8 @@ def survey():
         jobs = jobs[:int(limit)]
     path = report_path(shard)
     prior = {r["chart"]: r for r in json.load(open(path, encoding="utf-8"))} if os.path.exists(path) and "--redo" not in sys.argv else {}
+    if arg("--redo-verdict"):           # e.g. --redo-verdict FAIL: those charts run again, the rest keep their record
+        prior = {k: v for k, v in prior.items() if v.get("verdict") not in arg("--redo-verdict").split(",")}
     ssc_override, expected_override = arg("--ssc"), arg("--expected")
     if ssc_override:
         prior = {}
@@ -525,10 +531,17 @@ def git(*args):
     return subprocess.run(["git"] + list(args), cwd=ROOT, capture_output=True, text=True, encoding="utf-8").stdout
 
 
+def applied(rec):
+    """The edits that went in: the plan minus what the applier skipped (a skipped entry is the
+    edit plus a `why`, so it matches on every field the edit has)."""
+    skipped = rec.get("skipped", [])
+    return [d for d in rec["edits"] if not any(all(sk.get(k) == v for k, v in d.items()) for sk in skipped)]
+
+
 def message(rec):
-    e = rec["edits"]
+    e = applied(rec)
     x, al, ft = rec["extraction"], rec["alignment"], rec["footage"]
-    lines = ["Fix %s from the footage: %s" % (rec["chart"], summary([d for d in e if d["kind"] in ("tap->hold", "tail", "add-hold", "add-tap")])), ""]
+    lines = ["Fix %s from the footage: %s" % (rec["chart"], summary(e)), ""]
     lines.append("Evidence: the certified chart video %s (%s, band %s), result screen judged %d, read by" % (rec["vid"], rec["side"], ft["band"], rec["expected"]))
     lines.append("tools/note_extract.py and diffed against the file by tools/extract_repair.py. The extraction")
     lines.append("found %d of the file's %d notes (%.1f%%; %d extracted, %.1f%% of them in the file), median timing" % (x["matched"], x["file_notes"], 100 * x["recall"], x["extracted"], 100 * x["precision"]))
@@ -544,6 +557,9 @@ def message(rec):
             lines.append("  col %d: tap added at beat %s (%.2fs)" % (d["col"], d["head"], d["head_t"]))
     if rec.get("cleared"):
         lines.append("  (%d tap(s) the file wrote inside those holds cleared)" % rec["cleared"])
+    if rec.get("skipped"):
+        lines.append("Proposed by the diff but not applied: " + "; ".join(
+            "%s col %d beat %s (%s)" % (d["kind"], d["col"], d["head"], d["why"]) for d in rec["skipped"]))
     un = rec["extraction"]["unseen"]
     if un.get("missing") or un.get("hold->tap"):
         lines.append("Not applied: %d file note(s) the extraction did not find and %d hold(s) it read as taps -" % (un.get("missing", 0), un.get("hold->tap", 0)))
