@@ -6,6 +6,11 @@
 # judged note count is one we repaired. That is a property of the tree, not a list
 # someone remembered to update.
 #
+# Since the converter counts hold ticks by the tick lattice (2026-09-23), "known wrong" was a
+# verdict of the old arithmetic: a census chart can now be exact with its upstream block
+# untouched (Conflict S22, Sarabande S20). Those are listed with upstream_exact true and no
+# commit; every other entry names the last commit that changed its block (a revert counts).
+#
 #   python -X utf8 tools/rebuild_repairs.py
 import json
 import os
@@ -14,6 +19,8 @@ import subprocess
 import sys
 
 sys.path.insert(0, r"C:\Users\jonec\repos\piu-annotate")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import lattice_reauthor                                                           # noqa: E402  (refuses an old converter)
 from piu_annotate.formats.sscfile import StepchartSSC                             # noqa: E402
 from piu_annotate.formats.ssc_to_chartstruct import stepchart_ssc_to_chartstruct  # noqa: E402
 
@@ -56,13 +63,21 @@ def main():
         ticks = sum(round(t[2]) for t in ht)
         judged = int(c["judged"])
         if taps + ticks == judged:
+            changed = lattice_reauthor.history("simfiles/" + o["ssc_rel"], block_of(o["key"]))
+            seed = lattice_reauthor.block_section(lattice_reauthor.git("show", "%s:simfiles/%s" % (lattice_reauthor.SEED, o["ssc_rel"])), block_of(o["key"]))
+            now = lattice_reauthor.block_section(open(path, encoding="utf-8", newline="").read(), block_of(o["key"]))
+            upstream = lattice_reauthor.norm(seed) == lattice_reauthor.norm(now)
             out.append(dict(chart=name, key=o["key"], ssc_rel=o["ssc_rel"], video=c["video"],
-                            judged=judged, taps=taps, ticks=ticks, commit=last_fix_commit(o["ssc_rel"])))
+                            judged=judged, taps=taps, ticks=ticks, upstream_exact=upstream,
+                            commit="" if upstream else (changed[-1][0] if changed else last_fix_commit(o["ssc_rel"]))))
         else:
             unfixed.append((name, taps + ticks, judged))
     out.sort(key=lambda r: r["chart"])
     json.dump(out, open(os.path.join(ROOT, "sources", "repairs.json"), "w", encoding="utf-8"), indent=1)
-    print(f"repairs.json: {len(out)} charts verified exact; {len(unfixed)} census charts still wrong")
+    print(f"repairs.json: {len(out)} charts verified exact ({sum(1 for r in out if r['upstream_exact'])} of them "
+          f"with the upstream block untouched); {len(unfixed)} census charts still wrong")
+    for name, implied, judged in sorted(unfixed):
+        print(f"  still wrong: {name}: {implied} against {judged}")
 
 if __name__ == "__main__":
     main()

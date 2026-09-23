@@ -105,8 +105,21 @@ def history(rel, tag):
     return out
 
 
+def certified():
+    """Every chart with a certified judged count: the corpus ledger (E.charts), and the census
+    charts, which were certified in the census phase against its own evidence file."""
+    allc = dict(E.charts())
+    smap = {o["chart"]: o for o in json.load(open(os.path.join(ROOT, "sources", "ssc-map.json"), encoding="utf-8"))}
+    for c in json.load(open(os.path.join(ROOT, "sources", "census-final.json"), encoding="utf-8")):
+        name = c["chart"]
+        if name in allc or name not in smap or not str(c.get("judged", "")).strip().isdigit():
+            continue
+        allc[name] = dict(chart=name, key=smap[name]["key"], ssc_rel=smap[name]["ssc_rel"], expected=int(c["judged"]))
+    return allc
+
+
 def survey():
-    allc = E.charts()
+    allc = certified()
     rows = []
     changed_files = set(git("diff", "--name-only", SEED, "HEAD", "--", "simfiles").splitlines())
     for name, c in sorted(allc.items()):
