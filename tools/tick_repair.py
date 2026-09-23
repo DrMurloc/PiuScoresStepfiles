@@ -61,8 +61,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import author_ticks     # noqa: E402  (patch: the TICKCOUNTS writer)
 import corpus_map       # noqa: E402
 import edit_notes       # noqa: E402
-import extract_repair as E  # noqa: E402
+import extract_repair as E  # noqa: E402   (puts piu-annotate on the path, refuses an old converter)
 import note_extract     # noqa: E402
+from piu_annotate.formats import ssc_to_chartstruct as _C  # noqa: E402
 
 ROOT = E.ROOT
 PY = E.PY
@@ -345,11 +346,8 @@ def price_clusters(regions, taps, reads, clock, clean, tol, judged=None):
             rec["diff"] = a["err"] - b["err"]
             rec["price"] = rec["ticks"] + rec["diff"]
             rec["climb"], rec["between"] = a["value"] - b["value"], (a["file"] - b["file"]) - rec["ticks"]
-            segs = sum(regions[k]["segments"] for k in members)
-            if rec["diff"] and rec["diff"] == -(segs - len(members)):
-                # the converter adds a release tick on EVERY release row, so a pair whose holds let
-                # go on different rows derives one tick per extra row; the game counts the lattice
-                rec["pattern"] = "staggered releases: the converter counts a tick on each of the %d release rows, the game counted %d fewer" % (segs, segs - len(members))
+            # (until 2026-09-23 a shortfall of exactly the cluster's extra release rows was tagged
+            # as the converter's staggered-release tick; the converter counts by the lattice now)
         out.append(rec)
     # Two adjacent clusters whose differences point opposite ways share one reading that is off:
     # a misread of that plateau, not two opposite errors in adjacent holds. Cleaner S13 read 25
@@ -370,16 +368,23 @@ def price_clusters(regions, taps, reads, clock, clean, tol, judged=None):
 
 # ---------------------------------------------------------------- the file
 
+def exact(b):
+    """A schedule beat as the converter reads it: 73.583333 as written and the row at 73 + 7/12
+    are one beat, and one key here, not two a hair apart."""
+    return float(_C._frac(b))
+
+
 def schedule(text, tag):
-    """The block's #TICKCOUNTS as sorted (beat, rate); the song header's when the block has none."""
+    """The block's #TICKCOUNTS as sorted (beat, rate); the song header's when the block has none.
+    Beats are exact (see exact), the later of two written a hair apart winning, as in the converter."""
     sections, i = edit_notes.find_block(text, tag)
     m = re.search(r"#TICKCOUNTS:(.*?);", sections[i], re.S) or re.search(r"#TICKCOUNTS:(.*?);", sections[0], re.S)
-    entries = []
-    for part in (m.group(1) if m else "").replace("\n", "").split(","):
-        if "=" in part:
-            b, r = part.split("=")
-            entries.append((float(b), float(r)))
-    return sorted(entries)
+    entries = {}
+    for part in sorted((p for p in (m.group(1) if m else "").replace("\n", "").replace("\r", "").split(",") if "=" in p),
+                       key=lambda p: float(p.split("=")[0])):
+        b, r = part.split("=")
+        entries[exact(float(b))] = float(r)
+    return sorted(entries.items())
 
 
 def rate_at(sched, beat):
@@ -396,10 +401,11 @@ def fmt_rate(r):
 
 def with_rate(text, tag, sched, b0, b1, r):
     """The text with ONE rate over [b0, b1): entries inside go, the file's own rate returns at b1."""
-    keep = [(b, v) for b, v in sched if not (b0 - 1e-9 <= b < b1 - 1e-9)]
+    b0, b1 = exact(b0), exact(b1)
+    keep = [(b, v) for b, v in sched if not (b0 <= b < b1)]
     new = dict(keep)
     new[b0] = float(r)
-    if not any(abs(b - b1) < 1e-9 for b, _ in keep):
+    if b1 not in new:
         new[b1] = rate_at(sched, b1)
     tc = ",\n".join("%.6f=%s" % (b, fmt_rate(v)) for b, v in sorted(new.items()))
     out, ok = author_ticks.patch(text, tag, tc)
