@@ -396,7 +396,11 @@ Native S17 (holds the file wrote as taps); Higgledy Piggledy S15 and S16, With m
 Life is PIANO S16, Lacrimosa S17, Kokugen Kairou Labyrinth S15, Dement ~After Legend~ S15
 (releases moved to where the rail ends); Maria S12, Cleaner D26, Harmagedon D24 (a tap or two
 added, each flashed at the receptor, and a release moved). Every commit lists its edits, what
-the extraction saw, and what it did not apply.
+the extraction saw, and what it did not apply. One of them did not survive the day: S15 and
+S16 of Higgledy Piggledy share a song file, both candidates were whole-file copies made from
+the file before either fix, and the S15 commit (`9e281f7`) put the S16 block back to +8 while
+the in-place check read only S15 — re-landed as `f4767d1` from the file as it now stands, and
+`commit` now refuses a candidate whose file changed outside its own block (TOOLS.md).
 
 What the parks say, which is the census the loop was also for:
 
@@ -411,11 +415,49 @@ What the parks say, which is the census the loop was also for:
 - **478 parked on the extraction itself**: 170 under 93% recall (the reader missing the chart's
   own notes — dense drills, gimmick scrolls, two of the owner's edge cases), the rest under 93%
   precision (extras a busy BGA throws); dropping the bar to 85% shipped nothing.
-- **49 files write stepf2 cells** (`{2|n|1|0}`), which the applier does not edit — a writer
-  that speaks that dialect would open them.
+- **49 files write stepf2 cells** (`{2|n|1|0}`), which the applier did not edit. It does now
+  (2026-09-23: the grid is edited by panel, and a fake-flagged cell is handed to the matcher as
+  drawn-but-never-judged), so those files read like any other — the first of them through,
+  Club Night D18, still parks at 83% precision, and its extras are *not* on its fakes: 133
+  long streaks in columns 0 and 3 the file has nothing for, a BGA question for the frames.
 
 Snapshot `092226` is now **13 charts behind**; it is regenerated only when the owner asks.
 YouTube fetches are still refused from this network; the run read the 2,025 cached videos.
+
+## The converter counts a release tick on every release row (2026-09-23)
+
+Pricing the first near miss from the counter (ASDF D10, below) found a pair of holds at beats
+260–267 that the converter derives as 16 ticks and the game judged as 15: the converter closes
+a segment on each release row and adds a tick for it, so a pair whose holds let go on
+different rows derives one tick per extra row, where the game judges the tick lattice once.
+Counted over the whole certified corpus (1,479 charts, `work/stagger-corpus.*.json`):
+
+| | charts |
+|---|---|
+| certified charts off the count | 1,364 |
+| of them over the count by **exactly** their staggered release rows | **542** (191 at +1, 95 at +2, 53 at +3, 43 at +4, 27 at +5, 133 beyond) |
+| over by more than that count (the rule explains part) | 282 |
+| exact charts that carry staggered releases | 16 — every one a file we authored to the converter's arithmetic |
+| upstream (The Resistance) exact charts with staggered releases | 0 |
+
+The rule is one condition in `ssc_to_chartstruct.py` — add the release tick only when no hold
+remains active after the row (a release row that also carries a tap is already right: the
+tap's −1 cancels the +1) — and under it the certified set goes from **115 exact charts to
+641**. It breaks the 16 fitted files, which are ours to re-author from their own evidence
+(the counter loop's targets and the extraction loop's releases are on record). It is a change
+to the converter the snapshot is built with, so it is the owner's decision; nothing has been
+changed, and the loop below refuses to author around the pattern (EVIDENCE-RULES.md, "A
+staggered release is not a tick").
+
+## The tick loop (2026-09-23)
+
+`tools/tick_repair.py` is the counter loop's pricing aimed with the extraction loop's
+alignment (TOOLS.md has the method): every hold region of a near-miss file priced from the
+counter's readings either side of it, each reading held to the file's own running count, the
+counter filtered to the non-decreasing chain a full-combo play can show, and only a region the
+counter measured is authored — a single rate over its span, or a release moved a row toward
+the rail. Full-combo plays (result-screen maxcombo equal to the judged count) are read first,
+because on those a partial accounting closes; a play with breaks needs every region read.
 
 ## Beyond the census (sized 2026-09-06, listed in full 2026-09-08)
 

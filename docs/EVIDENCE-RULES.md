@@ -302,3 +302,39 @@ Say which one you used. What is *not* acceptable is letting the beat-weight dist
 scatter a bomb's ticks across mid-chart holds the anchors say are nearly empty — always check
 large targets against their anchor brackets and push the remainder into the window where the
 counter actually moved. This is the single most common way a converged file is still wrong.
+
+## A staggered release is not a tick
+
+The converter (`piu_annotate/formats/ssc_to_chartstruct.py`) accrues a hold region's ticks as
+rate × beats over its span and adds **one tick on every release row** that starts no new hold —
+the head's own judgement, in effect, for a lone hold: a hold from beat 0 to 2 at rate 4
+derives 8 + 1 = 9, and the game judges 9 (the head, then eight lattice ticks). But when one
+hold of a pair lets go while the other is still held, the converter closes a segment on that
+row, adds its release tick, and opens a fresh segment that ends with a release tick of its own:
+two for the pair, where the game — which judges the tick lattice once, however many holds are
+active at a tick — gives one. ASDF D10's pair at beats 260–267 (rate 2, one release at 266,
+the other at 267) derives 16; the combo counter climbs 15 across it on a full-combo play, and
+every other reading on that chart sits on the file's own count exactly.
+
+Measured over the 1,479 certified charts on 2026-09-23 (`work/stagger-corpus.*.json`):
+
+- **542 of the 1,364 charts off the count are over it by exactly their number of staggered
+  release rows** (191 at +1, 95 at +2, 53 at +3, … 69 at +10 or more). Of the 1,105
+  over-ticked charts, 282 more are over by *more* than that count, and 11 by less.
+- Of the 115 exact charts, **16 carry staggered releases, and all 16 are files we authored**
+  against the converter's arithmetic (the counter loop's targets, the extraction loop's
+  releases). The upstream corpus has none: The Resistance's schedules were written for the
+  game, and under the game's rule they are right.
+- A staggered release row that also carries a tap is right as the converter has it: the tap
+  is the judged event at that moment and the converter's −1 for a tap inside a hold already
+  cancels the +1 (17 of the 28 charts with such rows are exact once the tapless rows are
+  corrected, none if those rows are corrected too).
+
+So the rule is one condition: **the release tick is added only when no hold remains active
+after the row.** Under it the certified set goes from 115 exact charts to 641, and the 16 it
+breaks are ours to re-author from their own evidence. It is a change to the converter the
+snapshot is built with, so it is the owner's call; until it is made, `tick_repair.py` tags a
+region whose measured shortfall is exactly its extra release rows with the pattern and
+refuses to author around it — a rate bent to absorb the converter's tick would have to be
+unbent the day the converter is corrected, and a release moved to land on the count would be
+a grid edit against the video.

@@ -175,6 +175,12 @@ $PY tools/rebuild_repairs.py
 
 which re-derives `sources/repairs.json` from the tree.
 
+Two charts of one song file are two blocks of one file: a fix to the second must start from
+the file *with* the first fix in it, or it undoes it, and `tick_verify` on the second block
+will not notice (Higgledy Piggledy S15 undid S16 that way, 2026-09-22). The loops' `commit`
+refuses a candidate whose file changed outside its own block; by hand, re-derive the second
+fix after committing the first, and verify every repaired block of the file before committing.
+
 ## When it will not close
 
 - **Grid mismatch** → re-step pile. The file is a different chart revision.

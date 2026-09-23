@@ -71,6 +71,20 @@ over every shard's report that re-runs `tick_verify` in place before each commit
 per chart carrying every edit. `note_extract` now hands back its receptor flashes in `meta`
 and each rail's length and occupancy on the note, which is what these rules read.
 
+Two things learned after the first run (2026-09-23). A candidate is a whole-file copy made
+from the file as it stood when the survey ran, so when two charts of one song file both ship,
+the second candidate still carries the first block unrepaired and copying it in undoes the
+first fix — Higgledy Piggledy S15's commit put S16 back to its +8 state minutes after S16 had
+shipped, and the in-place check, which reads only the block being committed, said MATCH.
+`commit` now refuses a candidate whose file has changed outside its own block, and says to
+re-run the survey for that chart (`--redo --only`); `--note "<text>"` appends a paragraph to
+the commit message for exactly such a re-landing. And the note grid is edited by *panel*, not
+by character: a StepF2 cell such as `{2|n|1|0}` is one panel to `edit_notes.cells/get/put`,
+which the applier and `load_block`'s width now go through, so the 49 files that write those
+cells are read and edited like any other (their fake-flagged cells and `F` letters are also
+handed to the matcher as *drawn but never judged*, so an extracted note on one is that fake,
+not an addition — `--redo-reason stepf2` re-runs the charts a report parked for that reason).
+
 Proven before it ran (2026-09-22): the five charts the counter loop made exact came back with
 no edit at all (before the rules they drew 4, 3, 6 and 8 stray additions), and six manual
 repairs re-derived from their seed files found the same holds in the same columns — Another
@@ -85,6 +99,58 @@ release threshold (against the 60 ms default) shipped 2 of 48 near misses but mo
 them *further* from the count — the rail's last frame is noise at that scale, and one
 candidate ran to +1.3 million ticks inside a BPM gimmick before the gate refused it — and an
 85% precision bar (against 93%) shipped 0 of 24 precision-limited parks. Both defaults stay.
+
+## The tick loop
+
+**`tick_repair.py survey [--shard i/n] [--only "<chart>"] [--limit N] [--near N] [--redo] [--redo-verdict V,V] [--no-scan]`**
+**`tick_repair.py commit [--dry-run] [--only "<chart>"]`**
+Where the extraction loop found the screen showing the file's notes and holds and the count
+still off, this prices every hold region of the file from the combo counter and authors only
+what the counter measured. Its worklist is the extraction loop's census: the parks whose
+extraction cleared the bar, nearest the count first (`--near`, default 10), full-combo plays
+before plays with breaks; a chart whose extraction candidate applied edits is priced and
+authored on that candidate, so one commit carries both.
+
+How a region is read. The counter is a running count of judged events, so on a play that
+counted every event, a read minus the file's own count up to the same instant is the file's
+cumulative error there — and it changes only inside a region whose ticks the file has wrong.
+The video clock is the extraction loop's (the file's notes matched on screen; `note_extract`
+reloads from its cache in seconds), the display lag between a judgement and the counter's step
+is measured on the chart's own isolated taps, and each region is read on the stretch before it
+(back to the previous region, at most 0.6 s) and the stretch after it: the reads whose cut
+falls there, clear of every judged event by 35 ms, must agree on that constant (two frames,
+60% of them), or the stretch is not read. The change between the two readings is the region's
+own error, its ticks plus that change its price; two regions with nothing readable between
+them are priced together as one cluster. On a full-combo play the counter never falls, so only
+the longest non-decreasing chain of confident reads is believed — a dropped hundred, a 9 read
+as 5, a rail's leading 1 fall off it (ASDF D10: 135, 136, 137, 138, *135*, 140 — the fifth is
+139) — and every reading is held to the file's count within what the chart's whole deficit
+could explain. Two readings a full combo fixes without a frame: before the first hold the
+counter shows the file's first taps (it is blank below 4), and after the last event it rests
+at maxcombo, which *is* the judged count — a region priced off that end is priced by closure,
+and the record says so. On a play with breaks the reads are cut into runs at each reset and
+both readings of a region must come from one run.
+
+What it authors, in this order and nothing else: a region priced N where the file derives M
+gets the single integer `#TICKCOUNTS` rate over its own span under which the converter derives
+N (found by bisection against the real converter; the file's rate returns at the region's end,
+entries inside the span go); where no rate reaches N and the region ends on one release row,
+the release moves by one of the block's own rows, or the half-row between, toward N — only if
+the rail the extraction saw ends on that side of the file's release. A region whose shortfall
+is exactly its extra release rows is tagged with the pattern in
+[EVIDENCE-RULES.md](EVIDENCE-RULES.md) ("A staggered release is not a tick") and is **not**
+authored around: that difference is the converter's, not the file's.
+
+The gate: the priced clusters' differences must sum to the file's whole deficit (so every edit
+is a measured number and the unread regions are, in total, right as they stand); on a play
+with GOODs, BADs or MISSes every region must have been read, because a GOOD neither breaks nor
+increments the counter and an unread region could hide the tick it took; and after authoring
+the converter must derive the price on every edited cluster, the file's own ticks on every
+other, and the certified count in total. Everything else parks with the full region table —
+cut times, reads, the file's count at each, taps between — in `work/tick-loop-report[.i].json`.
+The counter scan (`work/combo/<vid>.<band>.jsonl`, `combo_reader`) is made on demand at about
+1.3× real time a video unless `--no-scan`. `commit` mirrors the extraction loop's: candidate in,
+`tick_verify` in place, the outside-the-block guard, one commit per chart naming every reading.
 
 ## Reading footage
 
