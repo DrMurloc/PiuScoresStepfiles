@@ -77,6 +77,8 @@ SHARE = 0.60    # and that value must carry this share of the plateau's reads
 LAG0 = 0.10     # s: the display lag assumed when the chart's own taps cannot measure it
 RATE_MAX = 128  # ticks per beat the rate search will go to
 TAIL_ROWS = 1   # how many of the block's own rows a release may move
+WINDOW_REGIONS = 4   # a cluster authored as one may hold this many regions...
+WINDOW_SECONDS = 4.0 # ...over this long: a window's total is measured, its interior is not
 NEAR = 10       # the default --near: how far from the count a chart may be to be priced this way
 
 
@@ -266,9 +268,14 @@ def price_clusters(regions, taps, reads, clock, clean, tol, judged=None):
         return p
 
     n = len(regions)
-    between = [stretch(regions[i]["t1"], min(regions[i + 1]["t0"], regions[i]["t1"] + SPAN)) for i in range(n - 1)]
-    first = stretch(regions[0]["t0"] - SPAN, regions[0]["t0"])
-    last = stretch(regions[-1]["t1"], regions[-1]["t1"] + SPAN)
+    # each region is read on the stretch NEAREST to it, at most SPAN away and never past its
+    # neighbour: a reading taken right after the previous region and carried across a minute of
+    # taps to the next one charges every tap error in between to that region (Cutie Song S11's
+    # last hold was priced from a plateau 57 s before it)
+    befores = [stretch(max(regions[i - 1]["t1"] if i else -1e9, regions[i]["t0"] - SPAN), regions[i]["t0"]) for i in range(n)]
+    afters = [stretch(regions[i]["t1"], min(regions[i + 1]["t0"] if i + 1 < n else 1e9, regions[i]["t1"] + SPAN)) for i in range(n)]
+    between = [afters[i] if afters[i] and not afters[i].get("why") else befores[i + 1] for i in range(n - 1)]
+    first, last = befores[0], afters[-1]
     if clean and judged is not None:
         # Two readings a full-combo play fixes without a frame (EVIDENCE-RULES, the structural
         # anchor): before anything is judged the counter is 0, and after the last event it rests
@@ -283,12 +290,25 @@ def price_clusters(regions, taps, reads, clock, clean, tol, judged=None):
         if not last or last.get("why"):
             end = max(taps_s[-1] if taps_s else 0.0, regions[-1]["t1"]) + JIT
             last = dict(cut=round(end, 3), value=judged, file=F(end), err=judged - F(end), frames=0, of=0, anchor="a full combo rests at the judged count after the last event")
-    befores = [first] + between
-    afters = between + [last]
+    befores[0], afters[-1] = first, last
+
+    def ok(p):
+        return bool(p) and not p.get("why")
+
+    # a gap long enough to be read from both ends is read from both, and the two must agree:
+    # a plateau the reader mangled (a 9 as 5) shows as one reading off the other's constant
+    disputed = set()
+    for i in range(n - 1):
+        x, y = afters[i], befores[i + 1]
+        if ok(x) and ok(y) and abs(x["cut"] - y["cut"]) > 1e-6 and x["err"] != y["err"]:
+            disputed.add(i)
+            why = "the two readings between them disagree (%d at %.2fs against the file's %d, %d at %.2fs against %d)" % (
+                x["value"], x["cut"], x["file"], y["value"], y["cut"], y["file"])
+            afters[i] = dict(x, why=why); befores[i + 1] = dict(y, why=why); between[i] = afters[i]
     clusters, cur = [], [0]
     for i in range(1, n):
         # a reading between two regions separates them; none, and they are read together
-        if between[i - 1] and not between[i - 1].get("why"):
+        if ok(between[i - 1]) or (i - 1) in disputed:
             clusters.append(cur); cur = [i]
         else:
             cur.append(i)
@@ -296,10 +316,13 @@ def price_clusters(regions, taps, reads, clock, clean, tol, judged=None):
     out = []
     for members in clusters:
         i0, i1 = members[0], members[-1]
+        # the reading nearest the cluster on each side; failing that, the same gap read from
+        # its other end (the stretch after the previous region, before the next)
+        b = befores[i0] if ok(befores[i0]) or not i0 else (afters[i0 - 1] if ok(afters[i0 - 1]) else befores[i0])
+        a = afters[i1] if ok(afters[i1]) or i1 + 1 >= n else (befores[i1 + 1] if ok(befores[i1 + 1]) else afters[i1])
         rec = dict(regions=members, t0=regions[i0]["t0"], t1=regions[i1]["t1"], b0=regions[i0]["b0"], b1=regions[i1]["b1"],
                    ticks=sum(regions[k]["ticks"] for k in members), ends=regions[i1]["ends"], chained=regions[i1]["chained"],
-                   before=befores[i0], after=afters[i1], price=None, why=None)
-        b, a = befores[i0], afters[i1]
+                   before=b, after=a, price=None, why=None)
         if not b or not a:
             rec["why"] = "no reading " + ("before" if not b else "") + (" and " if not b and not a else "") + ("after" if not a else "")
         elif b.get("why") or a.get("why"):
@@ -320,6 +343,20 @@ def price_clusters(regions, taps, reads, clock, clean, tol, judged=None):
                 # go on different rows derives one tick per extra row; the game counts the lattice
                 rec["pattern"] = "staggered releases: the converter counts a tick on each of the %d release rows, the game counted %d fewer" % (segs, segs - len(members))
         out.append(rec)
+    # Two adjacent clusters whose differences point opposite ways share one reading that is off:
+    # a misread of that plateau, not two opposite errors in adjacent holds. Cleaner S13 read 25
+    # for 29, 185 for 189, 405 for 409 (a units 9 as 5, which the chain cannot see when the
+    # plateau is the first frame of that value) and priced the holds either side -4 and +4 four
+    # times over; Iolite Sky D21 read 5 for 9 and priced its first two holds -5 and +4, which the
+    # authoring then met with rates of 4 and 27. The magnitudes need not match - one of the two
+    # holds may carry a real difference of its own - so any opposite-signed pair refuses both.
+    for k in range(len(out) - 1):
+        x, y = out[k], out[k + 1]
+        if x.get("diff") and y.get("diff") and x["diff"] * y["diff"] < 0:
+            why = "the reading between them (%d at %.2fs, the file's count there %d) prices them %+d and %+d - a misread of that plateau" % (
+                x["after"]["value"], x["after"]["cut"], x["after"]["file"], x["diff"], y["diff"])
+            for z in (x, y):
+                z.update(price=None, diff=None, why=why, pattern=None)
     return out
 
 
@@ -538,14 +575,30 @@ def survey_chart(job, scan_ok=True):
     rec["reads"] = dict(confident=len(raw), on_chain=len(reads), lag=lag, lag_taps=n_lag)
     tol = max(8, 3 * abs(D) + 5)
     clusters = price_clusters(regions, taps, reads, clock, clean, tol, judged if clean else None)
+    # what the tick lattice gives each priced cluster (tools/tick_model.py): where it agrees with
+    # the counter and the converter does not, the file is right and the converter's arithmetic is
+    # what is off - that is tagged, and never authored around
+    import tick_model
+    sched0 = schedule(open(ssc, encoding="utf-8", newline="").read(), tag)
+    for c in clusters:
+        if c.get("price") is None:
+            continue
+        c["model"] = sum(tick_model.model_region(blk["rows"], ncols, sched0, regions[k]["t0"], regions[k]["t1"]) for k in c["regions"])
+        if c["model"] == c["price"] != c["ticks"]:
+            c["pattern"] = (c.get("pattern") + " (the tick lattice agrees)") if c.get("pattern") else \
+                "converter arithmetic: the tick lattice gives %d, the converter %d, the counter %d" % (c["model"], c["ticks"], c["price"])
     priced = [c for c in clusters if c["price"] is not None]
     unpriced = [c for c in clusters if c["price"] is None]
     S = sum(c["diff"] for c in priced)
     rec["clusters"] = [dict(regions=c["regions"], t0=c["t0"], t1=c["t1"], b0=c["b0"], b1=c["b1"], ticks=c["ticks"], price=c["price"],
                             diff=c.get("diff"), why=c["why"], before=c["before"], after=c["after"], climb=c.get("climb"), between=c.get("between"),
-                            pattern=c.get("pattern"))
+                            pattern=c.get("pattern"), model=c.get("model"))
                        for c in clusters]
     rec["patterns"] = dict(Counter(c["pattern"].split(":")[0] for c in clusters if c.get("pattern")))
+    rec["arithmetic"] = dict(priced=sum(1 for c in clusters if c.get("price") is not None),
+                             converter_right=sum(1 for c in clusters if c.get("price") is not None and c["ticks"] == c["price"]),
+                             lattice_right=sum(1 for c in clusters if c.get("price") is not None and c.get("model") == c["price"]),
+                             neither=sum(1 for c in clusters if c.get("price") is not None and c["ticks"] != c["price"] and c.get("model") != c["price"]))
     rec.update(regions=len(regions), priced=len(priced), priced_regions=sum(len(c["regions"]) for c in priced), unpriced=len(unpriced),
                unpriced_why=dict(Counter(c["why"].split(" (")[0].split(": the read")[0] for c in unpriced)), diff_sum=S,
                differing=sum(1 for c in priced if c["diff"]))
@@ -570,6 +623,12 @@ def survey_chart(job, scan_ok=True):
             # happened to land on the price would be a grid edit against the video, and a rate
             # bent to absorb it would have to be unbent when the converter is corrected
             return {**rec, "reason": "region at %.2fs priced %d against the file's %d - %s; not authored around" % (c["t0"], c["price"], c["ticks"], c["pattern"])}
+        if len(c["regions"]) > WINDOW_REGIONS or c["t1"] - c["t0"] > WINDOW_SECONDS:
+            # a window's total is measured; its interior is not, and one rate over a long run of
+            # holds redistributes every one of them to shave a tick (Bluish Rose D14: 25 regions
+            # over 67 s re-rated 16 -> 15 to lose one tick - an exact total, a fabricated interior)
+            return {**rec, "reason": "cluster of %d regions over %.0f s (%.2f-%.2fs) priced %d against the file's %d as one - the interior is unobservable at this resolution" % (
+                len(c["regions"]), c["t1"] - c["t0"], c["t0"], c["t1"], c["price"], c["ticks"])}
         sched = schedule(text, tag)
         rate = solve_rate(text, key, tag, sched, c, c["price"])
         if rate is not None:
@@ -634,6 +693,8 @@ def survey():
     prior = {r["chart"]: r for r in json.load(open(path, encoding="utf-8"))} if os.path.exists(path) and "--redo" not in sys.argv else {}
     if arg("--redo-verdict"):
         prior = {k: v for k, v in prior.items() if v.get("verdict") not in arg("--redo-verdict").split(",")}
+    if arg("--redo-reason"):            # e.g. --redo-reason "no counter scan": those charts run again
+        prior = {k: v for k, v in prior.items() if arg("--redo-reason") not in (v.get("reason") or "")}
     os.makedirs(OUT, exist_ok=True)
     t0 = time.time()
     for i, job in enumerate(jobs, 1):
@@ -683,8 +744,9 @@ def message(rec):
             if c[which].get("anchor"):
                 read += "; the %s value is not a read but closure: %s" % (which, c[which]["anchor"])
         if e["kind"] == "rate":
-            lines.append("  beats %.3f-%.3f (%.2f-%.2fs, %d region%s): %s -> TICKCOUNTS %s per beat over the span (was %s)" % (
-                e["b0"], e["b1"], c["t0"], c["t1"], len(c["regions"]), "" if len(c["regions"]) == 1 else "s", read, e["new"], e["old"]))
+            lines.append("  beats %.3f-%.3f (%.2f-%.2fs, %d region%s): %s -> TICKCOUNTS %s per beat over the span (was %s)%s" % (
+                e["b0"], e["b1"], c["t0"], c["t1"], len(c["regions"]), "" if len(c["regions"]) == 1 else "s", read, e["new"], e["old"],
+                "; the total over the window is measured, the split between its regions is the rate's" if len(c["regions"]) > 1 else ""))
         else:
             lines.append("  col %d beat %s (%.2f-%.2fs): %s -> release moved %s -> %s (%.2f -> %.2fs); the rail on screen ends at %.2fs, on that side of the file's release" % (
                 e["col"], e["head"], c["t0"], c["t1"], read, e["old"], e["tail"], e["old_t"], e["tail_t"], e["rail_end"]))
