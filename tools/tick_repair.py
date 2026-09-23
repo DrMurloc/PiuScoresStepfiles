@@ -411,8 +411,9 @@ def regions_of(blk):
         return blk["rows"][j]["b"] if j is not None and abs(times[j] - t) < 1e-3 else None
 
     regs = []
-    for t0, t1, tk in blk["regions"]:
-        regs.append(dict(t0=round(t0, 4), t1=round(t1, 4), b0=beat_of(t0), b1=beat_of(t1), ticks=tk,
+    beats = blk.get("region_beats") or [(beat_of(t0), beat_of(t1)) for t0, t1, _ in blk["regions"]]
+    for (t0, t1, tk), (b0, b1) in zip(blk["regions"], beats):
+        regs.append(dict(t0=round(t0, 4), t1=round(t1, 4), b0=b0, b1=b1, ticks=tk,
                          segments=sum(1 for a, b, _ in blk["segments"] if a >= t0 - 1e-6 and b <= t1 + 1e-6)))
     for r in regs:
         ends = [h for h in holds if abs(h["tail"] - r["t1"]) < 1e-4]

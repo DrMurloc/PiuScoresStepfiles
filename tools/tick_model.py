@@ -1,13 +1,18 @@
-# The hold-tick count as the game judges it, against the converter's arithmetic, tested on what
-# the combo counter measured. The converter (piu_annotate ssc_to_chartstruct) accrues rate x beats
-# over each hold segment, rounds it, adds a tick on every release row that starts no hold and
-# takes one off for every tap row inside a hold. The game judges the TICK LATTICE: a hold's head
-# row is one judged event (a tap row already is one), and then every lattice point - a multiple
-# of 1/rate on the beat grid - that falls after a head and up to a release, with any hold held
-# across it, is one judged event however many holds are held, unless a tap or head row sits on
-# that point, in which case that row is the event. Two consequences the converter gets wrong: a
-# release while another hold stays held earns it a second tick (docs/EVIDENCE-RULES.md, "A
-# staggered release is not a tick"), and an interior it rounds up the lattice counts whole.
+# The hold-tick count as the game judges it, against the converter's old arithmetic, tested on
+# what the combo counter measured. The old converter (piu_annotate ssc_to_chartstruct,
+# hold_ticks="legacy") accrues rate x beats over each hold segment, rounds it, adds a tick on
+# every release row that starts no hold and takes one off for every tap row inside a hold. The
+# game judges the TICK LATTICE: a hold's head row is one judged event (a tap row already is one),
+# and then every lattice point - a multiple of 1/rate on the beat grid - that falls after a head
+# and up to a release, with any hold held across it, is one judged event however many holds are
+# held, unless a tap or head row sits on that point, in which case that row is the event. Two
+# consequences the old arithmetic gets wrong: a release while another hold stays held earns it a
+# second tick (docs/EVIDENCE-RULES.md, "A staggered release is not a tick"), and an interior it
+# rounds up the lattice counts whole.
+#
+# Since 2026-09-23 the converter itself counts by the lattice (HOLD_TICK_MODEL = "lattice" in the
+# piuscores-windows-port branch of piu-annotate). This file keeps an independent implementation
+# of the same model on the converter's own rows, which is what the converter was checked against.
 #
 #   python -X utf8 tools/tick_model.py test                    every priced cluster of the tick loop's reports
 #   python -X utf8 tools/tick_model.py census [--shard i/n]    every certified chart: exact under which arithmetic
@@ -21,12 +26,15 @@ from fractions import Fraction
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import extract_repair as E   # noqa: E402
 import tick_repair as T      # noqa: E402
+from piu_annotate.formats import ssc_to_chartstruct as C          # noqa: E402
+from piu_annotate.formats.sscfile import StepchartSSC             # noqa: E402
 
 ROOT = E.ROOT
 
 
 def snap(b):
-    return Fraction(round(b * 192), 192)
+    """An exact beat (the converter's own rule: the nearest fraction with a small denominator)."""
+    return Fraction(b).limit_denominator(10000)
 
 
 def holds_of(rows, ncols):
@@ -136,27 +144,55 @@ def test():
         print("  %-30s %-12s conv %4d grid %4d head %4d price %4d  %-20s clean=%s" % row)
 
 
+VARIANTS = {
+    "lattice": dict(exclude_fakes=True, head_needs_rate=False),          # the converter's default
+    "fakes-judged": dict(exclude_fakes=False, head_needs_rate=False),
+    "head-needs-rate": dict(exclude_fakes=True, head_needs_rate=True),
+}
+
+
 def census():
+    """Every certified chart through the converter: the old arithmetic, the lattice and its
+    variants (points inside a FAKES range judged or not; a head under TICKCOUNTS 0 judged or
+    not), and the independent model below on the same rows, region by region."""
     i, n = (int(x) for x in (T.arg("--shard") or "0/1").split("/"))
     allc = sorted(E.charts().values(), key=lambda c: c["chart"])[i::n]
+    keep = dict(C.LATTICE_OPTIONS)
     out = []
     for c in allc:
         try:
             ssc = os.path.join(ROOT, "simfiles", *c["ssc_rel"].split("/")); tag = E.block_tag(c["key"])
-            blk = E.load_block(ssc, tag)
-            if not blk or blk.get("error"):
+            legacy = E.load_block(ssc, tag, hold_ticks="legacy")
+            if not legacy or legacy.get("error"):
                 continue
-            sched = T.schedule(open(ssc, encoding="utf-8", newline="").read(), tag)
-            out.append(dict(chart=c["chart"], expected=c["expected"], converter=blk["implied"], in_tail=c["in_tail"],
-                            grid=blk["taps"] + chart_model(blk, sched, "grid"), head=blk["taps"] + chart_model(blk, sched, "head")))
+            row = dict(chart=c["chart"], expected=c["expected"], in_tail=c["in_tail"], legacy=legacy["implied"])
+            for name, opts in VARIANTS.items():
+                C.LATTICE_OPTIONS.update(opts)
+                blk = E.load_block(ssc, tag)
+                row[name] = blk["implied"]
+                if name == "lattice":
+                    sched = T.schedule(open(ssc, encoding="utf-8", newline="").read(), tag)
+                    row["model"] = blk["taps"] + chart_model(blk, sched, "grid")
+                    row["region_mismatch"] = sum(1 for t0, t1, tk in blk["regions"]
+                                                 if model_region(blk["rows"], blk["ncols"], sched, t0, t1) != tk)
+            C.LATTICE_OPTIONS.update(keep)
+            out.append(row)
         except Exception as ex:
+            C.LATTICE_OPTIONS.update(keep)
             out.append(dict(chart=c["chart"], error=str(ex)[:100]))
     json.dump(out, open(os.path.join(ROOT, "work", "tick-model-census.%d.json" % i), "w"), indent=1)
+    summarize(out)
+
+
+def summarize(out):
     ok = [o for o in out if "error" not in o]
-    for rule in ("converter", "grid", "head"):
-        print("%-9s exact %3d of %d | breaks %2d of the converter's exact | fixes %3d" % (
+    for rule in ["legacy"] + list(VARIANTS) + ["model"]:
+        print("%-16s exact %4d of %d | breaks %3d of legacy's exact | fixes %3d | within 5: %4d" % (
             rule, sum(1 for o in ok if o[rule] == o["expected"]), len(ok),
-            sum(1 for o in ok if o["converter"] == o["expected"] != o[rule]), sum(1 for o in ok if o[rule] == o["expected"] != o["converter"])))
+            sum(1 for o in ok if o["legacy"] == o["expected"] != o[rule]), sum(1 for o in ok if o[rule] == o["expected"] != o["legacy"]),
+            sum(1 for o in ok if 0 < abs(o[rule] - o["expected"]) <= 5)))
+    print("converter vs model: charts differing %d, regions differing %d" % (
+        sum(1 for o in ok if o["lattice"] != o["model"]), sum(o["region_mismatch"] for o in ok)))
     print("errors", len(out) - len(ok))
 
 
@@ -165,5 +201,8 @@ if __name__ == "__main__":
         test()
     elif sys.argv[1:2] == ["census"]:
         census()
+    elif sys.argv[1:2] == ["summary"]:
+        summarize([r for f in sorted(glob.glob(os.path.join(ROOT, "work", "tick-model-census.*.json")))
+                   for r in json.load(open(f, encoding="utf-8"))])
     else:
-        sys.exit("usage: tick_model.py test | census [--shard i/n]")
+        sys.exit("usage: tick_model.py test | census [--shard i/n] | summary")

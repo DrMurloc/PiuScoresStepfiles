@@ -67,6 +67,15 @@ import note_extract    # noqa: E402
 import quantize as Q   # noqa: E402
 from piu_annotate.formats.sscfile import StepchartSSC                             # noqa: E402
 from piu_annotate.formats.ssc_to_chartstruct import stepchart_ssc_to_chartstruct  # noqa: E402
+from piu_annotate.formats import ssc_to_chartstruct as _C                          # noqa: E402
+
+# Every repair is graded by the converter, so a converter that still counts hold ticks the old
+# way would grade every repair against the wrong arithmetic (docs/EVIDENCE-RULES.md, "A
+# staggered release is not a tick"). piu-annotate's piuscores-windows-port branch carries it.
+if getattr(_C, "HOLD_TICK_MODEL", "legacy") != "lattice":
+    sys.exit("piu-annotate's converter does not count hold ticks by the tick lattice - check out its "
+             "piuscores-windows-port branch (HOLD_TICK_MODEL = 'lattice') before grading anything")
+C_MERGE = _C.merge_holdticks
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PY = r"C:\Users\jonec\repos\piu-annotate\.venv\Scripts\python.exe"
@@ -87,7 +96,7 @@ DUP_TOL = 0.035      # s: an addition this close to a file note in its column is
                      # (nothing in the corpus puts two notes in one column closer than 34ms)
 GRIDS = (4, 8, 12, 16, 24, 32, 48)
 SHAPE_ORDER = ["under-ticked", "hold-less", "single-region", "over-ticked", "census", "duplicate-block"]
-TRAILER = "\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
+TRAILER = "\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 
 def arg(name, default=None):
@@ -126,15 +135,17 @@ def charts():
 
 # ---------------------------------------------------------------- the file's own notes
 
-def load_block(ssc_path, tag):
+def load_block(ssc_path, tag, hold_ticks=None):
     """The block through the converter: rows in chart time, its counts, the raw grid width (in
     panels - a StepF2 cell is one panel), and its hold regions: the converter's hold segments
-    merged wherever one runs into the next, each [start, end, ticks] in chart seconds."""
+    merged wherever one runs into the next, each [start, end, ticks] in chart seconds.
+    `hold_ticks="legacy"` counts the ticks the way the converter did before 2026-09-23."""
     sc = StepchartSSC.from_song_ssc_file(ssc_path, tag)
     if sc is None:
         return None
+    ctx = {}
     try:
-        df, ht, msg = stepchart_ssc_to_chartstruct(sc)
+        df, ht, msg = stepchart_ssc_to_chartstruct(sc, context=ctx, **({"hold_ticks": hold_ticks} if hold_ticks else {}))
     except Exception as ex:
         return dict(error="convert failed: " + f"{ex}"[:100])
     if df is None:
@@ -151,6 +162,17 @@ def load_block(ssc_path, tag):
             regions[-1][2] += tk
         else:
             regions.append([st, en, tk])
+    # each region's first and last beat, from the converter's own segments (a boundary is not
+    # always a written row: a release inside a fake or warp range is not)
+    region_beats = []
+    for seg in sorted(C_MERGE(ctx.get("segments") or []), key=lambda s: s.start_time):
+        st, en = round(float(seg.start_time), 4), round(float(seg.end_time), 4)
+        if region_beats and st <= region_beats[-1][2] + 1e-6:
+            region_beats[-1][1] = max(region_beats[-1][1], seg.end_beat)
+            region_beats[-1][2] = max(region_beats[-1][2], en)
+        else:
+            region_beats.append([seg.start_beat, seg.end_beat, en])
+    region_beats = [(a, b) for a, b, _ in region_beats] if len(region_beats) == len(regions) else None
     # The fakes: panels the game draws as arrows and never judges (a fake-flagged StepF2 cell, the
     # F letter), which the converter reads as empty. The extraction sees them on screen, so an
     # extracted note landing on one is the fake, not an addition. Kept by chartstruct column, in
@@ -170,7 +192,7 @@ def load_block(ssc_path, tag):
     except SystemExit:
         pass
     return dict(rows=rows, width=width, ncols=ncols, taps=taps, ticks=ticks, implied=taps + ticks, regions=regions, segments=segments,
-                fakes={c: sorted(v) for c, v in fakes.items()})
+                region_beats=region_beats, fakes={c: sorted(v) for c, v in fakes.items()})
 
 
 def file_events(rows, ncols):
