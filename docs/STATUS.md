@@ -376,10 +376,46 @@ for the frames to settle: the manual finale repairs on Csikos Post D16, Turkey M
 crosses on screen, and Get Your Groove On D10's hold head sits a quarter-beat later on screen
 than the counter loop placed it.
 
-First run: the 1,342 certified tail charts (under-ticked first, then hold-less, single-region,
-over-ticked; duplicate blocks skipped) in four shards from the evening of 2026-09-22 — the
-results go here when it finishes. YouTube fetches are still refused from this network; the run
-reads the 2,025 cached videos.
+### First corpus run (2026-09-22, four shards, ~2 min a chart, sprite passes cached)
+
+All 1,342 certified tail charts (duplicate blocks skipped), per-chart record in
+`sources/extract-loop-2026-09-22.json`:
+
+| outcome | charts |
+|---|---|
+| **SHIP** — closed exactly and committed, one commit per chart | **13** |
+| EXACT — already at the count | 7 |
+| edits applied, count still off | 505 |
+| extraction below the bar (recall or precision under 93%) | 478 |
+| notes match the screen exactly; the count is ticks, not notes | 286 |
+| stepf2 `{…}` cells in the note grid (the applier does not write them) | 49 |
+| too many additions to believe | 4 |
+
+The 13 (commits `a43f70c`..`df7516c`): PaPa Gonzales S16, Love is a Danger Zone pt. 2 S11,
+Native S17 (holds the file wrote as taps); Higgledy Piggledy S15 and S16, With my Lover S12,
+Life is PIANO S16, Lacrimosa S17, Kokugen Kairou Labyrinth S15, Dement ~After Legend~ S15
+(releases moved to where the rail ends); Maria S12, Cleaner D26, Harmagedon D24 (a tap or two
+added, each flashed at the receptor, and a release moved). Every commit lists its edits, what
+the extraction saw, and what it did not apply.
+
+What the parks say, which is the census the loop was also for:
+
+- **The reader is good on this corpus**: 1,293 charts read, recall against the file 99.6% at the
+  median (99% or better on 805), precision 95.8%, timing error 4.5 ms.
+- **The tail is mostly a tick problem, not a note problem.** 286 charts show the file's notes
+  and holds exactly, count still off; and of every park, **493 sit within ±5 of the count** —
+  181 at exactly +1, 108 at +2, 66 at +3. A release 40 ms off is one tick, and two experiments
+  from cache showed the rail reader cannot place a release that finely (TOOLS.md). Those
+  charts want the tick schedule and the release timing looked at together, with the counter as
+  the judge — the counter loop's tools, aimed with this loop's hold list.
+- **478 parked on the extraction itself**: 170 under 93% recall (the reader missing the chart's
+  own notes — dense drills, gimmick scrolls, two of the owner's edge cases), the rest under 93%
+  precision (extras a busy BGA throws); dropping the bar to 85% shipped nothing.
+- **49 files write stepf2 cells** (`{2|n|1|0}`), which the applier does not edit — a writer
+  that speaks that dialect would open them.
+
+Snapshot `092226` is now **13 charts behind**; it is regenerated only when the owner asks.
+YouTube fetches are still refused from this network; the run read the 2,025 cached videos.
 
 ## Beyond the census (sized 2026-09-06, listed in full 2026-09-08)
 
