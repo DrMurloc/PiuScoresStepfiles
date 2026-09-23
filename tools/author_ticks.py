@@ -14,6 +14,13 @@ import sys
 sys.path.insert(0, r"C:\Users\jonec\repos\piu-annotate")
 from piu_annotate.formats.sscfile import StepchartSSC              # noqa: E402
 from piu_annotate.formats.ssc_to_chartstruct import stepchart_ssc_to_chartstruct  # noqa: E402
+from piu_annotate.formats import ssc_to_chartstruct as _C                          # noqa: E402
+
+# the acceptance arithmetic: a converter still counting hold ticks the old way would pass and
+# fail the wrong files (docs/EVIDENCE-RULES.md, "A staggered release is not a tick")
+if getattr(_C, "HOLD_TICK_MODEL", "legacy") != "lattice":
+    sys.exit("piu-annotate's converter does not count hold ticks by the tick lattice - check out its "
+             "piuscores-windows-port branch (HOLD_TICK_MODEL = 'lattice')")
 
 def derive(path, tag, regions=None):
     """taps + per-hold ticks; when `regions` (list of {t0,t1}) is given, their hold

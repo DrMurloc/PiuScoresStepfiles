@@ -488,6 +488,9 @@ def survey_chart(entry, ssc_override=None, expected_override=None):
     if not blk or blk.get("error"):
         return {**rec, "reason": "file: " + ((blk or {}).get("error") or "block not found")}
     rec["file"] = dict(taps=blk["taps"], ticks=blk["ticks"], implied=blk["implied"], width=blk["width"])
+    if "--exact-first" in sys.argv and blk["implied"] == expected:
+        # a re-grade, not a census of the reader: an exact file needs no footage read
+        return {**rec, "verdict": "EXACT", "reason": "already exact at %d (not read: --exact-first)" % expected}
     try:
         notes, meta = note_extract.extract(name, quiet=True)
     except Exception as ex:

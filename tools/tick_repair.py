@@ -88,9 +88,17 @@ def arg(name, default=None):
 
 # ---------------------------------------------------------------- the worklist
 
+def census_path():
+    """The extraction loop's census to take the worklist from: --census, else the newest committed."""
+    if arg("--census"):
+        return arg("--census")
+    runs = sorted(f for f in os.listdir(os.path.join(ROOT, "sources")) if re.match(r"extract-loop-\d{4}-\d\d-\d\d\.json$", f))
+    return os.path.join(ROOT, "sources", runs[-1]) if runs else CENSUS
+
+
 def worklist():
     """The extraction loop's parks that read the screen well, with the file each should start from."""
-    census = json.load(open(CENSUS, encoding="utf-8"))["charts"]
+    census = json.load(open(census_path(), encoding="utf-8"))["charts"]
     allc = E.charts()
     jobs = []
     for r in census:
@@ -760,7 +768,7 @@ def message(rec):
 
 def commit():
     only, dry = arg("--only"), "--dry-run" in sys.argv
-    census = {r["chart"]: r for r in json.load(open(CENSUS, encoding="utf-8"))["charts"]}
+    census = {r["chart"]: r for r in json.load(open(census_path(), encoding="utf-8"))["charts"]}
     files = sorted(f for f in os.listdir(os.path.join(ROOT, "work")) if f.startswith("tick-loop-report") and f.endswith(".json"))
     recs = []
     for f in files:

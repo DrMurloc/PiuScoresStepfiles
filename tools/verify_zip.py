@@ -13,6 +13,9 @@
 #   - every repair in sources/repairs.json ships its tick total: the chart json's
 #     "Hold ticks" sums to the manifest's figure
 #   - against --old: no chart dropped, and the added ones listed by song
+#   - with --ticks: every chart's "Hold ticks", segment by segment, is what the installed
+#     converter (the tick lattice) derives from the stepfile the zip banks - a release built
+#     across a converter change carries the new arithmetic on every chart, not only the repairs
 import hashlib
 import json
 import os
@@ -108,6 +111,38 @@ def main():
     check(not bad, f"all {len(repairs)} repairs ship their tick total ({len(bad)} do not)")
     for b in bad[:10]:
         print(f"        {b}")
+
+    if "--ticks" in sys.argv:
+        # every chart's hold ticks, re-derived from the stepfile the zip banks with the installed
+        # converter (which must count by the tick lattice): the release carries the arithmetic
+        # the repairs were graded with, on every chart and not only the repaired ones
+        sys.path.insert(0, r"C:\Users\jonec\repos\piu-annotate")
+        from piu_annotate.formats import ssc_to_chartstruct as C
+        from piu_annotate.formats.sscfile import StepchartSSC
+        if getattr(C, "HOLD_TICK_MODEL", "legacy") != "lattice":
+            sys.exit("--ticks needs piu-annotate's converter to count by the tick lattice")
+        mismatch, failed, cache = [], [], {}
+        for n, key in enumerate(sorted(charts), 1):
+            meta = json.loads(z.read(key + ".json"))[2]
+            rel = meta["ssc_file"].replace("\\", "/").split("simfiles/")[-1]
+            tag = meta["DESCRIPTION"] + "_" + meta["SONGTYPE"]
+            try:
+                sc = StepchartSSC.from_song_ssc_file(tree[rel], tag)
+                _, ht, _ = C.stepchart_ssc_to_chartstruct(sc)
+                want = [[round(float(s), 4), round(float(e), 4), int(round(t))] for s, e, t in ht]
+            except Exception as ex:
+                failed.append(f"{key}: {type(ex).__name__}: {ex}"[:120])
+                continue
+            got = [[round(float(s), 4), round(float(e), 4), int(round(t))] for s, e, t in (meta.get("Hold ticks") or [])]
+            if got != want:
+                mismatch.append(f"{key}: zip {sum(t for _, _, t in got)} ticks in {len(got)} segments, "
+                                f"converter {sum(t for _, _, t in want)} in {len(want)}")
+            if n % 500 == 0:
+                print(f"    ... {n} charts re-derived", flush=True)
+        check(not mismatch and not failed, f"every chart's hold ticks are the converter's own, segment by segment "
+                                           f"({len(mismatch)} differ, {len(failed)} could not be converted)")
+        for m in (mismatch + failed)[:10]:
+            print(f"        {m}")
 
     if old_path:
         oz = zipfile.ZipFile(old_path)
