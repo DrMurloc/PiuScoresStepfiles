@@ -136,10 +136,23 @@ gets the single integer `#TICKCOUNTS` rate over its own span under which the con
 N (found by bisection against the real converter; the file's rate returns at the region's end,
 entries inside the span go); where no rate reaches N and the region ends on one release row,
 the release moves by one of the block's own rows, or the half-row between, toward N — only if
-the rail the extraction saw ends on that side of the file's release. A region whose shortfall
-is exactly its extra release rows is tagged with the pattern in
-[EVIDENCE-RULES.md](EVIDENCE-RULES.md) ("A staggered release is not a tick") and is **not**
-authored around: that difference is the converter's, not the file's.
+the rail the extraction saw ends on that side of the file's release. Before any of that, every
+priced cluster is also derived under the tick lattice (`tick_model.py`, below): a cluster the
+lattice prices as the counter does, while the converter does not, is tagged with the pattern
+in [EVIDENCE-RULES.md](EVIDENCE-RULES.md) ("A staggered release is not a tick") and is **not**
+authored around — that difference is the converter's, not the file's. A window of more than
+four regions or four seconds priced as one is not authored either: its total is measured, its
+interior is not. Two adjacent clusters priced opposite ways share a misread plateau and both
+are refused, and a gap read from both ends must give the same constant.
+
+**`tick_model.py test`** / **`tick_model.py census [--shard i/n]`**
+The hold-tick count as the game judges it, against the converter's arithmetic. `test` derives
+every cluster the tick loop's reports have priced under three rules — the converter's, the
+beat-grid tick lattice, a lattice anchored at each hold's head — and says which the counter
+agreed with; `census` derives every certified chart under the three and counts the exact
+ones, what each rule breaks that the converter had exact, and what it fixes
+(`work/tick-model-census.*.json`). The numbers that came out are in EVIDENCE-RULES.md; the
+beat-grid lattice is the one the counter and the corpus both side with.
 
 The gate: the priced clusters' differences must sum to the file's whole deficit (so every edit
 is a measured number and the unread regions are, in total, right as they stand); on a play

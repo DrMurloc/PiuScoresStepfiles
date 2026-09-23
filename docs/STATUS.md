@@ -440,14 +440,27 @@ Counted over the whole certified corpus (1,479 charts, `work/stagger-corpus.*.js
 | exact charts that carry staggered releases | 16 — every one a file we authored to the converter's arithmetic |
 | upstream (The Resistance) exact charts with staggered releases | 0 |
 
-The rule is one condition in `ssc_to_chartstruct.py` — add the release tick only when no hold
-remains active after the row (a release row that also carries a tap is already right: the
-tap's −1 cancels the +1) — and under it the certified set goes from **115 exact charts to
-641**. It breaks the 16 fitted files, which are ours to re-author from their own evidence
-(the counter loop's targets and the extraction loop's releases are on record). It is a change
-to the converter the snapshot is built with, so it is the owner's decision; nothing has been
-changed, and the loop below refuses to author around the pattern (EVIDENCE-RULES.md, "A
-staggered release is not a tick").
+That is one half of the converter's arithmetic; the other is that it rounds rate × beats where
+the game counts whole lattice points (Cutie Song S11, Pumping Up S10, ASDF D10's finale — each
+one tick over, each right as written). The model that carries both, the **beat-grid tick
+lattice** (`tools/tick_model.py`, EVIDENCE-RULES.md "A staggered release is not a tick"), was
+measured three ways the same day:
+
+| | converter | tick lattice |
+|---|---|---|
+| certified charts exact, of 1,479 | 116 | **645** |
+| charts broken that the converter had exact | — | 79 — every one a file we authored to the converter's arithmetic |
+| charts fixed that the converter has wrong | — | 608 |
+| clusters the combo counter priced (738, full-combo plays) it agrees with | 698 | **719** — and 22 of the 23 it and the converter disagree on |
+| certified charts still within ±5 of the count under it | 493 | 148 |
+
+The change is two conditions in `ssc_to_chartstruct.py`: add the release tick only when no
+hold remains active after the row, and count the lattice points inside a segment instead of
+rounding. It re-grades the 79 files we fitted to the old arithmetic (the counter loop's
+targets and the extraction loop's releases are on record, so they re-author), and it is a
+change to the converter the snapshot is built with — so it is the owner's decision. Nothing
+in piu-annotate has been touched, and no tick-loop repair is committed until it is settled:
+a rate solved under the old arithmetic is exactly the kind of fit the change would undo.
 
 ## The tick loop (2026-09-23)
 
@@ -455,9 +468,16 @@ staggered release is not a tick").
 alignment (TOOLS.md has the method): every hold region of a near-miss file priced from the
 counter's readings either side of it, each reading held to the file's own running count, the
 counter filtered to the non-decreasing chain a full-combo play can show, and only a region the
-counter measured is authored — a single rate over its span, or a release moved a row toward
-the rail. Full-combo plays (result-screen maxcombo equal to the judged count) are read first,
-because on those a partial accounting closes; a play with breaks needs every region read.
+counter measured — and the lattice does not already explain — is authored: a single rate over
+its span, or a release moved a row toward the rail. Full-combo plays (result-screen maxcombo
+equal to the judged count) are read first, because on those a partial accounting closes; a
+play with breaks needs every region read. Its first run, over the 420 above-bar parks within
+±10 of the count, is what produced the counter's verdict in the table above; its reports
+(`work/tick-loop-report.*.json`) carry every reading, and its ships wait on the decision.
+What it also found on the way: the counter reader confuses a units 9 for a 5 often enough
+(Cleaner S13, Iolite Sky D21, Headless Chicken S10) that a plateau is only believed when the
+next one agrees with it — two adjacent clusters priced opposite ways are a misread, not two
+errors.
 
 ## Beyond the census (sized 2026-09-06, listed in full 2026-09-08)
 

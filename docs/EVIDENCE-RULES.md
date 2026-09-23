@@ -330,11 +330,35 @@ Measured over the 1,479 certified charts on 2026-09-23 (`work/stagger-corpus.*.j
   cancels the +1 (17 of the 28 charts with such rows are exact once the tapless rows are
   corrected, none if those rows are corrected too).
 
-So the rule is one condition: **the release tick is added only when no hold remains active
-after the row.** Under it the certified set goes from 115 exact charts to 641, and the 16 it
-breaks are ours to re-author from their own evidence. It is a change to the converter the
-snapshot is built with, so it is the owner's call; until it is made, `tick_repair.py` tags a
-region whose measured shortfall is exactly its extra release rows with the pattern and
-refuses to author around it — a rate bent to absorb the converter's tick would have to be
-unbent the day the converter is corrected, and a release moved to land on the count would be
-a grid edit against the video.
+The release row is one half of it. The other is rounding: the converter accrues rate × beats
+as a real number and rounds the segment's total, so a hold whose end sits between two lattice
+points derives an extra tick whenever the fraction is a half or more, where the game — which
+only ever judges ticks that exist — counts the whole lattice points inside the hold. Cutie
+Song S11's last hold (converter 8, counter 7), Pumping Up S10's at 85.11 s (25 against 24)
+and ASDF D10's finale (50 against 49) are all that, and none of them needs a note moved.
+
+The model that carries both is the **tick lattice** (`tools/tick_model.py`): a hold's head row
+is one judged event unless a tap row already is; then every multiple of 1/rate on the beat
+grid that falls after a head and up to a release, with any hold held across it, is one judged
+event however many holds are held — unless a tap or head row sits on that point, in which
+case that row is the event. Measured three ways on 2026-09-23:
+
+| | converter | tick lattice (beat grid) | lattice anchored at each hold's head |
+|---|---|---|---|
+| certified charts exact, of 1,479 | 116 | **645** | 371 |
+| charts it breaks that the converter had exact | — | 79: 77 files we authored to the converter's arithmetic, and two counter-loop repairs under another name (Get Your Groove On D10, Love is a Danger Zone SC S13) | 100 |
+| charts it fixes that the converter has wrong | — | 608 | 355 |
+| clusters the combo counter priced on full-combo plays (738, the tick loop's first 35 charts) it agrees with | 698 | **719** | 700 |
+| of the 23 clusters where converter and lattice disagree, the counter sides with | 1 | **22** | — |
+
+So the arithmetic is the beat grid's — StepMania's checkpoint positions — and the two
+conditions to change in `ssc_to_chartstruct.py` are: add the release tick only when no hold
+remains active after the row, and count the lattice points inside a segment rather than
+rounding rate × beats. Under it the near-miss tail all but disappears: of the 834 certified
+charts still off, 686 are off by six or more (the counter loop's re-ticks and finales) and
+148 sit within ±5. It is a change to the converter the snapshot is built with and it
+re-grades every file we authored against the old arithmetic (79 to re-author from their own
+evidence), so it is the owner's call. Until it is made, `tick_repair.py` tags a cluster the
+lattice prices as the counter does with the pattern and refuses to author around it — a rate
+bent to absorb the converter's tick would have to be unbent the day the converter is
+corrected, and a release moved to land on the count would be a grid edit against the video.
