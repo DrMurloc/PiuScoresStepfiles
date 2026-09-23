@@ -399,21 +399,6 @@ def fmt_rate(r):
     return "%d" % round(r) if abs(r - round(r)) < 1e-9 else "%g" % r
 
 
-def with_rate(text, tag, sched, b0, b1, r):
-    """The text with ONE rate over [b0, b1): entries inside go, the file's own rate returns at b1."""
-    b0, b1 = exact(b0), exact(b1)
-    keep = [(b, v) for b, v in sched if not (b0 <= b < b1)]
-    new = dict(keep)
-    new[b0] = float(r)
-    if b1 not in new:
-        new[b1] = rate_at(sched, b1)
-    tc = ",\n".join("%.6f=%s" % (b, fmt_rate(v)) for b, v in sorted(new.items()))
-    out, ok = author_ticks.patch(text, tag, tc)
-    if not ok:
-        raise RuntimeError("block not found for TICKCOUNTS")
-    return out
-
-
 def regions_of(blk):
     """The converter's hold segments merged into regions: [t0, t1], beats, ticks, and what ends each."""
     _, holds = E.file_events(blk["rows"], blk["ncols"])
@@ -453,25 +438,74 @@ def span_ticks(blk, t0, t1):
     return sum(inside) if inside else None
 
 
-def solve_rate(text, key, tag, sched, cl, target):
-    """The integer rate over the cluster's span under which the converter derives `target` ticks
-    for it, by bisection - the count is monotone in the rate - or None."""
-    lo, hi = 0, RATE_MAX
-    for _ in range(12):
-        if lo > hi:
-            break
-        r = (lo + hi) // 2
-        blk = convert(with_rate(text, tag, sched, cl["b0"], cl["b1"], r), key, tag)
-        tk = span_ticks(blk, cl["t0"], cl["t1"]) if blk else None
-        if tk is None:
-            return None
-        if tk == target:
-            return r
-        if tk < target:
-            lo = r + 1
+def write_schedule(text, tag, entries):
+    """The text with the block's #TICKCOUNTS set to `entries` {exact beat: rate}. An entry the
+    schedule already had, at the same beat and rate, keeps its own text, so the diff shows only
+    what changed."""
+    old = {}
+    sections, i = edit_notes.find_block(text.replace("\r\n", "\n"), tag)
+    m = re.search(r"#TICKCOUNTS:(.*?);", sections[i], re.S) or re.search(r"#TICKCOUNTS:(.*?);", sections[0], re.S)
+    for part in (m.group(1) if m else "").replace("\r", "").replace("\n", "").split(","):
+        if "=" in part:
+            b, r = part.split("=")
+            old[exact(float(b))] = (float(r), part.strip())
+    out = []
+    for b, v in sorted(entries.items()):
+        if b in old and abs(old[b][0] - v) < 1e-9:
+            out.append(old[b][1])
         else:
-            hi = r - 1
-    return None
+            out.append("%.6f=%s" % (b, fmt_rate(v)))
+    new, ok = author_ticks.patch(text.replace("\r\n", "\n"), tag, ",\n".join(out))
+    if not ok:
+        raise RuntimeError("block not found for TICKCOUNTS")
+    return new.replace("\n", "\r\n") if "\r\n" in text else new
+
+
+def rate_cluster(text, key, tag, cl, target):
+    """A schedule over the cluster's span under which the converter derives `target` events for
+    it, or None: the single integer rate nearest the one it has, found by scanning every rate up
+    to twice the density the target needs (a region whose heads sit on a lattice counts fewer
+    points at the rates that land on them, so the count is not monotone and bisection misses);
+    failing that, two rates split on a sixteenth-beat grid between the pair whose counts bracket
+    the target. Counted with the converter's own post-loop step (lattice_reauthor.Counts)."""
+    import lattice_reauthor as L
+    os.makedirs(OUT, exist_ok=True)
+    tmp = os.path.join(OUT, "tmp-%s.ssc" % key)
+    open(tmp, "w", encoding="utf-8", newline="").write(text)
+    cnt = L.Counts(tmp, tag)
+    b0, b1 = exact(cl["b0"]), exact(cl["b1"])
+    idx = [k for k, (a, b) in enumerate(cnt.bounds) if a >= b0 - 1e-6 and b <= b1 + 1e-6]
+    if not idx:
+        return None
+
+    def total(rates):
+        cs = cnt.counts(L.with_region(dict(cnt.base), b0, b1, rates))
+        return sum(cs[k] for k in idx)
+
+    ref = L.rate_at(cnt.base, b0)
+    top = min(4 * RATE_MAX, int(2 * target / max(b1 - b0, 1e-6)) + 12)
+    scan = {r: total([(b0, r)]) for r in range(top + 1)}
+    hits = [r for r, v in scan.items() if v == target]
+    plan = [(b0, min(hits, key=lambda r: abs(r - ref)))] if hits else None
+    if plan is None:
+        lo = [r for r, v in scan.items() if v < target]
+        hi = [r for r, v in scan.items() if v > target]
+        pairs = sorted(((a, b) for a in lo for b in hi), key=lambda p: (abs(p[0] - p[1]), p[0] + p[1]))[:8]
+        grid = [k / 16 for k in range(int(b0 * 16) + 1, int(b1 * 16) + 1) if b0 < k / 16 < b1]
+        grid = grid[::max(1, len(grid) // 64)]
+        for a, b in pairs:
+            for c in grid:
+                for rates in ([(b0, a), (c, b)], [(b0, b), (c, a)]):
+                    if total(rates) == target:
+                        plan = rates
+                        break
+                if plan:
+                    break
+            if plan:
+                break
+    if plan is None:
+        return None
+    return write_schedule(text, tag, L.with_region(dict(cnt.base), b0, b1, plan)), plan, ref
 
 
 def tail_candidates(text, tag, cl):
@@ -644,11 +678,11 @@ def survey_chart(job, scan_ok=True):
             # over 67 s re-rated 16 -> 15 to lose one tick - an exact total, a fabricated interior)
             return {**rec, "reason": "cluster of %d regions over %.0f s (%.2f-%.2fs) priced %d against the file's %d as one - the interior is unobservable at this resolution" % (
                 len(c["regions"]), c["t1"] - c["t0"], c["t0"], c["t1"], c["price"], c["ticks"])}
-        sched = schedule(text, tag)
-        rate = solve_rate(text, key, tag, sched, c, c["price"])
-        if rate is not None:
-            text = with_rate(text, tag, sched, c["b0"], c["b1"], rate)
-            edits.append(dict(kind="rate", cluster=c["t0"], b0=c["b0"], b1=c["b1"], old=fmt_rate(rate_at(sched, c["b0"])), new=fmt_rate(rate),
+        got = rate_cluster(text, key, tag, c, c["price"])
+        if got is not None:
+            text, plan, ref = got
+            edits.append(dict(kind="rate", cluster=c["t0"], b0=c["b0"], b1=c["b1"], old=fmt_rate(ref),
+                              new=", then ".join("%s from beat %.4f" % (fmt_rate(r), b) for b, r in plan) if len(plan) > 1 else fmt_rate(plan[0][1]),
                               ticks=c["ticks"], price=c["price"]))
             continue
         got, why = try_tail(text, key, tag, c, c["price"], pad, blk["width"], obs_tail)
