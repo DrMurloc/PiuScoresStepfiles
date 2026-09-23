@@ -296,8 +296,10 @@ def price_clusters(regions, taps, reads, clock, clean, tol, judged=None):
             cut = regions[0]["t0"] - JIT
             first = dict(cut=round(cut, 3), value=F(cut), file=F(cut), err=0, frames=0, of=0,
                          anchor="the game draws no counter below 4, and the file's first %d tap(s) are on screen" % F(cut))
-        if not last or last.get("why"):
-            end = max(taps_s[-1] if taps_s else 0.0, regions[-1]["t1"]) + JIT
+        if (not last or last.get("why")) and not any(t > regions[-1]["t1"] + 1e-6 for t in taps_s):
+            # only when the last hold is the chart's last event: with taps after it, the anchor would
+            # charge any tap the file has wrong after the hold to the hold (Conflict S6, 2026-09-23)
+            end = regions[-1]["t1"] + JIT
             last = dict(cut=round(end, 3), value=judged, file=F(end), err=judged - F(end), frames=0, of=0, anchor="a full combo rests at the judged count after the last event")
     befores[0], afters[-1] = first, last
 
@@ -327,8 +329,16 @@ def price_clusters(regions, taps, reads, clock, clean, tol, judged=None):
         i0, i1 = members[0], members[-1]
         # the reading nearest the cluster on each side; failing that, the same gap read from
         # its other end (the stretch after the previous region, before the next)
-        b = befores[i0] if ok(befores[i0]) or not i0 else (afters[i0 - 1] if ok(afters[i0 - 1]) else befores[i0])
-        a = afters[i1] if ok(afters[i1]) or i1 + 1 >= n else (befores[i1 + 1] if ok(befores[i1 + 1]) else afters[i1])
+        # the reading nearest the cluster on each side; failing that, the same gap read from its
+        # other end - but only if that reading is itself within SPAN of the cluster. A reading
+        # further off carries every tap between it and the cluster into the price, and a tap the
+        # file has wrong there is then charged to the hold (Conflict S6's "before" sat 11 s early)
+        b = befores[i0]
+        if not ok(b) and i0 and ok(afters[i0 - 1]) and regions[i0]["t0"] - afters[i0 - 1]["cut"] <= SPAN:
+            b = afters[i0 - 1]
+        a = afters[i1]
+        if not ok(a) and i1 + 1 < n and ok(befores[i1 + 1]) and befores[i1 + 1]["cut"] - regions[i1]["t1"] <= SPAN:
+            a = befores[i1 + 1]
         rec = dict(regions=members, t0=regions[i0]["t0"], t1=regions[i1]["t1"], b0=regions[i0]["b0"], b1=regions[i1]["b1"],
                    ticks=sum(regions[k]["ticks"] for k in members), ends=regions[i1]["ends"], chained=regions[i1]["chained"],
                    before=b, after=a, price=None, why=None)
