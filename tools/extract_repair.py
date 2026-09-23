@@ -127,12 +127,12 @@ def charts():
 # ---------------------------------------------------------------- the file's own notes
 
 def load_block(ssc_path, tag):
-    """The block through the converter: rows in chart time, its counts, and the raw grid width."""
+    """The block through the converter: rows in chart time, its counts, the raw grid width (in
+    panels - a StepF2 cell is one panel), and its hold regions: the converter's hold segments
+    merged wherever one runs into the next, each [start, end, ticks] in chart seconds."""
     sc = StepchartSSC.from_song_ssc_file(ssc_path, tag)
     if sc is None:
         return None
-    if "{" in sc["NOTES"]:
-        return dict(error="stepf2 cells in the note grid")
     try:
         df, ht, msg = stepchart_ssc_to_chartstruct(sc)
     except Exception as ex:
@@ -140,10 +140,37 @@ def load_block(ssc_path, tag):
     if df is None:
         return dict(error="convert failed: " + msg)
     rows = [dict(t=float(t), b=float(b), line=str(l).replace("`", "")) for t, b, l in zip(df["Time"], df["Beat"], df["Line"])]
-    width = max((len(r.strip()) for m in sc["NOTES"].split(",") for r in m.split("\n") if r.strip() and not r.strip().startswith("#")), default=len(rows[0]["line"]))
+    width = max((edit_notes.width(r.strip()) for m in sc["NOTES"].split(",") for r in m.split("\n")
+                 if r.strip() and not r.strip().startswith(("#", "//"))), default=len(rows[0]["line"]))
     taps = int(df["Line"].str.contains("1", regex=False).sum())
     ticks = sum(int(round(t[2])) for t in ht)
-    return dict(rows=rows, width=width, ncols=len(rows[0]["line"]), taps=taps, ticks=ticks, implied=taps + ticks)
+    regions, segments = [], sorted((float(t[0]), float(t[1]), int(round(t[2]))) for t in ht)
+    for st, en, tk in segments:
+        if regions and st <= regions[-1][1] + 1e-6:
+            regions[-1][1] = max(regions[-1][1], en)
+            regions[-1][2] += tk
+        else:
+            regions.append([st, en, tk])
+    # The fakes: panels the game draws as arrows and never judges (a fake-flagged StepF2 cell, the
+    # F letter), which the converter reads as empty. The extraction sees them on screen, so an
+    # extracted note landing on one is the fake, not an addition. Kept by chartstruct column, in
+    # chart seconds, so plan() can pair them the way it pairs the judged notes.
+    ncols = len(rows[0]["line"])
+    fakes = {}
+    try:
+        sections, i = edit_notes.find_block(open(ssc_path, encoding="utf-8", newline="").read(), tag)
+        _, measures = edit_notes.parse_notes(sections[i])
+        _, time_at = clocks(rows)
+        pad = (ncols - width) // 2
+        for mi, mrows in enumerate(measures):
+            for r, row in enumerate(mrows):
+                for col, cell in enumerate(edit_notes.cells(row)):
+                    if edit_notes.drawn_fake(cell):
+                        fakes.setdefault(col + pad, []).append(time_at(4 * mi + 4 * r / len(mrows)))
+    except SystemExit:
+        pass
+    return dict(rows=rows, width=width, ncols=ncols, taps=taps, ticks=ticks, implied=taps + ticks, regions=regions, segments=segments,
+                fakes={c: sorted(v) for c, v in fakes.items()})
 
 
 def file_events(rows, ncols):
@@ -299,12 +326,21 @@ def plan(notes, blk, a, b, flashes=None):
                     edits.append(dict(kind="tail", col=c, head=str(hb), old=str(old), tail=str(tb), grid=g, old_t=round(h["tail"], 3), tail_t=round(new_t, 3)))
         elif sym == "2" and not ext_hold:
             seen["hold->tap"] += 1
+    fakes = blk.get("fakes") or {}
     for i in extra:
         n = notes[i]
+        t = a + b * n["t"]
+        # a fake is drawn and never judged: an extracted note on one is that fake, and it is
+        # neither an addition nor a miss of the reader's (the 49 StepF2 charts park on precision
+        # without this, at 83% on Club Night D18 with its 11 fake hold pairs seen exactly)
+        ft = fakes.get(n["col"], [])
+        j = bisect.bisect_left(ft, t - TOL)
+        if j < len(ft) and abs(ft[j] - t) <= TOL:
+            seen["fake on screen"] += 1
+            continue
         if flashes is not None and not flashed(flashes, n["col"], n["t"]):
             seen["unflashed addition"] += 1
             continue
-        t = a + b * n["t"]
         near = [x[0] for x in fnotes.get(n["col"], [])]
         j = bisect.bisect_left(near, t - DUP_TOL)
         if j < len(near) and abs(near[j] - t) <= DUP_TOL:
@@ -327,7 +363,7 @@ def plan(notes, blk, a, b, flashes=None):
             edits.append(dict(kind="add-tap", col=n["col"], head=str(hb), grid=g, head_t=round(t, 3)))
     seen["missing"] = len(missing)
     stats = dict(file_notes=n_file, extracted=len(notes), matched=len(pairs),
-                 recall=round(len(pairs) / max(n_file, 1), 4), precision=round(len(pairs) / max(len(notes), 1), 4),
+                 recall=round(len(pairs) / max(n_file, 1), 4), precision=round(len(pairs) / max(len(notes) - seen["fake on screen"], 1), 4),
                  err_median_ms=round(1000 * float(np.median(errs)), 1) if errs else None,
                  err_p90_ms=round(1000 * float(np.percentile(errs, 90)), 1) if errs else None,
                  file_holds=len(fholds), extracted_holds=sum(1 for n in notes if n.get("hold_end") is not None),
@@ -339,11 +375,13 @@ def apply(text, tag, edits, pad, width):
     """The edits on the block's note grid, in memory. Returns the new text and what happened."""
     sections, i = edit_notes.find_block(text, tag)
     span, measures = edit_notes.parse_notes(sections[i])
-    cols = len(measures[0][0])
+    cols = edit_notes.width(measures[0][0])
     done, skipped, cleared = [], [], 0
+    # every look at a panel goes through edit_notes.get/put: a StepF2 cell is one panel, and a
+    # fake-flagged one reads as empty here exactly as the converter reads it
 
     def covers(measures, col, b1, b2):
-        return any(len(row) > col and row[col] != "0" and b1 + 1e-6 < 4 * mi + 4 * r / len(rows) < b2 - 1e-6
+        return any(edit_notes.get(row, col) != "0" and b1 + 1e-6 < 4 * mi + 4 * r / len(rows) < b2 - 1e-6
                    for mi, rows in enumerate(measures) for r, row in enumerate(rows))
 
     def clear_between(col, b1, b2):
@@ -351,8 +389,8 @@ def apply(text, tag, edits, pad, width):
         for mi, rows in enumerate(measures):
             for r, row in enumerate(rows):
                 beat = 4 * mi + 4 * r / len(rows)
-                if len(row) > col and b1 + 1e-6 < beat < b2 - 1e-6 and row[col] != "0":
-                    measures[mi][r] = row[:col] + "0" + row[col + 1:]
+                if b1 + 1e-6 < beat < b2 - 1e-6 and edit_notes.get(row, col) != "0":
+                    measures[mi][r] = edit_notes.put(row, col, "0")
                     n += 1
         return n
 
@@ -361,7 +399,7 @@ def apply(text, tag, edits, pad, width):
         open_ = False
         for rows in measures:
             for row in rows:
-                ch = row[col] if len(row) > col else "0"
+                ch = edit_notes.get(row, col)
                 if ch == "3":
                     if not open_:
                         return False
@@ -390,14 +428,14 @@ def apply(text, tag, edits, pad, width):
                 old = float(Fraction(e["old"])); tail = float(Fraction(e["tail"]))
                 mi, r = edit_notes.beat_to_pos(measures, old, cols)
                 row = measures[mi][r]
-                if len(row) <= col or row[col] != "3":
+                if edit_notes.get(row, col) != "3":
                     skipped.append({**e, "why": "no release at the old beat"}); continue
-                measures[mi][r] = row[:col] + "0" + row[col + 1:]
+                measures[mi][r] = edit_notes.put(row, col, "0")
                 edit_notes.set_char(measures, tail, col, "3", cols)
                 cleared += clear_between(col, head, tail)
             elif e["kind"] == "add-tap":
                 mi, r = edit_notes.beat_to_pos(measures, head, cols)
-                if len(measures[mi][r]) <= col or measures[mi][r][col] != "0":
+                if edit_notes.width(measures[mi][r]) <= col or edit_notes.get(measures[mi][r], col) != "0":
                     skipped.append({**e, "why": "the row is taken or narrower than the column"}); continue
                 edit_notes.set_char(measures, head, col, "1", cols)
             if not sound(col):
@@ -503,6 +541,8 @@ def survey():
     prior = {r["chart"]: r for r in json.load(open(path, encoding="utf-8"))} if os.path.exists(path) and "--redo" not in sys.argv else {}
     if arg("--redo-verdict"):           # e.g. --redo-verdict FAIL: those charts run again, the rest keep their record
         prior = {k: v for k, v in prior.items() if v.get("verdict") not in arg("--redo-verdict").split(",")}
+    if arg("--redo-reason"):            # e.g. --redo-reason stepf2: the charts parked for that reason run again
+        prior = {k: v for k, v in prior.items() if arg("--redo-reason") not in (v.get("reason") or "")}
     ssc_override, expected_override = arg("--ssc"), arg("--expected")
     if ssc_override:
         prior = {}
@@ -538,7 +578,18 @@ def applied(rec):
     return [d for d in rec["edits"] if not any(all(sk.get(k) == v for k, v in d.items()) for sk in skipped)]
 
 
-def message(rec):
+def edit_line(d):
+    """One applied edit, as a commit message states it."""
+    if d["kind"] == "tap->hold":
+        return "col %d beat %s: the tap is a hold, rail to beat %s (%.2f-%.2fs)" % (d["col"], d["head"], d["tail"], d["head_t"], d["tail_t"])
+    if d["kind"] == "tail":
+        return "col %d beat %s: release moved %s -> %s (%.2f -> %.2fs)" % (d["col"], d["head"], d["old"], d["tail"], d["old_t"], d["tail_t"])
+    if d["kind"] == "add-hold":
+        return "col %d: hold added at beat %s to %s (%.2f-%.2fs)" % (d["col"], d["head"], d["tail"], d["head_t"], d["tail_t"])
+    return "col %d: tap added at beat %s (%.2fs)" % (d["col"], d["head"], d["head_t"])
+
+
+def message(rec, note=None):
     e = applied(rec)
     x, al, ft = rec["extraction"], rec["alignment"], rec["footage"]
     lines = ["Fix %s from the footage: %s" % (rec["chart"], summary(e)), ""]
@@ -547,14 +598,7 @@ def message(rec):
     lines.append("found %d of the file's %d notes (%.1f%%; %d extracted, %.1f%% of them in the file), median timing" % (x["matched"], x["file_notes"], 100 * x["recall"], x["extracted"], 100 * x["precision"]))
     lines.append("error %s ms, offset %+.3fs, clock %+.4f%%. Every edit is something the screen showed:" % (x["err_median_ms"], al["offset"], al["clock"]))
     for d in e:
-        if d["kind"] == "tap->hold":
-            lines.append("  col %d beat %s: the tap is a hold, rail to beat %s (%.2f-%.2fs)" % (d["col"], d["head"], d["tail"], d["head_t"], d["tail_t"]))
-        elif d["kind"] == "tail":
-            lines.append("  col %d beat %s: release moved %s -> %s (%.2f -> %.2fs)" % (d["col"], d["head"], d["old"], d["tail"], d["old_t"], d["tail_t"]))
-        elif d["kind"] == "add-hold":
-            lines.append("  col %d: hold added at beat %s to %s (%.2f-%.2fs)" % (d["col"], d["head"], d["tail"], d["head_t"], d["tail_t"]))
-        elif d["kind"] == "add-tap":
-            lines.append("  col %d: tap added at beat %s (%.2fs)" % (d["col"], d["head"], d["head_t"]))
+        lines.append("  " + edit_line(d))
     if rec.get("cleared"):
         lines.append("  (%d tap(s) the file wrote inside those holds cleared)" % rec["cleared"])
     if rec.get("skipped"):
@@ -567,11 +611,29 @@ def message(rec):
     lines.append("")
     lines.append("Before: taps %d + ticks %d = %d. After: taps %d + ticks %d = %d, the judged count exactly" % (rec["file"]["taps"], rec["file"]["ticks"], rec["file"]["implied"], rec["after"]["taps"], rec["after"]["ticks"], rec["after"]["implied"]))
     lines.append("(tick_verify). No frame was read by eye.")
+    if note:
+        lines += ["", note]
     return "\n".join(lines) + TRAILER
 
 
+def same_outside(text_a, text_b, tag):
+    """Whether two versions of a song file agree everywhere except inside one block.
+
+    A candidate is a whole-file copy made from the file as it stood when the survey ran. When
+    two charts of ONE song file both ship, the second candidate still carries the first block
+    as it was before its fix, and copying it in silently undoes that fix - Higgledy Piggledy
+    S15's commit (9e281f7) put S16 back to its +8 state minutes after 32c0ca9 had fixed it,
+    and the in-place check, which only reads the block being committed, said MATCH. So a
+    candidate is only copied in when the file has not changed outside its own block."""
+    def norm(t):
+        return t.replace("\r\n", "\n")
+    sa, ia = edit_notes.find_block(norm(text_a), tag)
+    sb, ib = edit_notes.find_block(norm(text_b), tag)
+    return ia == ib and len(sa) == len(sb) and all(x == y for k, (x, y) in enumerate(zip(sa, sb)) if k != ia)
+
+
 def commit():
-    only, dry = arg("--only"), "--dry-run" in sys.argv
+    only, dry, note = arg("--only"), "--dry-run" in sys.argv, arg("--note")
     recs = []
     for f in sorted(os.listdir(os.path.join(ROOT, "work"))):
         if f.startswith("extract-loop-report") and f.endswith(".json"):
@@ -585,6 +647,9 @@ def commit():
         cand = os.path.join(ROOT, r["candidate"])
         if not os.path.exists(cand):
             print("  %s: candidate missing, skipped" % r["chart"]); continue
+        if not same_outside(open(ssc, encoding="utf-8", newline="").read(), open(cand, encoding="utf-8", newline="").read(), block_tag(r["key"])):
+            print("  %s: the file changed outside this block since the candidate was written (another chart of the same "
+                  "song was repaired) - re-run the survey for it and commit again" % r["chart"]); continue
         shutil.copyfile(cand, ssc)
         out = subprocess.run([PY, "-X", "utf8", os.path.join(ROOT, "tools", "tick_verify.py"), "--file", ssc, "--block", block_tag(r["key"]), str(r["expected"])],
                              cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace").stdout
@@ -595,7 +660,7 @@ def commit():
             git("checkout", "HEAD", "--", ssc)
             print("  would commit %s: %s" % (r["chart"], r["reason"])); continue
         git("add", "--", ssc)
-        subprocess.run(["git", "commit", "-q", "-F", "-"], cwd=ROOT, input=message(r), text=True, encoding="utf-8")
+        subprocess.run(["git", "commit", "-q", "-F", "-"], cwd=ROOT, input=message(r, note), text=True, encoding="utf-8")
         sha = git("rev-parse", "--short", "HEAD").strip()
         r["commit"] = sha
         print("  %s %s: %s" % (sha, r["chart"], r["reason"]))

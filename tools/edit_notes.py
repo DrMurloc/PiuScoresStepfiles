@@ -7,6 +7,47 @@
 import re
 import sys
 
+CELL = re.compile(r"\{[^}]*\}|.")
+# what the pipeline's parser (piu_annotate notelines.parse_line) makes of a panel that is not 0-3
+JUDGED = {"F": "0", "M": "0", "K": "0", "V": "0", "v": "0", "S": "0", "s": "0", "E": "0", "I": "1", "4": "2", "6": "2", "L": "1"}
+
+def cells(row):
+    """A row as its panels. A StepF2 cell such as `{2|n|1|0}` (type, attribute, fake flag,
+    reserved) is ONE panel, exactly like a plain character - editing a row by character
+    position would splice inside the token and shift every column after it."""
+    return CELL.findall(row)
+
+def judged(cell):
+    """The panel as the converter judges it: a fake-flagged cell, and the fake letters, are empty."""
+    if cell.startswith("{"):
+        parts = cell[1:-1].split("|")
+        if len(parts) > 2 and parts[2] == "1":
+            return "0"
+        return JUDGED.get(parts[0], parts[0])
+    return JUDGED.get(cell, cell)
+
+def drawn_fake(cell):
+    """A panel the game draws as an arrow but never judges: a fake-flagged StepF2 tap, hold head
+    or release, or the plain `F`. Mines and the other letters draw no arrow."""
+    if cell.startswith("{"):
+        parts = cell[1:-1].split("|")
+        return len(parts) > 2 and parts[2] == "1" and parts[0] in ("1", "2", "3", "4", "6")
+    return cell == "F"
+
+def width(row):
+    return len(cells(row))
+
+def get(row, col):
+    """The judged panel at a column; `0` past the row's width."""
+    c = cells(row)
+    return judged(c[col]) if col < len(c) else "0"
+
+def put(row, col, ch):
+    """The row with one panel replaced, whatever that panel was written as."""
+    c = cells(row)
+    c[col] = ch
+    return "".join(c)
+
 def find_block(text, desc_tag):
     code = desc_tag.rsplit("_", 1)[0]
     sections = text.split("#NOTEDATA:;")
@@ -54,11 +95,11 @@ def set_char(measures, beat, col, ch, cols):
     # a half-double block is SIX columns wide, and python slicing would silently APPEND
     # rather than fail when the column is out of range - which is how First Love D15 got a
     # hold on a seventh panel that does not exist (it crashed the pipeline's featurizer)
-    if col >= len(row):
-        raise SystemExit(f"column {col} is outside this block's {len(row)} panels (row {row!r} "
+    if col >= width(row):
+        raise SystemExit(f"column {col} is outside this block's {width(row)} panels (row {row!r} "
                          f"at beat {beat}). Chartstruct columns are PADDED for narrow styles: "
                          f"file column = chartstruct column - (10 - width) // 2.")
-    measures[mi][r] = row[:col] + ch + row[col + 1:]
+    measures[mi][r] = put(row, col, ch)
 
 def main():
     op, path, tag, col = sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4])
@@ -67,7 +108,7 @@ def main():
     text = open(path, encoding="utf-8", newline="").read()
     sections, i = find_block(text, tag)
     span, measures = parse_notes(sections[i])
-    cols = len(measures[0][0])
+    cols = width(measures[0][0])
     if op == "add-hold":
         set_char(measures, b1, col, "2", cols)
         set_char(measures, b2, col, "3", cols)
@@ -77,23 +118,23 @@ def main():
         for mi, rows in enumerate(measures):
             for r, row in enumerate(rows):
                 beat = 4 * mi + 4 * r / len(rows)
-                if len(row) > col and b1 + 1e-6 < beat < b2 - 1e-6 and row[col] != "0":
-                    measures[mi][r] = row[:col] + "0" + row[col + 1:]
+                if b1 + 1e-6 < beat < b2 - 1e-6 and get(row, col) != "0":
+                    measures[mi][r] = put(row, col, "0")
                     cleared += 1
         if cleared:
             print(f"  cleared {cleared} note(s) on col {col} inside the hold")
     elif op == "move-release":
         mi, r = beat_to_pos(measures, b1, cols)
         row = measures[mi][r]
-        assert row[col] == "3", f"no release at beat {b1} col {col} (row {row})"
-        measures[mi][r] = row[:col] + "0" + row[col + 1:]
+        assert get(row, col) == "3", f"no release at beat {b1} col {col} (row {row})"
+        measures[mi][r] = put(row, col, "0")
         set_char(measures, b2, col, "3", cols)
     elif op == "remove":
         # a phantom: a note the file has that the game never judges (Slam S5's 193rd tap)
         mi, r = beat_to_pos(measures, b1, cols)
         row = measures[mi][r]
-        assert len(row) > col and row[col] != "0", f"no note at beat {b1} col {col} (row {row})"
-        measures[mi][r] = row[:col] + "0" + row[col + 1:]
+        assert get(row, col) != "0", f"no note at beat {b1} col {col} (row {row})"
+        measures[mi][r] = put(row, col, "0")
     else:
         raise SystemExit("unknown op")
     body = "\n,\n".join("\n".join(rows) for rows in measures)
