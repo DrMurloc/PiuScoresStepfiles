@@ -19,8 +19,10 @@ as a decimal and exceed the previous (MMDDYY convention: 083126 > 082626 > 05072
 
 ## Rebuilding
 
-Build from piu-annotate's `piuscores-windows-port` branch: since `092326` the converter counts hold ticks by the
-tick lattice, and a release built from upstream piu-annotate would carry the old arithmetic on every chart.
+Build from the `piuscores-windows-port` branch of the owner's fork of piu-annotate,
+https://github.com/DrMurloc/piu-annotate (setup: docs/SNAPSHOT.md, "Setting up the clone"). Since `092326` the
+converter counts hold ticks by the tick lattice, and a release built from upstream piu-annotate would carry the old
+arithmetic on every chart.
 `tools/snapshot_reuse.py` prepares a release that reuses the previous one's predictions (docs/SNAPSHOT.md).
 
 ```

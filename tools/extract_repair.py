@@ -73,8 +73,8 @@ from piu_annotate.formats import ssc_to_chartstruct as _C                       
 # way would grade every repair against the wrong arithmetic (docs/EVIDENCE-RULES.md, "A
 # staggered release is not a tick"). piu-annotate's piuscores-windows-port branch carries it.
 if getattr(_C, "HOLD_TICK_MODEL", "legacy") != "lattice":
-    sys.exit("piu-annotate's converter does not count hold ticks by the tick lattice - check out its "
-             "piuscores-windows-port branch (HOLD_TICK_MODEL = 'lattice') before grading anything")
+    sys.exit("piu-annotate's converter does not count hold ticks by the tick lattice - check out the "
+             "piuscores-windows-port branch of https://github.com/DrMurloc/piu-annotate (HOLD_TICK_MODEL = 'lattice') before grading anything")
 C_MERGE = _C.merge_holdticks
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

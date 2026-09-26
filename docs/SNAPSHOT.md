@@ -23,6 +23,36 @@ stepfiles/<pack>/<song>/*.ssc  the 664-file corpus the release was generated fro
 
 Exactly one current zip lives at HEAD; superseded ones are deleted (history keeps them).
 
+## Setting up the clone
+
+The pipeline and every grading tool here run from a piu-annotate clone next to this repo
+(the `../piu-annotate` in the commands below), on the `piuscores-windows-port` branch of the
+owner's fork. On a machine that has none, from the folder that holds this repo:
+
+```
+git clone -c core.autocrlf=false -b piuscores-windows-port https://github.com/DrMurloc/piu-annotate.git
+cd piu-annotate
+<python 3.12> -m venv .venv
+.venv/Scripts/python.exe -m pip install -e . hackerargs==1.1.1 lightgbm==4.7.0 loguru==0.7.3 \
+    numpy==2.5.2 pandas==2.2.3 ruptures==1.1.10 scikit-learn==1.9.0 scipy==1.17.1 tqdm==4.70.0
+```
+
+`core.autocrlf=false` keeps the checkout byte-for-byte. Git for Windows converts text files to
+CRLF by default, and LightGBM cannot read its limb models that way: limb prediction dies on
+"Model format error, expect a tree here". The pins are the versions `092326` was built with.
+Keep pandas on 2.2.3, upstream's own pin: pandas 3 changed defaults the pipeline has never
+been run under.
+
+Then create `artifacts/models/120524/model-config.local.yaml`, which both launchers read: a
+copy of `model-config.yaml` beside it with `model.dir` set to that folder's absolute path on
+this machine. It is gitignored because that path differs per machine; the models themselves
+are in the repository. Copy in the two Phoenix 2 charts lists as well (below). The footage
+tools also want `opencv-python-headless` and `yt-dlp` in the same venv, and the pack tools run
+on a system Python with `pyzipper` (docs/TOOLS.md).
+
+The clone needs `-b`: the fork's `main` mirrors maxwshen's original, which has none of our
+changes, and the grading tools refuse its converter.
+
 ## Running it
 
 ```
@@ -43,7 +73,8 @@ output in a log (`> pipeline-<name>.log 2>&1`) and watch the log, not the proces
 `PIU-Simfiles` clone, which is the seed, not the source of truth — pointing at it silently
 ships unrepaired stepfiles.
 
-**Build from the clone's `piuscores-windows-port` branch.** Since 2026-09-23 its converter
+**Build from the `piuscores-windows-port` branch of the owner's fork**
+(https://github.com/DrMurloc/piu-annotate). Since 2026-09-23 its converter
 counts hold ticks by the tick lattice (commit `e01246d`; EVIDENCE-RULES.md, "A staggered release
 is not a tick"). Upstream piu-annotate still counts them the old way; a snapshot built from it
 would carry the old arithmetic's hold ticks for every chart and undo the re-authoring of our
