@@ -74,7 +74,10 @@
 # - The converter's source hash and the oracle manifest's hash are pinned at the start of a run
 #   and re-checked before every launch; drift halts the run (running jobs are killed and left
 #   unfinished in the ledger) without reverting anything, and resuming refuses a changed pin
-#   unless told otherwise, because one run must not mix two converters.
+#   unless told otherwise, because one run must not mix two converters. The converter must also
+#   be the one frozen in sources/oracle-manifest.json (corpus_grade.py's CONVERTER PIN): a run
+#   refuses to start, and loopcommit refuses to commit, when it is not - or when the manifest is
+#   missing, does not read, or carries no pin - unless the run was started --converter-unpinned.
 # - Detached mode relaunches this script with CREATE_NO_WINDOW|CREATE_NEW_PROCESS_GROUP so it
 #   outlives the terminal and the chat session that started it. It stays inside the Claude
 #   desktop app's process container (the venv's base interpreter lives in that app's
@@ -85,12 +88,21 @@
 #   {"id": "<unique>", "cmd": ["{py}", "{tools}/tick_verify.py", "Slam D24"],
 #    "cwd": "<relative to the worktree, optional>", "timeout": <s, optional>,
 #    "slot": true|false (takes a decode slot, default true), "env": {..optional..},
+#    "retry_exit": [<exit code>, ...], "retry_after": <s>, "retry_limit": <n>  (optional),
 #    "meta": <free-form, optional>}
+# retry_exit names exit codes that mean "not now, try again later" rather than a result: such an
+# exit is recorded as outcome "deferred" (verdict RETRY_LATER, not a finished row) and the job goes
+# back on the queue, launched again no sooner than retry_after seconds (default 300) later, up to
+# retry_limit deferrals in a row (default 12); the next one is recorded as a finished exit with
+# verdict RETRY_EXHAUSTED (a resume re-runs it with --retry nonzero). A job whose command runs
+# tools/corpus_grade.py gets retry_exit [2] unless it says otherwise: the grade exits 2 when it
+# REFUSES (a stalled or starved worker pool, a transient MemoryError or OSError, a worker that
+# died) - never as a verdict on the corpus, which is 0 or 1.
 # "{py}" as a whole argument expands to this interpreter with -X utf8 -B; {root}, {tools},
 # {run}, {run_dir} and {job} are substituted inside arguments. A job may print a line
 # "VERDICT: <word>" and the last one becomes its ledger verdict; otherwise the verdict is OK or
-# FAIL by exit code (TIMEOUT, STOPPED, HALTED, CRASHED, PREEMPTED and LAUNCH_ERROR are the
-# supervisor's own).
+# FAIL by exit code (TIMEOUT, STOPPED, HALTED, CRASHED, PREEMPTED, LAUNCH_ERROR, RETRY_LATER and
+# RETRY_EXHAUSTED are the supervisor's own).
 # Children see PSF_RUN, PSF_JOB, PSF_RUN_DIR and PSF_SLOT_HELD=1 when they hold a slot (so a
 # child that asks decode_slot() for one does not deadlock against its own supervisor).
 #
@@ -152,7 +164,10 @@ QUIESCE_TIMEOUT_S = 5.0      # how long a freeze waits for the rails mutexes bef
 AWAKE_GAP_S = 2.0            # a lock wait's poll gap longer than its poll plus this was spent frozen (or asleep)
 DISK_EVERY_S = 30
 HEARTBEAT_EVERY_S = 30
-ACTIVE_STATES = {"running", "waiting-slot", "paused-disk", "stopping", "suspended", "retrying"}
+ACTIVE_STATES = {"running", "waiting-slot", "waiting-retry", "paused-disk", "stopping", "suspended", "retrying"}
+RETRY_AFTER_S = 300.0        # a job's retry_exit default wait before it is launched again
+RETRY_LIMIT = 12             # and how many deferrals in a row before its exit is taken as final
+UNRESUMED_LIMIT = 3          # launches that could not resume their child before the job is a launch-error
 FINISHED_OUTCOMES = {"exit", "timeout", "launch-error"}
 RETRY_KINDS = {"nonzero", "timeout", "launch-error"}
 EXIT_STOPPED, EXIT_HALTED, EXIT_CRASHED = 3, 4, 5
@@ -427,7 +442,7 @@ class ProcJob:
     def __init__(self):
         self.h = _CreateJobObjectW(None, None) if IS_WIN else None
         self.frozen = {}                               # pid -> creation time, of the processes this froze
-        self.unfreezable = set()                       # pids it could not open or suspend (not retried)
+        self.unfreezable = set()                       # pids it could not open or suspend (not retried until a thaw)
         if not self.h:
             return
         info = _ExtendedLimit()
@@ -485,6 +500,7 @@ class ProcJob:
         """Resume exactly the processes this froze that are still in the job (same PID and same
         creation time); returns how many it thawed."""
         inside, n = set(self.pids()), 0
+        self.unfreezable.clear()                       # a bare PID is not kept across a thaw: Windows reuses them
         for pid, born in list(self.frozen.items()):
             del self.frozen[pid]
             if pid not in inside:
@@ -898,16 +914,23 @@ def converter_hash(pkg):
 
 
 def frozen_converter_pin(pkg, manifest_path=None):
-    """The converter against the pin frozen in sources/oracle-manifest.json, when the manifest
-    carries one (corpus_grade.py's CONVERTER PIN: sha256 over "<path>\\t<sha256>\\n" lines, sorted,
-    for the modules the conversion loads, each file's sha256 taken with CRLF read as LF, paths
-    relative to the package's parent). None when there is no frozen pin to compare with.
+    """The converter against the pin frozen in sources/oracle-manifest.json (corpus_grade.py's
+    CONVERTER PIN: sha256 over "<path>\\t<sha256>\\n" lines, sorted, for the modules the conversion
+    loads, each file's sha256 taken with CRLF read as LF, paths relative to the package's parent).
     py_sha256 above covers every .py and so also catches a change to a module the conversion
-    does not load; this answers the other question — is this the frozen converter at all."""
-    m = read_json(manifest_path or ORACLE_MANIFEST)
-    conv = (m or {}).get("converter") if m and "_unreadable" not in m else None
+    does not load; this answers the other question — is this the frozen converter at all.
+    The manifest is committed (since the rails landed), so a manifest that is missing, does not
+    read, or carries no pin is itself a failure (ok False, `why` says which), not a pass."""
+    path = manifest_path or ORACLE_MANIFEST
+    m = read_json(path)
+    rel = os.path.relpath(path, ROOT).replace(os.sep, "/") if not os.path.relpath(path, ROOT).startswith("..") else path
+    if not m:
+        return {"frozen": None, "current": None, "ok": False, "differs": [], "why": f"{rel} is missing"}
+    if "_unreadable" in m:
+        return {"frozen": None, "current": None, "ok": False, "differs": [], "why": f"{rel} does not read"}
+    conv = m.get("converter")
     if not isinstance(conv, dict) or not isinstance(conv.get("pin"), str) or not isinstance(conv.get("files"), dict):
-        return None
+        return {"frozen": None, "current": None, "ok": False, "differs": [], "why": f"{rel} carries no converter pin"}
     base, pairs = os.path.dirname(pkg), {}
     for rel in conv["files"]:
         try:
@@ -916,8 +939,10 @@ def frozen_converter_pin(pkg, manifest_path=None):
         except OSError:
             pairs[rel] = "missing"
     pin = hashlib.sha256("".join(f"{k}\t{v}\n" for k, v in sorted(pairs.items())).encode("utf-8")).hexdigest()
-    return {"frozen": conv["pin"], "current": pin, "ok": pin == conv["pin"],
-            "differs": sorted(k for k, v in pairs.items() if v != conv["files"][k])}
+    differs = sorted(k for k, v in pairs.items() if v != conv["files"][k])
+    return {"frozen": conv["pin"], "current": pin, "ok": pin == conv["pin"], "differs": differs,
+            "why": None if pin == conv["pin"] else f"the converter is not the one frozen in {rel} (pin {conv['pin'][:12]}, "
+                                                    f"found {pin[:12]}; differs: {', '.join(differs) or 'nothing listed'})"}
 
 
 def pins(full=False):
@@ -969,7 +994,7 @@ def tool_state():
 # ---------------------------------------------------------------- jobs
 
 RUN_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$")
-JOB_KEYS = {"id", "cmd", "cwd", "timeout", "slot", "env", "meta"}
+JOB_KEYS = {"id", "cmd", "cwd", "timeout", "slot", "env", "meta", "retry_exit", "retry_after", "retry_limit"}
 
 
 def load_jobs(path):
@@ -1019,8 +1044,27 @@ def load_jobs(path):
             raise SystemExit(f"{where} ({jid}): 'env' must map strings to strings")
         if "cwd" in j and not isinstance(j["cwd"], str):
             raise SystemExit(f"{where} ({jid}): 'cwd' must be a string")
+        if "retry_exit" in j and not (isinstance(j["retry_exit"], list) and all(
+                isinstance(c, int) and not isinstance(c, bool) and c != 0 for c in j["retry_exit"])):
+            raise SystemExit(f"{where} ({jid}): 'retry_exit' must be a list of nonzero exit codes")
+        if "retry_after" in j and not (isinstance(j["retry_after"], (int, float)) and not isinstance(j["retry_after"], bool)
+                                       and j["retry_after"] >= 0):
+            raise SystemExit(f"{where} ({jid}): 'retry_after' must be 0 or more seconds")
+        if "retry_limit" in j and not (isinstance(j["retry_limit"], int) and not isinstance(j["retry_limit"], bool)
+                                       and j["retry_limit"] >= 0):
+            raise SystemExit(f"{where} ({jid}): 'retry_limit' must be 0 or more")
         jobs.append(j)
     return jobs
+
+
+def retry_exit_codes(job):
+    """The exit codes that mean "try again later" for this job: its retry_exit, else [2] for a job
+    that runs tools/corpus_grade.py (exit 2 is the grade refusing, never a verdict), else none."""
+    if "retry_exit" in job:
+        return set(job["retry_exit"])
+    cmd = job.get("cmd")
+    words = cmd.replace("\\", "/").split() if isinstance(cmd, str) else [str(a).replace("\\", "/") for a in cmd or []]
+    return {2} if any(w.strip('"').endswith("corpus_grade.py") for w in words) else set()
 
 
 def jobs_text(jobs):
@@ -1054,7 +1098,11 @@ def child_env(job, run, rdir, slot, threads):
               "VECLIB_MAXIMUM_THREADS", "OPENCV_FOR_THREADS_NUM", "PSF_CV_THREADS"):
         env[k] = t
     env.update(PYTHONDONTWRITEBYTECODE="1", PYTHONUTF8="1", PYTHONIOENCODING="utf-8",
-               PSF_RUN=run, PSF_JOB=job["id"], PSF_RUN_DIR=rdir)
+               PSF_RUN=run, PSF_JOB=job["id"], PSF_RUN_DIR=rdir,
+               # read-only git (status, diff) then never takes the worktree's index.lock, so a job frozen
+               # mid-`git status` cannot block every git write there; real writes still lock, and
+               # loopcommit's run under the commit lock, whose holder is never frozen
+               GIT_OPTIONAL_LOCKS="0")
     if slot:
         env["PSF_SLOT_HELD"] = "1"
     else:
@@ -1066,7 +1114,7 @@ def child_env(job, run, rdir, slot, threads):
 
 VERDICT_RE = re.compile(rb"^VERDICT[:=][ \t]*(\S[^\r\n]*?)[ \t]*\r?$", re.M)
 KILL_VERDICT = {"timeout": "TIMEOUT", "stopped": "STOPPED", "halted": "HALTED", "launch-error": "LAUNCH_ERROR",
-                "crashed": "CRASHED", "preempted": "PREEMPTED"}
+                "crashed": "CRASHED", "preempted": "PREEMPTED", "deferred": "RETRY_LATER"}
 
 
 # ---------------------------------------------------------------- the supervisor
@@ -1092,10 +1140,12 @@ class Supervisor:
         self.hb_path = os.path.join(rdir, "heartbeat.json")
         self.log_path, self.log_is_stdout = os.path.join(rdir, "supervisor.log"), log_is_stdout
         self.running, self.last, self.attempts = [], {}, {}
+        self.deferrals, self.not_before, self.unresumed = {}, {}, {}   # retry_exit bookkeeping, per job
         for r in read_jsonl(self.ledger):
             if r.get("kind") == "job":
                 self.last[r["job"]] = r
                 self.attempts[r["job"]] = self.attempts.get(r["job"], 0) + 1
+                self.deferrals[r["job"]] = self.deferrals.get(r["job"], 0) + 1 if r.get("outcome") == "deferred" else 0
         self.queue = [j for j in jobs if not self.finished(j["id"])]
         self.skipped = len(jobs) - len(self.queue)
         self.state, self.stop_since, self.stop_src, self.halt, self.crash = "running", None, None, None, None
@@ -1166,6 +1216,9 @@ class Supervisor:
                       "limit": limit, "gaming": hits},
             "free_gb": self.free, "stop": self.stop_src, "halt": self.halt, "grace_s": self.opts.grace,
             "crash": self.crash, "trouble": self.trouble,
+            # a freeze that cannot take the rails mutexes leaves jobs past the gaming limit running
+            "quiesce_blocked_s": round(now - self.quiesce_blocked, 1) if self.quiesce_blocked is not None else None,
+            "deferred": {j: round(t - now, 1) for j, t in self.not_before.items() if t > now},
         })
         self.hb_t, self.hb_state = now, self.state
 
@@ -1257,8 +1310,12 @@ class Supervisor:
             finally:
                 status = resume_created(proc)          # whatever happened above, never leave it suspended
             if status != 0:
-                self.event_safe("launch-unresumed", job=jid, pid=proc.pid, ntstatus=f"0x{status & 0xFFFFFFFF:08X}")
-                self.kill(r, "launch-error")
+                # the supervisor's failure, not the job's: queued again (preempted), unless it keeps happening
+                self.unresumed[jid] = self.unresumed.get(jid, 0) + 1
+                final = self.unresumed[jid] >= UNRESUMED_LIMIT
+                self.event_safe("launch-unresumed", job=jid, pid=proc.pid, ntstatus=f"0x{status & 0xFFFFFFFF:08X}",
+                                then="launch-error" if final else "preempted")
+                self.kill(r, "launch-error" if final else "preempted")
                 return
         if slot:
             try:
@@ -1269,6 +1326,8 @@ class Supervisor:
     def verdict(self, r, outcome, rc):
         if outcome != "exit":
             return KILL_VERDICT[outcome]
+        if rc in retry_exit_codes(r.job):
+            return "RETRY_EXHAUSTED"                   # it kept saying "later" past its retry_limit
         try:
             with open(r.log, "rb") as fh:
                 fh.seek(max(r.offset, os.path.getsize(r.log) - 65536))
@@ -1307,6 +1366,13 @@ class Supervisor:
         self.last[r.job["id"]] = row
         if outcome == "preempted":
             self.queue.insert(0, r.job)                # it runs again as soon as the pool allows
+        jid = r.job["id"]
+        if outcome == "deferred":
+            self.deferrals[jid] = self.deferrals.get(jid, 0) + 1
+            self.not_before[jid] = end + float(r.job.get("retry_after", RETRY_AFTER_S))
+            self.queue.append(r.job)                   # "later": behind everything already waiting
+        elif outcome not in ("preempted",):
+            self.deferrals[jid] = 0
         if r.slot:
             self.release_slot(r.slot)
         with contextlib.suppress(*TRANSIENT):
@@ -1350,6 +1416,9 @@ class Supervisor:
                 stragglers.append(r)                   # a process the job was starting as it was being frozen
         if fresh or stragglers:
             self.freeze(fresh, stragglers, now, why)
+        elif self.quiesce_blocked is not None:          # the need to freeze went away while it was blocked
+            self.event("freeze-unblocked", after_s=round(now - self.quiesce_blocked, 1), reason="no longer needed")
+            self.quiesce_blocked = None
 
     def freeze(self, fresh, stragglers, now, why):
         """Freeze the jobs in `fresh`, and catch what the frozen `stragglers` were starting as they
@@ -1428,7 +1497,13 @@ class Supervisor:
                 continue
             rc = r.proc.poll()
             if rc is not None:
-                self.record(r, "exit", rc)
+                later = rc in retry_exit_codes(r.job) and \
+                    self.deferrals.get(r.job["id"], 0) < int(r.job.get("retry_limit", RETRY_LIMIT))
+                if later:
+                    self.event("deferred", job=r.job["id"], exit_code=rc,
+                               retry_after_s=float(r.job.get("retry_after", RETRY_AFTER_S)),
+                               deferral=self.deferrals.get(r.job["id"], 0) + 1)
+                self.record(r, "deferred" if later else "exit", rc)
             elif r.suspended_at is None and now > r.deadline:
                 self.event("timeout", job=r.job["id"], after_s=round(now - r.start, 1), frozen_s=round(r.suspended_s, 1))
                 self.kill(r, "timeout")
@@ -1449,7 +1524,7 @@ class Supervisor:
             for r in list(self.running):
                 self.kill(r, "stopped")
 
-        waiting = False
+        waiting = retry_wait = False
         if self.stop_since is None and self.halt is None and self.queue:
             if now - self.disk_t >= DISK_EVERY_S:
                 self.disk_t, self.free = now, free_gb()
@@ -1461,7 +1536,11 @@ class Supervisor:
                     self.event("paused-disk" if low else "resumed-disk", free_gb=self.free, floor_gb=floor)
             if not self.paused:
                 while self.queue and len(self.running) < self.opts.parallel:
-                    job, slot = self.queue[0], None
+                    job = next((j for j in self.queue if self.not_before.get(j["id"], 0.0) <= now), None)
+                    if job is None:                    # everything queued was told "later": wait for it
+                        retry_wait = True
+                        break
+                    slot = None
                     if job.get("slot", True):
                         if time.time() - self.slot_t < SLOT_RETRY_S:
                             waiting = True
@@ -1491,6 +1570,7 @@ class Supervisor:
         self.state = ("halted" if self.halt is not None else "stopping" if self.stop_since is not None
                       else "suspended" if self.running and len(frozen) == len(self.running)
                       else "paused-disk" if self.paused else "waiting-slot" if waiting and not self.running
+                      else "waiting-retry" if retry_wait and not self.running
                       else "running")
         self.heartbeat()
         return bool(self.running) or (bool(self.queue) and self.stop_since is None and self.halt is None)
@@ -1608,12 +1688,10 @@ def cmd_run(args):
         raise SystemExit(f"refusing to start {run}: {src} is present. Clear it with "
                          f"`supervise.py stop {'' if 'global' in src else run} --clear` when you mean to.")
     pkg = converter_dir()
-    fz = frozen_converter_pin(pkg) if pkg else None
-    if fz and not fz["ok"] and not args.converter_unpinned:
-        raise SystemExit(f"refusing to start {run}: the converter at {pkg} is not the one frozen in "
-                         f"{os.path.relpath(ORACLE_MANIFEST, ROOT)} (pin {fz['frozen'][:12]}, found {fz['current'][:12]}; "
-                         f"differs: {', '.join(fz['differs'])}). Loops run the frozen converter; --converter-unpinned "
-                         "runs a deliberate candidate anyway and records that in the run manifest.")
+    fz = frozen_converter_pin(pkg) if pkg else {"ok": False, "why": "no piu_annotate converter found"}
+    if not fz["ok"] and not args.converter_unpinned:
+        raise SystemExit(f"refusing to start {run}: {fz['why']} (converter at {pkg}). Loops run the frozen converter; "
+                         "--converter-unpinned runs a deliberate candidate anyway and records that in the run manifest.")
     # the jobs file is read and checked before anything is created, so a bad one leaves no run folder
     frozen = os.path.join(rdir, "jobs.jsonl")
     if args.jobs:
@@ -1738,6 +1816,8 @@ def run_summary(run):
             "running": hb.get("running", []) if alive else [], "heartbeat_age_s": age,
             "updated": hb.get("updated"), "stop": stop_reason(run), "halt": hb.get("halt"),
             "crash": hb.get("crash"), "trouble": hb.get("trouble") if alive else None,
+            "quiesce_blocked_s": hb.get("quiesce_blocked_s") if alive else None,
+            "deferred": hb.get("deferred") if alive else None,
             "attempts": len(manifest.get("attempts", []))}
 
 
@@ -1784,6 +1864,10 @@ def cmd_status(args):
             print(f"  CRASHED {s['crash'].get('at')}: {s['crash'].get('error')} (traceback in events.jsonl and supervisor.log)")
         if s["trouble"]:
             print(f"  retrying since {s['trouble'].get('since')} ({s['trouble'].get('tries')} tries): {s['trouble'].get('error')}")
+        if s.get("quiesce_blocked_s") is not None:
+            print(f"  FREEZE BLOCKED {s['quiesce_blocked_s']}s: a rails mutex stays held, so jobs past the limit keep running")
+        for j, left in sorted((s.get("deferred") or {}).items()):
+            print(f"  deferred: {j} (said 'later'; launched again in {left}s)")
     return 0
 
 

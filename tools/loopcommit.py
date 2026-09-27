@@ -147,10 +147,9 @@ def pin_problems(run):
             problems.append(f"the converter changed since run {run} began (source hash {began[:12]} -> "
                             f"{str(conv.get('py_sha256'))[:12]})")
     unpinned = bool(manifest) and any(a.get("converter_unpinned") for a in manifest.get("attempts", []))
-    fz = S.frozen_converter_pin(pkg) if pkg else None
-    if fz and not fz["ok"] and not unpinned:
-        problems.append(f"the converter is not the one frozen in sources/oracle-manifest.json (pin {fz['frozen'][:12]}, "
-                        f"found {fz['current'][:12]}; differs: {', '.join(fz['differs'])})")
+    fz = S.frozen_converter_pin(pkg) if pkg else {"ok": False, "why": "no piu_annotate converter found"}
+    if not fz["ok"] and not unpinned:
+        problems.append(fz["why"])
     return problems
 
 
@@ -190,7 +189,7 @@ def cmd_commit(args):
     body = args.body or ""
     if args.body_file:
         body = sys.stdin.read() if args.body_file == "-" else open(args.body_file, encoding="utf-8-sig").read()
-    body = body.lstrip("﻿").strip()               # PowerShell 5.1 writes a BOM into files and native stdin
+    body = body.lstrip("\ufeff").strip()               # PowerShell 5.1 writes a BOM into files and native stdin
     if any(line.strip().startswith(OUR_TRAILERS) for line in body.splitlines()):
         raise Refused(f"the body may not carry {', '.join(OUR_TRAILERS)} lines; those trailers are loopcommit's to write")
     paths = args.paths[1:] if args.paths[:1] == ["--"] else args.paths

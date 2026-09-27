@@ -110,6 +110,12 @@ elif mode == "mutexspin":             # take and drop a rails mutex (40 ms held,
         n += 1
         time.sleep(0.01)
     mark("end", holds=n)
+elif mode == "exitseq":               # exit with the n-th code of a comma list on the job's n-th attempt
+    mark("start")
+    n = sum(1 for f in os.listdir(out) if f.startswith(safe + ".") and f.endswith(".start.json")
+            and f[len(safe) + 1:-len(".start.json")].isdigit())
+    codes = [int(c) for c in sys.argv[3].split(",")]
+    sys.exit(codes[min(n, len(codes)) - 1])
 elif mode == "until":                 # start, then wait for a file (or a cap)
     stop, cap = sys.argv[3], float(sys.argv[4])
     mark("start")
@@ -700,6 +706,41 @@ def d_resume(d):
     return f"{len(finished_before)} finished before the kill were skipped; in-flight job re-ran; 5 rows, one each"
 
 
+def d_retry_later(d):
+    """An exit code a job calls "later" (retry_exit, and 2 by default for tools/corpus_grade.py) is a
+    deferral, not a result: queued again after retry_after, up to retry_limit, then final."""
+    grade = os.path.join(d.dir, "corpus_grade.py")      # a toy under the grade's name: the default rule
+    shutil.copyfile(d.toy, grade)
+    specs = [d.toyjob("later-ok", "exitseq", "2,2,0", retry_exit=[2], retry_after=1),
+             {"id": "grade-refuses", "cmd": ["{py}", grade, "exitseq", d.out, "2,1"], "retry_after": 1},
+             d.toyjob("exhausted", "exitseq", "2,2,2,2", retry_exit=[2], retry_after=0.5, retry_limit=2),
+             d.toyjob("plain-fail", "exitseq", "2")]
+    path = d.jobs("j", specs)
+    r = d.sup("run", "later", "--jobs", path, "--parallel", "2")
+    rows = {}
+    for x in d.ledger("later"):
+        rows.setdefault(x["job"], []).append(x)
+    seq = {j: [(x["outcome"], x["exit_code"], x["verdict"]) for x in v] for j, v in rows.items()}
+    d.expect(r.returncode == 0, f"exit {r.returncode}: {r.stdout[-300:]}{r.stderr[-300:]}")
+    d.expect(seq.get("later-ok") == [("deferred", 2, "RETRY_LATER"), ("deferred", 2, "RETRY_LATER"), ("exit", 0, "OK")],
+             f"later-ok: {seq.get('later-ok')}")
+    d.expect(seq.get("grade-refuses") == [("deferred", 2, "RETRY_LATER"), ("exit", 1, "FAIL")],
+             f"a corpus_grade.py exit 2 was not deferred by default: {seq.get('grade-refuses')}")
+    d.expect(seq.get("exhausted") == [("deferred", 2, "RETRY_LATER"), ("deferred", 2, "RETRY_LATER"), ("exit", 2, "RETRY_EXHAUSTED")],
+             f"exhausted: {seq.get('exhausted')}")
+    d.expect(seq.get("plain-fail") == [("exit", 2, "FAIL")], f"a plain exit 2 was deferred: {seq.get('plain-fail')}")
+    ts = sorted(m["t"] for m in d.marks("start") if m["job"] == "later-ok")
+    gaps = [b - a for a, b in zip(ts, ts[1:])]
+    d.expect(len(gaps) == 2 and min(gaps) >= 0.95, f"relaunched sooner than retry_after 1 s: gaps {gaps}")
+    again = d.sup("run", "later")
+    d.expect(again.returncode == 0 and len(d.ledger("later")) == sum(len(v) for v in rows.values()),
+             "a resume re-ran a finished job")
+    bad = d.jobs("bad", [d.toyjob("x", "sleep", 0.1, retry_exit=[0])])
+    rb = d.sup("run", "badjobs", "--jobs", bad)
+    d.expect(rb.returncode != 0 and "retry_exit" in rb.stderr, "retry_exit [0] was accepted")
+    return "deferred 2,2 then OK; corpus_grade.py's 2 deferred by default; exhausted after 2; a plain 2 is FAIL"
+
+
 def d_crash(d):
     """A supervisor error is never 'finished': a transient one is retried and the run completes; one
     that persists past --transient-budget, or a plain bug, ends the run as crashed (exit 5), its
@@ -874,6 +915,10 @@ def d_pin_drift(d):
     d.expect(d.heartbeat("drift").get("state") == "halted", "heartbeat not halted")
     d.expect(len(rows) <= 1, f"{len(rows)} jobs recorded after the drift")
     r = d.sup("run", "drift", env=env)
+    # refused twice over now that sources/oracle-manifest.json freezes a pin: the drifted copy is not
+    # the frozen converter, and (past that, with --converter-unpinned) not the one the run began with
+    d.expect(r.returncode != 0 and "not the one frozen" in r.stderr, f"resume accepted a converter off the frozen pin: {r.stderr[-300:]}")
+    r = d.sup("run", "drift", "--converter-unpinned", env=env)
     d.expect(r.returncode != 0 and "changed since this run began" in r.stderr, "resume accepted a changed converter")
     # the frozen pin, computed here independently the way corpus_grade.converter_pin does it
     import hashlib
@@ -892,6 +937,14 @@ def d_pin_drift(d):
         json.dump({"converter": {"pin": pin, "files": files}}, fh)
     bad = S.frozen_converter_pin(os.path.join(conv, "piu_annotate"), manifest)
     d.expect(good and good["ok"], f"the real converter did not match its own frozen pin: {good}")
+    # the manifest is committed now: its absence, or a manifest with no pin, is a failure, not a pass
+    missing = S.frozen_converter_pin(pkg, os.path.join(d.dir, "no-such-manifest.json"))
+    d.expect(not missing["ok"] and "missing" in (missing.get("why") or ""), f"a missing manifest passed: {missing}")
+    pinless = os.path.join(d.dir, "pinless-manifest.json")
+    with open(pinless, "w") as fh:
+        json.dump({"oracle": {}}, fh)
+    nopin = S.frozen_converter_pin(pkg, pinless)
+    d.expect(not nopin["ok"] and "no converter pin" in (nopin.get("why") or ""), f"a pinless manifest passed: {nopin}")
     d.expect(bad and not bad["ok"] and bad["differs"] == ["piu_annotate/formats/ssc_to_chartstruct.py", "piu_annotate/utils.py"],
              f"the drifted copy was not caught by the frozen pin: {bad}")
     return f"halted with {len(rows)} job recorded; resume refused the new pin; frozen pin matched, and caught the drift"
@@ -1228,7 +1281,7 @@ DRILLS = [("slot_limit", d_slot_limit), ("slot_two_supervisors", d_slot_two_supe
           ("freeze_lock_holder", d_freeze_lock_holder), ("freeze_mutex", d_freeze_mutex),
           ("frozen_lock_wait", d_frozen_lock_wait), ("late_assign", d_late_assign), ("jobs_bom", d_jobs_bom),
           ("stop_run", d_stop_run), ("stop_grace_kill", d_stop_grace_kill), ("timeout", d_timeout),
-          ("resume", d_resume), ("crash", d_crash), ("commit_lock", d_commit_lock), ("stale_lock", d_stale_lock),
+          ("resume", d_resume), ("retry_later", d_retry_later), ("crash", d_crash), ("commit_lock", d_commit_lock), ("stale_lock", d_stale_lock),
           ("disk_pause", d_disk_pause), ("pin_drift", d_pin_drift), ("detach", d_detach),
           ("loopcommit", d_loopcommit), ("revert_run", d_revert_run), ("hook", d_hook), ("junction", d_junction),
           ("worktree", d_worktree)]
