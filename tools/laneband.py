@@ -23,7 +23,7 @@
 # cached .inset fit byte for byte (preflight, and lanefit.py's census, check exactly that).
 #
 #   laneband.py build --vids <vid> ... | --vids-file F     decode what is not cached (one slot)
-#   laneband.py preflight                                   re-fit 8 known videos; exit 2 on any drift
+#   laneband.py preflight [--no-codecs]                     re-fit 8 known videos and probe AV1 + VP9; exit 2 on any drift
 #   laneband.py status                                      how much of the cache exists
 import argparse
 import hashlib
@@ -53,6 +53,11 @@ FIELD_DIR = os.path.join(ROOT, "work", "receptor")
 PREFLIGHT = [("gxXqbXvzKOU", "L", 5, "1p"), ("x_d68CYJioE", "C", 10, "1p"), ("VyNEwu1XUjs", "C", 10, "1p"),
              ("b75q1UXkaKI", "C", 5, "2p"), ("nhAI_6qN6gs", "C", 10, "1p"), ("X14P1SjDza8", "C", 10, "1p"),
              ("9B2roORF9Zc", "C", 10, "2p"), ("1EdGrclHG_I", "C", 10, "1p")]
+# The eight are all h264; every PHOENIX 2 official upload (the held-out stratum) is AV1, and four
+# official uploads are VP9. No AV1 or VP9 video has a cached .inset fit, so these are checked without
+# one: production _fit_field against the arithmetic on the same fresh decode (the same fit, or the
+# same exception), and the cached picture against the fresh one. Both carry only tune charts.
+PREFLIGHT_CODECS = [("1Ez5gpvFDyE", "C", 10, "1p", "AV01"), ("Pa8PBY5zdKM", "C", 10, "1p", "VP90")]
 
 
 def stored_rows(h):
@@ -340,10 +345,20 @@ def cmd_build(a):
     return 0
 
 
+def _fit_or_error(fn):
+    """A fit's bytes, or its exception as text, so a raise compares like a fit."""
+    try:
+        return fit_bytes(fn())
+    except Exception as ex:
+        return "raised %s: %s" % (type(ex).__name__, ex)
+
+
 def cmd_preflight(a):
     """Re-fit the 8 known videos from a fresh decode, through receptors._fit_field itself and through
     fit_field_from(); both must give the cached .inset bytes, and a cached picture must equal the
-    fresh one. Catches a cv2/ffmpeg drift and a copy of the arithmetic that has come apart."""
+    fresh one. Then the codec probes (PREFLIGHT_CODECS): the codec is the one named, production and
+    the arithmetic agree on the fresh decode, and the cached picture (which must exist) equals it.
+    Catches a cv2/ffmpeg drift and a copy of the arithmetic that has come apart."""
     import supervise
     bad = []
     with supervise.decode_slot():
@@ -373,11 +388,35 @@ def cmd_preflight(a):
                 time.time() - t), flush=True)
             if not all(ok):
                 bad.append("%s %s %d %s: %s" % (vid, band, ncols, side, ok))
+        for vid, band, ncols, side, codec in ([] if a.no_codecs else PREFLIGHT_CODECS):
+            t = time.time()
+            cap = open_video(vid)
+            prod = _fit_or_error(lambda: R._fit_field(cap, vid, band, ncols, side, N))
+            cap.release()
+            d, why = decode(vid)
+            if d is None:
+                bad.append("%s: %s" % (vid, why))
+                continue
+            y0, y1 = int(d["h"] * 0.07), int(d["h"] * 0.21)
+            Y0, _ = stored_rows(d["h"])
+            pure = _fit_or_error(lambda: fit_field_from(d["med"][y0 - Y0:y1 - Y0, :], d["w"], band, ncols, side, y0, y1))
+            mb = load(vid)
+            cached = None if mb is None else _fit_or_error(lambda: fit_from_cache(mb, band, ncols, side))
+            ok = [d["fourcc"] == codec, prod == pure, mb is not None and bool(np.array_equal(mb["full"], d["med"])),
+                  cached == prod]
+            print("%s %s %d %s  %s  production %s arithmetic: %s  cached picture %s  cached arithmetic %s  %.1fs" % (
+                vid, band, ncols, side, d["fourcc"], prod[:60], "same" if ok[1] else "DIFFERS",
+                "not cached" if mb is None else "same" if ok[2] else "DIFFERS", "same" if ok[3] else "DIFFERS",
+                time.time() - t), flush=True)
+            if not all(ok):
+                bad.append("%s %s %d %s (%s): codec/arithmetic/picture/cached %s" % (vid, band, ncols, side, codec, ok))
     if bad:
         print("PREFLIGHT FAILED: %s" % "; ".join(bad))
         print("VERDICT: DRIFT")
         return 2
-    print("preflight: %d videos re-fitted byte for byte (cv2 %s)" % (min(a.limit, len(PREFLIGHT)), cv2.__version__))
+    print("preflight: %d videos re-fitted byte for byte, %d codec probes (%s) agree (cv2 %s)" % (
+        min(a.limit, len(PREFLIGHT)), 0 if a.no_codecs else len(PREFLIGHT_CODECS),
+        ", ".join(c[-1] for c in PREFLIGHT_CODECS), cv2.__version__))
     print("VERDICT: OK")
     return 0
 
@@ -409,6 +448,7 @@ def main(argv=None):
     b.add_argument("--retry-failed", action="store_true")
     p = sub.add_parser("preflight")
     p.add_argument("--limit", type=int, default=len(PREFLIGHT))
+    p.add_argument("--no-codecs", action="store_true", help="skip the AV1/VP9 probes (minutes of decode)")
     sub.add_parser("status")
     a = ap.parse_args(argv)
     return {"build": cmd_build, "preflight": cmd_preflight, "status": cmd_status}[a.cmd](a)
