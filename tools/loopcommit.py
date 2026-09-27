@@ -21,15 +21,41 @@
 #   RETRY LATER (the gate's exit 75, or a gate that ended with no report of this attempt) the pass
 #               stays open (exit 75): the next `pass gate` gates the SAME base again.
 # `pass begin` refuses while a pass is open with commits after its base: a new pass would take a
-# base that already holds them, and they would never be gated. The declared count is fixed at a
-# pass's first gate. Every attempt's gate output and JSON report are kept beside pass.json, and
-# finished passes are appended to passes.jsonl. One pass command runs per run at a time.
+# base that already holds them, and they would never be gated; and it refuses while the run has
+# Loop-Run commits that no gated pass covers (after its last closed pass's head, or after the
+# branch's merge-base with main when it has none). The declared count is fixed at a pass's first
+# gate. Every attempt's gate output and JSON report are kept beside pass.json, and finished passes
+# are appended to passes.jsonl. One pass command runs per run at a time.
+#
+# THE GATE IS NEVER JUDGED BY CODE THE LOOP CHANGED. `pass gate` runs the worktree's own
+# tools/corpus_grade.py, so before it runs anything it holds the gate's code - every file under
+# tools/ the gate can run or read: the modules followed by import from corpus_grade, loopcommit
+# and supervise (trace_audit and everything it imports among them), any tools/ file named like a
+# module they import (it would be imported in the library's place), every folder (the counter
+# atlases, childsite) and every file that is not a Python module; never __pycache__ (the gate runs
+# with an empty PYTHONPYCACHEPREFIX of its own, and PYTHONPATH reset to tools/childsite) - to that
+# code at the merge-base of HEAD and main, the rails the owner merged:
+#   - the same at HEAD and in the working tree: the gate runs;
+#   - different, and the pass changes a stepfile: REFUSED (exit 2, the run halted, nothing
+#     reverted, the pass left open): a stepfile pass waits until the owner merges that code into
+#     main (or the loop takes it back);
+#   - different, and the pass changes no stepfile: a TOOLS-ONLY pass - there is nothing for the gate
+#     to judge, so it does not run: PASS with --declared 0 (any other count FAILs, as the gate's
+#     DECLARED would). Such code judges nothing on the branch until main has it.
+# And a pass may not change what only the owner changes (OWNER_ONLY: the rails' own code - the gate,
+# the pass, the pool, the block hash, the trace audit, the atomic writes, childsite, the push hook -
+# and the oracle, the ratchet's ledgers, demotions.jsonl among them, and footage-corrupt.json):
+# `commit` refuses to stage them, and a pass whose base..HEAD touches one anyway is REFUSED the same
+# way. The orchestrator's merge gate, `corpus_grade.py gate --base main --head loops/<x>` run from
+# main's own checkout, is the backstop for a loop that edits the code it runs itself.
 #
 # commit: takes the one machine-wide commit lock (supervise.py's work/.commit.lock), stages
 # exactly the declared paths (files or folders, relative to the repository root), and refuses
+# unless the run has an OPEN pass begun in this repository on this branch (a commit outside one
+# would sit at or under the next pass's base and never be gated), while a STOP applies to the run,
 # when the index already holds a staged change outside them, when a declared path has nothing
-# to commit, when HEAD is detached, or when the branch is main/master (and, without
-# --allow-branch, anything outside loops/*). The message gets a "Loop-Run: <run>" trailer and
+# to commit or reaches an OWNER_ONLY path, when HEAD is detached, or when the branch is main/master
+# (and, without --allow-branch, anything outside loops/*). The message gets a "Loop-Run: <run>" trailer and
 # the Co-Authored-By trailer (a byte-order mark PowerShell put on --body-file or stdin is
 # dropped). After `git commit -F <msg> -- <paths>` it checks git's return code, that HEAD
 # advanced by exactly one commit on top of the old HEAD, that the commit touched exactly the
@@ -44,7 +70,8 @@
 # Exit codes: 0 committed (a pass: begun, passed, shown); 2 refused (nothing was committed: a
 # refusal above, the run's last pass gate failed, the commit lock not taken within --lock-timeout
 # (time this process was awake: a supervisor freezing the job while it waits does not use it up),
-# a path outside the repository or on another drive; for `pass gate` also the gate refusing, which
+# a path outside the repository or on another drive; for `pass gate` also the gate refusing, the
+# gate's code not main's under a stepfile pass, or an OWNER_ONLY path in the pass - each of which
 # halts the run); 3 a post-commit check failed and the commit was undone (its changes left
 # staged); 4 `pass gate` FAILED (run halted, its commits after the base reverted); 75 `pass gate`
 # not judged - retry later, the pass stays open (supervise.py defers a loopcommit.py job on 75 by
@@ -66,9 +93,11 @@
 # that fails its post-commit check is undone with `git reset --soft` like any other (exit 3, the
 # reversal left staged for inspection).
 import argparse
+import ast
 import contextlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -79,6 +108,25 @@ import supervise as S  # noqa: E402
 
 CO_AUTHOR = "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 OUR_TRAILERS = ("Loop-Run:", "Loop-Revert:", "Reverts:")
+MAIN = "main"
+# the rails' own code: a loop never changes what judges and enforces its passes
+RAILS_CODE = ("tools/corpus_grade.py", "tools/guards.py", "tools/trace_audit.py", "tools/loopcommit.py",
+              "tools/supervise.py", "tools/atomicio.py", "tools/childsite", ".githooks")
+# human data the gate or the audit reads that is not in the oracle manifest
+OWNER_DATA = ("sources/footage-corrupt.json",)
+# where the gate starts following imports to find its own code (trace_audit is reached through
+# corpus_grade's audit-ships; the children's site hook is added from tools/childsite)
+GATE_ROOTS = ("corpus_grade", "loopcommit", "supervise")
+PY_MODULE = (".py", ".pyw", ".pyc", ".pyd", ".so")
+
+
+def owner_only():
+    """Paths no loop commits: the rails' code, the oracle (the files the grade reads to decide who is
+    certified and at what count, and the policy files its gate enforces), the oracle manifest, the
+    ratchet's append-only ledgers (a demotion is the owner's call; a promotion is the trace audit's
+    corpus run) and the other human data the gate reads. corpus_grade's own lists, so they cannot drift."""
+    import corpus_grade as CG
+    return tuple(RAILS_CODE) + tuple(CG.ORACLE_DATA) + tuple(CG.ORACLE_POLICY) + (CG.MANIFEST, CG.DEMOTIONS, CG.PROMOTIONS) + OWNER_DATA
 
 
 class Refused(Exception):
@@ -226,9 +274,9 @@ def cmd_commit(args):
     branch = branch_guard(top, args.allow_branch)
 
     with S.commit_lock(run=run, purpose=f"loopcommit {branch}", timeout=args.lock_timeout):
-        halted = pass_halted(run)                       # read under the lock a failing gate reverts under
-        if halted:
-            raise Refused(halted)
+        outside_pass = pass_refusal(run, top, branch)   # read under the lock a failing gate reverts under
+        if outside_pass:
+            raise Refused(outside_pass)
         pins_wrong = pin_problems(run)
         if pins_wrong:
             raise Refused("; ".join(pins_wrong) + ". A converter mismatch halts the loop; nothing was committed or reverted")
@@ -244,10 +292,14 @@ def cmd_commit(args):
         now = staged(top)
         outside = [p for p in now if not covered(p, decl)]
         idle = [d for d in decl if not any(covered(p, [d]) for p in now)]
-        if outside or idle:
+        owners = [p for p in now if covered(p, owner_only())]
+        if outside or idle or owners:
             g(top, "reset", "-q", "--", *decl)
             raise Refused((f"staging reached undeclared paths {outside}; " if outside else "")
-                          + (f"declared paths with nothing to commit: {idle}" if idle else ""))
+                          + (f"declared paths with nothing to commit: {idle}; " if idle else "")
+                          + (f"paths only the owner changes: {owners[:10]} (the rails' own code, the oracle, the "
+                             "ratchet's ledgers - a demotion is the owner's call - and footage-corrupt.json); a loop "
+                             "hands those to the owner" if owners else "").rstrip("; "))
         message = f"{subject}\n\n" + (f"{body}\n\n" if body else "") + f"Loop-Run: {run}\n{args.co_author}\n"
         must(commit_with(top, message, decl), "git commit")
         new, problems = verify_commit(top, old, now, decl)
@@ -383,18 +435,171 @@ def pass_lock(run, timeout):
         lock.release()
 
 
-def pass_halted(run):
-    """Why this run may not commit (its last pass gate failed and reverted it), or None."""
+def pass_refusal(run, top, branch):
+    """Why run `run` may not commit in `top` on `branch` right now, or None. A loop commits only
+    inside an open pass begun here, on this branch, whose base HEAD still stands on, and never while
+    a STOP applies to the run: a commit before `pass begin`, or after a pass closed, would sit at or
+    under the next pass's base, and no gate would ever look at it."""
     cur = read_pass(pass_paths(run)[1])
-    if cur and cur.get("state") == "failed":
+    state = cur.get("state") if cur else None
+    if state == "failed":
         return (f"run {run}'s pass gate failed ({str(cur.get('base'))[:10]}..{str(cur.get('head'))[:10]}, "
                 f"{cur.get('closed')}): the run is halted and its commits after the base were reverted; nothing "
                 f"commits for it until the owner clears its STOP and a new pass begins")
+    stop = S.stop_reason(run)
+    if stop:
+        return f"{stop} is present: nothing commits for a run while a STOP applies to it (clearing it is the owner's call)"
+    if state != "open":
+        last = (f"its last pass {state} at {str(cur.get('head'))[:10]}" if cur else "no pass was begun")
+        return (f"run {run} has no open pass ({last}): `loopcommit.py pass begin --run {run}` takes the base first - a "
+                "commit outside a pass would sit under the next pass's base and never be gated")
+    if cur.get("branch") != branch or not same_path(cur.get("repo", ""), top):
+        return f"run {run}'s open pass was begun in {cur.get('repo')} on {cur.get('branch')}, not {top} on {branch}"
+    if not is_ancestor(top, cur["base"], "HEAD"):
+        return f"run {run}'s pass base {str(cur['base'])[:10]} is no longer an ancestor of HEAD (the branch was rewritten)"
     return None
 
 
 def same_path(a, b):
     return os.path.normcase(os.path.normpath(a)) == os.path.normcase(os.path.normpath(b))
+
+
+def is_ancestor(top, a, b):
+    return g(top, "merge-base", "--is-ancestor", a, b).returncode == 0
+
+
+# ---------------------------------------------------------------- the gate's own code
+
+def rails_base(top):
+    """The main commit this branch stands on (the merge-base of HEAD and main): the gate's code at
+    that commit is the code the owner merged, and the only code a pass is ever judged by."""
+    r = g(top, "merge-base", "HEAD", MAIN)
+    if r.returncode != 0 or not r.stdout.strip():
+        raise Refused(f"HEAD has no merge-base with {MAIN} (git exit {r.returncode}: {r.stderr.strip()[:200]}): a pass is "
+                      f"judged only by the gate's code as it stands on {MAIN}, and there is no {MAIN} to hold it to")
+    return r.stdout.strip()
+
+
+def imported(src):
+    """Top-level module names a Python source imports anywhere in it - at module level or inside a
+    function, and importlib.import_module / __import__ of a literal name. None: it does not parse."""
+    try:
+        tree = ast.parse(src)
+    except (SyntaxError, ValueError):
+        return None
+    out = set()
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Import):
+            out.update(a.name.split(".")[0] for a in n.names)
+        elif isinstance(n, ast.ImportFrom) and n.level == 0 and n.module:
+            out.add(n.module.split(".")[0])
+        elif (isinstance(n, ast.Call) and n.args and isinstance(n.args[0], ast.Constant) and isinstance(n.args[0].value, str)
+              and getattr(n.func, "attr", getattr(n.func, "id", None)) in ("import_module", "__import__")):
+            out.add(n.args[0].value.split(".")[0])
+    return out
+
+
+def import_names(files, read):
+    """Every module name the gate's code imports, followed from GATE_ROOTS (and the imports of
+    tools/childsite, which runs in every supervised child) through each tools/ module it reaches -
+    library names included, because a tools/ file named like one would be imported in its place.
+    files: {path under tools/: anything}; read(path) -> the source bytes."""
+    mods = {rel[:-3]: rel for rel in files if "/" not in rel and rel.endswith(".py")}
+    todo = list(GATE_ROOTS)
+    for rel in sorted(files):
+        if rel.startswith("childsite/") and rel.endswith(".py"):
+            todo += sorted(imported(read(rel)) or ())
+    seen = set()
+    while todo:
+        m = todo.pop()
+        if m in seen:
+            continue
+        seen.add(m)
+        if m in mods:
+            todo += sorted(imported(read(mods[m])) or ())
+    return seen
+
+
+def in_gate_code(rel, names_):
+    """Whether tools/<rel> is something the gate can run or read: any folder (the counter atlases,
+    childsite), any file that is not a Python module, and any Python module named like something the
+    gate's code imports. Never __pycache__: the gate runs with an empty PYTHONPYCACHEPREFIX of its own."""
+    parts = rel.rstrip("/").split("/")
+    if "__pycache__" in parts:
+        return False
+    if len(parts) > 1 or rel.endswith("/") or not rel.lower().endswith(PY_MODULE):
+        return True
+    return rel.split(".", 1)[0] in names_
+
+
+def blobs(top, shas):
+    """{blob id: bytes}, one `git cat-file --batch`."""
+    shas = sorted(set(shas))
+    if not shas:
+        return {}
+    r = g(top, "cat-file", "--batch", data=("\n".join(shas) + "\n").encode(), binary=True)
+    data = must(r, "git cat-file --batch")
+    out, pos = {}, 0
+    for s in shas:
+        nl = data.index(b"\n", pos)
+        hd = data[pos:nl].split(b" ")
+        if len(hd) < 3 or hd[0].decode() != s:
+            raise Refused(f"git cat-file answered {data[pos:nl][:80]!r} for {s}")
+        size = int(hd[2])
+        out[s] = data[nl + 1:nl + 1 + size]
+        pos = nl + 1 + size + 1
+    return out
+
+
+def gate_code_at(top, rev):
+    """({repo path: blob id} of the gate's code at a commit, the import names that decided it)."""
+    files = {}
+    for rec in must(g(top, "ls-tree", "-r", "-z", rev, "--", "tools"), f"git ls-tree {rev[:10]} tools").split("\0"):
+        if rec:
+            meta, path = rec.split("\t", 1)
+            _, kind, sha = meta.split(" ")
+            if kind == "blob" and path.startswith("tools/"):
+                files[path[len("tools/"):]] = sha
+    src = blobs(top, [s for rel, s in files.items() if rel.endswith(".py") and ("/" not in rel or rel.startswith("childsite/"))])
+    names_ = import_names(files, lambda rel: src.get(files[rel], b""))
+    return {"tools/" + rel: sha for rel, sha in files.items() if in_gate_code(rel, names_)}, names_
+
+
+def gate_code_local(top, names_):
+    """The gate's code where the working tree or the index differs from HEAD: modified, staged,
+    deleted, untracked or ignored (a planted tools/<library>.py is untracked, a .pyc ignored)."""
+    out = must(g(top, "--no-optional-locks", "status", "--porcelain=v1", "-z", "--no-renames", "--untracked-files=all",
+                 "--ignored=matching", "--", "tools", binary=True), "git status tools")
+    found = set()
+    for rec in out.split(b"\0"):
+        p = rec[3:].decode("utf-8", "replace") if len(rec) > 3 else ""
+        if p.startswith("tools/") and in_gate_code(p[len("tools/"):], names_):
+            found.add(p)
+    return sorted(found)
+
+
+def gate_code_drift(top, rev="HEAD"):
+    """(main's merge-base, gate code that differs between it and `rev`, gate code the working tree
+    changes) - both empty when the gate that would run here is the code the owner merged."""
+    fork = rails_base(top)
+    at_fork, _ = gate_code_at(top, fork)
+    at_rev, names_ = gate_code_at(top, rev)
+    moved = sorted(p for p in set(at_fork) | set(at_rev) if at_fork.get(p) != at_rev.get(p))
+    return fork, moved, gate_code_local(top, names_)
+
+
+def gate_env(top):
+    """The gate's environment: nothing a loop set for Python survives (PYTHONPATH, PYTHONSTARTUP,
+    PYTHONHOME, ...); PYTHONPATH is tools/childsite alone (the OpenCV thread cap every supervised child
+    gets), and bytecode is looked up only in an empty folder of the gate's own, so a __pycache__ under
+    tools/ is never read. -> (env, that folder, to remove afterwards)."""
+    env = {k: v for k, v in os.environ.items() if not k.upper().startswith("PYTHON")}
+    pyc = tempfile.mkdtemp(prefix="loopcommit-pyc-")
+    env.update(PYTHONDONTWRITEBYTECODE="1", PYTHONUTF8="1", PYTHONIOENCODING="utf-8", PYTHONPYCACHEPREFIX=pyc)
+    site = os.path.join(top, "tools", "childsite")
+    if os.path.isdir(site):
+        env["PYTHONPATH"] = site
+    return env, pyc
 
 
 def cmd_pass_begin(args):
@@ -416,9 +621,27 @@ def cmd_pass_begin(args):
         src = S.stop_reason(run)
         if src:
             raise Refused(f"{src} is present: no pass begins while the run is stopped or halted (clearing it is the owner's call)")
+        # every Loop-Run commit of this run must sit inside a gated pass: none after the last closed
+        # pass's head, or, with none on this branch, after the branch's merge-base with main
+        fork, moved, local = gate_code_drift(top)
+        last = cur if (cur and cur.get("state") in ("passed", "failed") and cur.get("head") and cur.get("branch") == branch
+                       and same_path(cur.get("repo", ""), top) and is_ancestor(top, cur["head"], "HEAD")) else None
+        since, what = (last["head"], f"its last pass ({last['state']}, head {last['head'][:10]})") if last else \
+            (fork, f"{MAIN} (merge-base {fork[:10]})")
+        _, _, mine, reverted = run_log(top, since, run)
+        loose = [c for c in mine if c["sha"] not in reverted]
+        if loose:
+            raise Refused(f"run {run} has {len(loose)} Loop-Run commit(s) since {what} that no pass gated ("
+                          + "; ".join(f"{c['sha'][:10]} {c['subject'][:60]}" for c in loose[:5]) + (" ..." if len(loose) > 5 else "")
+                          + f"): a new pass would take a base that already holds them. Whether to take them back "
+                          f"(`loopcommit.py revert-run {run} --base {since[:10]}`) is the owner's call")
         rec = dict(run=run, state="open", base=tip, branch=branch, repo=top, began=S.now_iso(), gates=[])
         S.write_json(pfile, rec)
     print(f"pass open for run {run}: base {tip} on {branch}")
+    if moved or local:
+        print(f"note: the gate's own code here is not {MAIN}'s (merge-base {fork[:10]}): {', '.join((moved + local)[:8])}"
+              f"{' ...' if len(moved) + len(local) > 8 else ''}. A pass that changes no stepfile passes without a gate; one "
+              f"that changes a stepfile is refused until the owner merges that code into {MAIN}")
     return 0
 
 
@@ -426,6 +649,45 @@ def cmd_pass_show(args):
     cur = read_pass(pass_paths(check_run(args.run))[1])
     print(json.dumps(cur or {}, indent=1, sort_keys=True, ensure_ascii=False))
     return 0
+
+
+def halt_open(rdir, pfile, cur, base, why):
+    """Halt the run over a pass nobody judged (the gate refused, or loopcommit did before running it):
+    its STOP is written, nothing is reverted, the pass stays open for the same base. -> exit 2."""
+    S.write_json(os.path.join(rdir, "STOP"), {"at": S.now_iso(), "by_pid": os.getpid(), "reason":
+                 f"loopcommit pass gate: {why[:1200]}; nothing reverted, the pass at base {base[:10]} stays open - once "
+                 f"fixed, clear this STOP and gate the same base again"})
+    S.write_json(pfile, cur)
+    print(f"pass NOT JUDGED and the run halted: {why[:600]}; nothing reverted, the pass stays open at base {base[:10]}",
+          file=sys.stderr)
+    return 2
+
+
+def fail_pass(top, run, branch, rdir, pfile, hist, cur, base, tip, failures, args):
+    """A FAILED pass: halt the run first (no new job starts, and no job of the run commits once the
+    state says failed), then take back this run's commits after the base. -> exit 4."""
+    why = "; ".join(failures or [])
+    S.write_json(os.path.join(rdir, "STOP"), {"at": S.now_iso(), "by_pid": os.getpid(), "reason":
+                 f"loopcommit pass gate FAILED ({base[:10]}..{tip[:10]}), this run's commits after the base "
+                 f"reverted: {why[:1500]}"})
+    cur.update(state="failed", closed=S.now_iso(), head=tip, failures=failures, revert="pending")
+    S.write_json(pfile, cur)
+    try:
+        done, mine = revert_run(top, run, base, branch, f"The pass gate failed: {why[:800]}", args.lock_timeout,
+                                args.co_author)
+        files = sorted({f for c in mine for f in touched(top, c["sha"])})
+        left = [p for p in must(g(top, "diff", "--name-only", "-z", "--no-renames", base, "HEAD", "--", *files),
+                                "git diff").split("\0") if p] if files else []
+        cur["revert"] = dict(ok=True, reverted=done, commits=len(mine), still_differ_from_base=left)
+        tail = (f"{done} commit(s) reverted" + (f"; {len(left)} of their file(s) still differ from the base "
+                                                f"(another commit touched them): {left[:10]}" if left else ""))
+    except (Refused, TimeoutError) as e:
+        cur["revert"] = dict(ok=False, error=str(e))
+        tail = f"the revert did NOT complete: {e}"
+    S.write_json(pfile, cur)
+    S.append_jsonl(hist, cur)
+    print(f"pass FAILED: run {run} halted (its STOP is written); {tail}", file=sys.stderr)
+    return PASS_FAILED
 
 
 def cmd_pass_gate(args):
@@ -441,7 +703,7 @@ def cmd_pass_gate(args):
         if cur.get("branch") != branch or not same_path(cur.get("repo", ""), top):
             raise Refused(f"run {run}'s open pass was begun in {cur.get('repo')} on {cur.get('branch')}, not {top} on {branch}")
         base = cur["base"]
-        if g(top, "merge-base", "--is-ancestor", base, "HEAD").returncode != 0:
+        if not is_ancestor(top, base, "HEAD"):
             raise Refused(f"the pass base {base[:10]} is no longer an ancestor of HEAD (the branch was rewritten); nothing gated")
         if cur.get("declared") is not None and cur["declared"] != args.declared:
             raise Refused(f"this pass declared {cur['declared']:+d} at its first gate, and a retry gates the same claim "
@@ -453,6 +715,47 @@ def cmd_pass_gate(args):
         report, logf = stem + ".json", stem + ".log"
         with contextlib.suppress(FileNotFoundError):
             os.remove(report)                          # only this attempt's report is believed
+        attempt = dict(n=n, at=S.now_iso(), head=tip)
+
+        # before anything runs: what the pass changed, and whether the gate that would judge it is main's
+        changed = names(top, "diff", "--name-only", "--no-renames", base, tip)
+        owners = [p for p in changed if covered(p, owner_only())]
+        if owners:
+            why = (f"the pass changes paths only the owner changes ({', '.join(owners[:8])}{' ...' if len(owners) > 8 else ''}): "
+                   "the rails' own code, the oracle, the ratchet's ledgers (a demotion is the owner's call) and "
+                   "footage-corrupt.json are never a loop's to commit")
+            cur.setdefault("gates", []).append(dict(attempt, exit=2, verdict=None, refused=why, owner_only=owners[:50]))
+            return halt_open(rdir, pfile, cur, base, why)
+        fork, moved, local = gate_code_drift(top, tip)
+        if moved or local:
+            code = moved + [p for p in local if p not in moved]
+            steps = [p for p in changed if p.startswith("simfiles/")]
+            where = (f"the gate's own code here is not {MAIN}'s (merge-base {fork[:10]}): "
+                     + (f"committed {', '.join(moved[:8])}{' ...' if len(moved) > 8 else ''}" if moved else "")
+                     + ("; " if moved and local else "")
+                     + (f"in the working tree {', '.join(local[:8])}{' ...' if len(local) > 8 else ''}" if local else ""))
+            if steps:
+                why = (f"this pass changes {len(steps)} stepfile(s), and {where}. A pass is never judged by code the loop "
+                       f"changed: a stepfile pass here waits until the owner merges that code into {MAIN} (or the loop "
+                       "takes it back)")
+                cur.setdefault("gates", []).append(dict(attempt, exit=2, verdict=None, refused=why, gate_code=code[:50]))
+                return halt_open(rdir, pfile, cur, base, why)
+            # a tools-only pass: no stepfile and no owner-only path changed, so there is nothing for the
+            # gate to judge, and the code that would judge it is not main's - it does not run
+            if args.declared != 0:
+                fails = [f"DECLARED: net change in exact charts is +0 (the pass changes no stepfile), declared {args.declared:+d}"]
+                cur.setdefault("gates", []).append(dict(attempt, exit=1, verdict="FAIL", tools_only=True, gate_code=code[:50]))
+                print(f"pass {base[:10]}..{tip[:10]} changes no stepfile - tools only, not gated: {where}\nFAIL {fails[0]}")
+                return fail_pass(top, run, branch, rdir, pfile, hist, cur, base, tip, fails, args)
+            cur.setdefault("gates", []).append(dict(attempt, exit=0, verdict="PASS", tools_only=True, gate_code=code[:50]))
+            cur.update(state="passed", closed=S.now_iso(), head=tip, net=0, tools_only=True)
+            S.write_json(pfile, cur)
+            S.append_jsonl(hist, cur)
+            print(f"pass PASSED (tools only, not gated): run {run}, {base[:10]}..{tip[:10]} changes no stepfile and no "
+                  f"owner-only path, so there is nothing for the gate to judge; {where}. That code judges nothing on this "
+                  f"branch: a pass here that changes a stepfile is refused until the owner merges it into {MAIN}")
+            return 0
+
         cmd = S.PY + [os.path.join(top, "tools", "corpus_grade.py"), "gate", "--base", base, "--head", tip,
                       "--declared", str(args.declared), "--json", report]
         if args.audit_no_decode:
@@ -460,16 +763,20 @@ def cmd_pass_gate(args):
         if args.workers:
             cmd += ["--workers", str(args.workers)]
         t0 = time.time()
-        r = subprocess.run(cmd, cwd=top, capture_output=True, text=True, encoding="utf-8", errors="replace",
-                           creationflags=S.QUIET)
+        env, pyc = gate_env(top)
+        try:
+            r = subprocess.run(cmd, cwd=top, capture_output=True, text=True, encoding="utf-8", errors="replace",
+                               creationflags=S.QUIET, env=env)
+        finally:
+            shutil.rmtree(pyc, ignore_errors=True)
         S.write_atomic(logf, r.stdout + (f"\n--- stderr ---\n{r.stderr}" if r.stderr.strip() else ""))
         sys.stdout.write(r.stdout)
         sys.stdout.flush()
         rep = S.read_json(report)
         fresh = bool(rep) and "_unreadable" not in rep and rep.get("base") == base and rep.get("head") == tip
         verdict = rep.get("verdict") if fresh else None
-        cur.setdefault("gates", []).append(dict(n=n, at=S.now_iso(), head=tip, exit=r.returncode, verdict=verdict,
-                                                report=report, log=logf, seconds=round(time.time() - t0, 1)))
+        cur.setdefault("gates", []).append(dict(attempt, exit=r.returncode, verdict=verdict, report=report, log=logf,
+                                                seconds=round(time.time() - t0, 1)))
         if r.returncode == 0 and verdict == "PASS":
             cur.update(state="passed", closed=S.now_iso(), head=tip, net=rep.get("net"))
             S.write_json(pfile, cur)
@@ -477,39 +784,10 @@ def cmd_pass_gate(args):
             print(f"pass PASSED: run {run}, {base[:10]}..{tip[:10]}, net {rep.get('net'):+d} as declared")
             return 0
         if r.returncode == 1 and verdict == "FAIL":
-            why = "; ".join(rep.get("failures") or [])
-            # halt first (no new job starts, and no job of the run commits once the state says failed),
-            # then take back this run's commits after the base
-            S.write_json(os.path.join(rdir, "STOP"), {"at": S.now_iso(), "by_pid": os.getpid(), "reason":
-                         f"loopcommit pass gate FAILED ({base[:10]}..{tip[:10]}), this run's commits after the base "
-                         f"reverted: {why[:1500]}"})
-            cur.update(state="failed", closed=S.now_iso(), head=tip, failures=rep.get("failures"), revert="pending")
-            S.write_json(pfile, cur)
-            try:
-                done, mine = revert_run(top, run, base, branch, f"The pass gate failed: {why[:800]}", args.lock_timeout,
-                                        args.co_author)
-                files = sorted({f for c in mine for f in touched(top, c["sha"])})
-                left = [p for p in must(g(top, "diff", "--name-only", "-z", "--no-renames", base, "HEAD", "--", *files),
-                                        "git diff").split("\0") if p] if files else []
-                cur["revert"] = dict(ok=True, reverted=done, commits=len(mine), still_differ_from_base=left)
-                tail = (f"{done} commit(s) reverted" + (f"; {len(left)} of their file(s) still differ from the base "
-                                                        f"(another commit touched them): {left[:10]}" if left else ""))
-            except (Refused, TimeoutError) as e:
-                cur["revert"] = dict(ok=False, error=str(e))
-                tail = f"the revert did NOT complete: {e}"
-            S.write_json(pfile, cur)
-            S.append_jsonl(hist, cur)
-            print(f"pass FAILED: run {run} halted (its STOP is written); {tail}", file=sys.stderr)
-            return PASS_FAILED
+            return fail_pass(top, run, branch, rdir, pfile, hist, cur, base, tip, rep.get("failures"), args)
         if r.returncode == 2:
             refusal = next((l for l in reversed(r.stdout.splitlines()) if l.startswith("REFUSED")), r.stdout.strip()[-300:])
-            S.write_json(os.path.join(rdir, "STOP"), {"at": S.now_iso(), "by_pid": os.getpid(), "reason":
-                         f"loopcommit pass gate: the gate refused ({refusal[:600]}); nothing reverted, the pass at base "
-                         f"{base[:10]} stays open - once fixed, clear this STOP and gate the same base again"})
-            S.write_json(pfile, cur)
-            print(f"pass NOT JUDGED and the run halted: the gate refused ({refusal[:300]}); nothing reverted, the pass "
-                  f"stays open at base {base[:10]}", file=sys.stderr)
-            return 2
+            return halt_open(rdir, pfile, cur, base, f"the gate refused ({refusal[:600]})")
         # 75, or an exit with no report of this attempt to believe (a gate killed mid-run): not judged
         S.write_json(pfile, cur)
         print(f"pass NOT JUDGED (gate exit {r.returncode}{'' if verdict else ', no report from this attempt'}): the pass "

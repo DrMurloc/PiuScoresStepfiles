@@ -1020,7 +1020,14 @@ def d_loopcommit(d):
                               errors="replace", creationflags=FLAGS)
     head = lambda: git(repo, "rev-parse", "HEAD")      # noqa: E731
     base = head()
+    git(repo, "branch", "main")                        # the rails the passes are held to
     write(repo, "a.txt", "a v2\n")
+    r = lc("commit", "--repo", repo, "--run", "R0", "-m", "no pass", "--", "a.txt")
+    d.expect(r.returncode == 2 and "no open pass" in r.stderr and head() == base,
+             f"a commit outside any pass: {r.returncode} {r.stderr[-300:]}")
+    for run in ("R1", "R8", "R9"):
+        r = lc("pass", "begin", "--run", run, "--repo", repo)
+        d.expect(r.returncode == 0, f"pass begin {run}: {r.returncode} {r.stderr[-300:]}")
     write(repo, "b.txt", "b v2\n")
     git(repo, "add", "--", "b.txt")
     r = lc("commit", "--repo", repo, "--run", "R1", "-m", "a only", "--", "a.txt")
@@ -1047,10 +1054,24 @@ def d_loopcommit(d):
              f"a path on another drive: exit {r.returncode} {r.stderr[-300:]}")
     r = lc("commit", "--repo", repo, "--run", "R1", "-m", "spoof", "--body", "Loop-Run: R9", "--", "b.txt")
     d.expect(r.returncode == 2 and head() == h, "a body carrying Loop-Run was accepted")
-    git(repo, "checkout", "-q", "-b", "main")
+    # what only the owner changes: the rails' code and the ratchet's ledgers, declared by name or reached by a folder
+    write(repo, "tools/corpus_grade.py", "# a loop's own gate\n")
+    write(repo, "sources/demotions.jsonl", '{"chart": "X S1", "block_sha": "' + "0" * 64 + '", "reason": "r", "evidence": "e"}\n')
+    write(repo, "sources/report.json", "{}\n")
+    for decl in (["tools/corpus_grade.py"], ["sources"], ["sources/demotions.jsonl", "b.txt"]):
+        r = lc("commit", "--repo", repo, "--run", "R1", "-m", "owner-only", "--", *decl)
+        d.expect(r.returncode == 2 and "only the owner" in r.stderr and head() == h
+                 and git(repo, "diff", "--cached", "--name-only") == "",
+                 f"an owner-only path {decl}: exit {r.returncode}, staged {git(repo, 'diff', '--cached', '--name-only')!r}: "
+                 f"{r.stderr[-300:]}")
+    for f in ("tools/corpus_grade.py", "sources/demotions.jsonl", "sources/report.json"):
+        os.remove(os.path.join(repo, f))
+    git(repo, "checkout", "-q", "main")
+    hm = head()
     r = lc("commit", "--repo", repo, "--run", "R1", "-m", "on main", "--", "b.txt")
-    d.expect(r.returncode == 2 and "main" in r.stderr and head() == h, "committed on main")
+    d.expect(r.returncode == 2 and "main" in r.stderr and head() == hm, "committed on main")
     git(repo, "checkout", "-q", "loops/test")
+    d.expect(head() == h, "back on loops/test at another commit")
     # the commit lock not taken in time: refused (2), not a traceback
     holder = subprocess.Popen(PY + [SUP, "lock-exec", "--run", "other", "--", *PY, "-c", "import time; time.sleep(600)"],
                               env=d.env, creationflags=FLAGS, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -1103,9 +1124,10 @@ def d_loopcommit(d):
     msg = git(repo, "log", "-1", "--format=%B")
     d.expect(piped.returncode == 0 and "﻿" not in msg and "\npiped body" in msg,
              f"a BOM on stdin: exit {piped.returncode}, message {msg[:120]!r}")
-    return ("refused (exit 2): undeclared staged, unchanged, ignored, outside, other drive, spoofed trailer, main, "
-            "lock timeout, changed converter; failed check undone (exit 3); committed exactly a file, a folder and a "
-            "delete; a BOM'd body file or stdin leaves no BOM in the message")
+    return ("refused (exit 2): no open pass, undeclared staged, unchanged, ignored, outside, other drive, spoofed "
+            "trailer, owner-only paths (by name or through a folder, nothing left staged), main, lock timeout, changed "
+            "converter; failed check undone (exit 3); committed exactly a file, a folder and a delete; a BOM'd body file "
+            "or stdin leaves no BOM in the message")
 
 
 def d_revert_run(d):
@@ -1117,7 +1139,15 @@ def d_revert_run(d):
         return subprocess.run(PY + [script, *pre, command, "--repo", repo, *args], env=d.env, capture_output=True,
                               text=True, encoding="utf-8", errors="replace", creationflags=FLAGS)
 
+    begun = set()
+
     def loop(run, msg, **files):
+        if run not in begun:                            # a loop commits only inside an open pass
+            b = subprocess.run(PY + [LC, "pass", "begin", "--run", run, "--repo", repo], env=d.env, capture_output=True,
+                               text=True, encoding="utf-8", errors="replace", creationflags=FLAGS)
+            if b.returncode != 0:
+                raise RuntimeError(b.stderr)
+            begun.add(run)
         for rel, text in files.items():
             if text is None:
                 os.remove(os.path.join(repo, rel))
@@ -1137,6 +1167,7 @@ def d_revert_run(d):
         return {f: open(os.path.join(repo, f), encoding="utf-8").read()
                 for f in sorted(git(repo, "ls-files").split())}
     manual("seed", a="a0\n", b="b0\n", d="d0\n", g="g0\n")
+    git(repo, "branch", "main")
     loop("R1", "R1 before the base", d="d1\n")                  # must survive: it is not after the base
     base = git(repo, "rev-parse", "HEAD")
     at_base = tree()
@@ -1187,11 +1218,21 @@ def d_revert_run(d):
 
 # A toy tools/corpus_grade.py for the pass drill's throwaway repository (loopcommit's `pass gate`
 # runs the repository's own grade): each call is logged and answered from a plan, one word per call.
+# It imports a tools/ module of its own (toyhelper: the gate's code, which a loop may change) and,
+# if it can find one, psf_selftest_probe - which only a PYTHONPATH the loop set could supply.
 PASS_GATE = r'''
 import json, os, sys
+import toyhelper
+try:
+    import psf_selftest_probe
+except ImportError:
+    psf_selftest_probe = None
 a = sys.argv[1:]
 def opt(k):
     return a[a.index(k) + 1] if k in a else None
+with open(os.environ["PASS_ENV"], "a") as fh:
+    fh.write(json.dumps(dict(pythonpath=os.environ.get("PYTHONPATH"), pycache=sys.pycache_prefix,
+                             probe=psf_selftest_probe is not None, helper=toyhelper.X)) + "\n")
 with open(os.environ["PASS_LOG"], "a") as fh:
     fh.write(json.dumps(a) + "\n")
 plan = open(os.environ["PASS_PLAN"]).read().split()
@@ -1215,19 +1256,28 @@ def d_pass(d):
     75 and a report-less exit keep it open; FAIL halts the run and reverts only its commits after the base."""
     repo = new_repo(os.path.join(d.dir, "repo"))
     write(repo, "tools/corpus_grade.py", PASS_GATE)
+    write(repo, "tools/toyhelper.py", "X = 1\n")
     for f in ("a.txt", "b.txt", "c.txt"):
         write(repo, f, f"{f} v1\n")
-    git(repo, "add", "--", "tools/corpus_grade.py", "a.txt", "b.txt", "c.txt")
-    git(repo, "commit", "-q", "-m", "seed", "--", "tools/corpus_grade.py", "a.txt", "b.txt", "c.txt")
+    git(repo, "add", "--", "tools/corpus_grade.py", "tools/toyhelper.py", "a.txt", "b.txt", "c.txt")
+    git(repo, "commit", "-q", "-m", "seed", "--", "tools/corpus_grade.py", "tools/toyhelper.py", "a.txt", "b.txt", "c.txt")
+    git(repo, "branch", "main")                        # the rails the passes are held to
     plan, glog = os.path.join(d.dir, "plan.txt"), os.path.join(d.dir, "gate-calls.jsonl")
-    env = dict(d.env, PASS_PLAN=plan, PASS_LOG=glog)
+    elog = os.path.join(d.dir, "gate-env.jsonl")
+    env = dict(d.env, PASS_PLAN=plan, PASS_LOG=glog, PASS_ENV=elog)
 
-    def lc(*args):
-        return subprocess.run(PY + [LC, *args], env=env, capture_output=True, text=True, encoding="utf-8",
-                              errors="replace", creationflags=FLAGS)
+    def lc(*args, extra=None):
+        return subprocess.run(PY + [LC, *args], env=dict(env, **(extra or {})), capture_output=True, text=True,
+                              encoding="utf-8", errors="replace", creationflags=FLAGS)
 
-    def p(sub, run, *args):
-        return lc("pass", sub, "--run", run, "--repo", repo, *args)
+    def p(sub, run, *args, extra=None):
+        return lc("pass", sub, "--run", run, "--repo", repo, *args, extra=extra)
+
+    def plain(msg, trailer=None, **files):             # a commit made around loopcommit
+        for rel, text in files.items():
+            write(repo, rel, text)
+        git(repo, "add", "--", *files)
+        git(repo, "commit", "-q", "-m", msg + (f"\n\nLoop-Run: {trailer}" if trailer else ""), "--", *files)
 
     def commit(run, msg, **files):
         for rel, text in files.items():
@@ -1315,9 +1365,92 @@ def d_pass(d):
     d.expect(r.returncode == 2 and os.path.exists(stop("RQ")) and head() == h and state("RQ").get("state") == "open",
              f"a refused gate: exit {r.returncode}, STOP {os.path.exists(stop('RQ'))}, HEAD moved {head() != h}, "
              f"state {state('RQ').get('state')}")
+
+    # a commit outside a pass - before `pass begin`, or after the pass closed - is refused: it would sit
+    # under the next pass's base, and no gate would ever look at it
+    h = head()
+    r = commit("RC", "RC before its pass", **{"c.txt": "c rc0\n"})
+    d.expect(r.returncode == 2 and "no open pass" in r.stderr and head() == h,
+             f"a commit before pass begin: {r.returncode} {r.stderr[-200:]}")
+    git(repo, "checkout", "-q", "--", "c.txt")
+    d.expect(p("begin", "RC").returncode == 0, "RC begin failed")
+    d.expect(commit("RC", "RC one", **{"c.txt": "c rc1\n"}).returncode == 0, "RC one failed")
+    gate_plan("PASS")
+    d.expect(p("gate", "RC", "--declared", "0").returncode == 0 and state("RC").get("state") == "passed", "RC's gate did not pass")
+    h = head()
+    r = commit("RC", "RC after its pass", **{"c.txt": "c rc2\n"})
+    d.expect(r.returncode == 2 and "no open pass" in r.stderr and head() == h,
+             f"a commit after the pass passed: {r.returncode} {r.stderr[-200:]}")
+    git(repo, "checkout", "-q", "--", "c.txt")
+    # a Loop-Run commit that went around loopcommit: no pass begins over it
+    plain("RC around loopcommit", trailer="RC", **{"c.txt": "c rc3\n"})
+    r = p("begin", "RC")
+    d.expect(r.returncode == 2 and "no pass gated" in r.stderr, f"a pass began over an ungated commit: {r.returncode} {r.stderr[-300:]}")
+
+    # the gate's own code: a loop's change to a module the gate imports makes a TOOLS-ONLY pass (nothing
+    # to judge, not gated); a stepfile pass over it is refused (2, halted, nothing reverted) until main has it
+    gate_plan("PASS")
+    d.expect(p("begin", "RT").returncode == 0, "RT begin failed")
+    d.expect(commit("RT", "RT: the loop's own helper", **{"tools/toyhelper.py": "X = 2\n"}).returncode == 0, "RT helper commit failed")
+    r = p("gate", "RT", "--declared", "0")
+    st = state("RT")
+    d.expect(r.returncode == 0 and st.get("state") == "passed" and st.get("tools_only") and not calls(),
+             f"a tools-only pass: exit {r.returncode}, state {st.get('state')}, gate called {len(calls())}x: {r.stdout[-300:]}{r.stderr[-300:]}")
+    r = p("begin", "RT")
+    d.expect(r.returncode == 0 and "not main's" in r.stdout and "toyhelper.py" in r.stdout, f"begin over changed gate code: {r.stdout}")
+    d.expect(commit("RT", "RT: a stepfile", **{"simfiles/s.ssc": "#NOTES:1;\n"}).returncode == 0, "RT stepfile commit failed")
+    h = head()
+    r = p("gate", "RT", "--declared", "0")
+    d.expect(r.returncode == 2 and "toyhelper.py" in r.stderr and not calls() and head() == h and os.path.exists(stop("RT"))
+             and state("RT").get("state") == "open",
+             f"a stepfile pass over changed gate code: exit {r.returncode}, gate called {len(calls())}x, HEAD moved {head() != h}, "
+             f"STOP {os.path.exists(stop('RT'))}, state {state('RT').get('state')}: {r.stderr[-300:]}")
+    git(repo, "branch", "-f", "main", "HEAD")          # the owner merges that code into main and clears the STOP
+    os.remove(stop("RT"))
+    r = p("gate", "RT", "--declared", "0")
+    d.expect(r.returncode == 0 and len(calls()) == 1 and state("RT").get("state") == "passed",
+             f"the same pass once main has the code: exit {r.returncode}, gate called {len(calls())}x: {r.stderr[-300:]}")
+    d.expect(p("begin", "RU").returncode == 0, "RU begin failed")
+    d.expect(commit("RU", "RU: helper again", **{"tools/toyhelper.py": "X = 3\n"}).returncode == 0, "RU helper commit failed")
+    gate_plan("PASS")
+    r = p("gate", "RU", "--declared", "1")
+    d.expect(r.returncode == 4 and text("tools/toyhelper.py") == "X = 2\n" and state("RU").get("state") == "failed" and not calls(),
+             f"a tools-only pass declaring a ship: exit {r.returncode}, helper {text('tools/toyhelper.py')!r}, "
+             f"state {state('RU').get('state')}: {r.stderr[-300:]}")
+
+    # a planted tools/json.py (the gate imports json) in the working tree: refused before anything runs
+    d.expect(p("begin", "RW").returncode == 0, "RW begin failed")
+    d.expect(commit("RW", "RW: a stepfile", **{"simfiles/w.ssc": "#NOTES:2;\n"}).returncode == 0, "RW stepfile commit failed")
+    write(repo, "tools/json.py", "raise SystemExit('planted json')\n")
+    r = p("gate", "RW", "--declared", "0")
+    d.expect(r.returncode == 2 and "tools/json.py" in r.stderr and not calls(),
+             f"a planted tools/json.py: exit {r.returncode}, gate called {len(calls())}x: {r.stderr[-300:]}")
+    os.remove(os.path.join(repo, "tools", "json.py"))
+    os.remove(stop("RW"))
+    # a loop's PYTHONPATH never reaches the gate, and bytecode is looked up only in the gate's own empty folder
+    evil = os.path.join(d.dir, "evil")
+    write(evil, "psf_selftest_probe.py", "X = 1\n")
+    if os.path.exists(elog):
+        os.remove(elog)
+    r = p("gate", "RW", "--declared", "0", extra={"PYTHONPATH": evil})
+    seen = [json.loads(x) for x in open(elog)] if os.path.exists(elog) else []
+    d.expect(r.returncode == 0 and len(seen) == 1 and not seen[0]["probe"] and seen[0]["pythonpath"] is None
+             and seen[0]["pycache"] and not os.path.exists(seen[0]["pycache"]),
+             f"the gate's environment: exit {r.returncode}, {seen}: {r.stderr[-300:]}")
+
+    # an owner-only path committed around loopcommit (a demotion the loop wrote itself): refused before anything runs
+    d.expect(p("begin", "RO").returncode == 0, "RO begin failed")
+    plain("RO demotes a chart", trailer="RO", **{"sources/demotions.jsonl": '{"chart": "X S1"}\n'})
+    gate_plan("PASS")
+    r = p("gate", "RO", "--declared", "0")
+    d.expect(r.returncode == 2 and "only the owner" in r.stderr and not calls() and os.path.exists(stop("RO")),
+             f"an owner-only path in the pass: exit {r.returncode}, gate called {len(calls())}x: {r.stderr[-300:]}")
     return ("no-pass gate refused; begin idempotent until a commit, then refused; 75 and a report-less exit 1 kept the "
             "pass open and re-gated its base; FAIL halted and reverted 2 of the run's commits (the owner's kept), "
-            "then refused its commits and a new pass; a refusing gate halted with nothing reverted")
+            "then refused its commits and a new pass; a refusing gate halted with nothing reverted; commits before "
+            "begin and after a closed pass refused, and no pass begins over an ungated one; a tools-only pass passed "
+            "ungated, a stepfile pass over it refused until main had the code, then gated; a planted tools/json.py and "
+            "an owner-only path refused; the gate ran without the loop's PYTHONPATH and with an empty pycache prefix")
 
 
 def d_hook(d):
