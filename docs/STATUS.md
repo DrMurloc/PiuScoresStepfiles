@@ -639,45 +639,69 @@ map) is recovered **20 of 20**. The research's seven re-pairs reproduce at the s
 0.987, Awakening S19 0.970, We will meet again S13 0.964, Vook S10 0.913, Phantom S18 0.839, Blaze
 Emotion S2 0.811, Solitary S17/S18 0.999/0.935), plus Moonlight S18 (0.825).
 
-**What the rule settles now** (F1 >= 0.8, margin >= 0.3 over the mapped block and the runner-up, and the
-target converts to the certified total; each also cites the chart map row's own chartId, whose Phoenix 1
-catalog row has the target block's level and the certified total - the row names carry the wrong level):
-- Witch Doctor D22: `D22` -> `D23 INFOBAR TITLE` (1,162; F1 0.987 against 0.123; chartId b5cc8967 = Double 23).
-- Vook S10: `S10` -> `S16 INFOBAR TITLE` (552; 0.913 against 0.432; b0fa33e5 = Single 16).
-- Phantom S18: `S18` -> `S19` (897; 0.839 against 0.147; 85b77570 = Single 19).
-- Withdrawn, the census ledger (eye-verified) naming the other chart on that side: Final Audition Ep.1 S4
-  (DgLesNMzb1w), Beat of The War S9 (XNMIAm04k_c), My Way S8 (bXMj-YNDufs).
+**Blind batch b1, applied** (`identity.py reads`; answers in `work/blind-answers/identity-1/b1.json`, the
+result in `work/identity/reads-b1.json`). 8 packets (5 level-ball, 3 title), 32 items, 16 seeds, two
+independent readers per packet: **16 of 16 readers valid** (every seed right, no file opened outside
+its packet) and **32 of 32 items read alike by both**, none unsure. The predictions registered before
+any read hit 15 of 16; the miss is fRDOTIiGpCY, predicted to be another song - its title is Altale's,
+and it is the level that is wrong (below).
+
+**What the overlay settles** (`sources/identity-overlay-2026-09-27.json`, 17 rows, still inert):
+- Re-keyed by notes and count (F1 >= 0.8, margin >= 0.3 over the mapped block and the runner-up, the
+  target converts to the certified total; the map row's own chartId is the target's catalog chart):
+  Witch Doctor D22 -> `D23 INFOBAR TITLE` (1,162; F1 0.987 against 0.123), Vook S10 -> `S16 INFOBAR
+  TITLE` (552; 0.913 against 0.432), Phantom S18 -> `S19` (897; 0.839 against 0.147).
+- Re-keyed by notes and the ball (the ball shows the chart's own catalog level): the crossed pair
+  Solitary S17 -> `S18` (1p; F1 0.999; converts to 629 of a certified 713) and Solitary S18 -> `S17`
+  (2p; 0.935; 618 = 618) - the balls read SINGLE/17 on 1p and SINGLE/18 on 2p, so the pack's two
+  blocks carry each other's current levels; and Moonlight S18 -> `S19` (0.825; 766 of 805; the ball
+  reads SINGLE/19, chartId d4d72efb's Phoenix 1 level).
+- Withdrawn, one side certifying two names (a result screen shows one total a side): the census's
+  three (Final Audition Ep.1 S4, Beat of The War S9, My Way S8), now also ball-confirmed, and eight
+  by the ball alone - D D19, Avalanche D19, Witch Doctor #1 S17, Witch Doctor #1 D20, Pump me Amadeus
+  S16, Dignity S15, Dignity D20, Pumptris 8 Bit ver. S17. In all 14 same-side videos the ball shows
+  the level of the chartId both names carry, as predicted.
 
 **ORACLE GROWTH** (`identity.py grade-delta`, the corpus grade with the overlay applied as the staged
-`corpus_grade` change applies it): **749 -> 752 exact, PROTECTED 629 -> 632** (the three targets were
-exact at the import), PROVISIONAL 120 -> 120, certified 1,490 -> 1,487 (the three withdrawals). Rebuilt
-under the overlay the ORACLE_CONFLICT set goes from 34 charts on 14 videos to 29 on 11. Not in the grade
-until the owner lands it; the landing (a review commit for the two catalog conflicts it resolves, then
-`freeze --accept-identity`) is drilled end to end in a scratch clone and listed in
-`work/owner-list/identity.json`.
+`corpus_grade` change applies it): **749 -> 753 exact, PROTECTED 629 -> 633** (Phantom S18, Solitary
+S18, Vook S10 and Witch Doctor D22; each target block was exact at the import), PROVISIONAL 120 -> 120,
+certified 1,490 -> 1,479 (the 11 withdrawals). Moonlight S18 and Solitary S17 move onto their right
+blocks and stay not exact: repair targets now, rather than blocks a loop would have re-ticked into
+another chart. Rebuilt under the overlay, ORACLE_CONFLICT goes from 34 charts on 14 videos to 13 on
+3. Not in the grade until the owner lands it; the landing (a review commit for the two catalog
+conflicts it resolves, then `freeze --accept-identity`) is drilled end to end in a throwaway clone of
+main - PASS at every step, `--declared 4` at the acceptance, an edited accepted overlay refused - and
+listed in `work/owner-list/identity.json`.
 
-**Waiting on blind reads** (batch b1: 8 packets, 32 items, 16 seeds; predictions pre-registered in
-`work/blind-keys/identity-1/b1-predictions.json` before any answer):
-- The 14 same-side double certifications. In every one, both names carry **one chartId**, whose catalog
-  row has the higher name's level and the certified total: the lower name is a mis-leveled duplicate map
-  row. The census settles 3 of them the same way; the level balls test the prediction for the other 11,
-  none of which has a cached pass.
-- Solitary S17/S18, a crossed pair (the 1p notes are the S18 block, 629 against a certified 713; the 2p
-  notes the S17 block, 618 = 618), and Moonlight S18 -> S19 (766 against 805): count does not agree, so
-  a ball read decides.
-- The pre-registered song-level mismaps pK0Ybp2iIEI, Dw-8BJZZVp0 and fRDOTIiGpCY (balls, and a title
-  compared with a reference video of the named song where one of the same skin exists), and the sides
-  whose notes match no block of the named song (B2 S4, Chimera S19/S23, Gargoyle S4, STAGER S17).
+**Song-level findings** (owner items plus ORACLE_CONFLICT proposals in
+`sources/oracle-conflict-2026-09-27.json`; never overlay rows - the fix is to human data, and all four
+are OPEN charts, outside the population):
+- pK0Ybp2iIEI, named Blaze Emotion S9: its title differs from a Blaze Emotion reference (both readers
+  "likely"); its balls read SINGLE/9 at 465 and SINGLE/17 at 1,092 - exactly Blaze emotion (Band
+  version) S9 and S17 in the catalog.
+- Dw-8BJZZVp0, named Blaze Emotion (Band Version) S17: the ball reads SINGLE/16 at 882. No catalog
+  S16 has 882; Blaze Emotion S16 has 884. With the video above, the two look swapped (the title here was
+  not read: no same-skin reference exists).
+- fRDOTIiGpCY, named Altale D16: the title is Altale's, the ball reads DOUBLE/19, and 1,113 is Altale
+  D19's catalog count.
+- B2 S7 on ZWwJS2OF-Po: the only side shows SINGLE/4, B2 S4's certification.
 
-**To the owner** (`work/owner-list/identity.json`): Awakening S19 (a 1,000 total that three catalog
-charts of the song carry), Blaze Emotion S2 and We will meet again S13 (census rows, eye-verified, say
-the mapped block), the two count-vetoed exact charts, and six certified charts with no cached pass whose
-map row's chartId is another level's chart while an unmapped block at that level converts to the
-certified total exactly (Come to Me S6 -> S11 383, Final Audition 3 S5 -> S8 297, Get Your Groove On S7
--> S12 324, Hypnosis(SynthWulf Mix) S11 -> S13 763, My Way S4 -> S6 201, Solitary S6 -> S11 306): one
-decode of each pad would let the notes decide. Across the whole chart map, 29 rows carry a name level
-that is not their chartId's catalog level (24 certified, none exact); the three re-keys, Moonlight S18,
-the 11 same-side lower names, the three withdrawn and these six are 24 of them.
+**Confirmed, though the notes match no block**: STAGER S17 (ball and title), Chimera S19 (ball and
+title), B2 S4 and Gargoyle S4 (ball). The play is the named chart; STAGER S17, B2 S4 and Gargoyle S4
+are exact and PROTECTED, so on those pads it is the extraction that is off (best F1 0.244, 0.206,
+0.184), not the name.
+
+**To the owner** (`work/owner-list/identity.json`, 19 items): the three same-side doubles with a
+round-hundred total, each with its read - Pump me Amadeus D19/D21 and Phantom D19/D21 (both balls
+DOUBLE/21; Phantom D21 is exact and PROTECTED at 1,000) and Faster Z S19/S21 (SINGLE/21); the four
+song-level findings; Awakening S19 (a 1,000 total that three catalog charts of the song carry); Blaze
+Emotion S2 and We will meet again S13 (census rows, eye-verified, say the mapped block); the two
+count-vetoed exact charts; and six certified charts with no cached pass whose map row's chartId is
+another level's chart while an unmapped block at that level converts to the certified total exactly
+(Come to Me S6 -> S11 383, Final Audition 3 S5 -> S8 297, Get Your Groove On S7 -> S12 324,
+Hypnosis(SynthWulf Mix) S11 -> S13 763, My Way S4 -> S6 201, Solitary S6 -> S11 306): one decode of
+each pad would let the notes decide. Across the whole chart map, 29 rows carry a name level that is not
+their chartId's catalog level (24 certified, none exact).
 
 ## Beyond the census (sized 2026-09-06, listed in full 2026-09-08)
 
