@@ -13,12 +13,22 @@
 #   PROVISIONAL  every other exact chart: exact by our edits, interior not proven.
 #
 #   python -X utf8 -B tools/corpus_grade.py grade [--rev <commit>] [--oracle-rev <commit>] [--out <path>|-]
-#   python -X utf8 -B tools/corpus_grade.py gate --base <rev> [--head <rev>] [--oracle-pass] [--declared N] [--json <path>]
+#   python -X utf8 -B tools/corpus_grade.py gate --base <rev> [--head <rev> | --worktree] [--oracle-pass] [--declared N]
+#                                                [--json <path>] [--audit-no-decode]
 #   python -X utf8 -B tools/corpus_grade.py freeze [--repin]      (writes sources/oracle-manifest.json)
 #   python -X utf8 -B tools/corpus_grade.py conflicts [--write]   (builds sources/oracle-conflict.json)
 #   python -X utf8 -B tools/corpus_grade.py selfcheck             (guards' block split == the converter's)
 #   common: [--workers N] (default 6)  [--no-cache]  [--cache-dir <dir>]  [--unpinned]
 #           [--stall-timeout S] (default 600)
+#
+# EXIT CODES: 0 done (the gate: PASS); 1 the gate FAILs (selfcheck: a mismatch); 2 REFUSED - the
+# tool cannot judge until something is fixed (an oracle or converter that is not the manifest's, an
+# oracle edited without a freeze, a revision that does not resolve, a converter without the
+# lattice, an incomplete oracle tree, an internal error); 75 (EX_TEMPFAIL) REFUSED, RETRY LATER -
+# the machine, not the work, stopped the judgement (a pool starved or a worker hung past
+# --stall-timeout, a MemoryError or OSError, a converter that answered two ways, a ship audit the
+# machine failed). Only 75 means "the same command may succeed later"; supervise.py retries it by
+# default, and never 2.
 #
 # grade --rev reads the commit's .ssc files as git blobs (never the working tree); without --rev
 # it grades the working tree. Only the blocks come from --rev: the oracle (who is certified, at
@@ -36,9 +46,14 @@
 # live file result_reader appends to, and a row there is not oracle until it is promoted into
 # sources/ by an oracle commit.
 #
-# THE GATE grades --base and --head (default: the working tree), each under its own tree's
-# oracle, prints every transition (a chart's exactness, block, header, count, population or
-# PROTECTED tier changing), and exits 1 when
+# THE GATE grades --base and --head (default: HEAD - the commits a pass made; --worktree grades the
+# working tree instead, for a check before committing), each under its own tree's oracle, prints
+# every transition (a chart's exactness, block, header, count, population or PROTECTED tier
+# changing), audits every SHIP - a chart exact at the head whose block or file header the change
+# edited: GAINED, or EDITED-EXACT (a PROTECTED chart's re-edit too, where a promotion row lets it
+# through) - with tools/trace_audit.py (a GAINED chart against the import commit, so its whole
+# interior since upstream is judged; an EDITED-EXACT one against --base, the change alone; an
+# --oracle-pass audits nothing, since any stepfile edit fails it), and exits 1 when
 #   - a chart leaves exact without a sources/demotions.jsonl row naming it and its block_sha
 #     before the change (with a reason and evidence; a quarantined chart's row also needs the
 #     owner's yes in an "owner" field);
@@ -51,11 +66,17 @@
 #   - an owner-revisit chart's block or header no longer hashes to what owner-revisit.json records;
 #   - a chart in the ORACLE_CONFLICT set becomes exact (halt for review, take no credit);
 #   - demotions.jsonl or protected-promotions.jsonl lost or rewrote a line (both are append-only);
-#   - --declared N is given and the net change in exact charts is not N.
+#   - --declared N is given and the net change in exact charts is not N;
+#   - a ship's trace audit is not FLAT with every edit covered (and no OFF in the whole trace):
+#     UNCOVERED and UNAUDITED do not ship, OFF does not ship. A ship whose judged events are the
+#     audit base's (the block differs in nothing the converter judges) passes: there is no edit.
 # It exits 2 when it cannot judge (converter or oracle drift at the head, a revision that does
-# not resolve, a conversion the machine failed - MemoryError, OSError, a worker that died or hung
-# past --stall-timeout - or a converter that answers differently twice). It writes nothing but
-# --json, and it never reads a grade file to decide anything.
+# not resolve, an audit that loaded another converter), and 75 when the machine stopped it (a
+# conversion or a ship audit that hit MemoryError or OSError, a worker that died or hung past
+# --stall-timeout, a converter that answers differently twice). It writes nothing but --json and
+# the trace audit's own scratch (work/rails-audit-scratch/: clocks, blobs, overlays), and it never
+# reads a grade file to decide anything. With the default head (HEAD) it says when the working
+# tree differs from HEAD under simfiles/ or sources/: those edits are not what it judged.
 import argparse
 import hashlib
 import inspect
@@ -108,9 +129,19 @@ def log(msg):
     print("[corpus_grade] " + msg, file=sys.stderr, flush=True)
 
 
+TEMPFAIL = 75                      # sysexits' EX_TEMPFAIL: the machine stopped the judgement; try again later
+
+
 def refuse(msg, code=2):
+    """Cannot judge until something is fixed (exit 2): never retried by supervise."""
     print("REFUSED: " + msg, flush=True)
     sys.exit(code)
+
+
+def later(msg):
+    """The machine, not the work, stopped the judgement (exit 75): the same command may succeed later."""
+    print("REFUSED, RETRY LATER (exit %d): %s" % (TEMPFAIL, msg), flush=True)
+    sys.exit(TEMPFAIL)
 
 
 def lf(data):
@@ -400,7 +431,8 @@ class Converter:
     ordinary failure, and a cached one would stay a wrong "not exact" until someone deleted it.
     A `transient` result (MemoryError or OSError in convert_one) refuses the run outright, and a
     pool that delivers no result for `stall` seconds (a killed or hung worker loses its task
-    without a word) refuses it too - either way exit 2, never a verdict."""
+    without a word) refuses it too - either way exit 75 (retry later), never a verdict. A worker
+    on another converter is exit 2: that is drift, and waiting does not fix it."""
 
     def __init__(self, pin, workers=6, cache_dir=DEFAULT_CACHE, use_cache=True, stall=600):
         self.pin, self.workers, self.cache_dir, self.use_cache = pin, workers, cache_dir, use_cache
@@ -483,8 +515,8 @@ class Converter:
                 if again:                                # believe an error only when it repeats
                     second = self._pool(again, 1)
                     moved = [j[2] for j in again if second[j] != first[j]]
-                    if moved:
-                        refuse("the converter answered differently on a second try for %d block(s), so nothing is "
+                    if moved:                    # a swallowed MemoryError that did not repeat: the machine
+                        later("the converter answered differently on a second try for %d block(s), so nothing is "
                                "judged: %s" % (len(moved), "; ".join("%s: %s -> %s" % (j[2], first[j], second[j])
                                                                      for j in again if second[j] != first[j])[:600]))
                 for job in jobs:
@@ -511,7 +543,7 @@ class Converter:
                 try:
                     res, wpin, extra = it.next(timeout=self.stall)
                 except PoolTimeout:
-                    refuse("no conversion result for %ds after %d of %d blocks, waiting on %s (a worker was killed "
+                    later("no conversion result for %ds after %d of %d blocks, waiting on %s (a worker was killed "
                            "or hung) - nothing is judged" % (self.stall, len(results), len(jobs), job[2]))
                 if wpin != self.pin:
                     refuse("a worker's converter pin %s is not the parent's %s" % (str(wpin)[:12], self.pin[:12]))
@@ -520,7 +552,7 @@ class Converter:
                 results[job] = res
         transient = [(j[2], results[j]["transient"]) for j in jobs if "transient" in results[j]]
         if transient:
-            refuse("the machine, not the file, failed %d conversion(s) - nothing cached, nothing judged; run again: %s"
+            later("the machine, not the file, failed %d conversion(s) - nothing cached, nothing judged; run again: %s"
                    % (len(transient), "; ".join("%s: %s" % t for t in transient)[:600]))
         return results
 
@@ -756,16 +788,139 @@ def append_only(before, after):
     return a[:len(b)] == b
 
 
+def worktree_drift():
+    """Paths under simfiles/ or sources/ where the working tree differs from HEAD (untracked included)."""
+    rc, out, err = git("--no-optional-locks", "status", "--porcelain", "-z", "--untracked-files=all", "--",
+                       "simfiles", "sources", text=False)
+    if rc != 0:
+        refuse("git status failed: %s" % err.strip())
+    return sorted({rec[3:].decode("utf-8", "replace") for rec in out.split(b"\0") if len(rec) > 3 and rec[2:3] == b" "})
+
+
+# ---------------------------------------------------------------- the ships' trace audit
+
+# the trace audit's words for "the audited block derives the audit base's judged events": no edit
+NO_EDIT_BASES = ("the block and song header are the base's", "the blocks differ but derive the same judged events")
+
+
+def audit_ships(ships, head, args):
+    """{chart: {"record": <trace_audit record>} | {"error": why} | {"transient": why}} for each
+    (row, head row, audit base rev) - run in a child process (tools/trace_audit.py loads the footage
+    stack and audit hooks this process should not carry), on the head's own file and the audit base's."""
+    jobs = [dict(chart=h["chart"], key=h["key"], ssc_rel=h["ssc_rel"], vid=h["vid"], side=h["side"],
+                 expected=h["expected"], head_rev=head.rev, base_rev=arev) for row, h, arev in ships]
+    tmpdir = tempfile.mkdtemp(prefix="corpus-gate-audit-")
+    try:
+        jpath, opath = os.path.join(tmpdir, "jobs.json"), os.path.join(tmpdir, "audits.json")
+        write_atomic(jpath, dump(jobs))
+        cmd = [sys.executable, "-X", "utf8", "-B", os.path.abspath(__file__), "audit-ships", "--jobs", jpath, "--out", opath]
+        if args.audit_no_decode:
+            cmd.append("--no-decode")
+        t0 = time.time()
+        p = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        tail = (p.stdout + p.stderr).strip()[-600:]
+        if p.returncode == TEMPFAIL:
+            later("the ship audit could not run on this machine just now: " + tail)
+        if p.returncode != 0 or not os.path.isfile(opath):
+            refuse("the ship audit did not run (exit %d): %s" % (p.returncode, tail))
+        with open(opath, encoding="utf-8") as f:
+            done = json.load(f)
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)
+    # the audit loads more of piu_annotate than a conversion does; every module the pin names must
+    # be the pinned one
+    theirs = done.get("converter_files") or {}
+    moved = sorted(f for f, s in args._pin_files.items() if theirs.get(f) != s)
+    if moved:
+        refuse("the ship audit loaded another converter than the grade (%s) - nothing is judged" % ", ".join(moved))
+    log("audited %d ship(s) in %.1fs (trace_audit %s)" % (len(jobs), time.time() - t0, str(done.get("audit_version"))[:8]))
+    return {a["chart"]: a for a in done["audits"]}, done.get("audit_version")
+
+
+def ship_verdict(res, h, t):
+    """(True | False | None, text) for one ship's audit: True it may ship, False it may not, None
+    the machine stopped the audit (not judged)."""
+    if "transient" in res:
+        return None, "the audit hit %s on this machine" % res["transient"]
+    if "error" in res:
+        return False, "UNAUDITED - the audit raised %s" % res["error"]
+    rec = res["record"]
+    if rec.get("block_sha") != h.get("block_sha"):
+        return False, "UNAUDITED - the audit read block %s, the grade %s" % (str(rec.get("block_sha"))[:12], str(h.get("block_sha"))[:12])
+    if "file" in rec and rec["file"].get("implied") != h.get("implied"):
+        return False, "UNAUDITED - the audit counts %s judged events, the grade %s" % (rec["file"].get("implied"), h.get("implied"))
+    edits = rec.get("edits") or []
+    if not edits and rec.get("base") in NO_EDIT_BASES:
+        return True, "no judged event differs from the audit base (%s)" % rec["base"]
+    if not edits:
+        return False, "UNAUDITED - no edit found against the audit base, yet the %s chart changed: %s" % (t, rec.get("reason"))
+    whole = (rec.get("whole") or {}).get("verdict")
+    if rec.get("verdict") == "FLAT" and whole != "OFF" and all(e.get("verdict") == "FLAT" and e.get("covered") for e in edits):
+        return True, "FLAT, %d edit(s), every one covered" % len(edits)
+    bad = [e for e in edits if not (e.get("verdict") == "FLAT" and e.get("covered"))]
+    first = bad[0] if bad else {}
+    where = (" (%s-%ss)" % (first.get("lo"), first.get("hi"))) if first.get("lo") is not None else ""
+    return False, "%s - %d of %d edit(s) not FLAT and covered%s: %s" % (
+        rec.get("verdict"), len(bad), len(edits), where, str(first.get("reason") or rec.get("reason"))[:200])
+
+
+def cmd_audit_ships(args):
+    """The gate's child: trace_audit.audit_chart on each ship, one JSON file out. Exit 0 with a
+    result per ship (a raise is that ship's error, MemoryError/OSError its `transient`), 75 when
+    the machine stopped the audit before any ship, 2 otherwise."""
+    with open(args.jobs, encoding="utf-8") as f:
+        jobs = json.load(f)
+    load_converter()                                     # before trace_audit: its imports then find this converter
+    import trace_audit as TA
+    TA.DECODE = not args.no_decode
+    import_rev = resolve(TA.IMPORT_REV)
+    out = []
+    TA.sweep_overlays()
+    try:
+        for j in jobs:
+            c = {k: j[k] for k in ("chart", "key", "ssc_rel", "vid", "side", "expected")}
+            try:
+                new_path = TA.blob_path(j["head_rev"], j["ssc_rel"]) if j.get("head_rev") else \
+                    os.path.join(ROOT, "simfiles", *j["ssc_rel"].split("/"))
+                base_path = TA.blob_path(j["base_rev"], j["ssc_rel"])
+                if new_path is None or not os.path.isfile(new_path):
+                    out.append(dict(chart=c["chart"], error="no file %s at the head" % j["ssc_rel"]))
+                    continue
+                # no file at the import is the audit's own "no base block" (the chart is judged
+                # whole); no file at any other base cannot be told to audit_chart, which would
+                # quietly take the import's file instead
+                if base_path is None and j["base_rev"] != import_rev:
+                    out.append(dict(chart=c["chart"], error="no file %s at the audit base %s" % (j["ssc_rel"], j["base_rev"][:12])))
+                    continue
+                rec = TA.audit_chart(c, new_path=new_path, base_path=base_path)
+                out.append(dict(chart=c["chart"], base_rev=j["base_rev"], record=rec))
+            except (MemoryError, OSError) as ex:
+                out.append(dict(chart=c["chart"], transient="%s: %s" % (type(ex).__name__, str(ex)[:200])))
+            except Exception as ex:
+                out.append(dict(chart=c["chart"], error="%s: %s" % (type(ex).__name__, str(ex)[:200])))
+    finally:
+        TA.sweep_overlays()
+    doc = dict(converter_files=loaded_converter_files(), audit_version=TA.AUDIT_VERSION, decode=TA.DECODE, audits=out)
+    write_atomic(args.out, json.dumps(doc, indent=1, sort_keys=True, ensure_ascii=False, default=str) + "\n")
+
+
 def cmd_gate(args):
     t0 = time.time()
     pin = converter_pin()
-    base, head = Tree(args.base), Tree(args.head)
+    args._pin_files = pin["files"]
+    base, head = Tree(args.base), Tree(None if args.worktree else (args.head or "HEAD"))
     ob, oh = Oracle(base), Oracle(head)
     check_manifest(oh, pin, args.unpinned)             # the head must be graded by what it pins
+    fails, notes = [], []
+    if not args.worktree and not args.head:
+        drift = worktree_drift()
+        if drift:
+            notes.append("the working tree differs from HEAD in %d path(s) under simfiles/ or sources/ (%s%s): the gate "
+                         "judged HEAD - the commits - not those; --worktree grades the working tree" % (
+                             len(drift), ", ".join(drift[:5]), " ..." if len(drift) > 5 else ""))
     g = Grader(args, pin)
     rb, ib = g.grade(base, ob)
     rh, ih = g.grade(head, oh)
-    fails, notes = [], []
 
     # oracle and pin
     base_pin = (ob.manifest or {}).get("converter", {}).get("pin")
@@ -815,7 +970,7 @@ def cmd_gate(args):
     conflict = set(ob.conflict) | set(oh.conflict)
     quarantine = set(ob.quarantine) | set(oh.quarantine)
     promo_head = {(r["chart"], r["block_sha"]) for r in oh.promotions if valid_promotion(r)}
-    trans = []
+    trans, ships = [], []
     for name in sorted(set(rb) | set(rh)):
         b, h = rb.get(name), rh.get(name)
         bx, hx = bool(b and b["exact"]), bool(h and h["exact"])
@@ -880,7 +1035,35 @@ def cmd_gate(args):
                 row["verdict"] = "ok: exact at %s under the new oracle" % IMPORT_COMMIT
         if row["verdict"].startswith("FAIL"):
             fails.append("%s %s: %s" % (t, name, row["verdict"][6:]))
+        elif edited and t in ("GAINED", "EDITED-EXACT") and not args.oracle_pass:
+            # a ship: exact at the head in a block or header this change edited. A GAINED chart is
+            # audited against the import (its whole interior since upstream, as the audit ledger
+            # judges it); an EDITED-EXACT one against --base (only this change - the chart shipped before)
+            ships.append((row, h, g.import_tree.rev if t == "GAINED" else base.rev))
         trans.append(row)
+
+    # every ship's interior against the combo counter: FLAT and covered, or it does not ship
+    unjudged, audit_version = [], None
+    if ships:
+        results, audit_version = audit_ships(ships, head, args)
+        for row, h, arev in ships:
+            res = results.get(row["chart"]) or dict(error="the audit returned nothing for this chart")
+            ok, text = ship_verdict(res, h, row["transition"])
+            label = ("import %s" % arev[:12]) if arev == g.import_tree.rev else ("base %s" % arev[:12])
+            rec = res.get("record") or {}
+            row["audit"] = dict(base=arev, verdict=rec.get("verdict") if rec else ("NOT JUDGED" if ok is None else "UNAUDITED"),
+                                ok=ok, text=text, reason=rec.get("reason") or res.get("error") or res.get("transient"),
+                                edits=[{k: e.get(k) for k in ("lo", "hi", "kind", "basis", "verdict", "covered", "reason")}
+                                       for e in rec.get("edits") or []],
+                                whole=(rec.get("whole") or {}).get("verdict"))
+            if ok is None:
+                unjudged.append("%s: %s" % (row["chart"], text))
+                row["verdict"] = "NOT JUDGED: trace audit vs %s - %s" % (label, text)
+            elif ok:
+                row["verdict"] = (row["verdict"] + "; " if row["verdict"] != "ok" else "ok: ") + "trace audit vs %s: %s" % (label, text)
+            else:
+                row["verdict"] = "FAIL: trace audit vs %s: %s - OFF, UNCOVERED and UNAUDITED do not ship" % (label, text)
+                fails.append("AUDIT %s %s: %s" % (row["transition"], row["chart"], row["verdict"][6:]))
 
     # owner revisit: the recorded hashes are the accepted state
     seen = set()
@@ -925,20 +1108,37 @@ def cmd_gate(args):
             print("    %-44s %s -> %s of %s/%s  [%s -> %s]  %s" % (
                 r["chart"][:44], bf.get("implied", bf.get("error")), af.get("implied", af.get("error")),
                 bf.get("expected"), af.get("expected"), r["tier_base"], r["tier_head"], r["verdict"]))
+    audited = [r for r in trans if r.get("audit")]
+    if audited:
+        print("  SHIPS AUDITED (%d; tools/trace_audit.py %s%s)" % (len(audited), str(audit_version)[:8],
+                                                                 ", no decoding" if args.audit_no_decode else ""))
+        for r in audited:
+            a = r["audit"]
+            print("    %-44s %s vs %s" % (r["chart"][:44], a["verdict"], a["base"][:12]))
+            for e in a["edits"][:12]:
+                print("      edit %s-%s %s: %s%s - %s" % (e.get("lo"), e.get("hi"), e.get("basis") or e.get("kind") or "",
+                                                         e.get("verdict"), "" if e.get("covered") else " (not covered)",
+                                                         str(e.get("reason"))[:160]))
     for n in notes:
         print("  note: " + n)
-    verdict = "FAIL" if fails else "PASS"
+    verdict = "FAIL" if fails else ("NOT JUDGED" if unjudged else "PASS")
     for f in fails:
         print("  FAIL " + f)
+    for u in unjudged:
+        print("  NOT JUDGED " + u)
     print(verdict)
     if args.json:
         rep = dict(tool="corpus_grade gate", base=base.label, head=head.label, import_commit=g.import_tree.rev,
                    oracle_base=ob.hash, oracle_head=oh.hash, converter_pin=pin["pin"], oracle_pass=bool(args.oracle_pass),
                    declared=args.declared, exact_base=exact_b, exact_head=exact_h, net=net, transitions=trans,
                    stepfiles_changed=[dict(path=p, change=how) for p, how in stepfiles],
-                   failures=fails, notes=notes, verdict=verdict)
+                   ships_audited=len(audited), audit_version=audit_version,
+                   failures=fails, not_judged=unjudged, notes=notes, verdict=verdict)
         write_atomic(args.json, dump(rep))
     log("gate took %.1fs (%d converted, %d from cache)" % (time.time() - t0, g.conv.stats["converted"], g.conv.stats["cached"]))
+    if unjudged and not fails:
+        later("the trace audit of %d ship(s) was stopped by the machine (%s); gate the same base again"
+              % (len(unjudged), "; ".join(unjudged)[:400]))
     sys.exit(1 if fails else 0)
 
 
@@ -1137,10 +1337,19 @@ def main():
     p.add_argument("--out")
     p = sub.add_parser("gate", parents=[common])
     p.add_argument("--base", required=True)
-    p.add_argument("--head")
+    heads = p.add_mutually_exclusive_group()
+    heads.add_argument("--head", help="the commit to judge (default HEAD: the commits a pass made)")
+    heads.add_argument("--worktree", action="store_true",
+                       help="judge the working tree instead of a commit (a check before committing, never a pass's gate)")
     p.add_argument("--oracle-pass", action="store_true")
     p.add_argument("--declared", type=int)
     p.add_argument("--json")
+    p.add_argument("--audit-no-decode", action="store_true",
+                   help="a ship whose clock needs the footage decoded audits UNCOVERED (and fails) instead")
+    p = sub.add_parser("audit-ships")                    # the gate's child process (see audit_ships)
+    p.add_argument("--jobs", required=True)
+    p.add_argument("--out", required=True)
+    p.add_argument("--no-decode", action="store_true")
     p = sub.add_parser("freeze", parents=[common])
     p.add_argument("--repin", action="store_true")
     p = sub.add_parser("conflicts", parents=[common])
@@ -1150,12 +1359,15 @@ def main():
     if not sys.flags.utf8_mode:
         refuse("run with -X utf8: the converter reads .ssc files in the default encoding")
     try:
-        dict(grade=cmd_grade, gate=cmd_gate, freeze=cmd_freeze, conflicts=cmd_conflicts, selfcheck=cmd_selfcheck)[args.cmd](args)
+        dict(grade=cmd_grade, gate=cmd_gate, freeze=cmd_freeze, conflicts=cmd_conflicts, selfcheck=cmd_selfcheck,
+             **{"audit-ships": cmd_audit_ships})[args.cmd](args)
     except SystemExit:
         raise
     except BaseException as ex:                          # exit 1 means FAIL; a crash is not a verdict
         import traceback
         traceback.print_exc()
+        if isinstance(ex, (MemoryError, OSError)):       # the machine (a file held, memory short): later
+            later("internal error: %s: %s" % (type(ex).__name__, ex))
         refuse("internal error: %s: %s" % (type(ex).__name__, ex))
 
 
