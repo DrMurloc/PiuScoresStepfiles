@@ -290,6 +290,32 @@ def adjacent(med, xs, p):
     return float(np.mean([_corr(cr[k], cr[k + 1]) for k in range(len(xs) - 1)]))
 
 
+LIB_W = 48     # a receptor crop resampled to this many columns, whatever the pitch it was cut at
+
+
+def canon(med, xs, p):
+    """Each lane's receptor crop resampled to LIB_W columns and normalised (zero mean, unit
+    variance), so crops cut at different pitches compare; None if a crop leaves the frame."""
+    cr = crops(med, xs, p)
+    if cr is None:
+        return None
+    out = []
+    for c in cr:
+        z = cv2.resize(c.astype(np.float32), (LIB_W, c.shape[0]), interpolation=cv2.INTER_AREA)
+        out.append((z - z.mean()) / (z.std() + 1e-6))
+    return out
+
+
+def ncc(med, xs, p, lib):
+    """Singles: how much a fit's five receptor crops look like the receptor library's five (lane k
+    against library lane k mod 5), mean correlation. The library is built from doubles fits that
+    passed twin agreement, never from a singles fit and never by the rule it grades."""
+    cz = canon(med, xs, p)
+    if cz is None or lib is None:
+        return None
+    return float(np.mean([_corr(c, lib[k % 5]) for k, c in enumerate(cz)]))
+
+
 # ---------------------------------------------------------------- CLI
 
 def cmd_build(a):
@@ -367,6 +393,14 @@ def cmd_status(a):
 
 
 def main(argv=None):
+    argv = list(sys.argv[1:] if argv is None else argv)
+    # A YouTube id may start with "-" (-5NBR2TjE0E), which argparse takes for an option: everything
+    # after `build --vids` is a video id, read here rather than by argparse.
+    if argv[:1] == ["build"] and "--vids" in argv:
+        i = argv.index("--vids")
+        vids, argv = argv[i + 1:], argv[:i]
+        a = argparse.Namespace(cmd="build", vids=vids, vids_file=None, retry_failed="--retry-failed" in argv)
+        return cmd_build(a)
     ap = argparse.ArgumentParser(description=__doc__)
     sub = ap.add_subparsers(dest="cmd", required=True)
     b = sub.add_parser("build")
