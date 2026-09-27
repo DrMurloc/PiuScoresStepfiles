@@ -1019,7 +1019,14 @@ def main():
     args = ap.parse_args()
     if not sys.flags.utf8_mode:
         refuse("run with -X utf8: the converter reads .ssc files in the default encoding")
-    dict(grade=cmd_grade, gate=cmd_gate, freeze=cmd_freeze, conflicts=cmd_conflicts, selfcheck=cmd_selfcheck)[args.cmd](args)
+    try:
+        dict(grade=cmd_grade, gate=cmd_gate, freeze=cmd_freeze, conflicts=cmd_conflicts, selfcheck=cmd_selfcheck)[args.cmd](args)
+    except SystemExit:
+        raise
+    except BaseException as ex:                          # exit 1 means FAIL; a crash is not a verdict
+        import traceback
+        traceback.print_exc()
+        refuse("internal error: %s: %s" % (type(ex).__name__, ex))
 
 
 if __name__ == "__main__":
