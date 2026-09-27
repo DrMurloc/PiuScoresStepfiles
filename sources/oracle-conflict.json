@@ -1,0 +1,553 @@
+{
+ "built_from": {
+  "blocks_digest": "eb22cbbbd2fe1d10fd10e8da9abab54bd25b706598f8afcbebb205b14a056c87",
+  "oracle_data": {
+   "sources/census-final.json": "222703fa1b2794b47ddbc32ab3ed25b31571cae2ded7e76f8896d596beb2db7b",
+   "sources/certification-2026-08-30.json": "1bfc0bd5e2ab4e022f02243c80e6e05ffa34265b3f328ca780222db6ce996817",
+   "sources/certification-corpus-2026-09-10.json": "5ad2c9844b13e64a85700eabbab80ad2284c98f79c57fd480c6a1876776124bc",
+   "sources/p1-note-counts-2026-07-04.json": "331e5e7ede73d3e4b7d783a6d8186ce42c91b3f429cbbece351a8066093227bc",
+   "sources/ssc-map-tail.json": "2ef619a66cc221023dbc1e891b15e6219a675849999f1d559407151f4999170a",
+   "sources/ssc-map.json": "b3735810f775b7872e303f2e9064432477a1425fe461ecb26cf23f2bf1af92cc",
+   "sources/tail-2026-09-08.json": "f62d548b10bc984f66850ba2dceed9f673392008651a516203e7c241646d53e7",
+   "sources/video-map.json": "ca53f1059830f8125d47767cb729fdc564106751c9215ce78fb64f08cea07164"
+  }
+ },
+ "charts": [
+  {
+   "chart": "Adrenaline Blaster D23",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "block D23_ARCADE has identical converter inputs to D22_ARCADE in 14 - XX/1627 - Adrenaline Blaster/1627 - Adrenaline Blaster.ssc",
+     "kind": "twin"
+    }
+   ]
+  },
+  {
+   "chart": "Avalanche D19",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "video BJDhXGnI9s8 certifies Avalanche D19 + Avalanche D20 on 2p",
+     "kind": "same_side"
+    },
+    {
+     "detail": "certified 884 on BJDhXGnI9s8, but the Phoenix 1 catalog lists 973 and the file already converts to 973",
+     "kind": "catalog"
+    }
+   ]
+  },
+  {
+   "chart": "Avalanche D20",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "video BJDhXGnI9s8 certifies Avalanche D19 + Avalanche D20 on 2p",
+     "kind": "same_side"
+    }
+   ]
+  },
+  {
+   "chart": "Beat of The War S9",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "video XNMIAm04k_c certifies Beat of The War S16 + Beat of The War S9 on 2p; the census (eye-verified) says the screen is Beat of The War S16's",
+     "kind": "same_side"
+    },
+    {
+     "detail": "certified 500 on XNMIAm04k_c, but the Phoenix 1 catalog lists 380 and the file already converts to 380",
+     "kind": "catalog"
+    }
+   ]
+  },
+  {
+   "chart": "Cosmical Rhythm D19",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "block D19_ARCADE has identical converter inputs to D18 HIDDEN INFOBAR_ARCADE in 12 - PRIME/1457 - Cosmical Rhythm/1457 - Cosmical Rhythm.ssc",
+     "kind": "twin"
+    }
+   ]
+  },
+  {
+   "chart": "D D19",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "video -UdlH4AGPQQ certifies D D19 + D D20 on 1p",
+     "kind": "same_side"
+    },
+    {
+     "detail": "certified 811 on -UdlH4AGPQQ, but the Phoenix 1 catalog lists 826 and the file already converts to 826",
+     "kind": "catalog"
+    }
+   ]
+  },
+  {
+   "chart": "D D20",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "video -UdlH4AGPQQ certifies D D19 + D D20 on 1p",
+     "kind": "same_side"
+    }
+   ]
+  },
+  {
+   "chart": "Dignity D20",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "video QRhXZdPcsVo certifies Dignity D20 + Dignity D24 on 1p",
+     "kind": "same_side"
+    },
+    {
+     "detail": "certified 1011 on QRhXZdPcsVo, but the Phoenix 1 catalog lists 877 and the file already converts to 877",
+     "kind": "catalog"
+    }
+   ]
+  },
+  {
+   "chart": "Dignity D24",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "video QRhXZdPcsVo certifies Dignity D20 + Dignity D24 on 1p",
+     "kind": "same_side"
+    }
+   ]
+  },
+  {
+   "chart": "Dignity S15",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "video _k_p2osf8x0 certifies Dignity S15 + Dignity S21 on 2p",
+     "kind": "same_side"
+    },
+    {
+     "detail": "certified 908 on _k_p2osf8x0, but the Phoenix 1 catalog lists 537 and the file already converts to 537",
+     "kind": "catalog"
+    }
+   ]
+  },
+  {
+   "chart": "Dignity S21",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "video _k_p2osf8x0 certifies Dignity S15 + Dignity S21 on 2p",
+     "kind": "same_side"
+    }
+   ]
+  },
+  {
+   "chart": "Faster Z S19",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "video o6ebPI0HDBw certifies Faster Z S19 + Faster Z S21 on 2p",
+     "kind": "same_side"
+    }
+   ]
+  },
+  {
+   "chart": "Faster Z S21",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "video o6ebPI0HDBw certifies Faster Z S19 + Faster Z S21 on 2p",
+     "kind": "same_side"
+    }
+   ]
+  },
+  {
+   "chart": "Final Audition 3 S5",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "certified 297 on f46zP7lxZMM, but the Phoenix 1 catalog lists 234 and the file already converts to 234",
+     "kind": "catalog"
+    }
+   ]
+  },
+  {
+   "chart": "Final Audition Ep.1 S4",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "video DgLesNMzb1w certifies Final Audition Ep. 1 S17 + Final Audition Ep.1 S4 on 1p; the census (eye-verified) says the screen is Final Audition Ep. 1 S17's",
+     "kind": "same_side"
+    },
+    {
+     "detail": "certified 606 on DgLesNMzb1w, but the Phoenix 1 catalog lists 121 and the file already converts to 121",
+     "kind": "catalog"
+    }
+   ]
+  },
+  {
+   "chart": "Get Your Groove On S7",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "certified 324 on rJNNDWN5QL8, but the Phoenix 1 catalog lists 206 and the file already converts to 206",
+     "kind": "catalog"
+    }
+   ]
+  },
+  {
+   "chart": "My Way S4",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "certified 201 on A-ua4qFcTYQ, but the Phoenix 1 catalog lists 123 and the file already converts to 123",
+     "kind": "catalog"
+    }
+   ]
+  },
+  {
+   "chart": "My Way S8",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "video bXMj-YNDufs certifies My Way S15 + My Way S8 on 2p; the census (eye-verified) says the screen is My Way S15's",
+     "kind": "same_side"
+    },
+    {
+     "detail": "certified 507 on bXMj-YNDufs, but the Phoenix 1 catalog lists 277 and the file already converts to 277",
+     "kind": "catalog"
+    }
+   ]
+  },
+  {
+   "chart": "Naissance 2 D20",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "block D20_ARCADE has identical converter inputs to D19 HIDDEN_ARCADE in 04 - EXCEED~ZERO/(3) A02 - Naissance 2/A02 - Naissance 2.ssc",
+     "kind": "twin"
+    }
+   ]
+  },
+  {
+   "chart": "Phantom D19",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "video I0_oG-zXra0 certifies Phantom D19 + Phantom D21 on 1p",
+     "kind": "same_side"
+    },
+    {
+     "detail": "certified 1000 on I0_oG-zXra0, but the Phoenix 1 catalog lists 897 and the file already converts to 897",
+     "kind": "catalog"
+    },
+    {
+     "detail": "block D19 INFOBAR TITLE_ARCADE has identical converter inputs to D20 HALFDOUBLE HIDDEN_ARCADE in 04 - EXCEED~ZERO/(1) C05 - Phantom/C05 - Phantom.ssc",
+     "kind": "twin"
+    }
+   ]
+  },
+  {
+   "chart": "Phantom D21",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "video I0_oG-zXra0 certifies Phantom D19 + Phantom D21 on 1p",
+     "kind": "same_side"
+    }
+   ]
+  },
+  {
+   "chart": "Phantom S18",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "certified 897 on -E5Z5OEkvTc, but the Phoenix 1 catalog lists 945 and the file already converts to 945",
+     "kind": "catalog"
+    }
+   ]
+  },
+  {
+   "chart": "Pump me Amadeus D19",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "video 5e3nzEulFXY certifies Pump me Amadeus D19 + Pump me Amadeus D21 on 2p",
+     "kind": "same_side"
+    },
+    {
+     "detail": "certified 1000 on 5e3nzEulFXY, but the Phoenix 1 catalog lists 708 and the file already converts to 708",
+     "kind": "catalog"
+    }
+   ]
+  },
+  {
+   "chart": "Pump me Amadeus D21",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "video 5e3nzEulFXY certifies Pump me Amadeus D19 + Pump me Amadeus D21 on 2p",
+     "kind": "same_side"
+    }
+   ]
+  },
+  {
+   "chart": "Pump me Amadeus S16",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "video PpkLiRF_9kw certifies Pump me Amadeus S16 + Pump me Amadeus S18 on 2p",
+     "kind": "same_side"
+    },
+    {
+     "detail": "certified 871 on PpkLiRF_9kw, but the Phoenix 1 catalog lists 620 and the file already converts to 620",
+     "kind": "catalog"
+    }
+   ]
+  },
+  {
+   "chart": "Pump me Amadeus S18",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "video PpkLiRF_9kw certifies Pump me Amadeus S16 + Pump me Amadeus S18 on 2p",
+     "kind": "same_side"
+    }
+   ]
+  },
+  {
+   "chart": "Pumptris 8 Bit ver. S17",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "video hxbQAQYt4Co certifies Pumptris 8 Bit ver. S17 + Pumptris 8 Bit ver. S18 on 2p",
+     "kind": "same_side"
+    },
+    {
+     "detail": "certified 948 on hxbQAQYt4Co, but the Phoenix 1 catalog lists 523 and the file already converts to 523",
+     "kind": "catalog"
+    }
+   ]
+  },
+  {
+   "chart": "Pumptris 8 Bit ver. S18",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "video hxbQAQYt4Co certifies Pumptris 8 Bit ver. S17 + Pumptris 8 Bit ver. S18 on 2p",
+     "kind": "same_side"
+    }
+   ]
+  },
+  {
+   "chart": "Solitary S6",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "certified 306 on obPE9ohrkLw, but the Phoenix 1 catalog lists 248 and the file already converts to 248",
+     "kind": "catalog"
+    }
+   ]
+  },
+  {
+   "chart": "Vook S10",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "certified 552 on 3PO5ckDXVpc, but the Phoenix 1 catalog lists 354 and the file already converts to 354",
+     "kind": "catalog"
+    }
+   ]
+  },
+  {
+   "chart": "Witch Doctor #1 D20",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "video YuuOqPltYlc certifies Witch Doctor #1 D20 + Witch Doctor #1 D21 on 1p",
+     "kind": "same_side"
+    },
+    {
+     "detail": "certified 1050 on YuuOqPltYlc, but the Phoenix 1 catalog lists 1111 and the file already converts to 1111",
+     "kind": "catalog"
+    }
+   ]
+  },
+  {
+   "chart": "Witch Doctor #1 D21",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "video YuuOqPltYlc certifies Witch Doctor #1 D20 + Witch Doctor #1 D21 on 1p",
+     "kind": "same_side"
+    }
+   ]
+  },
+  {
+   "chart": "Witch Doctor #1 S17",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "video Aq6KNVdA6N4 certifies Witch Doctor #1 S17 + Witch Doctor #1 S19 on 2p",
+     "kind": "same_side"
+    },
+    {
+     "detail": "certified 807 on Aq6KNVdA6N4, but the Phoenix 1 catalog lists 723 and the file already converts to 723",
+     "kind": "catalog"
+    }
+   ]
+  },
+  {
+   "chart": "Witch Doctor #1 S19",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "video Aq6KNVdA6N4 certifies Witch Doctor #1 S17 + Witch Doctor #1 S19 on 2p",
+     "kind": "same_side"
+    }
+   ]
+  }
+ ],
+ "purpose": "ORACLE_CONFLICT: certified charts the corpus grade cannot score honestly. The gate halts (exit 1) when one of them becomes exact, instead of taking the credit - the fix is an identity or certification review, not a stepfile edit. Built from data by `tools/corpus_grade.py conflicts --write`; see docs/TOOLS.md.",
+ "rules": {
+  "catalog": "certified count != the chart's Phoenix 1 catalog count (sources/p1-note-counts, matched by song, type and level) while the file already converts to the catalog count",
+  "same_side": "a video certifies two or more charts on one side (a result screen shows one total per side)",
+  "twin": "another block of the file has identical STEPSTYPE, NOTES, BPMS, STOPS, DELAYS, WARPS, FAKES and TICKCOUNTS (header inherited): byte-identical to the converter, e.g. HIDDEN / INFOBAR twins"
+ },
+ "videos": [
+  {
+   "census_verified": [],
+   "charts": [
+    "D D19",
+    "D D20"
+   ],
+   "side": "1p",
+   "vid": "-UdlH4AGPQQ"
+  },
+  {
+   "census_verified": [],
+   "charts": [
+    "Pump me Amadeus D19",
+    "Pump me Amadeus D21"
+   ],
+   "side": "2p",
+   "vid": "5e3nzEulFXY"
+  },
+  {
+   "census_verified": [],
+   "charts": [
+    "Witch Doctor #1 S17",
+    "Witch Doctor #1 S19"
+   ],
+   "side": "2p",
+   "vid": "Aq6KNVdA6N4"
+  },
+  {
+   "census_verified": [],
+   "charts": [
+    "Avalanche D19",
+    "Avalanche D20"
+   ],
+   "side": "2p",
+   "vid": "BJDhXGnI9s8"
+  },
+  {
+   "census_verified": [
+    "Final Audition Ep. 1 S17"
+   ],
+   "charts": [
+    "Final Audition Ep. 1 S17",
+    "Final Audition Ep.1 S4"
+   ],
+   "side": "1p",
+   "vid": "DgLesNMzb1w"
+  },
+  {
+   "census_verified": [],
+   "charts": [
+    "Phantom D19",
+    "Phantom D21"
+   ],
+   "side": "1p",
+   "vid": "I0_oG-zXra0"
+  },
+  {
+   "census_verified": [],
+   "charts": [
+    "Pump me Amadeus S16",
+    "Pump me Amadeus S18"
+   ],
+   "side": "2p",
+   "vid": "PpkLiRF_9kw"
+  },
+  {
+   "census_verified": [],
+   "charts": [
+    "Dignity D20",
+    "Dignity D24"
+   ],
+   "side": "1p",
+   "vid": "QRhXZdPcsVo"
+  },
+  {
+   "census_verified": [
+    "Beat of The War S16"
+   ],
+   "charts": [
+    "Beat of The War S16",
+    "Beat of The War S9"
+   ],
+   "side": "2p",
+   "vid": "XNMIAm04k_c"
+  },
+  {
+   "census_verified": [],
+   "charts": [
+    "Witch Doctor #1 D20",
+    "Witch Doctor #1 D21"
+   ],
+   "side": "1p",
+   "vid": "YuuOqPltYlc"
+  },
+  {
+   "census_verified": [],
+   "charts": [
+    "Dignity S15",
+    "Dignity S21"
+   ],
+   "side": "2p",
+   "vid": "_k_p2osf8x0"
+  },
+  {
+   "census_verified": [
+    "My Way S15"
+   ],
+   "charts": [
+    "My Way S15",
+    "My Way S8"
+   ],
+   "side": "2p",
+   "vid": "bXMj-YNDufs"
+  },
+  {
+   "census_verified": [],
+   "charts": [
+    "Pumptris 8 Bit ver. S17",
+    "Pumptris 8 Bit ver. S18"
+   ],
+   "side": "2p",
+   "vid": "hxbQAQYt4Co"
+  },
+  {
+   "census_verified": [],
+   "charts": [
+    "Faster Z S19",
+    "Faster Z S21"
+   ],
+   "side": "2p",
+   "vid": "o6ebPI0HDBw"
+  }
+ ]
+}
