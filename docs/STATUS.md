@@ -503,6 +503,12 @@ tick loop now reads a region only from readings within 0.6 s of it (TOOLS.md).
 After both: **738 of the 1,479 certified charts derive their judged count exactly** (116 under
 the old arithmetic before any of this), and the census ledger stands at 107.
 
+2026-09-27: the loaders had been dropping 11 eye-verified census certifications whose videos
+the corpus ledger also read (a shallow merge in `corpus_map`); with them back it is **749 of
+1,490** — 626 exact at the import itself (PROTECTED) and 123 by our edits (PROVISIONAL). The
+live count is `tools/corpus_grade.py grade`, recorded in `sources/corpus-grade.json`, and every
+loop's commit pass goes through its gate (TOOLS.md, "The corpus grade").
+
 Snapshot **`092326`** carries all of it — the first release whose hold ticks are counted by the lattice: of the
 992 certified charts whose shipped ticks changed, 634 are now exact, 273 closer and 84 farther (files short on
 ticks the old over-count had hidden). It is built, verified tick by tick against the converter, and waiting for
