@@ -9,6 +9,143 @@ C:\Users\jonec\repos\piu-annotate\.venv\Scripts\python.exe -X utf8 tools/<script
 Scratch output lands in `work/` (gitignored). Scripts are operator tools, not a library —
 they print what they did and expect a human reading the output.
 
+## Running loops unattended (the rails)
+
+Loops run for days on the owner's own PC, which he also games on. Every loop runs through
+these, and the rules they enforce are the loop-bucket rules of 2026-09-26/27: each loop in its
+own worktree on a local `loops/<name>` branch, never committing to main, never pushing.
+
+**`supervise.py run <run> --jobs <jobs.jsonl> [--timeout S] [--parallel N] [--grace S] [--threads 1|2] [--min-free-gb G] [--retry nonzero,timeout,launch-error] [--detach] [--accept-pin-change]`**
+**`supervise.py status [<run> ...] [--json]`** / **`stop [<run>] [--clear]`** / **`slots [--max N] [--gaming-max N] [--min-free-gb G]`**
+Runs a loop's jobs, one subprocess per job (a job is usually one chart), and records each in
+an append-only ledger. A jobs file is JSON lines, one `{"id", "cmd", "cwd"?, "timeout"?,
+"slot"?, "env"?, "meta"?}` per job; `"{py}"` as a whole argument becomes this venv's Python with
+`-X utf8 -B`, and `{root}`, `{tools}`, `{run}`, `{run_dir}`, `{job}` are substituted. A job may
+print `VERDICT: <word>`; the last one is its verdict, otherwise OK or FAIL by exit code.
+Everything shared lives in `work/`, which in a loop worktree is a junction to the main
+checkout's, so all loops see one copy:
+
+- **The decode-slot pool** (`work/.slots/`): at most 6 jobs at once machine-wide, 2 while
+  `Wow.exe` (or `WowClassic.exe`) runs, detected with `tasklist`. Slots are *counted* under an
+  OS file lock, not numbered — when the game starts, new jobs wait until fewer than 2 are
+  running, rather than taking a free low number while four others still decode. A slot whose
+  supervisor and child are both dead is recovered by PID liveness (with the process creation
+  time checked, so a reused PID does not keep it alive) and logged to `work/rails-events.jsonl`.
+  `slots --max`/`--gaming-max` can lower the limits (never raise them past 6 and 2), and
+  `--min-free-gb` overrides the free-space floor, live, for every running loop.
+- **STOP**: `work/STOP` stops every loop, `work/runs/<run>/STOP` one run (`supervise.py stop
+  [<run>]` makes them). No new job starts; running ones get `--grace` (10 minutes) to finish,
+  then `taskkill /T /F` kills them, and they re-run on resume. A run refuses to start while a
+  STOP applies to it — clearing one (`stop --clear`) is the owner's decision, never automatic.
+- **Per-job timeout** (`--timeout`, default 2 h; a job's own `timeout` wins) kills the whole
+  tree. Each child also runs in its own kill-on-close Windows job object, because the venv's
+  `python.exe` is a launcher that starts the real interpreter as its child and a tool may start
+  more: the job object catches what taskkill's parent-PID walk cannot (an orphan whose parent
+  already exited), a child that exits while its own children keep running has them killed
+  (`orphans_killed` in its ledger row counts those processes), and if the supervisor itself dies
+  its children die with it instead of decoding outside any slot.
+- **Being a good guest**: children run at BELOW_NORMAL priority with `CREATE_NO_WINDOW` (without
+  it a detached supervisor's children pop console windows over the game), OMP/BLAS threads
+  capped at `--threads` (default 2), and `tools/childsite/` first on `PYTHONPATH`. Its
+  `sitecustomize.py` calls `cv2.setNumThreads(--threads)` the moment a child imports cv2: the
+  venv's OpenCV 5.0 (parallel framework "Concurrency") ignores `OMP_NUM_THREADS` and
+  `OPENCV_FOR_THREADS_NUM` and starts one worker per core, 20 here. The supervisor asks Windows
+  to stay awake (`SetThreadExecutionState(ES_CONTINUOUS|ES_SYSTEM_REQUIRED)`) while it runs and
+  releases it on exit; the machine still has to be on AC, since it sleeps after 3 minutes on
+  battery whatever a process asks. Launches pause, not fail, while C: (or work/'s drive) has
+  under 40 GiB free.
+- **Pins**: the converter's source hash (sha256 over every `.py` under `piu_annotate/`, path and
+  bytes) and `sources/oracle-manifest.json`'s hash are recorded in the run manifest and
+  re-checked before every launch. Drift halts the run (exit 4): running jobs are killed and
+  left unfinished, nothing is reverted, and resuming refuses the new pin without
+  `--accept-pin-change`, because one run must not mix two converters.
+- **Records** in `work/runs/<run>/`: `manifest.json` (tool HEAD and `tools/` tree hash, the
+  argv, the converter pin with its git HEAD, the oracle hash — one entry per attempt),
+  `jobs.jsonl` (the job list, frozen at the first run; a run id names one list, so a changed
+  list needs a new id), `ledger.jsonl` (job, attempt, start, end, duration, exit code, outcome,
+  verdict, log), `events.jsonl`, `heartbeat.json` (after every job and every 30 s), `logs/`.
+- **Resume**: running the same run id again skips every job whose latest row finished (outcome
+  `exit`, `timeout` or `launch-error`; `--retry` names kinds to re-run). A job killed by STOP or
+  a halt, or in flight when a supervisor died, has no finished row and runs again. One
+  supervisor per run id at a time.
+- **`--detach`** relaunches the supervisor with no window in its own process group and returns
+  once its first heartbeat appears (its output goes to `supervisor.log`). It outlives the
+  terminal and the chat session that started it. It does not outlive the Claude desktop app
+  for certain: the venv's base interpreter lives in that app's virtualized AppData, so a Python
+  started outside the app cannot even find it, and the supervisor stays inside the app's
+  process container. A run that dies that way resumes from its ledger.
+- **`status`** reads every run's heartbeat and ledger: state (`running`, `waiting-slot`,
+  `paused-disk`, `stopping`, `finished`, `stopped`, `halted`, or `DEAD` when the heartbeat says
+  running but its PID is gone), done/total, verdict counts, what is running, plus the slot
+  pool, the commit lock, the main lock and the global STOP.
+
+Exit codes: 0 finished (whatever the jobs' verdicts), 3 stopped, 4 halted.
+
+**`supervise.py worktree <name> --base <rev>`** / **`supervise.py worktree-remove <name> [--delete-branch] [--force-branch]`** / **`supervise.py preflight [--videos] [--open-videos]`**
+`worktree` creates `../psf-wt/<name>` on a new branch `loops/<name>` from `--base`, junctions
+its `work/` and `videos/` to the main checkout's (`mklink /J`), and runs `preflight` there:
+the junctions resolve to the main checkout, the converter imports from the clone and counts
+ticks by the lattice, every tool imports (scripts without a `__main__` guard, and
+`download_videos`, `run_corpus`, `catalog_sweep` and `video_refresh_sql` always, are only
+compiled — importing them would run them), plus the branch, the hook setting, free space and
+the slot pool; `--videos` checks every `video-map.json` video is present, `--open-videos` also
+decodes a frame of each. `worktree-remove` removes each junction by itself (`rmdir` of the
+link, and it checks the target's entry count did not change) before `git worktree remove`, and
+refuses if `work/` or `videos/` is a real folder — never delete a loop worktree any other way,
+since a tool that recursed through a junction would be deleting the shared caches.
+
+**`supervise.py lock-exec [--run R] -- <cmd ...>`** / **`commitlock [--break] [--force]`** / **`mainlock take --note TEXT | release | show`** / **`pins`**
+`lock-exec` runs a command holding the commit lock (for a commit step that is not
+`loopcommit`). `commitlock` shows the holder; `--break` removes it only if its holder is dead,
+`--force` even if not. `mainlock` takes and releases `work/.main.lock`, which whoever merges
+loop branches into main holds for the duration and which the pre-push hook below honors; it is
+existence-based (no PID), because the merge is done by a person or a session, not one process.
+`pins` prints the converter and oracle pins.
+
+Library use, for a tool that decodes in-process: `with supervise.decode_slot(): ...` (a no-op
+inside a supervised job, which already holds one — `PSF_SLOT_HELD=1`) and
+`with supervise.commit_lock(run): ...`.
+
+**`loopcommit.py commit --run <run> -m "<subject>" [--body TEXT | --body-file F] -- <path> ...`**
+**`loopcommit.py revert-run <run> --base <sha> [--reason TEXT] [--dry-run]`** / **`loopcommit.py list-run <run> --base <sha>`**
+The only way a loop commits. `commit` takes the commit lock (`work/.commit.lock`, one for every
+loop; a dead holder's lock is recovered), stages exactly the declared paths (files or folders,
+relative to the repository root) and refuses if the index already holds a staged change outside
+them, if a declared path has nothing to commit, if HEAD is detached, or if the branch is main
+(or, without `--allow-branch`, anything outside `loops/*`). The message gets `Loop-Run: <run>`
+and the Co-Authored-By trailer (the body may not carry either). After committing it checks git's
+return code, that HEAD advanced by exactly one commit on the old HEAD, that the commit touched
+exactly what was staged and nothing undeclared, and that the trailer reads back; a failed check
+undoes that one commit with `reset --soft` and exits 3. It passes `--cleanup=whitespace`
+explicitly, so no `commit.cleanup` setting can strip the lines starting with `#` that stepfile
+commit bodies carry (`#TICKCOUNTS`). This replaces the bare, unchecked `git commit`
+that `extract_repair.py` and `tick_repair.py` used to run in a checkout several loops shared.
+
+`revert-run` reverts only the commits after `--base` whose `Loop-Run` trailer names the run,
+newest first, stopping at the base and leaving every other commit alone (another run's, the
+owner's). Each is reversed from its own binary diff with `git apply --index -R`, which applies
+all of it or nothing, and committed with `Loop-Revert: <run>` and `Reverts: <sha>` — not
+`Loop-Run`, or a second revert-run would revert the reverts. Already-reverted commits are
+skipped, so it is safe to run twice. If a reversal no longer applies because a later commit
+rewrote the same lines, it stops there and says so, with the reverts before it committed.
+
+**`.githooks/pre-push`** (enable once per clone: `git config core.hooksPath .githooks`)
+Refuses every push while `work/.main.lock` exists and prints the lock's note, so nobody
+publishes main halfway through a merge of loop branches. It reads nothing else: slots, the
+commit lock and running loops never block a push. `.gitattributes` keeps the hook LF-only,
+because `core.autocrlf` would otherwise check it out with CRLF endings `sh` cannot run.
+
+**`supervise_selftest.py [--dir <scratch>] [--only name,...] [--list]`**
+Proves the rails with toy jobs (python sleeps, no footage): the slot limit with 8 queued jobs
+and across two supervisors, the gaming limit, STOP within one job (run and global), the grace
+kill, the timeout kill with grandchildren and orphan reaping, resume after killing a supervisor,
+two supervisors serialized by the commit lock, stale-lock and stale-slot recovery (including a
+0-byte lock), the disk pause, a converter-drift halt, `--detach`, loopcommit's refusals,
+revert-run in a throwaway repository, the pre-push hook against a throwaway remote, and
+junction unlinking. Every drill uses its own state folder (`PSF_RAILS_STATE`) and its own
+repositories under `--dir` (default `work/rails-selftest/<time>`), so the real pool, locks and
+branches are never touched. About three minutes; run it after any change to these tools.
+
 ## Checking upstream for new steps
 
 **`resistance_packs.py list | changelog <pack> | recent <pack> --since <date> | get <pack> <entry> --out <dir>`**
