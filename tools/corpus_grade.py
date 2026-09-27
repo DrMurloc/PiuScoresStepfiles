@@ -57,6 +57,8 @@
 #   - a chart leaves exact without a sources/demotions.jsonl row naming it and its block_sha
 #     before the change (with a reason and evidence; a quarantined chart's row also needs the
 #     owner's yes in an "owner" field);
+#   - demotions.jsonl gains a row with no "owner" field (the owner's yes, written into the row):
+#     a demotion is the owner's call, never a loop's, whatever reason and evidence it gives;
 #   - a PROTECTED chart leaves exact at all, or its block or file header changes while it stays
 #     exact (unless a promotion row names the new block). Protection is judged at the base, so
 #     demoting a PROTECTED chart is a commit of its own, before the change that breaks it;
@@ -959,6 +961,14 @@ def cmd_gate(args):
             fails.append("LEDGER: %s lost or rewrote a line between base and head (append-only)" % path)
     if oh.demotions_bad or oh.promotions_bad:
         fails.append("LEDGER: unparseable line(s) at the head: demotions %s, promotions %s" % (oh.demotions_bad, oh.promotions_bad))
+    # a demotion is the owner's call: every row the change adds carries his yes in an "owner" field,
+    # whoever wrote it - otherwise a loop could write its own reason and evidence, pass UNPROTECTED in
+    # one pass and break the chart in the next
+    had = {json.dumps(r, sort_keys=True) for r in ob.demotions}
+    for r in oh.demotions:
+        if json.dumps(r, sort_keys=True) not in had and not (isinstance(r, dict) and str(r.get("owner", "")).strip()):
+            fails.append("LEDGER: %s adds a demotion of %s with no \"owner\" field - only the owner demotes, and his yes "
+                         "is written into the row" % (DEMOTIONS, r.get("chart") if isinstance(r, dict) else repr(r)[:60]))
 
     # transitions
     dem_rows = {}
