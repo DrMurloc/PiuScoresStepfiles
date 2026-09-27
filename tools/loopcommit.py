@@ -22,7 +22,8 @@
 # commit pass. A mismatch refuses the commit and reverts nothing.
 #
 # Exit codes: 0 committed; 2 refused (nothing was committed: a refusal above, the commit lock
-# not taken within --lock-timeout, a path outside the repository or on another drive); 3 a
+# not taken within --lock-timeout (time this process was awake: a supervisor freezing the job
+# while it waits does not use it up), a path outside the repository or on another drive); 3 a
 # post-commit check failed and the commit was undone (its changes left staged); 1 an unexpected
 # error, with a traceback.
 #

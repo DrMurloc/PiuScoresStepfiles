@@ -44,6 +44,13 @@
 #   against their timeout. A slot taken in-process through decode_slot() cannot be frozen, so it
 #   ranks first. A job without a job object cannot be frozen as a whole, so it is killed and
 #   queued again instead. A game check that fails counts as the game running (fail closed).
+# - A freeze never strands a lock. The supervisor freezes only while it holds every rails mutex
+#   itself (the commit lock's, the slot pool's, rails-events'), so a frozen process is inside
+#   none of them; and a job whose processes hold the commit lock is not frozen at all until it
+#   lets go (the pool runs one past its limit for that long): frozen, it would hold every loop's
+#   commits and gate-failure reverts for as long as the owner plays. A lock or mutex wait counts
+#   only the time its process was awake, so a job frozen while waiting is not refused the moment
+#   it thaws.
 # - A supervisor error does not end a multi-day run: an OSError or subprocess timeout inside a
 #   step (a full disk, a file an antivirus holds past the retries) is logged and
 #   retried with backoff for --transient-budget seconds; past that, or on any other exception,
@@ -138,6 +145,8 @@ RETRY_BASE_S, RETRY_MAX_S = 5.0, 300.0
 POLL_S = 0.5
 SLOT_RETRY_S = 2.0
 PREEMPT_EVERY_S = 1.0
+QUIESCE_TIMEOUT_S = 5.0      # how long a freeze waits for the rails mutexes before trying again next round
+AWAKE_GAP_S = 2.0            # a lock wait's poll gap longer than its poll plus this was spent frozen (or asleep)
 DISK_EVERY_S = 30
 HEARTBEAT_EVERY_S = 30
 ACTIVE_STATES = {"running", "waiting-slot", "paused-disk", "stopping", "suspended", "retrying"}
@@ -414,6 +423,7 @@ class ProcJob:
     def __init__(self):
         self.h = _CreateJobObjectW(None, None) if IS_WIN else None
         self.frozen = {}                               # pid -> creation time, of the processes this froze
+        self.unfreezable = set()                       # pids it could not open or suspend (not retried)
         if not self.h:
             return
         info = _ExtendedLimit()
@@ -442,21 +452,27 @@ class ProcJob:
             return []
         return [int(buf.Ids[i]) for i in range(min(buf.InList, _PID_LIST_MAX))]
 
+    def unfrozen(self):
+        """Processes in the job this has not frozen: after a freeze, one the job was starting as
+        it was being frozen."""
+        return [pid for pid in self.pids() if pid not in self.frozen and pid not in self.unfreezable]
+
     def suspend(self):
         """Suspend every process in the job not already frozen; returns how many it froze. Called
         again while frozen, it catches a process the job started as it was being frozen."""
         n = 0
-        for pid in self.pids():
-            if pid in self.frozen:
-                continue
+        for pid in self.unfrozen():
             h = _OpenProcess(_SUSPEND_ACCESS, False, pid)
             if not h:
+                self.unfreezable.add(pid)
                 continue
             try:
                 born = _filetime(h)
                 if _NtSuspendProcess(h) == 0:
                     self.frozen[pid] = born
                     n += 1
+                else:
+                    self.unfreezable.add(pid)
             finally:
                 _CloseHandle(h)
         return n
@@ -553,6 +569,21 @@ def games_running(max_age=None):
 
 # ---------------------------------------------------------------- locks
 
+class AwakeClock:
+    """Time spent waiting, counting only the time this process was awake: a gap between two polls
+    far longer than the poll is time it spent frozen by a supervisor (or the machine asleep), and
+    a job frozen while it waited for a lock must not be refused the moment it thaws."""
+
+    def __init__(self, poll):
+        self.cap, self.waited, self.last = poll + AWAKE_GAP_S, 0.0, time.time()
+
+    def tick(self):
+        now = time.time()
+        self.waited += min(max(0.0, now - self.last), self.cap)
+        self.last = now
+        return self.waited
+
+
 class FileMutex:
     """An OS byte-range lock. The kernel drops it when its holder dies, so it never goes stale;
     it guards the few-millisecond read-check-write of the PID lock files and the slot pool."""
@@ -563,7 +594,7 @@ class FileMutex:
     def __enter__(self):
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
         self.fd = os.open(self.path, os.O_RDWR | os.O_CREAT, 0o666)
-        deadline = time.time() + self.timeout
+        clock = AwakeClock(0.02)
         while True:
             try:
                 if IS_WIN:
@@ -574,7 +605,7 @@ class FileMutex:
                     fcntl.flock(self.fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
                 return self
             except OSError:
-                if time.time() > deadline:
+                if clock.tick() > self.timeout:
                     os.close(self.fd)
                     raise TimeoutError(f"{self.path} stayed locked for {self.timeout}s")
                 time.sleep(0.02)
@@ -626,7 +657,7 @@ class PidLock:
             return True, rec
 
     def acquire(self, timeout=None, poll=0.25, quiet_wait=False, stop_run=False, **info):
-        start, said = time.time(), False
+        clock, said = AwakeClock(poll), False
         while True:
             ok, cur = self.try_acquire(**info)
             if ok:
@@ -635,7 +666,8 @@ class PidLock:
                 print(f"waiting for the {self.name}: held by pid {cur.get('pid')} (run {cur.get('run')}, "
                       f"since {cur.get('since')})", file=sys.stderr, flush=True)
                 said = True
-            if timeout is not None and time.time() - start > timeout:
+            waited = clock.tick()
+            if timeout is not None and waited > timeout:
                 raise TimeoutError(f"{self.name} still held by pid {cur.get('pid')} after {timeout}s")
             if stop_run is not False and stop_reason(stop_run):
                 raise StopRequested(stop_reason(stop_run))
@@ -683,6 +715,38 @@ def commit_lock(run=None, purpose="", timeout=None):
         yield lock.mine
     finally:
         lock.release()
+
+
+# Every FileMutex the rails take, in the one order anything takes more than one of them in
+# (PidLock.try_acquire logs to rails-events inside the commit-lock mutex, live_slots(recover=True)
+# inside the slot-pool mutex; nothing takes them the other way round).
+RAILS_MUTEXES = (COMMIT_LOCK + ".mutex", os.path.join(SLOTS, ".mutex"), RAILS_LOG + ".mutex")
+
+
+@contextlib.contextmanager
+def rails_quiesced(timeout=QUIESCE_TIMEOUT_S):
+    """Hold every rails mutex at once. A process suspended inside this is inside none of them, and
+    cannot take or give up the commit lock while it is held, so the lock file is the truth about
+    who holds it. Raises TimeoutError when one stays held (the caller tries again later); never
+    call rails_event() inside it — this process already holds that log's mutex."""
+    with contextlib.ExitStack() as stack:
+        for path in RAILS_MUTEXES:
+            stack.enter_context(FileMutex(path, timeout=timeout))
+        yield
+
+
+def commit_lock_pids():
+    """The live processes the commit lock names: its taker and, for lock-exec, the child doing the
+    locked work. Empty when it is free, unreadable (which the next acquirer recovers) or dead."""
+    rec = read_json(COMMIT_LOCK)
+    if not rec or "_unreadable" in rec:
+        return set()
+    out = set()
+    for pid, created in ((rec.get("pid"), rec.get("created")), (rec.get("child"), rec.get("child_created"))):
+        with contextlib.suppress(TypeError, ValueError):
+            if pid and proc_alive(int(pid), created):
+                out.add(int(pid))
+    return out
 
 
 def stop_reason(run=None):
@@ -1000,6 +1064,7 @@ KILL_VERDICT = {"timeout": "TIMEOUT", "stopped": "STOPPED", "halted": "HALTED", 
 class Running:
     def __init__(self, **kw):
         self.suspended_at, self.suspended_s, self.suspends = None, 0.0, 0
+        self.lock_pinned_since = None                  # past the limit but left running: it holds the commit lock
         self.orphans, self.killed_as = 0, None
         self.__dict__.update(kw)
 
@@ -1028,6 +1093,7 @@ class Supervisor:
         self.slot_t, self.preempt_t, self.hb_t, self.hb_state, self.started = 0.0, 0.0, 0.0, None, time.time()
         self.unreleased = []                           # slots whose release failed; retried every step
         self.trouble = None                            # while a step keeps failing: since, tries, error
+        self.quiesce_blocked = None                    # while a freeze cannot take the rails mutexes: since
 
     def finished(self, jid):
         """Whether a resume skips this job (its latest row finished, and --retry does not name it)."""
@@ -1082,7 +1148,8 @@ class Supervisor:
             "total": len(self.jobs), "completed": done, "queued": len(self.queue), "skipped_at_start": self.skipped,
             "running": [{"job": r.job["id"], "pid": r.proc.pid, "since": now_iso(r.start), "start_ts": r.start,
                          "slot": bool(r.slot), "suspended": r.suspended_at is not None,
-                         "suspended_s": round(r.suspended_s + (now - r.suspended_at if r.suspended_at else 0.0), 1)}
+                         "suspended_s": round(r.suspended_s + (now - r.suspended_at if r.suspended_at else 0.0), 1),
+                         "lock_pinned": r.lock_pinned_since is not None}
                         for r in self.running],
             "verdicts": verdicts, "last": max(self.last.values(), key=lambda r: r.get("end", ""), default=None),
             "slots": {"used": len(live), "suspended": sum(1 for s in live if s.get("suspended")),
@@ -1247,6 +1314,7 @@ class Supervisor:
         allowed = {rec.get("token") for rec in movable[:max(0, limit - len(fixed))]}
         known = {rec.get("token") for rec in live}
         why = {"limit": limit, "gaming": hits, "slots_live": len(live)}
+        fresh, stragglers = [], []
         for r in mine:
             token = r.slot.rec.get("token")
             if token not in known:                     # our own slot file is unreadable: never freeze on that
@@ -1254,23 +1322,67 @@ class Supervisor:
             if token in allowed:
                 if r.suspended_at is not None:
                     self.thaw(r, now, why)
+                r.lock_pinned_since = None             # back inside the limit
             elif r.suspended_at is None:
-                self.freeze(r, now, why)
-            else:
-                r.pjob.suspend()                       # anything the job started as it was being frozen
+                fresh.append(r)
+            elif r.pjob.unfrozen():
+                stragglers.append(r)                   # a process the job was starting as it was being frozen
+        if fresh or stragglers:
+            self.freeze(fresh, stragglers, now, why)
 
-    def freeze(self, r, now, why):
-        if not (r.pjob and r.assigned):
+    def freeze(self, fresh, stragglers, now, why):
+        """Freeze the jobs in `fresh`, and catch what the frozen `stragglers` were starting as they
+        froze. It all happens holding every rails mutex (rails_quiesced), so no process is frozen
+        inside one, and a job whose processes hold the commit lock is left running until it lets
+        go: frozen, it would hold every loop's commits and gate-failure reverts for as long as the
+        game runs. The pool runs one past its limit for the length of that commit."""
+        for r in [r for r in fresh if not (r.pjob and r.assigned)]:
             self.event("preempted", job=r.job["id"], reason="no job object to freeze its tree in: killed, and queued again", **why)
             self.kill(r, "preempted")
+            fresh.remove(r)
+        if not fresh and not stragglers:
             return
-        n = r.pjob.suspend()
-        r.suspended_at, r.suspends = now, r.suspends + 1
-        r.slot.rec["suspended"] = now_iso(now)
-        with contextlib.suppress(OSError):
-            write_json(r.slot.path, r.slot.rec)
+        froze, pinned, loose = [], [], []
+        try:
+            with rails_quiesced():                     # nothing in here may call rails_event()
+                holders = commit_lock_pids()
+                for r in fresh:
+                    if holders & set(r.pjob.pids()):
+                        pinned.append(r)
+                    else:
+                        froze.append((r, r.pjob.suspend()))
+                for r in stragglers:
+                    if holders & set(r.pjob.pids()):
+                        loose.append(r)                # a process it was starting took the lock: it must run
+                    else:
+                        r.pjob.suspend()
+        except TimeoutError as e:                      # a mutex stayed held: freeze nothing now, try next round
+            if self.quiesce_blocked is None:
+                self.quiesce_blocked = now
+                self.event("freeze-deferred", jobs=[r.job["id"] for r in fresh + stragglers],
+                           reason=f"a rails mutex stayed held: {e}", **why)
+            return
+        t = time.time()
+        if self.quiesce_blocked is not None:
+            self.event("freeze-unblocked", after_s=round(t - self.quiesce_blocked, 1))
+            self.quiesce_blocked = None
+        for r, n in froze:
+            pinned_s = t - r.lock_pinned_since if r.lock_pinned_since is not None else None
+            r.lock_pinned_since = None
+            r.suspended_at, r.suspends = t, r.suspends + 1
+            r.slot.rec["suspended"] = now_iso(t)
+            with contextlib.suppress(OSError):
+                write_json(r.slot.path, r.slot.rec)
+            extra = {"lock_pinned_s": round(pinned_s, 1)} if pinned_s is not None else {}
+            self.event("suspended", job=r.job["id"], processes=n, **extra, **why)
+        for r in loose:
+            self.thaw(r, t, dict(why, reason="took the commit lock as it was being frozen"))
+        for r in pinned + loose:
+            if r.lock_pinned_since is None:
+                r.lock_pinned_since = t
+                self.event("freeze-deferred", job=r.job["id"],
+                           reason="it holds the commit lock: it runs past the limit until it lets go", **why)
         self.hb_t = 0.0                                # the heartbeat says so at the end of this step
-        self.event("suspended", job=r.job["id"], processes=n, **why)
 
     def thaw(self, r, now, why):
         n = r.pjob.resume()
@@ -1641,7 +1753,8 @@ def cmd_status(args):
             print(f"  verdicts: {verd}")
         for r in s["running"]:
             print(f"  running: {r['job']} (pid {r['pid']}, since {r['since']})"
-                  + (f"  FROZEN ({r.get('suspended_s')}s so far)" if r.get("suspended") else ""))
+                  + (f"  FROZEN ({r.get('suspended_s')}s so far)" if r.get("suspended") else "")
+                  + ("  past the limit: holds the commit lock" if r.get("lock_pinned") else ""))
         if s["stop"]:
             print(f"  {s['stop']}")
         if s["halt"]:
