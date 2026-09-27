@@ -81,7 +81,7 @@
 #   virtualized AppData and cannot start outside it), so quitting the app may end a run; the
 #   ledger makes that a resume, not a loss.
 #
-# Jobs file: JSON lines (or a .json list), one object per job:
+# Jobs file: JSON lines or a .json list (a BOM and CRLF are fine), one object per job:
 #   {"id": "<unique>", "cmd": ["{py}", "{tools}/tick_verify.py", "Slam D24"],
 #    "cwd": "<relative to the worktree, optional>", "timeout": <s, optional>,
 #    "slot": true|false (takes a decode slot, default true), "env": {..optional..},
@@ -207,7 +207,7 @@ def write_json(path, obj):
 def read_json(path):
     """None when the file is missing; {"_unreadable": why} when it is there but empty or corrupt."""
     try:
-        text = _retry(lambda: open(path, encoding="utf-8").read())
+        text = _retry(lambda: open(path, encoding="utf-8-sig").read())   # -sig: a hand-written file may carry a BOM
     except FileNotFoundError:
         return None
     except OSError as e:
@@ -239,7 +239,7 @@ def append_jsonl(path, obj):
 def read_jsonl(path):
     rows = []
     try:
-        fh = open(path, encoding="utf-8", errors="replace")
+        fh = open(path, encoding="utf-8-sig", errors="replace")
     except FileNotFoundError:
         return rows
     with fh:
@@ -974,7 +974,7 @@ JOB_KEYS = {"id", "cmd", "cwd", "timeout", "slot", "env", "meta"}
 
 def load_jobs(path):
     try:
-        with open(path, encoding="utf-8") as fh:
+        with open(path, encoding="utf-8-sig") as fh:  # -sig: PowerShell 5.1's Out-File and pipes write a BOM
             text = fh.read()
     except (OSError, UnicodeDecodeError) as e:
         raise SystemExit(f"{path}: cannot read the jobs file: {e}")
@@ -1620,7 +1620,7 @@ def cmd_run(args):
         jobs = load_jobs(args.jobs)
         text = jobs_text(jobs)
         if os.path.exists(frozen):
-            if open(frozen, encoding="utf-8").read() != text:
+            if open(frozen, encoding="utf-8-sig").read() != text:
                 raise SystemExit(f"{run} was frozen with a different job list ({frozen}); a run id names one "
                                  "job list, so start a new run id")
         else:

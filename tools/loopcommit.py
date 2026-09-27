@@ -10,10 +10,10 @@
 # when the index already holds a staged change outside them, when a declared path has nothing
 # to commit, when HEAD is detached, or when the branch is main/master (and, without
 # --allow-branch, anything outside loops/*). The message gets a "Loop-Run: <run>" trailer and
-# the Co-Authored-By trailer. After `git commit -F <msg> -- <paths>` it checks git's return
-# code, that HEAD advanced by exactly one commit on top of the old HEAD, that the commit
-# touched exactly the staged set and nothing outside the declared paths, and that the trailer
-# reads back. A failed check undoes that one commit with `git reset --soft` (the changes stay
+# the Co-Authored-By trailer (a byte-order mark PowerShell put on --body-file or stdin is
+# dropped). After `git commit -F <msg> -- <paths>` it checks git's return code, that HEAD
+# advanced by exactly one commit on top of the old HEAD, that the commit touched exactly the
+# staged set and nothing outside the declared paths, and that the trailer reads back. A failed check undoes that one commit with `git reset --soft` (the changes stay
 # staged) and exits 3 — it never leaves a commit it could not verify. Before staging anything it
 # checks the converter: when the run has a manifest (work/runs/<run>/manifest.json, written by
 # supervise.py), the converter's source hash must equal the one the run began with, and when
@@ -189,8 +189,8 @@ def cmd_commit(args):
         raise Refused("-m takes a one-line subject; the body goes in --body or --body-file")
     body = args.body or ""
     if args.body_file:
-        body = sys.stdin.read() if args.body_file == "-" else open(args.body_file, encoding="utf-8").read()
-    body = body.strip()
+        body = sys.stdin.read() if args.body_file == "-" else open(args.body_file, encoding="utf-8-sig").read()
+    body = body.lstrip("﻿").strip()               # PowerShell 5.1 writes a BOM into files and native stdin
     if any(line.strip().startswith(OUR_TRAILERS) for line in body.splitlines()):
         raise Refused(f"the body may not carry {', '.join(OUR_TRAILERS)} lines; those trailers are loopcommit's to write")
     paths = args.paths[1:] if args.paths[:1] == ["--"] else args.paths
