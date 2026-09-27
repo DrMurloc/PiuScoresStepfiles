@@ -799,8 +799,9 @@ CROPS = {
 }
 BALL_ASK = ("This is a crop of a dance game's result screen, where a round badge (the 'ball') shows the chart "
             "played: a word or words printed across its top and a number in its middle. What does it say?")
-BALL_FORMAT = ("WORD/NUMBER in capitals, the word(s) exactly as printed with spaces kept, e.g. 'SINGLE/16' or "
-               "'DOUBLE/21'. 'NONE' if no ball is in the crop, 'UNSURE' if any part cannot be read.")
+BALL_FORMAT = ("WORD/NUMBER in capitals, the word(s) exactly as printed with spaces kept and the number as digits "
+               "(a ball reading ABC over 99 would be 'ABC/99'). 'NONE' if no ball is in the crop, 'UNSURE' if any part "
+               "cannot be read.")
 TITLE_ASK = ("Two crops, each the song-title strip of a dance game's result screen (the title may be in any "
              "language or script, and a faint background may show through). Do both show the SAME song title?")
 TITLE_FORMAT = "'SAME', 'DIFFERENT' or 'UNSURE'"
