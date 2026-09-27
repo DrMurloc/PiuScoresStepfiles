@@ -505,14 +505,74 @@ the old arithmetic before any of this), and the census ledger stands at 107.
 
 2026-09-27: the loaders had been dropping 11 eye-verified census certifications whose videos
 the corpus ledger also read (a shallow merge in `corpus_map`); with them back it is **749 of
-1,490** — 626 exact at the import itself (PROTECTED) and 123 by our edits (PROVISIONAL). The
-live count is `tools/corpus_grade.py grade`, recorded in `sources/corpus-grade.json`, and every
-loop's commit pass goes through its gate (TOOLS.md, "The corpus grade").
+1,490** — 626 exact at the import itself (PROTECTED) and 123 by our edits (PROVISIONAL; 3 of
+them since promoted by the trace audit, below, "The rails"). The live count is
+`tools/corpus_grade.py grade`, recorded in `sources/corpus-grade.json`, and every loop's commit
+pass goes through its gate (TOOLS.md, "The corpus grade").
 
 Snapshot **`092326`** carries all of it — the first release whose hold ticks are counted by the lattice: of the
 992 certified charts whose shipped ticks changed, 634 are now exact, 273 closer and 84 farther (files short on
 ticks the old over-count had hidden). It is built, verified tick by tick against the converter, and waiting for
 the owner's upload (snapshots/README.md).
+
+## The rails (2026-09-27)
+
+Bucket 1 of the loop plan (work/loop-buckets-2026-09-26.txt): the gate every loop commits
+through, and the plumbing that lets loops run for days on this PC without corrupting the caches,
+each other or main. Four parts were built and adversarially reviewed in their own worktrees and
+integrated on the local branch `loops/rails` (grade, plumbing, supervise, audit; TOOLS.md has
+each tool). No stepfile changed, so the snapshot is exactly as far behind as it was at
+`8c9b5de`.
+
+**The corpus grade, after the merge fix.** `corpus_map` had been dropping 11 eye-verified census
+certifications whose videos the corpus ledger also read. With them back, the integrated tree
+grades **1,490 certified, 749 exact: 626 PROTECTED** (exact at the import `a23cee5`) plus **3
+promoted** by the trace audit (Get Your Groove On D10, Final Audition S18, Set me up S10), so
+629 PROTECTED and **120 PROVISIONAL**, 0 errors (`sources/corpus-grade.json`). Under the old
+merge the same tree was 738 of 1,479. Two grades of HEAD, cold (27 s on 6 workers) and warm
+(3 s), are byte-identical. `corpus_grade.py gate --base main --head HEAD --oracle-pass
+--declared 0` passes: exact 749 -> 749, PROTECTED 626 -> 629, the three PROMOTED, the oracle
+and converter-pin change (none -> `e82d48350c50`) allowed as an oracle pass; without
+`--oracle-pass` it fails on ORACLE alone. The planted-fault drills (24 gate cases, 11 oracle-pass
+and tier cases, 7 on a hooked converter copy) all come out as intended on the integrated tree.
+
+**The trace audit's corpus** (`sources/trace-audit-2026-09-27.json`, audit_version `d2cdb262`):
+the 123 edit-derived exact charts audit **3 FLAT, 10 OFF, 110 UNCOVERED**, 0 errors. FLAT means
+a strong counter read at level 0 within 8 judged rows on both sides of every edit; only those
+three are promoted. The 261 untouched exact controls give 0 OFF (17 FLAT, 244 UNCOVERED).
+
+**What the audit cannot see.** Its FLAT is earned only on full-combo plays and the few plays with
+breaks whose reads hold one run on both sides of an edit. On plays with breaks it detects
+nothing: 0 of 235 planted compensating pairs audit OFF (233 UNCOVERED, 2 FLAT, both pairs one row
+apart), because most such plays split into more runs than they have BADs and MISSes. A play with
+GOODs never audits FLAT. Pairs within 8 judged rows are inside its resolution (34% of those
+within 4 rows audit FLAT on full combos), and an edit the counter priced through hold lengths
+under an unchanged `#TICKCOUNTS` is not bracketed, so its own pricing reads vouch for it. There
+is no control at level 24+ with a full combo, so it has no measured power there.
+
+**The OFF charts, listed, not demoted.** Ten edit-derived exact charts read OFF inside while the
+total is exact. None is demoted or reverted here: the Phoenix 1 counter atlas misreads 9s (bucket
+3), and each waits on that fix and a re-audit before anyone decides.
+- Houseplan S17 (`3d17dae`) and Wedding Crashers S10 (`c40c089`) - already quarantined, with
+  Imagination S12 (`2c374be`, UNCOVERED), for the owner's review.
+- Seven census-phase counter-loop repairs, where small mid-chart tick cuts each step the
+  counter's level by their own size and a closure-priced finale absorbs the total: K.O.A : Alice
+  in Wonderworld SC D18, Pop The Track SC D16, Wedding Crashers SC S4, XX OPENING SC S6, Come to
+  Me S17 (a distant +5, 42 rows away - possibly a misread beyond the documented 9-as-5), Dr. M S9
+  and 2006. LOVE SONG D14.
+- My Way S15, one of the 11 restored census charts: a +7 level held from 77.0 s to 96.3 s over
+  267 reads, 8 rows before its finale edit.
+
+**Housekeeping.** `tools/fsck.py` over the shared caches: no 0-byte or unloadable file (1,413
+sprite passes, 4,462 receptor files, 724 counter scans, 195 reports); 1 truncated scan,
+`-1hzF02vOFc.R` (44 s of a 185 s video that decodes on), quarantined to
+`work/quarantine/fsck-20260927-103814/` and rescanned to 185.2 s, sealed. Five cached videos
+are recorded as unusable in `sources/footage-corrupt.json`, and loops now give their charts
+FOOTAGE_CORRUPT instead of PARK: D6Th6URU1Sk and E1LYZv8mCjE (no moov atom), 0T1_HBRTVLc (Chicken
+Wing S9/S11, stops decoding at 76 s of 125 s), 1rcd4MaRTDg (Alone D18, 62 s of 128 s) and
+AiNqD7lZjiM (Beat of The War S21, 66 decode errors and a stop at 15 s). The owner-revisit list is
+now enforced in every worklist that can ship: Slam D24, which sat in the extraction loop's
+worklist as a PARK, is skipped with its reason.
 
 ## Beyond the census (sized 2026-09-06, listed in full 2026-09-08)
 

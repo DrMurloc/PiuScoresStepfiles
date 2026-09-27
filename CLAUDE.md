@@ -57,6 +57,26 @@ graded by that arithmetic. The grading tools refuse to run against a converter w
 docs/EVIDENCE-RULES.md, "A staggered release is not a tick". To set the clone up on another
 machine, see docs/SNAPSHOT.md, "Setting up the clone".
 
+## Loops
+
+Unattended loops run on the rails (docs/TOOLS.md, "Running loops unattended", "Caches, reports
+and commits" and "The corpus grade"):
+
+- Every loop runs under `tools/supervise.py` (slot pool, gaming freeze, per-job timeout,
+  heartbeats, an append-only run ledger) in its own worktree on a local `loops/*` branch, made
+  with `supervise.py worktree`. Loops never commit to main and never push; whoever merges into
+  main holds `supervise.py mainlock` while doing it.
+- Loops commit only through `tools/loopcommit.py` (the one commit lock, explicit paths, a
+  `Loop-Run` trailer, checked results), and take work back only with `loopcommit.py revert-run`.
+- Every commit pass is gated by `tools/corpus_grade.py gate --base <pass base> --declared <N>`:
+  PROTECTED may not shrink except through a `sources/demotions.jsonl` row, the net gain must
+  equal the declared ships, and owner-revisit blocks, the oracle and the converter pin stay put.
+  On failure, revert this run's commits back to the pass base and halt. Oracle changes are their
+  own `--oracle-pass` commits, never mixed with stepfile edits.
+- `work/STOP` stops every loop (`work/runs/<run>/STOP` one run); only the owner clears it.
+- The snapshot rule is unchanged (hard rule 1): no loop regenerates or repackages a snapshot;
+  each run reports "snapshot now N charts behind" and nothing more.
+
 ## Where to start
 
 | You want to | Read |
