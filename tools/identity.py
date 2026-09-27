@@ -700,7 +700,8 @@ def cmd_decide(args):
     sample = rng.sample(exact_own, min(args.controls, len(exact_own)))
     ctrl = [dict(chart=n, status=ass[n]["status"], own=ass[n]["own"], mapped_f1=ass[n]["mapped_f1"],
                  runner_f1=ass[n]["runner_f1"], margin_runner=ass[n]["margin_runner"]) for n in sample]
-    ctrl_ok = sum(1 for c in ctrl if c["own"] and c["margin_runner"] >= MARGIN)
+    ctrl_ok = sum(1 for c in ctrl if c["own"])
+    ctrl_margin = sum(1 for c in ctrl if c["own"] and c["margin_runner"] >= MARGIN)
     all_exact = [n for n, a in ass.items() if grade.get(n, {}).get("exact") and a.get("best_f1") is not None]
     all_exact_own = sum(1 for n in all_exact if ass[n]["own"])
     all_exact_repair = sorted(n for n in all_exact if ass[n]["status"] == "candidate")
@@ -755,7 +756,7 @@ def cmd_decide(args):
     report = dict(tool="identity decide", code=_code(), fp_dir=os.path.abspath(args.fp_dir), fingerprints=len(fps),
                   rule=dict(best_f1=BEST_F1, margin=MARGIN),
                   population=len(pop), status=dict(status_n),
-                  controls=dict(sample=len(ctrl), picked_own=ctrl_ok, seed=args.seed, rows=ctrl,
+                  controls=dict(sample=len(ctrl), picked_own=ctrl_ok, picked_own_by_margin=ctrl_margin, seed=args.seed, rows=ctrl,
                                 all_exact_scored=len(all_exact), all_exact_own=all_exact_own,
                                 all_exact_would_repair=all_exact_repair),
                   swap_drill=dict(pairs=len(drill), recovered=sum(d["recovered"] for d in drill), rows=drill),
@@ -763,9 +764,9 @@ def cmd_decide(args):
                   assessments={n: {k: v for k, v in a.items() if not k.startswith("_")} for n, a in ass.items()})
     atomicio.write_json(args.out, report, indent=1, sort_keys=True, ensure_ascii=False)
     print("fingerprints %d, population %d: %s" % (len(fps), len(pop), ", ".join("%s %d" % kv for kv in sorted(status_n.items()))))
-    print("controls: %d of %d random exact charts (own F1 >= 0.9) pick their own block with margin %.1f; "
-          "all exact scored: %d of %d own, %d would re-pair" % (ctrl_ok, len(ctrl), MARGIN, all_exact_own, len(all_exact),
-                                                               len(all_exact_repair)))
+    print("controls: %d of %d random exact charts (own F1 >= 0.9) pick their own block (%d of them by the %.1f margin); "
+          "all exact scored: %d of %d own, %d would re-pair" % (ctrl_ok, len(ctrl), ctrl_margin, MARGIN, all_exact_own,
+                                                               len(all_exact), len(all_exact_repair)))
     print("swap drill: %d of %d pairs recovered" % (sum(d["recovered"] for d in drill), len(drill)))
     print("re-key rows (count agrees): %d; withdrawals: %d; pending a ball read: %d; owner list: %d" % (
         len(rows), len(withdraw), len(pending), len(owner)))
@@ -866,8 +867,9 @@ def cmd_packets(args):
     # ---- what needs reading
     balls, titles = [], []
     for r in rep.get("pending_ball", []):
-        balls.append(dict(vid=r["vid"], side=r["side"], purpose="pending re-key", chart=r["chart"],
-                          from_tag=guards.tag_of(r["from_key"]), to_tag=r["to_tag"]))
+        balls.append(dict(vid=r["vid"], side=r["side"], chart=r["chart"], from_tag=guards.tag_of(r["from_key"]),
+                          to_tag=r.get("to_tag"), purpose="pending re-key" if r["kind"] == "rekey"
+                          else "same-side double certification (no cached pass)"))
     for v in conflict.get("videos", []):
         balls.append(dict(vid=v["vid"], side=v["side"], purpose="same-side double certification", charts=v["charts"],
                           census_verified=v["census_verified"]))
@@ -875,7 +877,8 @@ def cmd_packets(args):
     # count cannot see looks exactly like this, so its ball and title are read too
     extra = [v for v in (args.extra_videos or "").split(",") if v]
     for n, a in sorted(ass.items()):
-        if a.get("status") == "unmatched" and (a.get("best_f1") or 0) < args.unmatched_below and a["vid"] not in extra:
+        if a.get("status") == "unmatched" and (a.get("best_f1") or 0) < args.unmatched_below and a["vid"] not in extra \
+                and not guards.footage_corrupt_reason(a["vid"]):        # a truncated pass explains itself
             extra.append(a["vid"])
     for vid in extra:
         e = cert.get(vid) or {}
@@ -1234,6 +1237,19 @@ def cmd_owner_list(args):
                                         to_tag=row.get("to_tag"), to_key=row.get("to_key")),
                           evidence={k: ev.get(k) for k in ("f1_best", "f1_mapped", "f1_runner", "to_implied", "count_agrees",
                                                            "catalog", "table", "winner", "margin") if k in ev}))
+    # exact by count, but the notes match another block by the margin: the count vetoed a re-key, and
+    # whether the certified total is a coincidence is the owner's to judge
+    for n, a in sorted(rep["assessments"].items()):
+        if a.get("status") == "exact-notes-disagree" and (a.get("best_f1") or 0) - (a.get("mapped_f1") or 0) >= MARGIN:
+            items.append(dict(chart=n, vid=a.get("vid"), side=a.get("side"),
+                              reason="exact at its mapped block (%s, %s notes) but the pad's notes match %s at F1 %.3f "
+                                     "against %.3f: the count vetoed a re-key%s" % (
+                                         a.get("mapped_tag"), a.get("expected"), "/".join(a.get("best_tags") or []),
+                                         a["best_f1"], a.get("mapped_f1") or 0,
+                                         "; round-hundred total" if a.get("expected") and int(a["expected"]) % 100 == 0 else ""),
+                              proposed=None, evidence=dict(table=a.get("table"), pass_name=a.get("pass_name"))))
+    for extra in args.extra_items or []:
+        items += json.load(open(extra, encoding="utf-8")).get("items", [])
     doc = dict(bucket="#2 chart identity (loops/identity-1)", date=args.date, report=os.path.abspath(args.report),
                items=items, staged=[dict(what=s.split("::", 1)[0], detail=s.split("::", 1)[1]) for s in (args.staged or [])])
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
@@ -1345,6 +1361,7 @@ def main():
     ol.add_argument("--date", default="2026-09-27")
     ol.add_argument("--staged", action="append", help="'<what>::<detail>' of something staged for the owner")
     ol.add_argument("--conflicts-out", help="write the proposed ORACLE_CONFLICT additions here")
+    ol.add_argument("--extra-items", action="append", help="a JSON {items: [...]} of further owner items")
     j = sub.add_parser("jobs")
     j.add_argument("jobs")
     j.add_argument("--list-dir", required=True)

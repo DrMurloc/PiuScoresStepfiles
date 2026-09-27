@@ -610,6 +610,75 @@ AiNqD7lZjiM (Beat of The War S21, 66 decode errors and a stop at 15 s). The owne
 now enforced in every worklist that can ship: Slam D24, which sat in the extraction loop's
 worklist as a PARK, is skipped with its reason.
 
+## Chart identity (2026-09-27, loop bucket #2, first checkpoint)
+
+Which block of its song's `.ssc` each certified play actually is, from the notes (`tools/identity.py`,
+docs/TOOLS.md "Chart identity"; branch `loops/identity-1`). No stepfile changed and no human data was
+edited: the findings are an overlay (`sources/identity-overlay-2026-09-27.json`) that stays inert until
+the owner accepts it, so the snapshot is exactly as far behind as it was, and what the overlay is worth
+is **oracle growth, not repairs**.
+
+**Every cached sprite pass, fingerprinted by replay.** All 1,413 passes in `work/spritepass/`, no frame
+decoded (supervised runs `identity-1-fp-c` and `identity-1-fp-d`; the first shards timed out while the
+owner played and were re-queued with the passes they had left): 1,403 scored against every same-width
+block of their song, 10 not (8 legacy pass names that record no side, and 2 passes of `st6xLWHcnGA`, a
+video no chart-map row names). The anchor search is the original's, vectorized and proven identical on
+45 random (pass, block) pairs (421.5 s against 28.6 s on 20 of them). Of the 1,490 certified charts,
+1,350 have a scored pass of their own pad (140 have none): **1,262 match their mapped block best at F1
+>= 0.8**, 69 match it best below 0.8 (a weak extraction, not an identity question), 9 match another
+block by the margin, 1 is ambiguous (Love is a Danger Zone pt. 2 S22, 0.977 against 0.958), 6 match
+nothing well, and 3 exact charts match another block better while their mapped block converts to the
+certified total - the count vetoes those (Pumptris Quattro S18, a jack chart the extractor under-reads;
+Mopemope S23, a 1,000 total; Ultimatum S23 by 0.002).
+
+**Controls.** 25 random exact charts with own F1 >= 0.9 pick their own block, 25 of 25 (24 by the 0.3
+margin; 1949 D28's HIDDEN INFOBAR variant sits at 0.868 against 0.940). Over all 639 exact charts with a
+pass, 633 pick their own block and **none would be re-paired** by the rule. The seeded swap drill
+(seed 20260927: the keys of 20 pairs of exact, confidently-own charts of one file swapped in a copy of the
+map) is recovered **20 of 20**. The research's seven re-pairs reproduce at the same F1 (Witch Doctor D22
+0.987, Awakening S19 0.970, We will meet again S13 0.964, Vook S10 0.913, Phantom S18 0.839, Blaze
+Emotion S2 0.811, Solitary S17/S18 0.999/0.935), plus Moonlight S18 (0.825).
+
+**What the rule settles now** (F1 >= 0.8, margin >= 0.3 over the mapped block and the runner-up, and the
+target converts to the certified total; each also cites the chart map row's own chartId, whose Phoenix 1
+catalog row has the target block's level and the certified total - the row names carry the wrong level):
+- Witch Doctor D22: `D22` -> `D23 INFOBAR TITLE` (1,162; F1 0.987 against 0.123; chartId b5cc8967 = Double 23).
+- Vook S10: `S10` -> `S16 INFOBAR TITLE` (552; 0.913 against 0.432; b0fa33e5 = Single 16).
+- Phantom S18: `S18` -> `S19` (897; 0.839 against 0.147; 85b77570 = Single 19).
+- Withdrawn, the census ledger (eye-verified) naming the other chart on that side: Final Audition Ep.1 S4
+  (DgLesNMzb1w), Beat of The War S9 (XNMIAm04k_c), My Way S8 (bXMj-YNDufs).
+
+**ORACLE GROWTH** (`identity.py grade-delta`, the corpus grade with the overlay applied as the staged
+`corpus_grade` change applies it): **749 -> 752 exact, PROTECTED 629 -> 632** (the three targets were
+exact at the import), PROVISIONAL 120 -> 120, certified 1,490 -> 1,487 (the three withdrawals). Rebuilt
+under the overlay the ORACLE_CONFLICT set goes from 34 charts on 14 videos to 29 on 11. Not in the grade
+until the owner lands it; the landing (a review commit for the two catalog conflicts it resolves, then
+`freeze --accept-identity`) is drilled end to end in a scratch clone and listed in
+`work/owner-list/identity.json`.
+
+**Waiting on blind reads** (batch b1: 8 packets, 32 items, 16 seeds; predictions pre-registered in
+`work/blind-keys/identity-1/b1-predictions.json` before any answer):
+- The 14 same-side double certifications. In every one, both names carry **one chartId**, whose catalog
+  row has the higher name's level and the certified total: the lower name is a mis-leveled duplicate map
+  row. The census settles 3 of them the same way; the level balls test the prediction for the other 11,
+  none of which has a cached pass.
+- Solitary S17/S18, a crossed pair (the 1p notes are the S18 block, 629 against a certified 713; the 2p
+  notes the S17 block, 618 = 618), and Moonlight S18 -> S19 (766 against 805): count does not agree, so
+  a ball read decides.
+- The pre-registered song-level mismaps pK0Ybp2iIEI, Dw-8BJZZVp0 and fRDOTIiGpCY (balls, and a title
+  compared with a reference video of the named song where one of the same skin exists), and the sides
+  whose notes match no block of the named song (B2 S4, Chimera S19/S23, Gargoyle S4, STAGER S17).
+
+**To the owner** (`work/owner-list/identity.json`): Awakening S19 (a 1,000 total that three catalog
+charts of the song carry), Blaze Emotion S2 and We will meet again S13 (census rows, eye-verified, say
+the mapped block), the two count-vetoed exact charts, and six certified charts with no cached pass whose
+map row's chartId is another level's chart while an unmapped block at that level converts to the
+certified total exactly (Come to Me S6 -> S11 383, Final Audition 3 S5 -> S8 297, Get Your Groove On S7
+-> S12 324, Hypnosis(SynthWulf Mix) S11 -> S13 763, My Way S4 -> S6 201, Solitary S6 -> S11 306): one
+decode of each pad would let the notes decide. Across the whole chart map, 29 rows carry a name level
+that is not their chartId's catalog level (24 certified, none exact); the three re-keys, Moonlight S18,
+the 11 same-side lower names, the three withdrawn and these six are 24 of them.
+
 ## Beyond the census (sized 2026-09-06, listed in full 2026-09-08)
 
 The census was the *blatantly* wrong 121 — its cut was narrow on purpose: taps above the

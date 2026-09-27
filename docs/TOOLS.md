@@ -966,7 +966,7 @@ all; when one half waits on a ball read, so does the other. One side certifying 
 result screen shows one total per side): the census ledger decides where it certifies one of them,
 else the pad's notes by the same rule (the winner's own block best by the margin, converting to the
 total), else a ball read. Controls: `--controls` random exact charts with own F1 >= 0.9 must each
-pick their own block with the margin; the swap drill swaps the keys of `--swaps` pairs of exact,
+pick their own block (how many by the margin is reported too); the swap drill swaps the keys of `--swaps` pairs of exact,
 confidently-own charts of one file (charts the rule may act on: no owner reason) in a copy of the
 map and requires the rule to put every pair back with count agreement, 100%.
 
@@ -981,27 +981,36 @@ agree; SAME and DIFFERENT title pairs of proven songs). The key, with the seeds,
 One decode per video, inside one machine-wide slot.
 
 **`identity.py overlay --report R --out sources/identity-overlay-<date>.json [--extra rows.json]`** /
-**`identity.py grade-delta --overlay <file> --out <report.json>`** / **`identity.py owner-list --report R --out work/owner-list/identity.json`**
+**`identity.py grade-delta --overlay <file> --out <report.json>`** /
+**`identity.py owner-list --report R --out work/owner-list/identity.json [--conflicts-out sources/oracle-conflict-<date>.json] [--extra-items F] [--staged "what::detail"]`**
 `overlay` writes the rows the rule settled: `rekey` (chart, ssc_rel, from_key, to_key, and the
 evidence: F1 table, margins, count, catalog row, ChartVideo side) and `withdraw` (vid, side, chart:
 this side does not show this chart). `grade-delta` grades the corpus with and without an overlay
 under the pinned converter and the working tree's oracle - `corpus_grade`'s own Oracle, grader and
 conflict builder, the overlay applied to a copy the way the staged `corpus_grade` change applies it -
 and reports it as ORACLE GROWTH, never as repairs (no block changes). `owner-list` writes the rows
-the rule may not settle, one line of reason each.
+the rule may not settle, one line of reason each (and exact charts whose notes match another block
+by the margin, which the count vetoed), and with `--conflicts-out` the proposed ORACLE_CONFLICT
+additions: not-exact charts whose notes match another block by the margin, or two blocks alike - a
+loop making one exact by editing its mapped block would be re-ticking the wrong block. That file is
+not read by the gate; the owner folds it into `sources/oracle-conflict.json`.
 
 **How an overlay lands.** `corpus_map` applies `IDENTITY_OVERLAYS` LAST, over the merged map and
 ledgers (`overlay_chart_map`, `overlay_certification`; a `rekey` row applies only while the chart
 still maps to its `from_key`, and never leaves two charts on one key) - but only once
 `sources/oracle-manifest.json` lists the file, so a loop's population and the gate's cannot
 disagree about it. Until then the overlay is inert everywhere. `corpus_grade` reading it as oracle
-is a change to the rails' own code, the owner's: the staged patch (work/owner-list/identity.json
-names it) adds `ORACLE_IDENTITY` (optional oracle: hashed and frozen, absent on older revisions),
-applies the overlays in `Oracle`, and makes them owner-only in `loopcommit`. Drilled in a scratch
-clone: the patched gate over the tools commit passes (749 -> 749); an unfrozen overlay is refused;
-the overlay commit with `conflicts --write` and `freeze` fails the gate on the ORACLE_CONFLICT charts
-it resolves (the union of base and head conflicts halts them), so the owner's review lands first as
-its own oracle commit removing the resolved entries, and the overlay commit after it passes.
+is a change to the rails' own code, the owner's: the staged patch (`work/owner-list/identity-corpus_grade.patch`,
+listed in `work/owner-list/identity.json`) adds `ORACLE_IDENTITY` (corpus_map's list) and the same
+rule - an overlay is inert until the tree's manifest lists it, oracle after (hashed, checked, owner-only
+in `loopcommit`) - and `freeze --accept-identity`, which lists every overlay present: the owner's
+acceptance, a commit of its own whose gate shows what the overlay moved. Drilled in a scratch clone
+with the first batch's rows: the branch with the overlay committed inert gates 749 -> 749 on today's
+rails and on the patched ones; a review commit removing the two ORACLE_CONFLICT charts the overlay
+resolves passes as an oracle pass (the gate halts a conflict chart that becomes exact over the union
+of the base and head sets, so that review lands first); the acceptance commit (`freeze
+--accept-identity`, `conflicts --write`, `freeze`) passes `--oracle-pass --declared 3` with three
+GAINED and three LEFT, 749 -> 752; an accepted overlay edited afterwards is refused.
 
 ## Reading footage
 
