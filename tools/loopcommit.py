@@ -4,6 +4,26 @@
 #                        [--lock-timeout S] [--allow-branch] -- <path> [<path> ...]
 #   loopcommit.py revert-run <run> --base <sha> [--reason TEXT] [--repo PATH] [--dry-run]
 #   loopcommit.py list-run <run> --base <sha> [--repo PATH]
+#   loopcommit.py pass begin --run <run> [--repo PATH]
+#   loopcommit.py pass gate  --run <run> --declared N [--workers N] [--audit-no-decode] [--repo PATH]
+#   loopcommit.py pass show  --run <run>
+#
+# A COMMIT PASS is how a loop ships stepfile edits: `pass begin` records HEAD as the pass base in
+# work/runs/<run>/pass.json; the loop commits (commit, below, one chart per commit); `pass gate`
+# runs `corpus_grade.py gate --base <that base> --head <HEAD> --declared N` - which also trace-audits
+# every ship - and acts on it:
+#   PASS        the pass is closed (exit 0);
+#   FAIL        the run is halted (work/runs/<run>/STOP, with the failures), the pass is marked failed
+#               (from then on `commit` refuses for this run), and this run's Loop-Run commits after the
+#               base are reverted with revert-run (exit 4; `pass show` says whether every revert applied);
+#   REFUSED     (the gate's exit 2: drift, an oracle not frozen, an internal error) the run is halted,
+#               nothing is reverted, and the pass stays open (exit 2);
+#   RETRY LATER (the gate's exit 75, or a gate that ended with no report of this attempt) the pass
+#               stays open (exit 75): the next `pass gate` gates the SAME base again.
+# `pass begin` refuses while a pass is open with commits after its base: a new pass would take a
+# base that already holds them, and they would never be gated. The declared count is fixed at a
+# pass's first gate. Every attempt's gate output and JSON report are kept beside pass.json, and
+# finished passes are appended to passes.jsonl. One pass command runs per run at a time.
 #
 # commit: takes the one machine-wide commit lock (supervise.py's work/.commit.lock), stages
 # exactly the declared paths (files or folders, relative to the repository root), and refuses
@@ -21,11 +41,14 @@
 # run was started --converter-unpinned) — the loop-bucket rule that the pin is checked at every
 # commit pass. A mismatch refuses the commit and reverts nothing.
 #
-# Exit codes: 0 committed; 2 refused (nothing was committed: a refusal above, the commit lock
-# not taken within --lock-timeout (time this process was awake: a supervisor freezing the job
-# while it waits does not use it up), a path outside the repository or on another drive); 3 a
-# post-commit check failed and the commit was undone (its changes left staged); 1 an unexpected
-# error, with a traceback.
+# Exit codes: 0 committed (a pass: begun, passed, shown); 2 refused (nothing was committed: a
+# refusal above, the run's last pass gate failed, the commit lock not taken within --lock-timeout
+# (time this process was awake: a supervisor freezing the job while it waits does not use it up),
+# a path outside the repository or on another drive; for `pass gate` also the gate refusing, which
+# halts the run); 3 a post-commit check failed and the commit was undone (its changes left
+# staged); 4 `pass gate` FAILED (run halted, its commits after the base reverted); 75 `pass gate`
+# not judged - retry later, the pass stays open (supervise.py defers a loopcommit.py job on 75 by
+# default); 1 an unexpected error, with a traceback.
 #
 # Why: the loops' earlier commit code (extract_repair.py, tick_repair.py) ran a bare
 # `git commit` without a pathspec and ignored its return code, in a checkout several loops
@@ -43,10 +66,13 @@
 # that fails its post-commit check is undone with `git reset --soft` like any other (exit 3, the
 # reversal left staged for inspection).
 import argparse
+import contextlib
+import json
 import os
 import subprocess
 import sys
 import tempfile
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import supervise as S  # noqa: E402
@@ -200,6 +226,9 @@ def cmd_commit(args):
     branch = branch_guard(top, args.allow_branch)
 
     with S.commit_lock(run=run, purpose=f"loopcommit {branch}", timeout=args.lock_timeout):
+        halted = pass_halted(run)                       # read under the lock a failing gate reverts under
+        if halted:
+            raise Refused(halted)
         pins_wrong = pin_problems(run)
         if pins_wrong:
             raise Refused("; ".join(pins_wrong) + ". A converter mismatch halts the loop; nothing was committed or reverted")
@@ -265,18 +294,24 @@ def cmd_list_run(args):
 
 
 def cmd_revert_run(args):
-    run = args.run
     top = toplevel(args.repo)
     branch = branch_guard(top, args.allow_branch)
-    with S.commit_lock(run=run, purpose=f"revert-run {branch}", timeout=args.lock_timeout):
-        base, commits, mine, reverted = run_log(top, args.base, run)
+    revert_run(top, args.run, args.base, branch, args.reason, args.lock_timeout, args.co_author, dry_run=args.dry_run)
+    return 0
+
+
+def revert_run(top, run, base_arg, branch, reason, lock_timeout, co_author, dry_run=False):
+    """revert-run's work (also a failed pass gate's): -> (reverted now, the run's commits after the
+    base). Raises Refused where revert-run refuses, with the reverts before it committed."""
+    with S.commit_lock(run=run, purpose=f"revert-run {branch}", timeout=lock_timeout):
+        base, commits, mine, reverted = run_log(top, base_arg, run)
         todo = [c for c in mine if c["sha"] not in reverted]           # newest first (topo order)
         print(f"{len(mine)} commit(s) of run {run} after {base[:10]}; {len(mine) - len(todo)} already reverted; "
               f"{len(todo)} to revert; {len(commits) - len(mine)} other commit(s) left alone")
-        if args.dry_run:
+        if dry_run:
             for c in todo:
                 print(f"  would revert {c['sha'][:10]} {c['subject']}")
-            return 0
+            return 0, mine
         if staged(top):
             raise Refused("the index holds staged changes; revert-run starts from a clean index")
         done = 0
@@ -299,8 +334,8 @@ def cmd_revert_run(args):
                 raise Refused(f"reversing {sha[:10]} staged {sorted(now)}, expected {sorted(files)}; left staged for inspection")
             old = head(top)
             message = (f'Revert "{c["subject"]}"\n\nThis reverts commit {sha}, a Loop-Run: {run} commit.\n\n'
-                       + (f"{args.reason.strip()}\n\n" if args.reason else "")
-                       + f"Loop-Revert: {run}\nReverts: {sha}\n{args.co_author}\n")
+                       + (f"{reason.strip()}\n\n" if reason else "")
+                       + f"Loop-Revert: {run}\nReverts: {sha}\n{co_author}\n")
             must(commit_with(top, message, files), "git commit")
             new, problems = verify_commit(top, old, files)
             if problems:
@@ -308,7 +343,179 @@ def cmd_revert_run(args):
                               + f"; left staged for inspection ({done} revert(s) before it are committed)")
             done += 1
             print(f"{new[:10]} reverts {sha[:10]} {c['subject']}")
+    return done, mine
+
+
+# ---------------------------------------------------------------- commit passes
+
+PASS_FILE, PASS_HISTORY = "pass.json", "passes.jsonl"
+PASS_FAILED = 4                      # the gate failed: the run's commits after the base reverted, the run halted
+TEMPFAIL = S.TEMPFAIL                # 75: not judged (the machine stopped the gate); the pass stays open
+
+
+def check_run(run):
+    if not S.RUN_ID.match(run):
+        raise Refused(f"run id {run!r}: letters, digits, '.', '_' and '-' only")
+    return run
+
+
+def pass_paths(run):
+    rdir = os.path.join(S.RUNS, run)
+    return rdir, os.path.join(rdir, PASS_FILE), os.path.join(rdir, PASS_HISTORY)
+
+
+def read_pass(path):
+    cur = S.read_json(path)
+    if cur is not None and "_unreadable" in cur:
+        raise Refused(f"{path} does not read ({cur['_unreadable']}); a pass record is never guessed at - "
+                      "repair or remove it by hand")
+    return cur
+
+
+@contextlib.contextmanager
+def pass_lock(run, timeout):
+    """One pass command per run at a time (a begin racing a gate would re-base the gate's pass)."""
+    lock = S.PidLock(os.path.join(S.RUNS, run, "pass.lock"), f"pass lock of {run}")
+    lock.acquire(timeout=timeout, run=run, purpose="loopcommit pass")
+    try:
+        yield
+    finally:
+        lock.release()
+
+
+def pass_halted(run):
+    """Why this run may not commit (its last pass gate failed and reverted it), or None."""
+    cur = read_pass(pass_paths(run)[1])
+    if cur and cur.get("state") == "failed":
+        return (f"run {run}'s pass gate failed ({str(cur.get('base'))[:10]}..{str(cur.get('head'))[:10]}, "
+                f"{cur.get('closed')}): the run is halted and its commits after the base were reverted; nothing "
+                f"commits for it until the owner clears its STOP and a new pass begins")
+    return None
+
+
+def same_path(a, b):
+    return os.path.normcase(os.path.normpath(a)) == os.path.normcase(os.path.normpath(b))
+
+
+def cmd_pass_begin(args):
+    run = check_run(args.run)
+    top = toplevel(args.repo)
+    branch = branch_guard(top, args.allow_branch)
+    rdir, pfile, _ = pass_paths(run)
+    os.makedirs(rdir, exist_ok=True)
+    with pass_lock(run, args.lock_timeout):
+        cur = read_pass(pfile)
+        tip = head(top)
+        if cur and cur.get("state") == "open":
+            if cur.get("base") == tip and not cur.get("gates") and cur.get("branch") == branch and same_path(cur.get("repo", ""), top):
+                print(f"pass already open for run {run} at {tip[:10]} with nothing committed since: it is this pass")
+                return 0
+            raise Refused(f"run {run} has an open pass from base {str(cur.get('base'))[:10]} ({cur.get('began')}) that "
+                          f"is not gated yet: gate it (`loopcommit.py pass gate --run {run} --declared N`). A new pass "
+                          "would take a base that already holds its commits, and they would never be gated")
+        src = S.stop_reason(run)
+        if src:
+            raise Refused(f"{src} is present: no pass begins while the run is stopped or halted (clearing it is the owner's call)")
+        rec = dict(run=run, state="open", base=tip, branch=branch, repo=top, began=S.now_iso(), gates=[])
+        S.write_json(pfile, rec)
+    print(f"pass open for run {run}: base {tip} on {branch}")
     return 0
+
+
+def cmd_pass_show(args):
+    cur = read_pass(pass_paths(check_run(args.run))[1])
+    print(json.dumps(cur or {}, indent=1, sort_keys=True, ensure_ascii=False))
+    return 0
+
+
+def cmd_pass_gate(args):
+    run = check_run(args.run)
+    top = toplevel(args.repo)
+    branch = branch_guard(top, args.allow_branch)
+    rdir, pfile, hist = pass_paths(run)
+    with pass_lock(run, args.lock_timeout):
+        cur = read_pass(pfile)
+        if not cur or cur.get("state") != "open":
+            raise Refused(f"run {run} has no open pass ({'its last pass ' + str(cur.get('state')) if cur else 'none was begun'}): "
+                          f"`loopcommit.py pass begin --run {run}` takes the base before a pass commits")
+        if cur.get("branch") != branch or not same_path(cur.get("repo", ""), top):
+            raise Refused(f"run {run}'s open pass was begun in {cur.get('repo')} on {cur.get('branch')}, not {top} on {branch}")
+        base = cur["base"]
+        if g(top, "merge-base", "--is-ancestor", base, "HEAD").returncode != 0:
+            raise Refused(f"the pass base {base[:10]} is no longer an ancestor of HEAD (the branch was rewritten); nothing gated")
+        if cur.get("declared") is not None and cur["declared"] != args.declared:
+            raise Refused(f"this pass declared {cur['declared']:+d} at its first gate, and a retry gates the same claim "
+                          f"(--declared {cur['declared']})")
+        cur["declared"] = args.declared
+        tip = head(top)
+        n = len(cur.get("gates") or []) + 1
+        stem = os.path.join(rdir, f"pass-{base[:10]}-gate{n}")
+        report, logf = stem + ".json", stem + ".log"
+        with contextlib.suppress(FileNotFoundError):
+            os.remove(report)                          # only this attempt's report is believed
+        cmd = S.PY + [os.path.join(top, "tools", "corpus_grade.py"), "gate", "--base", base, "--head", tip,
+                      "--declared", str(args.declared), "--json", report]
+        if args.audit_no_decode:
+            cmd.append("--audit-no-decode")
+        if args.workers:
+            cmd += ["--workers", str(args.workers)]
+        t0 = time.time()
+        r = subprocess.run(cmd, cwd=top, capture_output=True, text=True, encoding="utf-8", errors="replace",
+                           creationflags=S.QUIET)
+        S.write_atomic(logf, r.stdout + (f"\n--- stderr ---\n{r.stderr}" if r.stderr.strip() else ""))
+        sys.stdout.write(r.stdout)
+        sys.stdout.flush()
+        rep = S.read_json(report)
+        fresh = bool(rep) and "_unreadable" not in rep and rep.get("base") == base and rep.get("head") == tip
+        verdict = rep.get("verdict") if fresh else None
+        cur.setdefault("gates", []).append(dict(n=n, at=S.now_iso(), head=tip, exit=r.returncode, verdict=verdict,
+                                                report=report, log=logf, seconds=round(time.time() - t0, 1)))
+        if r.returncode == 0 and verdict == "PASS":
+            cur.update(state="passed", closed=S.now_iso(), head=tip, net=rep.get("net"))
+            S.write_json(pfile, cur)
+            S.append_jsonl(hist, cur)
+            print(f"pass PASSED: run {run}, {base[:10]}..{tip[:10]}, net {rep.get('net'):+d} as declared")
+            return 0
+        if r.returncode == 1 and verdict == "FAIL":
+            why = "; ".join(rep.get("failures") or [])
+            # halt first (no new job starts, and no job of the run commits once the state says failed),
+            # then take back this run's commits after the base
+            S.write_json(os.path.join(rdir, "STOP"), {"at": S.now_iso(), "by_pid": os.getpid(), "reason":
+                         f"loopcommit pass gate FAILED ({base[:10]}..{tip[:10]}), this run's commits after the base "
+                         f"reverted: {why[:1500]}"})
+            cur.update(state="failed", closed=S.now_iso(), head=tip, failures=rep.get("failures"), revert="pending")
+            S.write_json(pfile, cur)
+            try:
+                done, mine = revert_run(top, run, base, branch, f"The pass gate failed: {why[:800]}", args.lock_timeout,
+                                        args.co_author)
+                files = sorted({f for c in mine for f in touched(top, c["sha"])})
+                left = [p for p in must(g(top, "diff", "--name-only", "-z", "--no-renames", base, "HEAD", "--", *files),
+                                        "git diff").split("\0") if p] if files else []
+                cur["revert"] = dict(ok=True, reverted=done, commits=len(mine), still_differ_from_base=left)
+                tail = (f"{done} commit(s) reverted" + (f"; {len(left)} of their file(s) still differ from the base "
+                                                        f"(another commit touched them): {left[:10]}" if left else ""))
+            except (Refused, TimeoutError) as e:
+                cur["revert"] = dict(ok=False, error=str(e))
+                tail = f"the revert did NOT complete: {e}"
+            S.write_json(pfile, cur)
+            S.append_jsonl(hist, cur)
+            print(f"pass FAILED: run {run} halted (its STOP is written); {tail}", file=sys.stderr)
+            return PASS_FAILED
+        if r.returncode == 2:
+            refusal = next((l for l in reversed(r.stdout.splitlines()) if l.startswith("REFUSED")), r.stdout.strip()[-300:])
+            S.write_json(os.path.join(rdir, "STOP"), {"at": S.now_iso(), "by_pid": os.getpid(), "reason":
+                         f"loopcommit pass gate: the gate refused ({refusal[:600]}); nothing reverted, the pass at base "
+                         f"{base[:10]} stays open - once fixed, clear this STOP and gate the same base again"})
+            S.write_json(pfile, cur)
+            print(f"pass NOT JUDGED and the run halted: the gate refused ({refusal[:300]}); nothing reverted, the pass "
+                  f"stays open at base {base[:10]}", file=sys.stderr)
+            return 2
+        # 75, or an exit with no report of this attempt to believe (a gate killed mid-run): not judged
+        S.write_json(pfile, cur)
+        print(f"pass NOT JUDGED (gate exit {r.returncode}{'' if verdict else ', no report from this attempt'}): the pass "
+              f"stays open at base {base[:10]}; gate it again (`loopcommit.py pass gate --run {run} --declared "
+              f"{args.declared}`), never begin a new pass over it", file=sys.stderr)
+        return TEMPFAIL
 
 
 def main(argv=None):
@@ -343,6 +550,24 @@ def main(argv=None):
     p.add_argument("--base", required=True)
     common(p)
     p.set_defaults(fn=cmd_list_run)
+
+    p = sub.add_parser("pass", help="a commit pass: begin (take the base), gate (grade, audit, revert on FAIL), show")
+    psub = p.add_subparsers(dest="pass_command", required=True)
+    q = psub.add_parser("begin")
+    q.add_argument("--run", required=True)
+    common(q)
+    q.set_defaults(fn=cmd_pass_begin)
+    q = psub.add_parser("gate")
+    q.add_argument("--run", required=True)
+    q.add_argument("--declared", type=int, required=True, help="the net exact charts this pass ships")
+    q.add_argument("--workers", type=int, help="the grade's worker processes (its default is 6)")
+    q.add_argument("--audit-no-decode", action="store_true", help="passed on to the gate")
+    common(q)
+    q.set_defaults(fn=cmd_pass_gate)
+    q = psub.add_parser("show")
+    q.add_argument("--run", required=True)
+    common(q)
+    q.set_defaults(fn=cmd_pass_show)
 
     args = ap.parse_args(argv)
     try:

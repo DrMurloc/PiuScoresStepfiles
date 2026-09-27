@@ -95,9 +95,13 @@
 # back on the queue, launched again no sooner than retry_after seconds (default 300) later, up to
 # retry_limit deferrals in a row (default 12); the next one is recorded as a finished exit with
 # verdict RETRY_EXHAUSTED (a resume re-runs it with --retry nonzero). A job whose command runs
-# tools/corpus_grade.py gets retry_exit [2] unless it says otherwise: the grade exits 2 when it
-# REFUSES (a stalled or starved worker pool, a transient MemoryError or OSError, a worker that
-# died) - never as a verdict on the corpus, which is 0 or 1.
+# tools/corpus_grade.py or tools/loopcommit.py gets retry_exit [75] unless it says otherwise: both
+# exit 75 (EX_TEMPFAIL) only when the machine, not the work, stopped the judgement (a worker pool
+# starved or hung past --stall-timeout while the owner games, a MemoryError or OSError, a
+# converter that answered two ways; for loopcommit.py, a `pass gate` whose gate said so - the pass
+# stays open and the retry gates the same base). Their exit 2 is a refusal that waiting does not
+# fix (an oracle edited without a freeze, drift from the manifest's pin, a revision that does not
+# resolve) and is a finished FAIL at once, never deferred.
 # "{py}" as a whole argument expands to this interpreter with -X utf8 -B; {root}, {tools},
 # {run}, {run_dir} and {job} are substituted inside arguments. A job may print a line
 # "VERDICT: <word>" and the last one becomes its ledger verdict; otherwise the verdict is OK or
@@ -112,7 +116,10 @@
 # no finished row and runs again.
 #
 # Exit codes of `run`: 0 finished (every job has a finished row, whatever its verdict),
-# 3 stopped, 4 halted, 5 crashed.
+# 1 refused to start - nothing ran (a run or global STOP is present, the converter is not the frozen
+# pin, the jobs file does not parse or is not the run's frozen list, the run is already supervised,
+# a pin changed since the run began, a bad option value), or a --detach child that exited at once;
+# 3 stopped, 4 halted, 5 crashed. (2 is argparse's own: the command line did not parse.)
 #
 # PSF_RAILS_STATE relocates all of the shared state above (for the self-test only);
 # PSF_GAME_EXES overrides the game list and PSF_GAME_POLL_S how often it is checked (15 s);
@@ -1057,14 +1064,19 @@ def load_jobs(path):
     return jobs
 
 
+TEMPFAIL = 75                # sysexits' EX_TEMPFAIL: what corpus_grade.py and loopcommit.py exit for "the machine; later"
+RETRY_BY_DEFAULT = ("corpus_grade.py", "loopcommit.py")
+
+
 def retry_exit_codes(job):
-    """The exit codes that mean "try again later" for this job: its retry_exit, else [2] for a job
-    that runs tools/corpus_grade.py (exit 2 is the grade refusing, never a verdict), else none."""
+    """The exit codes that mean "try again later" for this job: its retry_exit, else [75] for a
+    job that runs tools/corpus_grade.py or tools/loopcommit.py (75 is those tools saying the machine
+    stopped them; their 2 is a refusal waiting does not fix, never retried), else none."""
     if "retry_exit" in job:
         return set(job["retry_exit"])
     cmd = job.get("cmd")
     words = cmd.replace("\\", "/").split() if isinstance(cmd, str) else [str(a).replace("\\", "/") for a in cmd or []]
-    return {2} if any(w.strip('"').endswith("corpus_grade.py") for w in words) else set()
+    return {TEMPFAIL} if any(w.strip('"').endswith(RETRY_BY_DEFAULT) for w in words) else set()
 
 
 def jobs_text(jobs):

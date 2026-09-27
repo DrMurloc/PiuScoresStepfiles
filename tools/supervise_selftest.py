@@ -629,7 +629,8 @@ def d_stop_run(d):
     d.expect(len(starts) == 1 and len(rows) == 1 and rows[0]["outcome"] == "exit", f"{len(starts)} started, ledger {rows}")
     d.expect(d.heartbeat("stopme").get("state") == "stopped", f"heartbeat {d.heartbeat('stopme').get('state')}")
     refused = d.sup("run", "stopme")
-    d.expect(refused.returncode != 0 and "STOP" in (refused.stderr + refused.stdout), "a run with STOP present started")
+    d.expect(refused.returncode == 1 and "STOP" in (refused.stderr + refused.stdout),
+             f"a run with STOP present: exit {refused.returncode} (documented: 1, refused to start)")
     d.sup("stop", "stopme", "--clear")
     # the global STOP, on a second run
     p = d.sup_bg("run", "stopall", "--jobs", d.jobs("k", [d.toyjob(f"u{i}", "sleep", 2.0) for i in range(4)]), "--parallel", "1")
@@ -707,12 +708,17 @@ def d_resume(d):
 
 
 def d_retry_later(d):
-    """An exit code a job calls "later" (retry_exit, and 2 by default for tools/corpus_grade.py) is a
-    deferral, not a result: queued again after retry_after, up to retry_limit, then final."""
-    grade = os.path.join(d.dir, "corpus_grade.py")      # a toy under the grade's name: the default rule
+    """An exit code a job calls "later" (retry_exit, and 75 by default for tools/corpus_grade.py and
+    tools/loopcommit.py) is a deferral, not a result: queued again after retry_after, up to
+    retry_limit, then final. The grade's 2 (a refusal waiting does not fix) is final at once."""
+    grade = os.path.join(d.dir, "corpus_grade.py")      # toys under the tools' names: the default rule
     shutil.copyfile(d.toy, grade)
+    lcommit = os.path.join(d.dir, "loopcommit.py")
+    shutil.copyfile(d.toy, lcommit)
     specs = [d.toyjob("later-ok", "exitseq", "2,2,0", retry_exit=[2], retry_after=1),
-             {"id": "grade-refuses", "cmd": ["{py}", grade, "exitseq", d.out, "2,1"], "retry_after": 1},
+             {"id": "grade-later", "cmd": ["{py}", grade, "exitseq", d.out, "75,1"], "retry_after": 1},
+             {"id": "grade-refuses", "cmd": ["{py}", grade, "exitseq", d.out, "2,0"], "retry_after": 1},
+             {"id": "pass-later", "cmd": ["{py}", lcommit, "exitseq", d.out, "75,0"], "retry_after": 1},
              d.toyjob("exhausted", "exitseq", "2,2,2,2", retry_exit=[2], retry_after=0.5, retry_limit=2),
              d.toyjob("plain-fail", "exitseq", "2")]
     path = d.jobs("j", specs)
@@ -724,8 +730,12 @@ def d_retry_later(d):
     d.expect(r.returncode == 0, f"exit {r.returncode}: {r.stdout[-300:]}{r.stderr[-300:]}")
     d.expect(seq.get("later-ok") == [("deferred", 2, "RETRY_LATER"), ("deferred", 2, "RETRY_LATER"), ("exit", 0, "OK")],
              f"later-ok: {seq.get('later-ok')}")
-    d.expect(seq.get("grade-refuses") == [("deferred", 2, "RETRY_LATER"), ("exit", 1, "FAIL")],
-             f"a corpus_grade.py exit 2 was not deferred by default: {seq.get('grade-refuses')}")
+    d.expect(seq.get("grade-later") == [("deferred", 75, "RETRY_LATER"), ("exit", 1, "FAIL")],
+             f"a corpus_grade.py exit 75 was not deferred by default: {seq.get('grade-later')}")
+    d.expect(seq.get("grade-refuses") == [("exit", 2, "FAIL")],
+             f"a corpus_grade.py exit 2 (a refusal) was deferred instead of final: {seq.get('grade-refuses')}")
+    d.expect(seq.get("pass-later") == [("deferred", 75, "RETRY_LATER"), ("exit", 0, "OK")],
+             f"a loopcommit.py exit 75 was not deferred by default: {seq.get('pass-later')}")
     d.expect(seq.get("exhausted") == [("deferred", 2, "RETRY_LATER"), ("deferred", 2, "RETRY_LATER"), ("exit", 2, "RETRY_EXHAUSTED")],
              f"exhausted: {seq.get('exhausted')}")
     d.expect(seq.get("plain-fail") == [("exit", 2, "FAIL")], f"a plain exit 2 was deferred: {seq.get('plain-fail')}")
@@ -738,7 +748,8 @@ def d_retry_later(d):
     bad = d.jobs("bad", [d.toyjob("x", "sleep", 0.1, retry_exit=[0])])
     rb = d.sup("run", "badjobs", "--jobs", bad)
     d.expect(rb.returncode != 0 and "retry_exit" in rb.stderr, "retry_exit [0] was accepted")
-    return "deferred 2,2 then OK; corpus_grade.py's 2 deferred by default; exhausted after 2; a plain 2 is FAIL"
+    return ("deferred 2,2 then OK; corpus_grade.py's and loopcommit.py's 75 deferred by default, the grade's 2 final "
+            "at once; exhausted after 2; a plain 2 is FAIL")
 
 
 def d_crash(d):
@@ -1174,6 +1185,141 @@ def d_revert_run(d):
             "conflict stops cleanly; a revert failing its check is undone (exit 3)")
 
 
+# A toy tools/corpus_grade.py for the pass drill's throwaway repository (loopcommit's `pass gate`
+# runs the repository's own grade): each call is logged and answered from a plan, one word per call.
+PASS_GATE = r'''
+import json, os, sys
+a = sys.argv[1:]
+def opt(k):
+    return a[a.index(k) + 1] if k in a else None
+with open(os.environ["PASS_LOG"], "a") as fh:
+    fh.write(json.dumps(a) + "\n")
+plan = open(os.environ["PASS_PLAN"]).read().split()
+n = sum(1 for _ in open(os.environ["PASS_LOG"]))
+what = plan[min(n, len(plan)) - 1]
+rep = dict(base=opt("--base"), head=opt("--head"), net=int(opt("--declared")),
+           failures=["DECLARED: planted by supervise_selftest"] if what == "FAIL" else [])
+if what in ("PASS", "FAIL"):
+    rep["verdict"] = what
+    with open(opt("--json"), "w") as fh:
+        json.dump(rep, fh)
+if what == "REFUSE":
+    print("REFUSED: planted by supervise_selftest")
+print(what)
+sys.exit(dict(PASS=0, FAIL=1, LATER=75, REFUSE=2, KILLED=1)[what])
+'''
+
+
+def d_pass(d):
+    """A commit pass: every gate runs on the recorded base; a new pass cannot start over an open one;
+    75 and a report-less exit keep it open; FAIL halts the run and reverts only its commits after the base."""
+    repo = new_repo(os.path.join(d.dir, "repo"))
+    write(repo, "tools/corpus_grade.py", PASS_GATE)
+    for f in ("a.txt", "b.txt", "c.txt"):
+        write(repo, f, f"{f} v1\n")
+    git(repo, "add", "--", "tools/corpus_grade.py", "a.txt", "b.txt", "c.txt")
+    git(repo, "commit", "-q", "-m", "seed", "--", "tools/corpus_grade.py", "a.txt", "b.txt", "c.txt")
+    plan, glog = os.path.join(d.dir, "plan.txt"), os.path.join(d.dir, "gate-calls.jsonl")
+    env = dict(d.env, PASS_PLAN=plan, PASS_LOG=glog)
+
+    def lc(*args):
+        return subprocess.run(PY + [LC, *args], env=env, capture_output=True, text=True, encoding="utf-8",
+                              errors="replace", creationflags=FLAGS)
+
+    def p(sub, run, *args):
+        return lc("pass", sub, "--run", run, "--repo", repo, *args)
+
+    def commit(run, msg, **files):
+        for rel, text in files.items():
+            write(repo, rel, text)
+        return lc("commit", "--repo", repo, "--run", run, "-m", msg, "--", *files)
+
+    def gate_plan(*steps):
+        with open(plan, "w") as fh:
+            fh.write(" ".join(steps))
+        if os.path.exists(glog):
+            os.remove(glog)
+
+    def calls():
+        return [json.loads(x) for x in open(glog)] if os.path.exists(glog) else []
+
+    def state(run):
+        return S.read_json(os.path.join(d.state, "runs", run, "pass.json")) or {}
+
+    def text(rel):
+        return open(os.path.join(repo, rel), encoding="utf-8").read()
+    head = lambda: git(repo, "rev-parse", "HEAD")        # noqa: E731
+    stop = lambda run: os.path.join(d.state, "runs", run, "STOP")    # noqa: E731
+
+    r = p("gate", "RP", "--declared", "0")
+    d.expect(r.returncode == 2 and "no open pass" in r.stderr, f"a gate with no pass begun: {r.returncode} {r.stderr[-200:]}")
+    base = head()
+    r = p("begin", "RP")
+    d.expect(r.returncode == 0 and state("RP").get("base") == base, f"begin: {r.returncode} {state('RP')} {r.stderr[-200:]}")
+    r = p("begin", "RP")
+    d.expect(r.returncode == 0 and "already open" in r.stdout, f"a second begin with nothing committed: {r.returncode} {r.stdout}")
+    d.expect(commit("RP", "RP one", **{"a.txt": "a v2\n"}).returncode == 0, "the pass's first commit failed")
+    r = p("begin", "RP")
+    d.expect(r.returncode == 2 and "not gated" in r.stderr and state("RP").get("base") == base,
+             f"a new pass began over an open one with commits: {r.returncode} {r.stderr[-200:]}")
+    gate_plan("LATER", "KILLED", "PASS")
+    r = p("gate", "RP", "--declared", "1")
+    d.expect(r.returncode == 75 and state("RP").get("state") == "open", f"gate said later: {r.returncode} {state('RP').get('state')}")
+    r = p("gate", "RP", "--declared", "0")
+    d.expect(r.returncode == 2 and "declared" in r.stderr and len(calls()) == 1,
+             f"a retry changing its declared count: {r.returncode} {r.stderr[-200:]}")
+    d.expect(commit("RP", "RP two", **{"b.txt": "b v2\n"}).returncode == 0, "the pass's second commit failed")
+    h = head()
+    r = p("gate", "RP", "--declared", "1")
+    d.expect(r.returncode == 75 and head() == h and not os.path.exists(stop("RP")),
+             f"a gate that exited 1 with no report was taken as a verdict: {r.returncode}, STOP {os.path.exists(stop('RP'))}")
+    r = p("gate", "RP", "--declared", "1")
+    d.expect(r.returncode == 0 and state("RP").get("state") == "passed", f"gate PASS: {r.returncode} {state('RP').get('state')}")
+    cs = calls()
+    d.expect(len(cs) == 3 and all(c[c.index("--base") + 1] == base for c in cs) and cs[-1][cs[-1].index("--head") + 1] == h,
+             f"the retries did not gate the recorded base {base[:10]} at HEAD: {cs}")
+    hist = S.read_jsonl(os.path.join(d.state, "runs", "RP", "passes.jsonl"))
+    d.expect(len(hist) == 1 and hist[0].get("state") == "passed", f"passes.jsonl: {hist}")
+
+    # a failing pass: the run's commits after its base are reverted, the owner's are not, the run halts
+    base2 = head()
+    d.expect(p("begin", "RP").returncode == 0, "a new pass after a passed one did not begin")
+    d.expect(commit("RP", "RP three", **{"a.txt": "a v3\n", "c.txt": "c v2\n"}).returncode == 0, "RP three failed")
+    write(repo, "b.txt", "b-owner\n")
+    git(repo, "add", "--", "b.txt")
+    git(repo, "commit", "-q", "-m", "the owner's own commit", "--", "b.txt")
+    d.expect(commit("RP", "RP four", **{"a.txt": "a v4\n"}).returncode == 0, "RP four failed")
+    gate_plan("FAIL")
+    r = p("gate", "RP", "--declared", "1")
+    st = state("RP")
+    d.expect(r.returncode == 4 and os.path.exists(stop("RP")) and "FAILED" in open(stop("RP"), encoding="utf-8").read(),
+             f"a failed gate: exit {r.returncode}, STOP {os.path.exists(stop('RP'))}: {r.stderr[-300:]}")
+    d.expect((text("a.txt"), text("b.txt"), text("c.txt")) == ("a v2\n", "b-owner\n", "c.txt v1\n"),
+             f"after the revert: a {text('a.txt')!r} b {text('b.txt')!r} c {text('c.txt')!r}")
+    d.expect(st.get("state") == "failed" and (st.get("revert") or {}).get("reverted") == 2, f"pass record: {st}")
+    d.expect(git(repo, "log", "-1", "--format=%(trailers:key=Loop-Revert,valueonly)") == "RP", "the reverts are not on the branch")
+    h = head()
+    r = commit("RP", "RP five", **{"c.txt": "c v9\n"})
+    d.expect(r.returncode == 2 and "pass gate failed" in r.stderr and head() == h,
+             f"a halted run committed: {r.returncode} {r.stderr[-200:]}")
+    git(repo, "checkout", "-q", "--", "c.txt")
+    r = p("begin", "RP")
+    d.expect(r.returncode == 2 and "STOP" in r.stderr, f"a pass began under the run's STOP: {r.returncode} {r.stderr[-200:]}")
+
+    # a gate that refuses (drift, an oracle not frozen): the run halts, nothing is reverted, the pass stays open
+    d.expect(p("begin", "RQ").returncode == 0, "RQ begin failed")
+    d.expect(commit("RQ", "RQ one", **{"c.txt": "c v3\n"}).returncode == 0, "RQ one failed")
+    h = head()
+    gate_plan("REFUSE")
+    r = p("gate", "RQ", "--declared", "0")
+    d.expect(r.returncode == 2 and os.path.exists(stop("RQ")) and head() == h and state("RQ").get("state") == "open",
+             f"a refused gate: exit {r.returncode}, STOP {os.path.exists(stop('RQ'))}, HEAD moved {head() != h}, "
+             f"state {state('RQ').get('state')}")
+    return ("no-pass gate refused; begin idempotent until a commit, then refused; 75 and a report-less exit 1 kept the "
+            "pass open and re-gated its base; FAIL halted and reverted 2 of the run's commits (the owner's kept), "
+            "then refused its commits and a new pass; a refusing gate halted with nothing reverted")
+
+
 def d_hook(d):
     """The pre-push hook refuses while work/.main.lock exists, and only then."""
     remote = os.path.join(d.dir, "remote.git")
@@ -1283,7 +1429,8 @@ DRILLS = [("slot_limit", d_slot_limit), ("slot_two_supervisors", d_slot_two_supe
           ("stop_run", d_stop_run), ("stop_grace_kill", d_stop_grace_kill), ("timeout", d_timeout),
           ("resume", d_resume), ("retry_later", d_retry_later), ("crash", d_crash), ("commit_lock", d_commit_lock), ("stale_lock", d_stale_lock),
           ("disk_pause", d_disk_pause), ("pin_drift", d_pin_drift), ("detach", d_detach),
-          ("loopcommit", d_loopcommit), ("revert_run", d_revert_run), ("hook", d_hook), ("junction", d_junction),
+          ("loopcommit", d_loopcommit), ("revert_run", d_revert_run), ("pass", d_pass), ("hook", d_hook),
+          ("junction", d_junction),
           ("worktree", d_worktree)]
 
 
