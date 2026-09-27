@@ -4,7 +4,8 @@
 #
 #   supervise.py run <run> --jobs <jobs.jsonl> [--timeout S] [--parallel N] [--grace S]
 #                          [--threads 1|2] [--min-free-gb G] [--retry nonzero,timeout,launch-error]
-#                          [--detach] [--accept-pin-change]
+#                          [--transient-budget S] [--detach] [--accept-pin-change]
+#                          [--converter-unpinned]
 #   supervise.py status [<run> ...] [--json]
 #   supervise.py stop [<run>] [--reason TEXT] [--clear]
 #   supervise.py slots [--max N] [--gaming-max N] [--min-free-gb G]
@@ -27,12 +28,27 @@
 #   work/rails-events.jsonl   machine-wide log of stale slots and locks recovered
 #
 # Why each piece exists:
-# - Slots are counted, not numbered: while Wow.exe runs the limit drops from 6 to 2, and a
+# - Slots are counted, not numbered: while Wow.exe runs (one Toolhelp32 process snapshot every
+#   15 s; tasklist, ~6 s here, only as the fallback) the limit drops from 6 to 2, and a
 #   numbered pool would let a new job take a free low number while four high ones still decode.
 #   Counting and creating happen under an OS byte-range lock (released by the kernel when its
 #   holder dies, so it can never go stale); a slot file whose owner AND child are both dead is
 #   recovered by PID liveness, with the process creation time checked so a reused PID does not
 #   keep a dead slot alive.
+# - The limit binds jobs already running, not just new launches: when it falls below the slots
+#   held (the game starts, or `slots --max` is lowered), every supervisor ranks the live slots
+#   machine-wide by when they were taken, and freezes its own jobs that rank past the limit —
+#   every process in the job object is suspended (NtSuspendProcess), so a frozen decoder uses no
+#   CPU while the owner plays. Frozen jobs keep their slots, so nothing new launches; they thaw
+#   oldest first as running jobs finish or the game exits, and time spent frozen does not count
+#   against their timeout. A slot taken in-process through decode_slot() cannot be frozen, so it
+#   ranks first. A job without a job object cannot be frozen as a whole, so it is killed and
+#   queued again instead. A game check that fails counts as the game running (fail closed).
+# - A supervisor error does not end a multi-day run: an OSError or subprocess timeout inside a
+#   step (a full disk, a file an antivirus holds past the retries) is logged and
+#   retried with backoff for --transient-budget seconds; past that, or on any other exception,
+#   the run ends as "crashed" (exit 5) with the traceback in events.jsonl and supervisor.log,
+#   its running jobs killed and left unfinished — never as "finished".
 # - Every child runs in its own Windows job object (kill-on-close) as well as under taskkill /T:
 #   the piu-annotate venv's python.exe is a launcher that starts the real interpreter as a
 #   child, and a tool may start ffmpeg or a pool of its own. The job object reaps what
@@ -63,17 +79,22 @@
 # "{py}" as a whole argument expands to this interpreter with -X utf8 -B; {root}, {tools},
 # {run}, {run_dir} and {job} are substituted inside arguments. A job may print a line
 # "VERDICT: <word>" and the last one becomes its ledger verdict; otherwise the verdict is OK or
-# FAIL by exit code (TIMEOUT, STOPPED, HALTED and LAUNCH_ERROR are the supervisor's own).
+# FAIL by exit code (TIMEOUT, STOPPED, HALTED, CRASHED, PREEMPTED and LAUNCH_ERROR are the
+# supervisor's own).
 # Children see PSF_RUN, PSF_JOB, PSF_RUN_DIR and PSF_SLOT_HELD=1 when they hold a slot (so a
 # child that asks decode_slot() for one does not deadlock against its own supervisor).
 #
 # Resume: re-running a run id re-reads its frozen jobs.jsonl and skips every job whose latest
 # ledger row finished (outcome exit, timeout or launch-error); --retry re-runs the named kinds.
-# A job killed by STOP or a halt, or running when a supervisor died, has no finished row and
-# runs again.
+# A job killed by STOP, a halt, a crash or a preemption, or running when a supervisor died, has
+# no finished row and runs again.
+#
+# Exit codes of `run`: 0 finished (every job has a finished row, whatever its verdict),
+# 3 stopped, 4 halted, 5 crashed.
 #
 # PSF_RAILS_STATE relocates all of the shared state above (for the self-test only);
-# PSF_GAME_EXES overrides the game list; PSF_CONVERTER_REPO points at another converter clone.
+# PSF_GAME_EXES overrides the game list and PSF_GAME_POLL_S how often it is checked (15 s);
+# PSF_CONVERTER_REPO points at another converter clone.
 import argparse
 import contextlib
 import ctypes
@@ -87,6 +108,7 @@ import socket
 import subprocess
 import sys
 import time
+import traceback
 import uuid
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -106,16 +128,23 @@ PY = [sys.executable, "-X", "utf8", "-B"]
 SLOT_MAX = 6                 # decode slots, machine-wide, never more
 SLOT_MAX_GAMING = 2          # while a game below is running
 GAME_EXES = [e.strip().lower() for e in (os.environ.get("PSF_GAME_EXES") or "Wow.exe,WowClassic.exe").split(",") if e.strip()]
-MIN_FREE_GB = 40             # GiB free on C: (and on work/'s drive) below which launches pause
+GAME_POLL_S = float(os.environ.get("PSF_GAME_POLL_S") or 15)
+GAME_CHECK_FAILED = "(game check failed)"   # what an unanswered game check counts as: a game running
+MIN_FREE_GB = 40             # GiB free on C: (and on work/'s drive) below which launches pause; never lower
 GRACE_S = 600                # after a STOP, running jobs get this long before taskkill /T
 DEFAULT_TIMEOUT_S = 7200
+TRANSIENT_BUDGET_S = 1800    # how long one supervisor error may persist before the run crashes
+RETRY_BASE_S, RETRY_MAX_S = 5.0, 300.0
 POLL_S = 0.5
 SLOT_RETRY_S = 2.0
+PREEMPT_EVERY_S = 1.0
 DISK_EVERY_S = 30
 HEARTBEAT_EVERY_S = 30
-ACTIVE_STATES = {"running", "waiting-slot", "paused-disk", "stopping"}
+ACTIVE_STATES = {"running", "waiting-slot", "paused-disk", "stopping", "suspended", "retrying"}
 FINISHED_OUTCOMES = {"exit", "timeout", "launch-error"}
 RETRY_KINDS = {"nonzero", "timeout", "launch-error"}
+EXIT_STOPPED, EXIT_HALTED, EXIT_CRASHED = 3, 4, 5
+TRANSIENT = (OSError, subprocess.SubprocessError)   # TimeoutError is an OSError
 NEVER_IMPORT = {"download_videos", "run_corpus", "catalog_sweep", "video_refresh_sql"}  # preflight compiles these only
 
 IS_WIN = os.name == "nt"
@@ -220,7 +249,18 @@ def sha256_file(path):
 
 
 def rails_event(event, **kw):
-    append_jsonl(RAILS_LOG, {"t": now_iso(), "event": event, "pid": os.getpid(), **kw})
+    # Many processes write this log; an append is not atomic across processes on Windows, so
+    # the append is serialized. It is a log: failing to write it must never fail the lock or
+    # slot operation that is reporting.
+    rec = {"t": now_iso(), "event": event, "pid": os.getpid(), **kw}
+    try:
+        try:
+            with FileMutex(RAILS_LOG + ".mutex", timeout=10):
+                append_jsonl(RAILS_LOG, rec)
+        except TimeoutError:
+            append_jsonl(RAILS_LOG, rec)
+    except OSError as e:
+        print(f"rails-events.jsonl not written ({e}): {json.dumps(rec, ensure_ascii=False)}", file=sys.stderr, flush=True)
 
 
 def quiet(cmd, timeout=120, cwd=None):
@@ -279,6 +319,47 @@ if IS_WIN:
                     ("TotalPageFaultCount", W.DWORD), ("TotalProcesses", W.DWORD),
                     ("ActiveProcesses", W.DWORD), ("TotalTerminatedProcesses", W.DWORD)]
 
+    _PID_LIST_MAX = 512
+
+    class _PidList(ctypes.Structure):                  # JOBOBJECT_BASIC_PROCESS_ID_LIST
+        _fields_ = [("Assigned", W.DWORD), ("InList", W.DWORD), ("Ids", ctypes.c_size_t * _PID_LIST_MAX)]
+
+    # NtSuspendProcess/NtResumeProcess suspend or resume every thread of a process in one call
+    # (what Process Explorer and psutil use); Win32 has no documented whole-process suspend.
+    _ntdll = ctypes.WinDLL("ntdll")
+    _NtSuspendProcess = _ntdll.NtSuspendProcess
+    _NtSuspendProcess.restype, _NtSuspendProcess.argtypes = ctypes.c_long, [W.HANDLE]
+    _NtResumeProcess = _ntdll.NtResumeProcess
+    _NtResumeProcess.restype, _NtResumeProcess.argtypes = ctypes.c_long, [W.HANDLE]
+    _SUSPEND_ACCESS = 0x0800 | 0x1000                  # PROCESS_SUSPEND_RESUME | QUERY_LIMITED_INFORMATION
+
+    class _ProcessEntry(ctypes.Structure):             # PROCESSENTRY32W
+        _fields_ = [("dwSize", W.DWORD), ("cntUsage", W.DWORD), ("th32ProcessID", W.DWORD),
+                    ("th32DefaultHeapID", ctypes.c_size_t), ("th32ModuleID", W.DWORD), ("cntThreads", W.DWORD),
+                    ("th32ParentProcessID", W.DWORD), ("pcPriClassBase", ctypes.c_long), ("dwFlags", W.DWORD),
+                    ("szExeFile", ctypes.c_wchar * 260)]
+
+    _CreateToolhelp32Snapshot = _fn("CreateToolhelp32Snapshot", W.HANDLE, W.DWORD, W.DWORD)
+    _Process32FirstW = _fn("Process32FirstW", W.BOOL, W.HANDLE, ctypes.POINTER(_ProcessEntry))
+    _Process32NextW = _fn("Process32NextW", W.BOOL, W.HANDLE, ctypes.POINTER(_ProcessEntry))
+
+    def _snapshot_images():
+        """Every running image name from one Toolhelp32 snapshot: the names tasklist prints, in
+        milliseconds instead of the ~6 s tasklist takes here with a few hundred processes."""
+        snap = _CreateToolhelp32Snapshot(0x2, 0)       # TH32CS_SNAPPROCESS
+        if not snap or snap == ctypes.c_void_p(-1).value:
+            raise OSError(f"CreateToolhelp32Snapshot failed (error {ctypes.get_last_error()})")
+        try:
+            entry, names = _ProcessEntry(), set()
+            entry.dwSize = ctypes.sizeof(entry)
+            ok = _Process32FirstW(snap, ctypes.byref(entry))
+            while ok:
+                names.add(entry.szExeFile.lower())
+                ok = _Process32NextW(snap, ctypes.byref(entry))
+            return names
+        finally:
+            _CloseHandle(snap)
+
     def _filetime(h):
         c, e, k, u = W.FILETIME(), W.FILETIME(), W.FILETIME(), W.FILETIME()
         if not _GetProcessTimes(h, ctypes.byref(c), ctypes.byref(e), ctypes.byref(k), ctypes.byref(u)):
@@ -327,10 +408,12 @@ def proc_alive(pid, created=None):
 
 
 class ProcJob:
-    """A kill-on-close Windows job object holding one child and everything it starts."""
+    """A kill-on-close Windows job object holding one child and everything it starts; it can
+    freeze the whole tree (suspend) and thaw it (resume)."""
 
     def __init__(self):
         self.h = _CreateJobObjectW(None, None) if IS_WIN else None
+        self.frozen = {}                               # pid -> creation time, of the processes this froze
         if not self.h:
             return
         info = _ExtendedLimit()
@@ -350,6 +433,52 @@ class ProcJob:
         ok = _QueryInformationJobObject(self.h, 1, ctypes.byref(acc), ctypes.sizeof(acc), None)
         return acc.ActiveProcesses if ok else 0
 
+    def pids(self):
+        if not self.h:
+            return []
+        buf = _PidList()
+        ok = _QueryInformationJobObject(self.h, 3, ctypes.byref(buf), ctypes.sizeof(buf), None)
+        if not ok and ctypes.get_last_error() != 234:  # ERROR_MORE_DATA: the list holds what fit
+            return []
+        return [int(buf.Ids[i]) for i in range(min(buf.InList, _PID_LIST_MAX))]
+
+    def suspend(self):
+        """Suspend every process in the job not already frozen; returns how many it froze. Called
+        again while frozen, it catches a process the job started as it was being frozen."""
+        n = 0
+        for pid in self.pids():
+            if pid in self.frozen:
+                continue
+            h = _OpenProcess(_SUSPEND_ACCESS, False, pid)
+            if not h:
+                continue
+            try:
+                born = _filetime(h)
+                if _NtSuspendProcess(h) == 0:
+                    self.frozen[pid] = born
+                    n += 1
+            finally:
+                _CloseHandle(h)
+        return n
+
+    def resume(self):
+        """Resume exactly the processes this froze that are still in the job (same PID and same
+        creation time); returns how many it thawed."""
+        inside, n = set(self.pids()), 0
+        for pid, born in list(self.frozen.items()):
+            del self.frozen[pid]
+            if pid not in inside:
+                continue
+            h = _OpenProcess(_SUSPEND_ACCESS, False, pid)
+            if not h:
+                continue
+            try:
+                if _filetime(h) == born and _NtResumeProcess(h) == 0:
+                    n += 1
+            finally:
+                _CloseHandle(h)
+        return n
+
     def terminate(self):
         if self.h:
             _TerminateJobObject(self.h, 1)
@@ -361,11 +490,14 @@ class ProcJob:
 
 
 def kill_tree(proc, pjob=None):
+    # Never raises: a taskkill that hangs or fails still leaves the job object and
+    # TerminateProcess to take the tree down.
     if IS_WIN:
-        quiet(["taskkill", "/T", "/F", "/PID", str(proc.pid)], timeout=60)
+        with contextlib.suppress(OSError, subprocess.SubprocessError):
+            quiet(["taskkill", "/T", "/F", "/PID", str(proc.pid)], timeout=60)
         if pjob:
             pjob.terminate()
-    else:
+    with contextlib.suppress(OSError):
         proc.kill()
     with contextlib.suppress(subprocess.TimeoutExpired):
         proc.wait(timeout=30)
@@ -383,17 +515,39 @@ def lower_own_priority():
 
 
 def running_images():
-    out = quiet(["tasklist", "/FO", "CSV", "/NH"], timeout=60).stdout if IS_WIN else ""
-    return {line.split('","')[0].strip('"').lower() for line in out.splitlines() if line.startswith('"')}
+    """Every running image name, lowercased: one Toolhelp32 snapshot, or tasklist when the snapshot
+    fails. Raises when neither answers (an empty list counts as no answer: System is always
+    running), so a caller can never mistake 'unknown' for 'no game'."""
+    if not IS_WIN:
+        return set()
+    try:
+        names = _snapshot_images()
+        if len(names) > 1:
+            return names
+    except OSError:
+        pass
+    r = quiet(["tasklist", "/FO", "CSV", "/NH"], timeout=60)
+    names = {line.split('","')[0].strip('"').lower() for line in r.stdout.splitlines() if line.startswith('"')}
+    if r.returncode != 0 or not names:
+        raise OSError(f"tasklist exit {r.returncode}, {len(names)} processes listed: {r.stderr.strip()[:200]}")
+    return names
 
 
-_game = {"t": 0.0, "hits": []}
+_game = {"t": 0.0, "hits": [], "failed": False}
 
 
-def games_running(max_age=15):
-    if time.time() - _game["t"] > max_age:
-        names = running_images()
-        _game.update(t=time.time(), hits=sorted(e for e in GAME_EXES if e in names))
+def games_running(max_age=None):
+    """The configured game images now running. Fails closed: when the check itself fails, the
+    answer is [GAME_CHECK_FAILED], which lowers the limit exactly as a running game does."""
+    if time.time() - _game["t"] > (GAME_POLL_S if max_age is None else max_age):
+        try:
+            names = running_images()
+            hits, failed = sorted(e for e in GAME_EXES if e in names), None
+        except TRANSIENT as e:
+            hits, failed = [GAME_CHECK_FAILED], f"{type(e).__name__}: {e}"
+        if bool(failed) != _game["failed"]:            # log the transitions, not every poll
+            rails_event("game-check-failed" if failed else "game-check-recovered", error=failed)
+        _game.update(t=time.time(), hits=hits, failed=bool(failed))
     return _game["hits"]
 
 
@@ -487,15 +641,32 @@ class PidLock:
                 raise StopRequested(stop_reason(stop_run))
             time.sleep(poll)
 
-    def release(self):
-        if not self.mine:
-            return
+    def set_child(self, pid):
+        """Name the process doing the locked work, so the lock stays held while it runs even if
+        the process that took the lock is killed without its tree."""
         with FileMutex(self.mutex):
             cur = read_json(self.path)
-            if cur and cur.get("token") == self.mine["token"]:
-                _retry(lambda: os.remove(self.path))
-            else:
-                rails_event("lock-lost", lock=self.name, mine=self.mine, found=cur)
+            if not cur or cur.get("token") != self.mine["token"]:
+                raise OSError(f"the {self.name} is no longer ours: {cur}")
+            self.mine.update(child=pid, child_created=proc_created(pid))
+            write_json(self.path, self.mine)
+
+    def release(self):
+        # Never raises: the work under the lock is done by now, and a release that fails leaves
+        # a lock naming a process that is about to exit, which the next acquirer recovers.
+        if not self.mine:
+            return
+        try:
+            with FileMutex(self.mutex):
+                cur = read_json(self.path)
+                if cur and cur.get("token") == self.mine["token"]:
+                    _retry(lambda: os.remove(self.path))
+                else:
+                    rails_event("lock-lost", lock=self.name, mine=self.mine, found=cur)
+        except OSError as e:
+            rails_event("lock-release-failed", lock=self.name, mine=self.mine, error=f"{type(e).__name__}: {e}")
+            print(f"warning: the {self.name} was not released ({e}); it is recovered as stale once this "
+                  "process exits", file=sys.stderr, flush=True)
         self.mine = None
 
 
@@ -534,9 +705,18 @@ def slot_config():
             return max(0, min(int(v), hi))
         except (TypeError, ValueError):
             return default
+    try:
+        floor = free_floor(float(cfg["min_free_gb"])) if cfg.get("min_free_gb") is not None else None
+    except (TypeError, ValueError):
+        floor = None
     return {"max": clamp(cfg.get("max", SLOT_MAX), SLOT_MAX, SLOT_MAX),
             "gaming_max": clamp(cfg.get("gaming_max", SLOT_MAX_GAMING), SLOT_MAX_GAMING, SLOT_MAX_GAMING),
-            "min_free_gb": cfg.get("min_free_gb")}
+            "min_free_gb": floor}
+
+
+def free_floor(gb):
+    """The free-space floor may be raised, never lowered below MIN_FREE_GB (the owner's 40 GB)."""
+    return max(float(MIN_FREE_GB), float(gb))
 
 
 def slot_limit():
@@ -579,12 +759,15 @@ class Slot:
             _retry(lambda: os.remove(self.path))
 
 
-def try_acquire_slot(run=None, job=None):
-    limit, hits = slot_limit()                         # tasklist runs outside the mutex: it is slow
+def try_acquire_slot(run=None, job=None, suspendable=False):
+    # Frozen slots count: while a game has jobs frozen, nothing new launches until the frozen
+    # ones have thawed and finished.
+    limit, hits = slot_limit()                         # the game check runs outside the mutex
     with FileMutex(os.path.join(SLOTS, ".mutex")):
         if len(live_slots(recover=True)) >= limit:
             return None
-        rec = me_record(run=run, job=job, child=None, child_created=None, limit=limit, gaming=hits)
+        rec = me_record(run=run, job=job, child=None, child_created=None, limit=limit, gaming=hits,
+                        suspendable=bool(suspendable))
         path = os.path.join(SLOTS, f"slot-{os.getpid()}-{rec['token'][:12]}.json")
         write_json(path, rec)
     return Slot(path, rec)
@@ -593,7 +776,9 @@ def try_acquire_slot(run=None, job=None):
 @contextlib.contextmanager
 def decode_slot(run=None, job=None, poll=SLOT_RETRY_S):
     """For a tool that decodes in-process: `with supervise.decode_slot(): ...`. A no-op inside a
-    supervised job that already holds one (PSF_SLOT_HELD=1). Raises StopRequested on STOP."""
+    supervised job that already holds one (PSF_SLOT_HELD=1). Raises StopRequested on STOP.
+    Such a slot cannot be frozen when the game starts, so it ranks ahead of supervised jobs,
+    which freeze around it; a tool holding one should keep each hold short."""
     if os.environ.get("PSF_SLOT_HELD") == "1":
         yield None
         return
@@ -638,6 +823,29 @@ def converter_hash(pkg):
     return h.hexdigest(), n
 
 
+def frozen_converter_pin(pkg, manifest_path=None):
+    """The converter against the pin frozen in sources/oracle-manifest.json, when the manifest
+    carries one (corpus_grade.py's CONVERTER PIN: sha256 over "<path>\\t<sha256>\\n" lines, sorted,
+    for the modules the conversion loads, each file's sha256 taken with CRLF read as LF, paths
+    relative to the package's parent). None when there is no frozen pin to compare with.
+    py_sha256 above covers every .py and so also catches a change to a module the conversion
+    does not load; this answers the other question — is this the frozen converter at all."""
+    m = read_json(manifest_path or ORACLE_MANIFEST)
+    conv = (m or {}).get("converter") if m and "_unreadable" not in m else None
+    if not isinstance(conv, dict) or not isinstance(conv.get("pin"), str) or not isinstance(conv.get("files"), dict):
+        return None
+    base, pairs = os.path.dirname(pkg), {}
+    for rel in conv["files"]:
+        try:
+            with open(os.path.join(base, *rel.split("/")), "rb") as fh:
+                pairs[rel] = hashlib.sha256(fh.read().replace(b"\r\n", b"\n")).hexdigest()
+        except OSError:
+            pairs[rel] = "missing"
+    pin = hashlib.sha256("".join(f"{k}\t{v}\n" for k, v in sorted(pairs.items())).encode("utf-8")).hexdigest()
+    return {"frozen": conv["pin"], "current": pin, "ok": pin == conv["pin"],
+            "differs": sorted(k for k, v in pairs.items() if v != conv["files"][k])}
+
+
 def pins(full=False):
     out = {"converter": None, "oracle": {"path": os.path.relpath(ORACLE_MANIFEST, ROOT).replace(os.sep, "/"),
                                          "sha256": sha256_file(ORACLE_MANIFEST)}}
@@ -646,6 +854,7 @@ def pins(full=False):
         digest, n = converter_hash(pkg)
         conv = {"path": pkg, "py_sha256": digest, "files": n}
         if full:
+            conv["frozen_pin"] = frozen_converter_pin(pkg)
             src = os.path.join(pkg, "formats", "ssc_to_chartstruct.py")
             try:
                 conv["lattice"] = bool(re.search(r"""^HOLD_TICK_MODEL\s*=\s*["']lattice["']""",
@@ -690,12 +899,25 @@ JOB_KEYS = {"id", "cmd", "cwd", "timeout", "slot", "env", "meta"}
 
 
 def load_jobs(path):
-    text = open(path, encoding="utf-8").read()
+    try:
+        with open(path, encoding="utf-8") as fh:
+            text = fh.read()
+    except (OSError, UnicodeDecodeError) as e:
+        raise SystemExit(f"{path}: cannot read the jobs file: {e}")
     if path.lower().endswith(".json"):
-        items = json.loads(text)
+        try:
+            items = json.loads(text)
+        except ValueError as e:
+            raise SystemExit(f"{path}: not JSON: {e}")
         items = items.get("jobs") if isinstance(items, dict) else items
     else:
-        items = [json.loads(line) for line in text.splitlines() if line.strip() and not line.lstrip().startswith("#")]
+        items = []
+        for n, line in enumerate(text.splitlines(), 1):
+            if line.strip() and not line.lstrip().startswith("#"):
+                try:
+                    items.append(json.loads(line))
+                except ValueError as e:
+                    raise SystemExit(f"{path} line {n}: not JSON: {e}")
     if not isinstance(items, list) or not items:
         raise SystemExit(f"{path}: no jobs")
     seen, jobs = set(), []
@@ -769,23 +991,31 @@ def child_env(job, run, rdir, slot, threads):
 
 
 VERDICT_RE = re.compile(rb"^VERDICT[:=][ \t]*(\S[^\r\n]*?)[ \t]*\r?$", re.M)
-KILL_VERDICT = {"timeout": "TIMEOUT", "stopped": "STOPPED", "halted": "HALTED", "launch-error": "LAUNCH_ERROR"}
+KILL_VERDICT = {"timeout": "TIMEOUT", "stopped": "STOPPED", "halted": "HALTED", "launch-error": "LAUNCH_ERROR",
+                "crashed": "CRASHED", "preempted": "PREEMPTED"}
 
 
 # ---------------------------------------------------------------- the supervisor
 
 class Running:
     def __init__(self, **kw):
+        self.suspended_at, self.suspended_s, self.suspends = None, 0.0, 0
+        self.orphans, self.killed_as = 0, None
         self.__dict__.update(kw)
 
 
+class Crashed(Exception):
+    pass
+
+
 class Supervisor:
-    def __init__(self, run, rdir, jobs, opts, base_pins):
+    def __init__(self, run, rdir, jobs, opts, base_pins, log_is_stdout=False):
         self.run, self.rdir, self.jobs, self.opts = run, rdir, jobs, opts
         self.base = pin_key(base_pins)
         self.ledger = os.path.join(rdir, "ledger.jsonl")
         self.events = os.path.join(rdir, "events.jsonl")
         self.hb_path = os.path.join(rdir, "heartbeat.json")
+        self.log_path, self.log_is_stdout = os.path.join(rdir, "supervisor.log"), log_is_stdout
         self.running, self.last, self.attempts = [], {}, {}
         for r in read_jsonl(self.ledger):
             if r.get("kind") == "job":
@@ -793,11 +1023,14 @@ class Supervisor:
                 self.attempts[r["job"]] = self.attempts.get(r["job"], 0) + 1
         self.queue = [j for j in jobs if not self.finished(j["id"])]
         self.skipped = len(jobs) - len(self.queue)
-        self.state, self.stop_since, self.stop_src, self.halt = "running", None, None, None
+        self.state, self.stop_since, self.stop_src, self.halt, self.crash = "running", None, None, None, None
         self.paused, self.disk_t, self.free = False, 0.0, None
-        self.slot_t, self.hb_t, self.hb_state, self.started = 0.0, 0.0, None, time.time()
+        self.slot_t, self.preempt_t, self.hb_t, self.hb_state, self.started = 0.0, 0.0, 0.0, None, time.time()
+        self.unreleased = []                           # slots whose release failed; retried every step
+        self.trouble = None                            # while a step keeps failing: since, tries, error
 
     def finished(self, jid):
+        """Whether a resume skips this job (its latest row finished, and --retry does not name it)."""
         r = self.last.get(jid)
         if not r or r.get("outcome") not in FINISHED_OUTCOMES:
             return False
@@ -805,9 +1038,30 @@ class Supervisor:
             return not (r.get("exit_code") != 0 and "nonzero" in self.opts.retry)
         return r["outcome"] not in self.opts.retry
 
+    def done(self, jid):
+        return (self.last.get(jid) or {}).get("outcome") in FINISHED_OUTCOMES
+
     def event(self, event, **kw):
         append_jsonl(self.events, {"t": now_iso(), "event": event, "run": self.run, "pid": os.getpid(), **kw})
         print(f"{now_iso()} {event} {json.dumps(kw, ensure_ascii=False) if kw else ''}", flush=True)
+
+    def event_safe(self, event, **kw):
+        # for the retry and crash paths, which must not die on their own log line
+        try:
+            self.event(event, **kw)
+        except Exception as e:  # noqa: BLE001
+            with contextlib.suppress(Exception):
+                print(f"{now_iso()} {event} (events.jsonl not written: {type(e).__name__}: {e})", flush=True)
+
+    def log_text(self, text):
+        """Into supervisor.log whether or not this supervisor is detached (a detached one's stdout
+        already is that log)."""
+        with contextlib.suppress(Exception):
+            print(text, flush=True)
+        if not self.log_is_stdout:
+            with contextlib.suppress(OSError):
+                with open(self.log_path, "a", encoding="utf-8") as fh:
+                    fh.write(text if text.endswith("\n") else text + "\n")
 
     def heartbeat(self, force=False):
         now = time.time()
@@ -816,53 +1070,113 @@ class Supervisor:
         verdicts = {}
         done = 0
         for j in self.jobs:
-            if self.finished(j["id"]):
+            if self.done(j["id"]):
                 done += 1
                 v = self.last[j["id"]].get("verdict")
                 verdicts[v] = verdicts.get(v, 0) + 1
         limit, hits = slot_limit()
+        live = [rec for _, rec in live_slots()]
         write_json(self.hb_path, {
             "run": self.run, "pid": os.getpid(), "created": proc_created(os.getpid()), "host": socket.gethostname(),
             "state": self.state, "updated": now_iso(now), "updated_ts": now, "started": now_iso(self.started),
             "total": len(self.jobs), "completed": done, "queued": len(self.queue), "skipped_at_start": self.skipped,
-            "running": [{"job": r.job["id"], "pid": r.proc.pid, "since": now_iso(r.start), "slot": bool(r.slot)} for r in self.running],
+            "running": [{"job": r.job["id"], "pid": r.proc.pid, "since": now_iso(r.start), "start_ts": r.start,
+                         "slot": bool(r.slot), "suspended": r.suspended_at is not None,
+                         "suspended_s": round(r.suspended_s + (now - r.suspended_at if r.suspended_at else 0.0), 1)}
+                        for r in self.running],
             "verdicts": verdicts, "last": max(self.last.values(), key=lambda r: r.get("end", ""), default=None),
-            "slots": {"used": len(live_slots()), "limit": limit, "gaming": hits}, "free_gb": self.free,
-            "stop": self.stop_src, "halt": self.halt, "grace_s": self.opts.grace,
+            "slots": {"used": len(live), "suspended": sum(1 for s in live if s.get("suspended")),
+                      "limit": limit, "gaming": hits},
+            "free_gb": self.free, "stop": self.stop_src, "halt": self.halt, "grace_s": self.opts.grace,
+            "crash": self.crash, "trouble": self.trouble,
         })
         self.hb_t, self.hb_state = now, self.state
 
+    def heartbeat_safe(self):
+        try:
+            self.heartbeat(force=True)
+        except Exception as e:  # noqa: BLE001
+            with contextlib.suppress(Exception):
+                print(f"{now_iso()} heartbeat not written: {type(e).__name__}: {e}", flush=True)
+
+    # ------------------------------------------------ slots
+
+    def release_slot(self, slot):
+        try:
+            slot.release()
+        except OSError as e:
+            self.unreleased.append(slot)
+            self.event_safe("slot-release-deferred", slot=os.path.basename(slot.path), error=f"{type(e).__name__}: {e}")
+
+    def retry_releases(self):
+        for slot in list(self.unreleased):
+            slot.release()                             # still failing: a transient error for main()
+            self.unreleased.remove(slot)
+
+    # ------------------------------------------------ jobs
+
+    def dequeue(self, job):
+        if self.queue and self.queue[0] is job:
+            self.queue.pop(0)
+        else:
+            self.queue.remove(job)
+
     def launch(self, job, slot):
+        """Start one job. Once its child exists it is tracked and off the queue before anything
+        else can fail; an error before that gives the slot back and leaves the job queued."""
         jid = job["id"]
-        attempt = self.attempts.get(jid, 0) + 1
+        logf = None
+        try:
+            cmd = expand(job, self.run, self.rdir)
+            cwd = os.path.join(ROOT, job["cwd"]) if job.get("cwd") else ROOT
+            log = os.path.join(self.rdir, "logs", log_name(jid))
+            os.makedirs(os.path.dirname(log), exist_ok=True)
+            logf = open(log, "ab")
+            attempt = self.attempts.get(jid, 0) + 1
+            shown = cmd if isinstance(cmd, str) else subprocess.list2cmdline(cmd)
+            logf.write(f"\n===== {now_iso()} attempt {attempt} of {jid}: {shown}\n".encode("utf-8"))
+            logf.flush()
+            offset = logf.tell()
+            env = child_env(job, self.run, self.rdir, slot, self.opts.threads)
+        except BaseException:
+            if logf:
+                with contextlib.suppress(OSError):
+                    logf.close()
+            if slot:
+                self.release_slot(slot)
+            raise
         self.attempts[jid] = attempt
-        cmd = expand(job, self.run, self.rdir)
-        cwd = os.path.join(ROOT, job["cwd"]) if job.get("cwd") else ROOT
-        log = os.path.join(self.rdir, "logs", log_name(jid))
-        os.makedirs(os.path.dirname(log), exist_ok=True)
-        logf = open(log, "ab")
-        shown = cmd if isinstance(cmd, str) else subprocess.list2cmdline(cmd)
-        logf.write(f"\n===== {now_iso()} attempt {attempt} of {jid}: {shown}\n".encode("utf-8"))
-        logf.flush()
-        offset = logf.tell()
         start = time.time()
         try:
-            proc = subprocess.Popen(cmd, cwd=cwd, env=child_env(job, self.run, self.rdir, slot, self.opts.threads),
-                                    stdin=subprocess.DEVNULL, stdout=logf, stderr=subprocess.STDOUT,
+            proc = subprocess.Popen(cmd, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=logf, stderr=subprocess.STDOUT,
                                     creationflags=(BELOW_NORMAL | CREATE_NO_WINDOW) if IS_WIN else 0)
         except OSError as e:
-            logf.write(f"launch failed: {e}\n".encode("utf-8"))
-            logf.close()
-            self.record(Running(job=job, proc=None, pjob=None, slot=slot, start=start, attempt=attempt,
-                                log=log, offset=offset, logf=None, assigned=False), "launch-error", None)
+            with contextlib.suppress(OSError):
+                logf.write(f"launch failed: {e}\n".encode("utf-8"))
+            with contextlib.suppress(OSError):
+                logf.close()
+            r = Running(job=job, proc=None, pjob=None, slot=slot, start=start, attempt=attempt,
+                        log=log, offset=offset, logf=None, assigned=False)
+            try:
+                self.record(r, "launch-error", None)
+            except BaseException:                      # the row was not written: the job stays queued
+                if slot:
+                    self.release_slot(slot)
+                raise
+            self.dequeue(job)
             return
-        pjob = ProcJob() if IS_WIN else None
-        assigned = pjob.assign(proc) if pjob else False
+        r = Running(job=job, proc=proc, pjob=None, slot=slot, start=start, attempt=attempt, log=log, offset=offset,
+                    logf=logf, assigned=False, deadline=start + float(job.get("timeout") or self.opts.timeout))
+        self.dequeue(job)
+        self.running.append(r)
+        if IS_WIN:
+            r.pjob = ProcJob()
+            r.assigned = r.pjob.assign(proc)
         if slot:
-            slot.set_child(proc.pid)
-        self.running.append(Running(job=job, proc=proc, pjob=pjob, slot=slot, start=start, attempt=attempt,
-                                    log=log, offset=offset, logf=logf, assigned=assigned,
-                                    deadline=start + float(job.get("timeout") or self.opts.timeout)))
+            try:
+                slot.set_child(proc.pid)
+            except OSError as e:
+                self.event_safe("slot-child-unrecorded", job=jid, error=f"{type(e).__name__}: {e}")
 
     def verdict(self, r, outcome, rc):
         if outcome != "exit":
@@ -878,48 +1192,125 @@ class Supervisor:
         return "OK" if rc == 0 else "FAIL"
 
     def record(self, r, outcome, rc):
+        """Write the job's ledger row, then let go of it. Raises only when the row itself could not
+        be written, and then the job is still tracked and is recorded again on the next step."""
         end = time.time()
-        orphans = 0
         if r.pjob:
-            orphans = r.pjob.active()
-            if orphans:
-                r.pjob.terminate()                    # a grandchild outliving its job would decode unslotted
+            n = r.pjob.active()
+            if n:
+                r.pjob.terminate()                     # a grandchild outliving its job would decode unslotted
+                r.orphans += n
             r.pjob.close()
         if r.logf:
-            r.logf.close()
+            with contextlib.suppress(OSError):
+                r.logf.close()
+            r.logf = None
+        frozen_s = r.suspended_s + (end - r.suspended_at if r.suspended_at is not None else 0.0)
         row = {"kind": "job", "run": self.run, "job": r.job["id"], "attempt": r.attempt,
                "start": now_iso(r.start), "end": now_iso(end), "duration_s": round(end - r.start, 3),
                "exit_code": rc, "outcome": outcome, "verdict": self.verdict(r, outcome, rc),
                "slot": bool(r.slot), "pid": r.proc.pid if r.proc else None,
                "log": os.path.relpath(r.log, self.rdir).replace(os.sep, "/"),
-               "orphans_killed": orphans, "job_object": r.assigned}
+               "orphans_killed": r.orphans, "job_object": r.assigned,
+               "suspended_s": round(frozen_s, 3), "suspends": r.suspends}
         append_jsonl(self.ledger, row)             # durable before the slot is given back
-        if r.slot:
-            r.slot.release()
         if r in self.running:
             self.running.remove(r)
         self.last[r.job["id"]] = row
-        self.heartbeat(force=True)
+        if outcome == "preempted":
+            self.queue.insert(0, r.job)                # it runs again as soon as the pool allows
+        if r.slot:
+            self.release_slot(r.slot)
+        with contextlib.suppress(*TRANSIENT):
+            self.heartbeat(force=True)                 # otherwise the next step writes it
 
     def kill(self, r, outcome):
+        r.killed_as = outcome                          # kept if the row fails to write, so a retry says why
         kill_tree(r.proc, r.pjob)
         self.record(r, outcome, r.proc.returncode)
 
+    # ------------------------------------------------ the limit binds running jobs
+
+    def preempt(self, now):
+        """Freeze this supervisor's jobs that rank past the slot limit, thaw the ones back inside it.
+        The rank is machine-wide: live slots ordered by when they were taken, the in-process ones
+        (which cannot be frozen) first; so every supervisor reaches the same answer on its own."""
+        mine = [r for r in self.running if r.slot and not r.killed_as]
+        if not mine or now - self.preempt_t < PREEMPT_EVERY_S:
+            return
+        self.preempt_t = now
+        limit, hits = slot_limit()
+        live = [rec for _, rec in live_slots()]
+        fixed = [rec for rec in live if not rec.get("suspendable")]
+        movable = sorted((rec for rec in live if rec.get("suspendable")),
+                         key=lambda rec: (rec.get("since_ts") or 0.0, str(rec.get("token"))))
+        allowed = {rec.get("token") for rec in movable[:max(0, limit - len(fixed))]}
+        known = {rec.get("token") for rec in live}
+        why = {"limit": limit, "gaming": hits, "slots_live": len(live)}
+        for r in mine:
+            token = r.slot.rec.get("token")
+            if token not in known:                     # our own slot file is unreadable: never freeze on that
+                continue
+            if token in allowed:
+                if r.suspended_at is not None:
+                    self.thaw(r, now, why)
+            elif r.suspended_at is None:
+                self.freeze(r, now, why)
+            else:
+                r.pjob.suspend()                       # anything the job started as it was being frozen
+
+    def freeze(self, r, now, why):
+        if not (r.pjob and r.assigned):
+            self.event("preempted", job=r.job["id"], reason="no job object to freeze its tree in: killed, and queued again", **why)
+            self.kill(r, "preempted")
+            return
+        n = r.pjob.suspend()
+        r.suspended_at, r.suspends = now, r.suspends + 1
+        r.slot.rec["suspended"] = now_iso(now)
+        with contextlib.suppress(OSError):
+            write_json(r.slot.path, r.slot.rec)
+        self.hb_t = 0.0                                # the heartbeat says so at the end of this step
+        self.event("suspended", job=r.job["id"], processes=n, **why)
+
+    def thaw(self, r, now, why):
+        n = r.pjob.resume()
+        frozen_for = now - r.suspended_at
+        r.deadline += frozen_for                       # time spent frozen is not the job's to answer for
+        r.suspended_s += frozen_for
+        r.suspended_at = None
+        r.slot.rec.pop("suspended", None)
+        with contextlib.suppress(OSError):
+            write_json(r.slot.path, r.slot.rec)
+        self.hb_t = 0.0
+        self.event("resumed", job=r.job["id"], processes=n, frozen_s=round(frozen_for, 1), **why)
+
+    # ------------------------------------------------ the loop
+
     def step(self):
         now = time.time()
+        self.retry_releases()
         for r in list(self.running):
+            if r.killed_as:                            # killed, but its row was not written
+                self.record(r, r.killed_as, r.proc.returncode)
+                continue
             rc = r.proc.poll()
             if rc is not None:
                 self.record(r, "exit", rc)
-            elif now > r.deadline:
-                self.event("timeout", job=r.job["id"], after_s=round(now - r.start, 1))
+            elif r.suspended_at is None and now > r.deadline:
+                self.event("timeout", job=r.job["id"], after_s=round(now - r.start, 1), frozen_s=round(r.suspended_s, 1))
                 self.kill(r, "timeout")
+
+        self.preempt(now)
 
         src = stop_reason(self.run)
         if src and self.stop_since is None:
             self.stop_since, self.stop_src = now, src
             self.event("stop-seen", source=src, running=[r.job["id"] for r in self.running],
                        queued=len(self.queue), grace_s=self.opts.grace)
+        if self.stop_since is not None:
+            for r in [r for r in self.running if r.suspended_at is not None]:
+                self.event("stop-kills-frozen", job=r.job["id"])   # frozen, it could not finish in the grace
+                self.kill(r, "stopped")
         if self.stop_since is not None and self.running and now - self.stop_since >= self.opts.grace:
             self.event("grace-expired", killing=[r.job["id"] for r in self.running])
             for r in list(self.running):
@@ -937,31 +1328,82 @@ class Supervisor:
                     self.event("paused-disk" if low else "resumed-disk", free_gb=self.free, floor_gb=floor)
             if not self.paused:
                 while self.queue and len(self.running) < self.opts.parallel:
-                    drift = pin_key(pins())
-                    if drift != self.base:
-                        self.halt = {"expected": self.base, "found": drift}
-                        self.event("halt", reason="converter or oracle manifest changed mid-run", **self.halt)
-                        break
                     job, slot = self.queue[0], None
                     if job.get("slot", True):
                         if time.time() - self.slot_t < SLOT_RETRY_S:
                             waiting = True
                             break
-                        slot = try_acquire_slot(self.run, job["id"])
+                        slot = try_acquire_slot(self.run, job["id"], suspendable=True)
                         if slot is None:
                             self.slot_t, waiting = time.time(), True
                             break
-                    self.queue.pop(0)
+                    try:
+                        drift = pin_key(pins())            # re-checked before every launch
+                    except BaseException:
+                        if slot:
+                            self.release_slot(slot)
+                        raise
+                    if drift != self.base:
+                        if slot:
+                            self.release_slot(slot)
+                        self.halt = {"expected": self.base, "found": drift}
+                        self.event("halt", reason="converter or oracle manifest changed mid-run", **self.halt)
+                        break
                     self.launch(job, slot)
         if self.halt is not None:
             for r in list(self.running):
                 self.kill(r, "halted")
 
+        frozen = [r for r in self.running if r.suspended_at is not None]
         self.state = ("halted" if self.halt is not None else "stopping" if self.stop_since is not None
+                      else "suspended" if self.running and len(frozen) == len(self.running)
                       else "paused-disk" if self.paused else "waiting-slot" if waiting and not self.running
                       else "running")
         self.heartbeat()
         return bool(self.running) or (bool(self.queue) and self.stop_since is None and self.halt is None)
+
+    def nap(self, seconds):
+        end = time.time() + seconds
+        while time.time() < end:
+            if self.stop_since is None and stop_reason(self.run):
+                return                                 # the next step handles the STOP at once
+            time.sleep(min(POLL_S, max(0.0, end - time.time())))
+
+    def transient(self, e):
+        """One step failed with an OSError or a subprocess timeout: log it and back off, unless it
+        has persisted past --transient-budget, which makes it a crash."""
+        now = time.time()
+        t = self.trouble = self.trouble or {"since": now_iso(now), "since_ts": now, "tries": 0}
+        t["tries"] += 1
+        t["error"] = f"{type(e).__name__}: {e}"
+        persisted = now - t["since_ts"]
+        self.event_safe("transient-error", error=t["error"], tries=t["tries"], for_s=round(persisted, 1),
+                        traceback=traceback.format_exc())
+        if persisted >= self.opts.transient_budget:
+            raise Crashed(f"a supervisor error persisted {persisted:.0f}s, past --transient-budget "
+                          f"{self.opts.transient_budget:g}s: {t['error']}") from e
+        self.state = "retrying"
+        self.heartbeat_safe()
+        self.nap(min(RETRY_BASE_S * 2 ** min(t["tries"] - 1, 16), RETRY_MAX_S))
+
+    def crashed(self, e):
+        tb = traceback.format_exc()
+        self.crash = {"at": now_iso(), "error": f"{type(e).__name__}: {e}"}
+        self.event_safe("crash", error=self.crash["error"], traceback=tb, killing=[r.job["id"] for r in self.running])
+        self.log_text(f"{now_iso()} CRASHED; the run ends here and its unfinished jobs run again on resume.\n{tb}")
+        for r in list(self.running):
+            try:
+                self.kill(r, "crashed")
+            except Exception:  # noqa: BLE001 - the process exits next, and the job object takes the tree
+                with contextlib.suppress(Exception):
+                    if r.pjob:
+                        r.pjob.terminate()
+                with contextlib.suppress(Exception):
+                    if r.slot:
+                        r.slot.release()
+        for slot in list(self.unreleased):
+            with contextlib.suppress(Exception):
+                slot.release()
 
     def main(self):
         awake = keep_awake(True)
@@ -969,25 +1411,45 @@ class Supervisor:
                    parallel=self.opts.parallel, keep_awake=awake)
         code = 0
         try:
-            while self.step():
+            while True:
+                try:
+                    more = self.step()
+                except TRANSIENT as e:
+                    self.transient(e)
+                    continue
+                if self.trouble:
+                    self.event("recovered", after_s=round(time.time() - self.trouble["since_ts"], 1),
+                               tries=self.trouble["tries"], error=self.trouble["error"])
+                    self.trouble = None
+                if not more:
+                    break
                 time.sleep(POLL_S)
         except KeyboardInterrupt:
-            self.event("interrupted", killing=[r.job["id"] for r in self.running])
+            self.event_safe("interrupted", killing=[r.job["id"] for r in self.running])
             for r in list(self.running):
-                self.kill(r, "stopped")
+                with contextlib.suppress(Exception):
+                    self.kill(r, "stopped")
             self.stop_since = self.stop_since or time.time()
             self.stop_src = self.stop_src or "keyboard interrupt"
+        except Exception as e:  # noqa: BLE001 - a crash is recorded as one, never as "finished"
+            self.crashed(e)
         finally:
             keep_awake(False)
-            if self.halt is not None:
-                self.state, code = "halted", 4
-            elif self.stop_since is not None and (self.queue or any(
-                    self.last.get(j["id"], {}).get("outcome") == "stopped" for j in self.jobs)):
-                self.state, code = "stopped", 3
-            else:
+            complete = not self.queue and not self.running and all(self.done(j["id"]) for j in self.jobs)
+            if self.crash is not None:
+                self.state, code = "crashed", EXIT_CRASHED
+            elif self.halt is not None:
+                self.state, code = "halted", EXIT_HALTED
+            elif self.stop_since is not None and not complete:
+                self.state, code = "stopped", EXIT_STOPPED
+            elif complete:
                 self.state = "finished"
-            self.heartbeat(force=True)
-            self.event("end", state=self.state, remaining=len(self.queue))
+            else:                                      # not reachable by construction; never call it finished
+                self.crash = {"at": now_iso(), "error": f"the loop ended with {len(self.queue)} queued and "
+                                                        f"{len(self.running)} running jobs"}
+                self.state, code = "crashed", EXIT_CRASHED
+            self.heartbeat_safe()
+            self.event_safe("end", state=self.state, remaining=len(self.queue), code=code)
         return code
 
 
@@ -1000,12 +1462,26 @@ def cmd_run(args):
     args.retry = {k.strip() for k in (args.retry or "").split(",") if k.strip()}
     if args.retry - RETRY_KINDS:
         raise SystemExit(f"--retry takes {sorted(RETRY_KINDS)}")
+    if args.transient_budget < 0:
+        raise SystemExit("--transient-budget is seconds, 0 or more")
+    floor = free_floor(args.min_free_gb)
+    if floor != args.min_free_gb:
+        print(f"--min-free-gb {args.min_free_gb:g} raised to {floor:g}: the free-space floor is never below "
+              f"{MIN_FREE_GB} GiB", file=sys.stderr)
+    args.min_free_gb = floor
     rdir = os.path.join(RUNS, run)
     src = stop_reason(run)
     if src:
         raise SystemExit(f"refusing to start {run}: {src} is present. Clear it with "
                          f"`supervise.py stop {'' if 'global' in src else run} --clear` when you mean to.")
-    os.makedirs(rdir, exist_ok=True)
+    pkg = converter_dir()
+    fz = frozen_converter_pin(pkg) if pkg else None
+    if fz and not fz["ok"] and not args.converter_unpinned:
+        raise SystemExit(f"refusing to start {run}: the converter at {pkg} is not the one frozen in "
+                         f"{os.path.relpath(ORACLE_MANIFEST, ROOT)} (pin {fz['frozen'][:12]}, found {fz['current'][:12]}; "
+                         f"differs: {', '.join(fz['differs'])}). Loops run the frozen converter; --converter-unpinned "
+                         "runs a deliberate candidate anyway and records that in the run manifest.")
+    # the jobs file is read and checked before anything is created, so a bad one leaves no run folder
     frozen = os.path.join(rdir, "jobs.jsonl")
     if args.jobs:
         jobs = load_jobs(args.jobs)
@@ -1021,6 +1497,7 @@ def cmd_run(args):
         text = jobs_text(jobs)
     else:
         raise SystemExit(f"{run} has no frozen job list yet: pass --jobs")
+    os.makedirs(rdir, exist_ok=True)
 
     run_lock = PidLock(os.path.join(rdir, "supervisor.lock"), f"run lock of {run}")
     held = run_lock.holder()
@@ -1050,11 +1527,13 @@ def cmd_run(args):
         manifest["attempts"].append({
             "started": now_iso(), "pid": os.getpid(), "host": socket.gethostname(), "argv": sys.argv[1:],
             "python": sys.executable, "detached": bool(args._detached), "tool": tool_state(), "pins": cur,
+            "converter_unpinned": bool(args.converter_unpinned),
             "options": {"timeout": args.timeout, "parallel": args.parallel, "grace": args.grace,
-                        "threads": args.threads, "min_free_gb": args.min_free_gb, "retry": sorted(args.retry)}})
+                        "threads": args.threads, "min_free_gb": args.min_free_gb, "retry": sorted(args.retry),
+                        "transient_budget": args.transient_budget}})
         write_json(mpath, manifest)
         lower_own_priority()
-        return Supervisor(run, rdir, jobs, args, cur).main()
+        return Supervisor(run, rdir, jobs, args, cur, log_is_stdout=bool(args._detached)).main()
     finally:
         run_lock.release()
 
@@ -1082,7 +1561,7 @@ def detach(args, rdir):
     except OSError:                                    # the enclosing job forbids breakaway
         proc = subprocess.Popen(cmd, creationflags=flags, **kw)
     hb_path = os.path.join(rdir, "heartbeat.json")
-    for _ in range(60):
+    for _ in range(240):                               # a cold venv launcher has taken 40 s to start
         hb = read_json(hb_path) or {}
         if hb.get("updated_ts", 0) >= t0 - 1 and proc_alive(hb.get("pid"), hb.get("created")):
             print(f"{args.run}: detached supervisor pid {hb['pid']} is {hb.get('state')}, "
@@ -1115,13 +1594,17 @@ def run_summary(run):
             verdicts[r.get("verdict")] = verdicts.get(r.get("verdict"), 0) + 1
     state = hb.get("state") or "never-started"
     alive = proc_alive(hb.get("pid"), hb.get("created")) if hb else False
+    total = manifest.get("jobs") or hb.get("total")
     if state in ACTIVE_STATES and not alive:
         state = f"DEAD (last {state})"
+    elif state == "finished" and total is not None and done < total:
+        state = f"INCOMPLETE (says finished, {done}/{total} have a finished row)"   # never read as complete
     age = round(time.time() - hb["updated_ts"]) if hb.get("updated_ts") else None
     return {"run": run, "state": state, "pid": hb.get("pid"), "alive": alive,
-            "total": manifest.get("jobs") or hb.get("total"), "completed": done, "verdicts": verdicts,
+            "total": total, "completed": done, "verdicts": verdicts,
             "running": hb.get("running", []) if alive else [], "heartbeat_age_s": age,
             "updated": hb.get("updated"), "stop": stop_reason(run), "halt": hb.get("halt"),
+            "crash": hb.get("crash"), "trouble": hb.get("trouble") if alive else None,
             "attempts": len(manifest.get("attempts", []))}
 
 
@@ -1132,7 +1615,7 @@ def cmd_status(args):
     limit, hits = slot_limit()
     slots = [rec for _, rec in live_slots()]
     machine = {"slots_used": len(slots), "slots_limit": limit, "gaming": hits,
-               "slots": [{k: s.get(k) for k in ("pid", "child", "run", "job", "since")} for s in slots],
+               "slots": [{k: s.get(k) for k in ("pid", "child", "run", "job", "since", "suspended")} for s in slots],
                "commit_lock": read_json(COMMIT_LOCK), "main_lock": read_json(MAIN_LOCK),
                "global_stop": os.path.exists(GLOBAL_STOP), "free_gb": free_gb(), "state_dir": STATE}
     if args.json:
@@ -1146,7 +1629,8 @@ def cmd_status(args):
     ml = machine["main_lock"]
     print("main lock:   " + ("free" if not ml else f"HELD: {ml.get('note')} ({ml.get('since')})"))
     for s in machine["slots"]:
-        print(f"  slot: pid {s['pid']} child {s['child']} run {s['run']} job {s['job']} since {s['since']}")
+        print(f"  slot: pid {s['pid']} child {s['child']} run {s['run']} job {s['job']} since {s['since']}"
+              + (f"  FROZEN since {s['suspended']}" if s.get("suspended") else ""))
     for s in summaries:
         verd = ", ".join(f"{k} {v}" for k, v in sorted(s["verdicts"].items(), key=lambda kv: -kv[1]))
         print(f"\n{s['run']}: {s['state']}  {s['completed']}/{s['total']} done"
@@ -1156,11 +1640,16 @@ def cmd_status(args):
         if verd:
             print(f"  verdicts: {verd}")
         for r in s["running"]:
-            print(f"  running: {r['job']} (pid {r['pid']}, since {r['since']})")
+            print(f"  running: {r['job']} (pid {r['pid']}, since {r['since']})"
+                  + (f"  FROZEN ({r.get('suspended_s')}s so far)" if r.get("suspended") else ""))
         if s["stop"]:
             print(f"  {s['stop']}")
         if s["halt"]:
             print(f"  HALTED: {s['halt']}")
+        if s["crash"]:
+            print(f"  CRASHED {s['crash'].get('at')}: {s['crash'].get('error')} (traceback in events.jsonl and supervisor.log)")
+        if s["trouble"]:
+            print(f"  retrying since {s['trouble'].get('since')} ({s['trouble'].get('tries')} tries): {s['trouble'].get('error')}")
     return 0
 
 
@@ -1180,8 +1669,14 @@ def cmd_stop(args):
             print(f"no {path}")
         return 0
     write_json(path, {"at": now_iso(), "by_pid": os.getpid(), "reason": args.reason or ""})
-    print(f"created {path}: no new job starts; running jobs get {GRACE_S // 60} minutes (the run's --grace) "
-          "before they are killed")
+    if args.run:
+        hb = read_json(os.path.join(RUNS, args.run, "heartbeat.json")) or {}
+        grace = hb.get("grace_s")
+        when = (f"{grace:g} s (its --grace)" if isinstance(grace, (int, float)) else "the run's --grace")
+    else:
+        when = f"each run's --grace (default {GRACE_S:g} s)"
+    print(f"created {path}: no new job starts; jobs frozen for a game are killed now, and running jobs get "
+          f"{when} before they are killed")
     return 0
 
 
@@ -1195,7 +1690,10 @@ def cmd_slots(args):
         if args.gaming_max is not None:
             cfg["gaming_max"] = max(0, min(args.gaming_max, SLOT_MAX_GAMING))
         if args.min_free_gb is not None:
-            cfg["min_free_gb"] = args.min_free_gb
+            cfg["min_free_gb"] = free_floor(args.min_free_gb)     # may raise the floor, never lower it
+            if cfg["min_free_gb"] != args.min_free_gb:
+                print(f"--min-free-gb {args.min_free_gb:g} raised to {cfg['min_free_gb']:g}: the floor is never "
+                      f"below {MIN_FREE_GB} GiB", file=sys.stderr)
         write_json(cfg_path, cfg)
         print(f"wrote {cfg_path}: {cfg}")
     with FileMutex(os.path.join(SLOTS, ".mutex")):
@@ -1211,8 +1709,27 @@ def cmd_lock_exec(args):
     cmd = args.cmd[1:] if args.cmd[:1] == ["--"] else args.cmd
     if not cmd:
         raise SystemExit("lock-exec needs a command after --")
-    with commit_lock(run=args.run, purpose="lock-exec", timeout=args.timeout):
-        return subprocess.call(cmd)
+    lock = PidLock(COMMIT_LOCK, "commit lock")
+    try:
+        lock.acquire(timeout=args.timeout, run=args.run, purpose="lock-exec")
+    except TimeoutError as e:
+        print(f"lock-exec: {e}; nothing was run", file=sys.stderr)
+        return 2
+    try:
+        with subprocess.Popen(cmd) as proc:
+            try:
+                # the child is named in the lock, so killing lock-exec alone (no /T) does not free
+                # the lock while its command still runs
+                lock.set_child(proc.pid)
+            except OSError as e:
+                print(f"lock-exec: the child could not be named in the lock ({e})", file=sys.stderr)
+            try:
+                return proc.wait()
+            except BaseException:
+                proc.kill()
+                raise
+    finally:
+        lock.release()
 
 
 def cmd_commitlock(args):
@@ -1301,9 +1818,7 @@ def cmd_worktree(args):
     print(f"created {wt} on {branch} at {base.stdout.strip()[:10]}", flush=True)
     for sub in ("work", "videos"):
         link, target = os.path.join(wt, sub), os.path.join(main, sub)
-        r = quiet(["cmd", "/c", "mklink", "/J", link, target])
-        if r.returncode != 0 or not same_dir(link, target):
-            raise SystemExit(f"junction {link} -> {target} failed: {r.stdout}{r.stderr}")
+        link_junction(link, target)
         print(f"  {sub}/ -> {target} (junction)", flush=True)
     if args.no_preflight:
         return 0
@@ -1314,11 +1829,31 @@ def cmd_worktree(args):
     return subprocess.call(PY + [own, "preflight"], cwd=wt)
 
 
+def link_junction(link, target):
+    r = quiet(["cmd", "/c", "mklink", "/J", link, target])
+    if r.returncode != 0 or not same_dir(link, target):
+        raise SystemExit(f"junction {link} -> {target} failed: {r.stdout}{r.stderr}")
+
+
 def cmd_worktree_remove(args):
     main = main_checkout()
     wt = os.path.normpath(os.path.join(os.path.dirname(main), "psf-wt", args.name))
     if os.path.normcase(wt) not in worktrees() or same_dir(wt, main):
         raise SystemExit(f"{wt} is not a linked worktree of this repository")
+    # Everything git worktree remove would refuse over is checked BEFORE a junction is touched:
+    # a loop worktree left without its junctions would have its tools create a real, unshared work/.
+    st = git("status", "--porcelain", "--untracked-files=all", cwd=wt)
+    if st.returncode != 0:
+        raise SystemExit(f"git status failed in {wt}; nothing was changed:\n{st.stderr}")
+    if st.stdout.strip():
+        raise SystemExit(f"{wt} has uncommitted or untracked files, which git worktree remove refuses; nothing was "
+                         f"changed:\n{st.stdout.rstrip()}")
+    for block in git("worktree", "list", "--porcelain", cwd=main).stdout.split("\n\n"):
+        lines = block.splitlines()
+        if lines and os.path.normcase(os.path.normpath(lines[0].split(" ", 1)[-1])) == os.path.normcase(wt) \
+                and any(line == "locked" or line.startswith("locked ") for line in lines):
+            raise SystemExit(f"{wt} is locked (git worktree unlock it first); nothing was changed")
+    unlinked = []
     for sub in ("work", "videos"):
         link = os.path.join(wt, sub)
         if not os.path.lexists(link):
@@ -1328,13 +1863,17 @@ def cmd_worktree_remove(args):
         target = os.path.join(main, sub)
         before = len(os.listdir(target))
         os.rmdir(link)                                 # removes the junction itself, never what it points at
+        unlinked.append((link, target))
         after = len(os.listdir(target))
         if after != before:
             raise SystemExit(f"{target} changed from {before} to {after} entries while unlinking: stopping")
         print(f"unlinked {link} ({target} intact: {after} entries)")
     r = git("worktree", "remove", wt, cwd=main)
     if r.returncode != 0:
-        raise SystemExit(f"git worktree remove failed (left in place):\n{r.stderr}")
+        for link, target in unlinked:                  # put the worktree back as it was
+            link_junction(link, target)
+            print(f"re-linked {link} -> {target}")
+        raise SystemExit(f"git worktree remove failed; the worktree is left in place with its junctions:\n{r.stderr}")
     print(f"removed worktree {wt}")
     if args.delete_branch:
         branch = f"loops/{args.name}"
@@ -1465,10 +2004,17 @@ def main(argv=None):
     p.add_argument("--parallel", type=int, default=SLOT_MAX, help="jobs this run keeps in flight (the slot pool caps it machine-wide)")
     p.add_argument("--grace", type=float, default=GRACE_S, help="seconds running jobs get after a STOP before taskkill /T")
     p.add_argument("--threads", type=int, choices=(1, 2), default=2, help="OMP/BLAS/OpenCV threads per child")
-    p.add_argument("--min-free-gb", type=float, default=MIN_FREE_GB, help="pause launches below this many GiB free on C:")
+    p.add_argument("--min-free-gb", type=float, default=MIN_FREE_GB,
+                   help=f"pause launches below this many GiB free on C: (raised to {MIN_FREE_GB} if lower)")
     p.add_argument("--retry", default="", help="re-run finished jobs of these kinds on resume: nonzero,timeout,launch-error")
+    p.add_argument("--transient-budget", type=float, default=TRANSIENT_BUDGET_S,
+                   help="seconds one supervisor OSError/subprocess timeout may keep recurring (retried with backoff) "
+                        "before the run ends as crashed")
     p.add_argument("--detach", action="store_true", help="relaunch detached (outlives this terminal) and return")
     p.add_argument("--accept-pin-change", action="store_true", help="resume although the converter/oracle hash changed")
+    p.add_argument("--converter-unpinned", action="store_true",
+                   help="run although the converter is not the one frozen in sources/oracle-manifest.json (a deliberate "
+                        "candidate converter); recorded in the run manifest")
     p.add_argument("--_detached", action="store_true", help=argparse.SUPPRESS)
     p.set_defaults(fn=cmd_run)
 
