@@ -1,0 +1,45 @@
+{
+ "purpose": "Cached videos no reader can use: the container does not open, the footage stops decoding long before it ends, or it decodes with errors throughout. Loops read this (tools/guards.py footage_corrupt_reason) and give a chart on one of these videos a FOOTAGE_CORRUPT verdict instead of a PARK: no reader change rescues it and a rescan gives the same file. Only a fresh download does, which loops may not do - that is the owner's. `bands` null means every band of the video.",
+ "recorded": "2026-09-27",
+ "source": "the 2026-09-26 research pass (work/loop-buckets-2026-09-26.txt, bucket #1) and tools/fsck.py on 2026-09-27; each entry re-checked with OpenCV on 2026-09-27 as its `checked` field says",
+ "videos": [
+  {
+   "vid": "D6Th6URU1Sk",
+   "bands": null,
+   "problem": "does not open: moov atom not found (an incomplete download, 980 KB)",
+   "charts": ["Good Night D19"],
+   "checked": "cv2.VideoCapture does not open it; ffmpeg reports 'moov atom not found'"
+  },
+  {
+   "vid": "E1LYZv8mCjE",
+   "bands": null,
+   "problem": "does not open: moov atom not found (an incomplete download, 7 MB)",
+   "charts": ["YOU AND I S21"],
+   "checked": "cv2.VideoCapture does not open it; ffmpeg reports 'moov atom not found'"
+  },
+  {
+   "vid": "0T1_HBRTVLc",
+   "bands": null,
+   "problem": "stops decoding at 76.3 s of the 124.9 s it declares",
+   "scans_affected": ["L", "R"],
+   "charts": ["Chicken Wing S9", "Chicken Wing S11"],
+   "checked": "fsck.decodes_past(76.3): the decoder stops at 76.32 s; both band scans end there"
+  },
+  {
+   "vid": "1rcd4MaRTDg",
+   "bands": null,
+   "problem": "stops decoding at 61.6 s of the 127.5 s it declares",
+   "scans_affected": ["C"],
+   "charts": ["Alone D18"],
+   "checked": "fsck.decodes_past(61.6): the decoder stops at 61.57 s; the C scan ends there"
+  },
+  {
+   "vid": "AiNqD7lZjiM",
+   "bands": null,
+   "problem": "decodes with more than 50 errors: read from the start, the decoder stops at 15.2 s of the 114.1 s it declares",
+   "detail": "66 h264 error lines ('Invalid NAL unit size', 'Error splitting the input into NAL units') before the stop; a seek past that point decodes again, so a reader sees holes rather than a short video",
+   "charts": ["Beat of The War S21"],
+   "checked": "a straight cv2 decode from 0 s: 912 frames, last 15.18 s, 66 decoder error lines on stderr; a seek to 30 s then decodes 10 s cleanly. The 2026-09-23 extraction census parked Beat of The War S21 at 0.1% recall"
+  }
+ ]
+}

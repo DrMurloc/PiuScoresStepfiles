@@ -23,8 +23,13 @@
 #
 # OWNER REVISIT: sources/owner-revisit.json lists charts the owner will revisit by hand. Their
 # current state is accepted - no loop re-opens, re-fixes or flags them. is_owner_revisit() is
-# the skip every loop checks; the corpus grade's gate fails a commit pass that changes one of
-# their blocks (by block_sha and header_sha, recorded in the file).
+# the skip every loop checks (owner_revisit_skip() gives the reason it logs); the corpus grade's
+# gate fails a commit pass that changes one of their blocks (by block_sha and header_sha,
+# recorded in the file).
+#
+# FOOTAGE CORRUPT: sources/footage-corrupt.json lists cached videos no reader can use (the
+# container does not open, or the footage stops decoding long before it ends). A loop gives a
+# chart on one a FOOTAGE_CORRUPT verdict (footage_corrupt_reason()) rather than a PARK.
 import hashlib
 import json
 import os
@@ -151,7 +156,51 @@ def is_owner_revisit(chart_or_key, path=OWNER_REVISIT):
     """True when a chart name ("Slam D24") or chartstruct key ("Slam_-_Novasonic_D24_ARCADE")
     is on the owner-revisit list. A loop that gets True skips the chart: it does not survey,
     re-fix or flag it."""
+    return owner_revisit_entry(chart_or_key, path) is not None
+
+
+def owner_revisit_entry(chart_or_key, path=OWNER_REVISIT):
+    """The owner-revisit entry naming this chart (by name or key), or None."""
     for e in owner_revisit(path):
         if chart_or_key in (e.get("chart"), e.get("key")):
-            return True
-    return False
+            return e
+    return None
+
+
+def owner_revisit_skip(*names, path=OWNER_REVISIT):
+    """The reason a loop logs when it skips a chart for being on the owner-revisit list (any of
+    `names` - a chart name, a key - matching), or None when it is not on the list. Every
+    worklist that can ship a file checks this before a chart is surveyed or committed."""
+    for n in names:
+        e = owner_revisit_entry(n, path) if n else None
+        if e is not None:
+            why = e.get("why_revisit") or e.get("state") or ""
+            return ("owner revisit: %s is on sources/owner-revisit.json, accepted as it stands until the owner "
+                    "changes it himself - not surveyed, re-fixed or shipped%s" % (e.get("chart"), (" (%s)" % why) if why else ""))
+    return None
+
+
+# ---------------------------------------------------------------- footage that cannot be read
+
+FOOTAGE_CORRUPT = os.path.join(ROOT, "sources", "footage-corrupt.json")
+
+
+def footage_corrupt(path=FOOTAGE_CORRUPT):
+    """{vid: entry} for every cached video recorded as unusable footage (sources/footage-corrupt.json):
+    the container does not open, the video stops decoding long before it ends, or it decodes with
+    errors. A loop that meets one gives the chart a FOOTAGE_CORRUPT verdict instead of parking it:
+    no reader change can rescue it, and a rescan gives the same file. Only a fresh download does,
+    which loops may not do."""
+    if not os.path.exists(path):
+        return {}
+    with open(path, encoding="utf-8") as f:
+        return {e["vid"]: e for e in json.load(f).get("videos", [])}
+
+
+def footage_corrupt_reason(vid, band=None, path=FOOTAGE_CORRUPT):
+    """"FOOTAGE_CORRUPT: <why>" when this video (and band, if the entry names bands) is recorded as
+    unusable footage, else None."""
+    e = footage_corrupt(path).get(vid)
+    if e is None or (band and e.get("bands") and band not in e["bands"]):
+        return None
+    return "FOOTAGE_CORRUPT: videos/%s.mp4 %s (sources/footage-corrupt.json) - re-download it; loops may not" % (vid, e.get("problem", "is unusable"))
