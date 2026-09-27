@@ -17,7 +17,7 @@
 #   python -X utf8 -B tools/trace_audit.py corpus   [--workers N] [--date YYYY-MM-DD] [--out-dir DIR]
 #   python -X utf8 -B tools/trace_audit.py crops    ["<chart>" ...] [--out <dir under work/rails-audit-scratch>]
 #   python -X utf8 -B tools/trace_audit.py version  [--sources]
-# (--workers is capped at 6; --no-decode never decodes footage to measure a missing clock)
+# (--workers is capped at 6; --no-decode never reads a frame of footage to measure a missing clock)
 #
 # WHAT IS READ. F(t) is the file's judged events in chart time, enumerated from piu-annotate's own
 # lattice converter (the tap rows, each hold head that is not a tap row, and every tick-lattice
@@ -27,8 +27,11 @@
 # extract_repair.align). It is taken from the extraction and tick loops' census records (newest
 # first) when the file's timing still matches the file it was measured on, and otherwise measured
 # here, in an overlay under the scratch dir that reads the shared work/ caches and never writes
-# them (a write guard refuses it); the display lag comes from tick_repair.measure_lag on the
-# chart's isolated taps. A read counts only at a QUIET instant: its cut at least `quiet` from every
+# them (a write guard refuses it). The caches alone are tried first with every frame read refused,
+# and only a clock that needs a frame decodes the footage - in a machine-wide decode slot, never
+# with --no-decode (what the cache files are called says nothing about whether they will serve:
+# a 0-byte or mismatched pass needs a decode too). The display lag comes from
+# tick_repair.measure_lag on the chart's isolated taps. A read counts only at a QUIET instant: its cut at least `quiet` from every
 # judged event (a player's GREAT lands up to ~80 ms off the note, and a 30 fps frame adds 33 ms)
 # and outside every hold region. A read whose cut falls at or after the file's LAST judged event
 # (F(cut) == the file's total) is dropped before anything is fitted: there the counter rests at
@@ -564,15 +567,53 @@ def _seed_overlay(vid, ov, fresh=False):
             os.replace(tmp, dst)
 
 
-def _extract_in_overlay(c, ov):
+class DecodeRefused(RuntimeError):
+    """A frame read while decoding is off."""
+
+
+_REAL_CAPTURE = []
+
+
+class _FramesOff:
+    """cv2.VideoCapture with every frame read refused. Opening a video and asking its frame count or
+    fps is not a decode; reading a frame is, and every frame the clock's code reads (note_extract's
+    sprite pass, receptors' field and geometry fits, sprites' anchors) goes through read()."""
+    def __init__(self, *args, **kwargs):
+        self._cap = _REAL_CAPTURE[0](*args, **kwargs)
+
+    def read(self, *args, **kwargs):
+        raise DecodeRefused("a frame read with decoding off")
+
+    grab = retrieve = read
+
+    def __getattr__(self, name):
+        return getattr(self._cap, name)
+
+
+@contextlib.contextmanager
+def frames_off():
+    """No frame of any video is decoded inside: cv2.VideoCapture is _FramesOff while it lasts."""
+    import cv2
+    if not _REAL_CAPTURE:
+        _REAL_CAPTURE.append(cv2.VideoCapture)
+    cv2.VideoCapture = _FramesOff
+    try:
+        yield
+    finally:
+        cv2.VideoCapture = _REAL_CAPTURE[0]
+
+
+def _extract_in_overlay(c, ov, decode):
     """note_extract.extract for the chart with its ROOT and the working directory in the overlay and the
-    write guard on. Returns (notes, None) or (None, why)."""
+    write guard on; with `decode` False every frame read is refused (frames_off), so only what the
+    overlay's caches hold can answer. Returns (notes, None, False), (None, why, False), or
+    (None, why, True) when it needed a frame it was not allowed to decode."""
     vids = os.path.join(ov, "videos")
     if not os.path.exists(os.path.join(vids, c["vid"] + ".mp4")):
         # a junction to the footage: nothing is copied, and nothing under it is ever written
         r = subprocess.run(["cmd", "/c", "mklink", "/J", vids, os.path.realpath(os.path.join(ROOT, "videos"))], capture_output=True)
         if r.returncode != 0 or not os.path.exists(os.path.join(vids, c["vid"] + ".mp4")):
-            return None, "cannot reach the footage from the overlay"
+            return None, "cannot reach the footage from the overlay", False
     import note_extract as NX
     if not _HOOKED[0]:
         sys.addaudithook(_write_guard)
@@ -582,10 +623,13 @@ def _extract_in_overlay(c, ov):
     os.chdir(ov)
     _GUARD[0] = True
     try:
-        notes, meta = NX.extract(c["chart"], quiet=True)
-        return notes, None
+        with (contextlib.nullcontext() if decode else frames_off()):
+            notes, meta = NX.extract(c["chart"], quiet=True)
+        return notes, None, False
+    except DecodeRefused:
+        return None, "the caches for %s do not hold everything this clock needs, and reading the footage was not allowed" % c["vid"], True
     except Exception as ex:
-        return None, "note extraction failed: %s: %s" % (type(ex).__name__, str(ex)[:160])
+        return None, "note extraction failed: %s: %s" % (type(ex).__name__, str(ex)[:160]), False
     finally:
         _GUARD[0] = False
         NX.ROOT, NX.CACHE = saved[0], saved[1]
@@ -630,8 +674,11 @@ def measure_clock(c, blk, decode=True):
     shared work/receptor and work/spritepass caches for the video are COPIED in (a 0-byte or
     unreadable one is left behind and rebuilt in the overlay), videos/ is a junction, and
     note_extract and receptors read and write only there while a write guard refuses anything else.
-    Cached per video, band and the file's note layout (all the alignment depends on besides the
-    footage). Returns dict(offset, clock, fitted_on, source) or dict(error)."""
+    The caches alone are tried first, with every frame read refused (frames_off); only when that
+    needs a frame is the footage decoded - inside a machine-wide decode slot, and never with
+    `decode` False (--no-decode). Cached per video, band and the file's note layout (all the
+    alignment depends on besides the footage). Returns dict(offset, clock, fitted_on, source) or
+    dict(error)."""
     ncols = blk["ncols"]
     fnotes, _ = E.file_events(blk["rows"], ncols)
     play = play_of(c["vid"], c["side"]) or {}
@@ -644,10 +691,6 @@ def measure_clock(c, blk, decode=True):
         except ValueError:
             pass
     ov = os.path.join(SCRATCH, "overlay", c["vid"])
-    have_pass = bool(glob.glob(os.path.join(ROOT, "work", "spritepass", c["vid"] + ".*.pkl")) or
-                     glob.glob(os.path.join(ov, "work", "spritepass", c["vid"] + ".*.pkl")))
-    if not have_pass and not decode:
-        return dict(error="no cached sprite pass for %s, and decoding is off (--no-decode)" % c["vid"])
     for sub in ("receptor", "spritepass"):
         os.makedirs(os.path.join(ov, "work", sub), exist_ok=True)
     lock = os.path.join(SCRATCH, "overlay", c["vid"] + ".lock")
@@ -673,12 +716,19 @@ def measure_clock(c, blk, decode=True):
             return json.load(open(ck, encoding="utf-8"))
         notes = None
         for attempt in (0, 1):
+            # the second attempt starts the overlay afresh: a pass a killed run left half-written
             _seed_overlay(c["vid"], ov, fresh=attempt > 0)
-            # a decode (no pass to read, or a broken one thrown away) takes a machine-wide slot,
-            # acquired before the write guard goes on (the slot pool writes its own files)
-            decoding = attempt > 0 or not have_pass
-            with (_decode_slot("trace_audit clock %s" % c["vid"]) if decoding else contextlib.nullcontext()):
-                notes, err = _extract_in_overlay(c, ov)
+            # the caches alone first, every frame read refused: whether a decode is needed is what
+            # happens, not what the file names suggest (a 0-byte or mismatched pass needs one too)
+            notes, err, refused = _extract_in_overlay(c, ov, decode=False)
+            if refused:
+                if not decode:
+                    err += " (--no-decode)"
+                    break
+                # a decode takes a machine-wide slot, acquired before the write guard goes on (the
+                # slot pool writes its own files)
+                with _decode_slot("trace_audit clock %s" % c["vid"]):
+                    notes, err, refused = _extract_in_overlay(c, ov, decode=True)
             if notes is not None:
                 break
         if notes is None:
