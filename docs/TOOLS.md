@@ -926,7 +926,7 @@ lattice_reauthor all check it). `footage_corrupt_reason(vid, band)` reads
 
 **`variant_grade.py jobs --out <jobs.jsonl> [--shards N]`** / **`dump [--shard I/N]`** / **`index`** / **`selftest`** / **`freeze`**
 **`variant_grade.py family-begin <hyp.py>`** / **`register <hyp.py> [<variant> ...]`** / **`grade <hyp.py> [<variant> ...]`** / **`reveal <hyp.py> <variant>`** / **`family-end <hyp.py>`**
-**`variant_grade.py null [--seed S] [--triples N]`** / **`stage2 <hyp.py>|BASE <variant> --patch <p.py> [--clean-room <c.py>]`** / **`status`** / **`stop <why>`**
+**`variant_grade.py null [--seed S] [--triples N]`** / **`stage2 <hyp.py>|BASE <variant> --patch <p.py> [--clean-room <c.py>] [--scratch <dir>]`** / **`status`** / **`stop <why>`**
 (all take `--work <dir>`, default `work/variant-grade`, and `--workers N`, default 3, at most 4;
 run with `-X utf8 -B`, or it refuses)
 Bucket 9 of the loop plan: "what if the game judged hold events this way" questions, graded over
@@ -946,8 +946,12 @@ dump code, written atomically. `index` seals it: a manifest of every file with t
 the oracle hash, the converter pin and the fork's HEAD, `.py` hash and `.py` git-status hash.
 Every later command refuses (exit 2, "re-dump") when any of those moved, when simfiles or the
 oracle has uncommitted changes, or when the dump code changed. First dump (2026-09-27): 751 files
-(664 at HEAD, 87 import copies), 9,578 convertible blocks, about 11 minutes on four shards while
-the lanes bucket was decoding.
+(664 at HEAD, 87 import copies), 10,020 blocks, about 11 minutes on four shards while the lanes
+bucket was decoding. **9,578 of them convert; the other 442 the pinned converter itself cannot
+convert** (297 stop on a symbol it does not know - co-op player markers, 277 of them in doubles
+blocks; 142 on a measure whose line count does not divide, 122 of them routine; 3 others). No
+certified chart is among them. Nothing grades those 442: every "every block" below means every
+convertible block, and stage 2 only checks that the scratch copy fails on them too.
 
 **The base model is the converter.** It recounts every segment from the dumped inputs exactly as
 `lattice_hold_ticks` does - the lattice points of the TICKCOUNT in effect, held, outside a WARP or
@@ -983,7 +987,12 @@ epoch, never to re-draw after looking).
 
 **Hypotheses** are files in `work/variant-grade/hypotheses/`: `FAMILY`, `TITLE`, `KIND` (`count`
 when the rule reads only what the converter already parses; `parse` when it reads a tag the
-converter does not, or changes how rows are built - then only stage 2 can make it a winner), a
+converter does not, or changes how rows are built - then only stage 2 can make it a winner),
+`IDEAS_FROM` (where the idea came from: a list of the tune-split tier-A charts that suggested it,
+or `"spec"` for a family the loop-bucket spec itself mandates; `family-begin` refuses a family
+with neither, or naming any chart that is not tier A in the tune split, and writes the answer into
+the family's ledger row - the first epoch did not enforce this, and six of its eight families
+came from elsewhere, see STATUS.md), a
 `feature(block)` predicate (the blocks the family can touch at all) and `VARIANTS = {name: (rule
 text, transform)}`, where a transform edits a copy of the base inputs: TICKCOUNTS entries, held
 spans, excluded ranges, heads, judged rows, explicit event adjustments placed the way a head is,
@@ -1005,14 +1014,35 @@ at least 1 fix, and over tune and sealed together no pristine, unexcused fitted 
 at least 3 notes-confirmed near-miss fixes across at least 2 packs, no tier-A cluster lost, and
 the whole-corpus blast radius in full. A parse-level rule wins only when **`stage2`** reproduces
 it: the rule written as `PATCH(source) -> source` into a scratch copy of the pinned converter
-modules (`work/variants-1-scratch/conv-<hash>/`, never the clone), every dumped file converted
-through that copy in workers that must have loaded it, totals compared block by block with the
-model, the fork's state compared before and after; with `--clean-room`, a second implementation
-written from the rule's text alone (`count(block) -> total`) compared the same way. `stage2 BASE
-<name> --patch <identity>` checks the machinery against the unpatched base (2026-09-27, supervised:
-9,578 blocks through the scratch copy, 0 differ, the fork unchanged). `family-end` closes a
-family (its net is its best tune net); three testable families in a row with no positive net,
-or a winner, write a stop row, after which nothing more registers.
+modules (`<scratch>/conv-<patch hash>/`, `--scratch` defaulting to the work directory's name plus
+`-scratch`; refused inside the clone), every dumped file converted through that copy in workers
+that must have loaded it, totals compared block by block with the model, the fork's state
+compared before and after; with `--clean-room`, a second implementation written from the rule's
+text alone (`count(block) -> total`) compared the same way. **Nothing is skipped**: every
+convertible block must come back from the scratch copy converted and equal to the model; a block
+the scratch copy fails on or never returns, a file it cannot read, or a worker that did not load
+the scratch copy is a difference; each of the 442 blocks the pinned converter cannot convert must
+fail in the scratch copy too; and the row records `blocks`, `equal`, `dump_errors`, `both_error`
+and the differences by reason (`ok` needs `equal == blocks`). The first version skipped any block
+the scratch copy failed on, so a patch that broke every block would have compared nothing and
+passed; a planted patch that raises on every block now fails on all 9,578 (2026-09-27, in a
+scratch epoch). `stage2 BASE <name> --patch <identity>` checks the machinery against the
+unpatched base (2026-09-27, supervised, before the hardening: 9,578 blocks, 0 differ, the fork
+unchanged; after it, see STATUS.md). `family-end` closes a family (its net is its best tune net);
+three testable families in a row with no positive net, or a winner, write a stop row.
+
+**The epoch is closed by its stop row, and the gate is frozen with the tiers.** After a stop row,
+or 12 hours from the freeze, `register`, `grade` and `reveal` refuse (the first version refused
+only `register`, so a stopped epoch could still grade, and reveal a registered tune pass); a closed
+family (`family-end`) takes no more registrations, grades or reveals. The freeze row records the
+hash of the gate's code - `GATE_CODE` in the tool: the gate functions, the grading worker, the
+code hashing, the stop and cap checks, the family-begin, register, grade, reveal, family-end and
+null commands, and the `GATE` constants - and of
+the base model, and `family-begin`, `register`, `grade`, `reveal`, `family-end`, `null` and a
+variant's `stage2` refuse when either differs (the first version recorded the whole tool's hash in
+each row but compared nothing, so the gate could change between the freeze and a grade). An
+epoch frozen before this, like the first one, cannot grade again: a further search is a new
+`--work` and a fresh `freeze`. `status` prints whether the pin holds.
 
 **The null run** (`null`): random 1-3-condition predicates over 15 structural hold features
 (length, head and tail grid, rate, a BPM or TICKCOUNT change inside, a rate-0 span, a STOP or DELAY
@@ -1024,8 +1054,11 @@ through the same tune and full gates, must pass 0. On 2026-09-27: 0 of 27,690 (9
 Guards: `tools/tick_model.py` is never imported. The ledger (`ledger.jsonl`) is append-only and
 hash-chained - every row carries the previous row's hash, a broken chain refuses every command -
 and written under an exclusive lock file. Exit codes: 0 done (a gate that fails is a recorded
-result, not an error); 1 a self-test mismatch; 2 refused (drift, a stale dump, an unregistered or
-re-edited variant, a cap, a fourth reveal); 75 the machine stopped it.
+result, not an error; `stage2` prints `VERDICT: PASS` or `FAIL` for supervise.py); 1 a self-test
+mismatch; 2 refused (drift, a stale dump, an unregistered or re-edited variant, a cap, a stop, a
+closed family, a gate changed since the freeze, a fourth reveal, a hypothesis, patch or other file
+that does not exist - waiting does not fix a typo); 75 the machine stopped it (a MemoryError or any
+other OSError).
 
 ## Reading footage
 

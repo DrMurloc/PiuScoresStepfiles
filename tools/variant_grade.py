@@ -15,6 +15,7 @@
 #   python -X utf8 -B tools/variant_grade.py family-end <hyp.py>     close a family; the zero-net stop
 #   python -X utf8 -B tools/variant_grade.py null [--seed S] [--triples N]      random predicates, must pass 0
 #   python -X utf8 -B tools/variant_grade.py stage2 <hyp.py>|BASE <variant> --patch <p.py> [--clean-room <c.py>]
+#                                            [--scratch <dir>] (default <work>-scratch)
 #   python -X utf8 -B tools/variant_grade.py status | stop <why>
 #   common: [--work <dir>] (default work/variant-grade)  [--workers N] (default 3, at most 4)
 #
@@ -31,7 +32,10 @@
 #
 # A HYPOTHESIS is a Python file (work/variant-grade/hypotheses/<family>.py) holding FAMILY, TITLE,
 # KIND ("count" when the rule reads only what the converter already parses, "parse" when it reads
-# a tag the converter does not - then only the stage-2 scratch copy grades it for real), a
+# a tag the converter does not - then only the stage-2 scratch copy grades it for real),
+# IDEAS_FROM (where the idea came from: a list of tune-split tier-A charts, or "spec" for a family
+# the loop-bucket spec itself mandates - only tier A may suggest a rule, and family-begin refuses
+# anything else and records the answer), a
 # feature(block) predicate (which blocks the family can touch at all: the reach precheck), and
 # VARIANTS = {name: (rule text, transform)}; a transform edits a copy of the base inputs (rates,
 # held spans, excluded ranges, heads, row points, explicit event adjustments). A variant is graded
@@ -74,11 +78,19 @@
 #     block the variant changes, by what it is). A parse-level rule wins only when stage 2 - the
 #     rule written into a patched SCRATCH copy of the converter module (never the clone) and a
 #     clean-room implementation written from the rule's text alone - reproduces the model's
-#     totals on every block.
+#     totals on every block: every block the model grades must come back from the scratch copy
+#     converted and equal (a block it fails on, or never returns, is a difference, never skipped),
+#     and a block the pinned converter could not convert must fail in the scratch copy too.
 #   null: random 1-3-condition predicates over structural hold features, +/-1 event per matching
 #     hold, through the same full gate, must pass 0.
+# THE GATE IS FROZEN WITH THE TIERS: the freeze row records the hash of the gate's code (GATE_CODE:
+# the gate functions, the grading and hashing code, the family and stop logic, and the GATE
+# constants) and of the base model; family-begin, register, grade, reveal, family-end, null and a
+# variant's stage 2 refuse (exit 2) when either differs. A changed gate is a new epoch.
 # Stops: the first winner; 3 families in a row with zero net fixes; 40 variants, 6 families or
-# 12 hours from the freeze. A null is worded "no rule found at evidence tier X (n charts)".
+# 12 hours from the freeze. After a stop row, or past the 12 hours, nothing registers, grades or
+# reveals; a closed family (family-end) takes no more registrations, grades or reveals. A null is
+# worded "no rule found at evidence tier X (n charts)".
 #
 # GUARDS: tools/tick_model.py is never imported or touched. Every run uses -B (refused
 # otherwise). The dump manifest records the simfiles tree, the oracle hash, the converter pin and
@@ -88,8 +100,9 @@
 #
 # EXIT CODES: 0 done; 1 a result that fails (a self-test mismatch, a gate that fails is NOT an
 # error - it is recorded and exits 0); 2 refused (drift, a stale or incomplete dump, an unregistered
-# or re-edited variant, a cap, a fourth reveal, a converter without the lattice); 75 the machine
-# stopped it (MemoryError / OSError), retry later.
+# or re-edited variant, a cap, a stop, a closed family, a gate changed since the freeze, a fourth
+# reveal, a converter without the lattice, a file named on the command line that does not exist);
+# 75 the machine stopped it (MemoryError / any other OSError), retry later.
 import os  # noqa: E401
 import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -922,7 +935,7 @@ def cmd_freeze(args, work):
     A.write_json(work.tiers, doc, indent=0, sort_keys=True)
     h = sha_file(work.tiers)
     ledger_append(work, dict(kind="freeze", tiers_sha=h, salt_sha=sha_text(salt), dump_key=man["dump_key"],
-                             tool=tool_hash(), model=model_code_hash()))
+                             tool=tool_hash(), model=model_code_hash(), gate=gate_code_hash()))
     summary = tiers_summary(doc)
     print(json.dumps(summary, indent=1))
 
@@ -1009,6 +1022,8 @@ def ledger_append(work, row):
 
 def load_hyp(path):
     path = os.path.abspath(path)
+    if not os.path.isfile(path):
+        refuse("no hypothesis file %s" % path)
     name = "vg_hyp_" + re.sub(r"[^A-Za-z0-9_]", "_", os.path.splitext(os.path.basename(path))[0])
     spec = importlib.util.spec_from_file_location(name, path)
     mod = importlib.util.module_from_spec(spec)
@@ -1085,21 +1100,65 @@ def registrations(work):
     return rows, fam, var
 
 
-def check_caps(work, adding_variants=0, adding_family=False):
-    rows, fam, var = registrations(work)
+def check_open(work, family=None):
+    """Refuse once the epoch is over - a stop row, or 12 hours from the freeze - and, for a family,
+    once that family is closed. Every command that registers, grades or reveals calls it."""
+    rows = ledger_rows(work)
+    stops = [r for r in rows if r["kind"] == "stop"]
+    if stops:
+        refuse("the bucket stopped: %s (a further search is a new epoch: a new --work and a fresh freeze)" % stops[-1]["why"])
     freeze = [r for r in rows if r["kind"] == "freeze"]
     if freeze:
         t0 = time.mktime(time.strptime(freeze[0]["at"], "%Y-%m-%d %H:%M:%S"))
         if (time.time() - t0) / 3600 > GATE["max_hours"]:
             refuse("the 12-hour cap from the freeze is spent")
+    if family is not None and any(r["kind"] == "family-end" and r["family"] == family for r in rows):
+        refuse("family %s is closed (family-end): it takes no more registrations, grades or reveals" % family)
+
+
+def check_caps(work, adding_variants=0, adding_family=False, family=None):
+    check_open(work, family)
+    rows, fam, var = registrations(work)
     tested = [f for f in fam.values() if f.get("reach") == "TESTABLE"]
     if adding_family and len(tested) >= GATE["max_families"]:
         refuse("the family cap (%d) is spent" % GATE["max_families"])
     if len(var) + adding_variants > GATE["max_variants"]:
         refuse("the variant cap (%d) would be exceeded (%d registered)" % (GATE["max_variants"], len(var)))
-    stops = [r for r in rows if r["kind"] == "stop"]
-    if stops:
-        refuse("the bucket stopped: %s" % stops[-1]["why"])
+
+
+# The gate's code, hashed into the freeze row with the base model: a grade or a reveal judged by
+# code that changed after the tiers were frozen is not the pre-registered gate.
+GATE_CODE = ("evaluate", "tune_pass", "full_pass", "collect", "chart_value", "cluster_windows", "blast_radius",
+             "_grade_init", "_grade_file", "run_grade", "check_open", "check_caps", "registrations", "_prepare",
+             "_strip_doc", "closure_hash", "variant_hash", "feature_hash", "cmd_family_begin", "cmd_register",
+             "cmd_grade", "cmd_reveal", "cmd_family_end", "cmd_null", "check_pinned", "gate_code_hash",
+             "model_code_hash")
+
+
+def gate_code_hash():
+    g = globals()
+    src = "\n".join(inspect.getsource(g[n]) for n in GATE_CODE)
+    return sha_text(src + "\n" + json.dumps(GATE, sort_keys=True))
+
+
+def check_pinned(work):
+    """Refuse unless the gate's code and the base model hash to what the freeze row recorded."""
+    frozen = [r for r in ledger_rows(work) if r["kind"] == "freeze"]
+    if not frozen:
+        refuse("the tiers are not frozen: run `freeze` first")
+    f = frozen[-1]
+    if "gate" not in f:
+        refuse("this epoch was frozen by a tool that did not pin its gate code, so a grade now could be judged by "
+               "code that changed after the freeze - a further search is a new epoch (a new --work, a fresh freeze)")
+    moved = []
+    g = gate_code_hash()
+    if f["gate"] != g:
+        moved.append("gate code %s -> %s" % (f["gate"][:12], g[:12]))
+    m = model_code_hash()
+    if f.get("model") != m:
+        moved.append("base model %s -> %s" % (str(f.get("model"))[:12], m[:12]))
+    if moved:
+        refuse("the gate has changed since the freeze (%s): a changed gate is a new epoch" % "; ".join(moved))
 
 
 # ================================================================ grading (a worker pool over files)
@@ -1430,14 +1489,29 @@ def cmd_selftest(args, work):
 
 def cmd_family_begin(args, work):
     """A family boundary: re-check the dump (it must describe the repo as it is now), then the
-    reach precheck. An UNTESTABLE family is recorded and spends nothing."""
-    man, oracle, corpus, tiers = startup(work, workers=args.workers)
+    reach precheck. An UNTESTABLE family is recorded and spends nothing. Only tier A may suggest a
+    rule: the hypothesis names the tune-split tier-A charts its idea came from (IDEAS_FROM), or
+    "spec" for a family the loop-bucket spec mandates, and the answer goes into the ledger."""
     mod = load_hyp(args.hyp)
     rows, fam, var = registrations(work)
     if mod.FAMILY in fam:
         print("family %s already begun: %s" % (mod.FAMILY, fam[mod.FAMILY]["reach"]))
         return
-    check_caps(work, adding_family=True)
+    check_caps(work, adding_family=True, family=mod.FAMILY)
+    check_pinned(work)
+    tiers = load_tiers(work)
+    src = getattr(mod, "IDEAS_FROM", None)
+    if src != "spec":
+        if not isinstance(src, (list, tuple)) or not src or not all(isinstance(n, str) for n in src):
+            refuse("%s: IDEAS_FROM must name the tune-split tier-A charts the idea came from (a list), or be \"spec\" "
+                   "for a family the bucket spec mandates - only tier A may suggest a rule" % mod.__vg_path__)
+        bad = [n for n in src if n not in tiers["charts"] or n in tiers["excluded"]
+               or not tiers["charts"][n].get("tier_a") or tiers["charts"][n]["split"] != "tune"]
+        if bad:
+            refuse("IDEAS_FROM names chart(s) that are not tune-split tier A: %s (tier A in the tune split: %s)" % (
+                bad, sorted(n for n, r in tiers["charts"].items()
+                            if r.get("tier_a") and r["split"] == "tune" and n not in tiers["excluded"])))
+    man, oracle, corpus, tiers = startup(work, workers=args.workers)
     ch, ex = tiers["charts"], tiers["excluded"]
     carriers = {}
     for n, row in ch.items():
@@ -1465,8 +1539,10 @@ def cmd_family_begin(args, work):
     verdict = "UNTESTABLE" if why else "TESTABLE"
     row = ledger_append(work, dict(kind="family", family=mod.FAMILY, title=mod.TITLE, feature_hash=feature_hash(mod),
                                    reach=verdict, why=why, carriers=dict(must), notes_confirmed_carriers=sorted(ncn),
-                                   packs=packs, dump_key=man["dump_key"], tiers_sha=sha_file(work.tiers)))
+                                   packs=packs, dump_key=man["dump_key"], tiers_sha=sha_file(work.tiers),
+                                   ideas_from=src if src == "spec" else sorted(src)))
     print("family %s (%s): %s" % (mod.FAMILY, mod.TITLE, verdict))
+    print("  idea from: %s" % ("the bucket spec" if src == "spec" else ", ".join(sorted(src))))
     print("  carriers by class: %s" % dict(must))
     print("  notes-confirmed near misses carrying it: %d %s, packs %s" % (len(ncn), sorted(ncn), packs))
     for w in why:
@@ -1484,8 +1560,12 @@ def cmd_register(args, work):
     if fam[mod.FAMILY]["feature_hash"] != feature_hash(mod):
         refuse("the family's feature() changed since family-begin")
     names = args.variants or sorted(mod.VARIANTS)
+    unknown = [v for v in names if v not in mod.VARIANTS]
+    if unknown:
+        refuse("%s defines no variant(s) %s" % (mod.__vg_path__, unknown))
     new = [v for v in names if (mod.FAMILY, v) not in var]
-    check_caps(work, adding_variants=len(new))
+    check_caps(work, adding_variants=len(new), family=mod.FAMILY)
+    check_pinned(work)
     for v in names:
         h = variant_hash(mod, v)
         if (mod.FAMILY, v) in var:
@@ -1501,6 +1581,11 @@ def cmd_register(args, work):
 
 def _prepare(args, work, mod, names):
     rows, fam, var = registrations(work)
+    if mod.FAMILY not in fam:
+        refuse("family %s was never begun" % mod.FAMILY)
+    unknown = [v for v in names if v not in mod.VARIANTS]
+    if unknown:
+        refuse("%s defines no variant(s) %s" % (mod.__vg_path__, unknown))
     for v in names:
         r = var.get((mod.FAMILY, v))
         if r is None:
@@ -1513,10 +1598,12 @@ def _prepare(args, work, mod, names):
 
 
 def cmd_grade(args, work):
-    man, oracle, corpus, tiers = startup(work, need_corpus=False, workers=args.workers)
     mod = load_hyp(args.hyp)
+    check_open(work, mod.FAMILY)                 # a stop row, the 12 hours, a closed family: before any work
+    check_pinned(work)
     names = args.variants or sorted(mod.VARIANTS)
     variants = _prepare(args, work, mod, names)
+    man, oracle, corpus, tiers = startup(work, need_corpus=False, workers=args.workers)
     res = run_grade(work, man, [mod], variants, cluster_windows(tiers), args.workers)
     out = {}
     for vkey in variants:
@@ -1526,7 +1613,7 @@ def cmd_grade(args, work):
         br = blast_radius(tiers, res, vkey, sealed_detail=False)
         fam, v = vkey.split("/", 1)
         summary = dict(kind="grade", family=fam, variant=v, code_hash=variant_hash(mod, v), tool=tool_hash(),
-                       model=model_code_hash(), scope="tune", tune_pass=ok, why=why,
+                       model=model_code_hash(), gate=gate_code_hash(), scope="tune", tune_pass=ok, why=why,
                        counts={k: (len(x) if isinstance(x, list) else x) for k, x in r.items()},
                        fixes=r["fixes"], notes_fixes=r["notes_fixes"], pristine_breaks=r["pristine_breaks"][:40],
                        fitted_breaks=r["fitted_breaks"][:40], fitted_breaks_excused=r["fitted_breaks_excused"][:40],
@@ -1546,8 +1633,9 @@ def cmd_grade(args, work):
 
 
 def cmd_reveal(args, work):
-    man, oracle, corpus, tiers = startup(work, need_corpus=False, workers=args.workers)
     mod = load_hyp(args.hyp)
+    check_open(work, mod.FAMILY)                 # a stop row, the 12 hours, a closed family: before any work
+    check_pinned(work)
     variants = _prepare(args, work, mod, [args.variant])
     rows = ledger_rows(work)
     reveals = [r for r in rows if r["kind"] == "reveal"]
@@ -1555,9 +1643,10 @@ def cmd_reveal(args, work):
         refuse("the sealed hold-out has had its %d reveals" % GATE["max_reveals"])
     vkey = "%s/%s" % (mod.FAMILY, args.variant)
     graded = [r for r in rows if r["kind"] == "grade" and r["family"] == mod.FAMILY and r["variant"] == args.variant
-              and r["code_hash"] == variant_hash(mod, args.variant)]
+              and r["code_hash"] == variant_hash(mod, args.variant) and r.get("gate") == gate_code_hash()]
     if not graded or not graded[-1]["tune_pass"]:
         refuse("%s has not passed the tune gate under its registered hash - a reveal is only for a tune pass" % vkey)
+    man, oracle, corpus, tiers = startup(work, need_corpus=False, workers=args.workers)
     res = run_grade(work, man, [mod], variants, cluster_windows(tiers), args.workers)
     vals, uvals, cvals, clvals = collect(tiers, res, vkey)
     sealed = evaluate(tiers, vals, uvals, cvals, clvals, {"sealed"})
@@ -1577,6 +1666,7 @@ def cmd_reveal(args, work):
 def cmd_null(args, work):
     """Random structural predicates, +/-1 event per matching hold, through the same full gate."""
     import numpy as np
+    check_pinned(work)
     man, oracle, corpus, tiers = startup(work, workers=args.workers)
     ch, ex = tiers["charts"], tiers["excluded"]
     # per-hold structural features over the population, the catalog set and the upstream blocks
@@ -1745,10 +1835,16 @@ def cmd_status(args, work):
     print("ledger rows %d; families %d (%d testable); variants registered %d of %d; reveals %d of %d" % (
         len(rows), len(fam), sum(1 for f in fam.values() if f["reach"] == "TESTABLE"), len(var), GATE["max_variants"],
         sum(1 for r in rows if r["kind"] == "reveal"), GATE["max_reveals"]))
+    frozen = [r for r in rows if r["kind"] == "freeze"]
+    if frozen:
+        f = frozen[-1]
+        print("gate pin: %s" % ("none (frozen before the gate was pinned: this epoch cannot grade)" if "gate" not in f else
+                                "ok %s" % f["gate"][:12] if f["gate"] == gate_code_hash() and f.get("model") == model_code_hash()
+                                else "MOVED since the freeze (this epoch cannot grade)"))
     for r in rows:
         if r["kind"] in ("freeze", "family", "reveal", "null", "stop"):
             print(" ", r["at"], r["kind"], {k: v for k, v in r.items() if k in ("family", "variant", "reach", "why", "gate_pass",
-                                                                               "passers", "rules", "tiers_sha")})
+                                                                               "passers", "rules", "tiers_sha", "ideas_from")})
         elif r["kind"] == "grade":
             print(" ", r["at"], "grade", r["family"], r["variant"], r["code_hash"][:12], "tune_pass=%s" % r["tune_pass"],
                   "net %+d" % r["counts"]["net"])
@@ -1764,6 +1860,7 @@ def cmd_family_end(args, work):
         refuse("family %s was never begun" % mod.FAMILY)
     if any(r["kind"] == "family-end" and r["family"] == mod.FAMILY for r in rows):
         refuse("family %s is already closed" % mod.FAMILY)
+    check_pinned(work)
     reach = fam[mod.FAMILY]["reach"]
     grades = [r for r in rows if r["kind"] == "grade" and r["family"] == mod.FAMILY]
     reveals = [r for r in rows if r["kind"] == "reveal" and r["family"] == mod.FAMILY]
@@ -1795,15 +1892,25 @@ def cmd_stop(args, work):
 
 # ================================================================ stage 2: the patched scratch converter
 
+_S2 = {}
+
+
 def _stage2_init(scratch):
+    """Load the scratch copy in this worker. A failure is recorded, not raised: an initializer that
+    raises kills the worker, the pool starts another, and the run never ends. Every file the
+    worker is then handed comes back as a file error, which the comparison counts."""
     if os.name == "nt":
         import ctypes
         k = ctypes.windll.kernel32
         k.SetPriorityClass(k.GetCurrentProcess(), 0x4000)
     sys.path.insert(0, scratch)
-    import piu_annotate
-    if not os.path.abspath(piu_annotate.__file__).startswith(os.path.abspath(scratch)):
-        raise RuntimeError("the scratch converter did not load from %s" % scratch)
+    try:
+        from piu_annotate.formats import ssc_to_chartstruct as C
+        if not os.path.abspath(C.__file__).startswith(os.path.abspath(scratch) + os.sep):
+            raise RuntimeError("the converter loaded from %s, not the scratch copy %s" % (C.__file__, scratch))
+        _S2["loaded"] = os.path.abspath(C.__file__)
+    except Exception as ex:
+        _S2["load_error"] = ("%s: %s" % (type(ex).__name__, ex))[:200]
     try:
         from loguru import logger
         logger.remove()
@@ -1813,24 +1920,35 @@ def _stage2_init(scratch):
 
 def cmd_stage2(args, work):
     """Write the rule into a SCRATCH copy of the converter's modules (never the clone), convert
-    every block through it, and compare with the model's variant totals; with --clean-room, also a
-    second implementation written from the rule's text alone. Refuses unless the scratch copy is
-    what loaded."""
+    every dumped file through it, and compare with the model's variant totals block by block;
+    with --clean-room, also a second implementation written from the rule's text alone. Nothing
+    is skipped: every block the model grades must come back from the scratch copy converted and
+    equal, a block the pinned converter could not convert must fail in the scratch copy too, and
+    a file or block that errors or never comes back is a difference."""
     import shutil
-    import tempfile
-    man, oracle, corpus, tiers = startup(work, workers=args.workers)
+    for label, p in (("--patch", args.patch), ("--clean-room", args.clean_room)):
+        if p is not None and not os.path.isfile(p):
+            refuse("%s: no file %s" % (label, os.path.abspath(p)))
     if args.hyp == "BASE":                       # the machinery's own check: an unpatched (or identity) copy
         mod, variants, vkey = None, {}, "base"
     else:
         mod = load_hyp(args.hyp)
+        check_pinned(work)
         variants = _prepare(args, work, mod, [args.variant])
         vkey = "%s/%s" % (mod.FAMILY, args.variant)
     spec = importlib.util.spec_from_file_location("vg_patch", os.path.abspath(args.patch))
     patch = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(patch)
+    if not callable(getattr(patch, "PATCH", None)):
+        refuse("%s defines no PATCH(source) -> source" % os.path.abspath(args.patch))
+    base_dir = os.path.abspath(args.scratch or (work.dir.rstrip("\\/") + "-scratch"))
+    conv_abs = os.path.abspath(CONVERTER)
+    if (base_dir + os.sep).lower().startswith(conv_abs.lower() + os.sep):
+        refuse("the scratch directory %s is inside the converter clone - stage 2 never writes there" % base_dir)
+    man, oracle, corpus, tiers = startup(work, workers=args.workers)
     import corpus_grade as CG
     pin = CG.converter_pin()
-    scratch = os.path.join(ROOT, "work", "variants-1-scratch", "conv-" + sha_file(os.path.abspath(args.patch))[:12])
+    scratch = os.path.join(base_dir, "conv-" + sha_file(os.path.abspath(args.patch))[:12])
     if os.path.exists(scratch):
         shutil.rmtree(scratch)
     for rel in pin["files"]:
@@ -1845,63 +1963,112 @@ def cmd_stage2(args, work):
             f.write(text)
     before = fork_state()
     res = run_grade(work, man, [mod] if mod else [], variants, {}, args.workers)
-    # convert every head/import file through the scratch copy, in workers that must load it
+    # what the model says for every dumped block, and which blocks the pinned converter could not convert
+    model, dump_err, rel_of = {}, set(), {}
+    for csha, f in corpus.files.items():
+        rel_of[csha] = f["rel"]
+        for b in f["blocks"]:
+            k = (csha, b["tag"], b["index"], b["reachable"])
+            if "error" in b:
+                dump_err.add(k)
+            else:
+                model[k] = (res.get(csha) or {}).get(k[1:], {}).get(vkey)
+    # convert every head/import file through the scratch copy, in workers that must have loaded it
     from multiprocessing import Pool
-    jobs = []
-    for f in man["files"]:
-        jobs.append((f["rel"], f["csha"], f["which"]))
-    uniq = {}
-    for rel, csha, which in jobs:
-        uniq.setdefault(csha, (rel, which))
     head_tree, imp_tree = CG.Tree("HEAD"), CG.Tree(IMPORT_COMMIT)
+    uniq = {}
+    for f in man["files"]:
+        uniq.setdefault(f["csha"], (f["rel"], f["which"]))
     items = []
     for csha, (rel, which) in sorted(uniq.items()):
-        data = (head_tree if which == "head" else imp_tree).read(rel)
-        items.append((csha, rel, data))
-    diffs, n = [], 0
+        items.append((csha, rel, (head_tree if which == "head" else imp_tree).read(rel)))
+    scratch_out, file_errors, loaded = {}, {}, set()
     with Pool(min(args.workers, GATE["max_workers"]), initializer=_stage2_init, initargs=(scratch,)) as pool:
-        for csha, blocks in pool.imap_unordered(_stage2_convert, items, chunksize=4):
-            for (tag, idx, reach), tot in blocks.items():
-                n += 1
-                mine = (res.get(csha) or {}).get((tag, idx, reach), {}).get(vkey)
-                if mine != tot:
-                    diffs.append((uniq[csha][0], tag, idx, mine, tot))
+        for csha, blocks, ferr, where in pool.imap_unordered(_stage2_convert, items, chunksize=4):
+            if ferr:
+                file_errors[csha] = ferr
+            if where:
+                loaded.add(where)
+            for k, v in blocks.items():
+                scratch_out[(csha,) + k] = v
     after = fork_state()
+    diffs, why = [], Counter()
+
+    def diff(k, mine, theirs, reason):
+        why[reason] += 1
+        diffs.append((rel_of.get(k[0], k[0]), k[1], k[2], mine, theirs, reason))
+
+    equal = 0
+    for k, mine in sorted(model.items()):
+        theirs = scratch_out.get(k)
+        if not isinstance(mine, int):
+            diff(k, mine, theirs, "the model has no total (the variant raised)")
+        elif k not in scratch_out:
+            diff(k, mine, file_errors.get(k[0], "absent"), "the scratch copy never returned it")
+        elif not isinstance(theirs, int):
+            diff(k, mine, theirs, "the scratch copy failed to convert it")
+        elif theirs != mine:
+            diff(k, mine, theirs, "totals differ")
+        else:
+            equal += 1
+    both_error = 0
+    for k in sorted(dump_err):
+        theirs = scratch_out.get(k)
+        if k not in scratch_out:
+            diff(k, "ERR", file_errors.get(k[0], "absent"), "the scratch copy never returned it")
+        elif isinstance(theirs, int):
+            diff(k, "ERR", theirs, "the scratch copy converts a block the pinned converter could not")
+        else:
+            both_error += 1
+    for k in sorted(set(scratch_out) - set(model) - dump_err):
+        diff(k, None, scratch_out[k], "a block the dump does not have")
     clean = None
     if args.clean_room:
         spec = importlib.util.spec_from_file_location("vg_clean", os.path.abspath(args.clean_room))
         cr = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(cr)
-        cdiffs, cn = [], 0
-        for csha, f in corpus.files.items():
-            for b in f["blocks"]:
-                if "error" in b:
-                    continue
-                cn += 1
-                mine = (res.get(csha) or {}).get((b["tag"], b["index"], b["reachable"]), {}).get(vkey)
+        cdiffs, cequal = [], 0
+        for k, mine in sorted(model.items()):
+            b = next(x for x in corpus.files[k[0]]["blocks"] if (x["tag"], x["index"], x["reachable"]) == k[1:])
+            try:
                 theirs = cr.count(b)
-                if mine != theirs:
-                    cdiffs.append((f["rel"], b["tag"], b["index"], mine, theirs))
-        clean = dict(blocks=cn, differ=len(cdiffs), examples=cdiffs[:10])
-    ok = not diffs and before == after and (clean is None or clean["differ"] == 0)
+            except Exception as ex:
+                theirs = "ERR %s: %s" % (type(ex).__name__, str(ex)[:120])
+            if isinstance(mine, int) and isinstance(theirs, int) and mine == theirs:
+                cequal += 1
+            else:
+                cdiffs.append((rel_of[k[0]], k[1], k[2], mine, theirs))
+        clean = dict(blocks=len(model), equal=cequal, differ=len(cdiffs), examples=[list(map(str, d)) for d in cdiffs[:10]])
+    ok = (len(model) > 0 and equal == len(model) and not diffs and not file_errors and before == after
+          and (clean is None or (clean["differ"] == 0 and clean["equal"] == len(model))))
     row = ledger_append(work, dict(kind="stage2", family=mod.FAMILY if mod else "BASE", variant=args.variant,
                                    code_hash=variant_hash(mod, args.variant) if mod else None,
-                                   patch_sha=sha_file(os.path.abspath(args.patch)), scratch=scratch, blocks=n,
-                                   differ=len(diffs), examples=[list(map(str, d)) for d in diffs[:10]], clean_room=clean,
+                                   gate=gate_code_hash() if mod else None,
+                                   patch_sha=sha_file(os.path.abspath(args.patch)), scratch=scratch,
+                                   loaded_from=sorted(loaded), files=len(items), file_errors=len(file_errors),
+                                   blocks=len(model), equal=equal, dump_errors=len(dump_err), both_error=both_error,
+                                   differ=len(diffs), differ_by_reason=dict(why),
+                                   examples=[list(map(str, d)) for d in diffs[:10]], clean_room=clean,
                                    fork_unchanged=before == after, ok=ok))
     print(json.dumps(row, indent=1))
+    print("VERDICT: %s" % ("PASS" if ok else "FAIL"))
 
 
 def _stage2_convert(item):
+    """One file through the scratch copy -> (csha, {(tag, index, reachable): total or 'ERR ...'},
+    file error or None, the converter module path it used). Nothing is dropped: a block that fails
+    to convert comes back as an error string, a file that fails as a file error."""
     csha, rel, data = item
+    if "loaded" not in _S2:
+        return csha, {}, "the scratch converter did not load: %s" % _S2.get("load_error", "?"), None
     import tempfile
-    from piu_annotate.formats.sscfile import SongSSC
-    from piu_annotate.formats import ssc_to_chartstruct as C
-    fd, path = tempfile.mkstemp(suffix=".ssc", prefix="vg2-")
     out = {}
+    fd, path = tempfile.mkstemp(suffix=".ssc", prefix="vg2-")
     try:
         with os.fdopen(fd, "wb") as f:
             f.write(data)
+        from piu_annotate.formats.sscfile import SongSSC
+        from piu_annotate.formats import ssc_to_chartstruct as C
         song = SongSSC(path, "PLACEHOLDER_PACK_DONOTUSE")
         seen = set()
         for i, sc in enumerate(song.stepcharts):
@@ -1910,18 +2077,26 @@ def _stage2_convert(item):
             seen.add(tag)
             try:
                 r = C.stepchart_ssc_to_chartstruct(sc)
-            except Exception:
+            except (MemoryError, OSError):
+                raise
+            except Exception as ex:
+                out[(tag, i, reach)] = ("ERR %s: %s" % (type(ex).__name__, ex))[:200]
                 continue
             if r[0] is None:
+                out[(tag, i, reach)] = ("ERR convert failed: %s" % r[-1])[:200]
                 continue
             df, ht, _ = r
             out[(tag, i, reach)] = int(df["Line"].str.contains("1", regex=False).sum()) + int(sum(round(x[2]) for x in ht))
+    except (MemoryError, OSError):
+        raise
+    except Exception as ex:
+        return csha, out, ("%s: %s" % (type(ex).__name__, ex))[:200], _S2["loaded"]
     finally:
         try:
             os.remove(path)
         except OSError:
             pass
-    return csha, out
+    return csha, out, None, _S2["loaded"]
 
 
 # ================================================================ main
@@ -1960,6 +2135,7 @@ def main():
     p.add_argument("variant")
     p.add_argument("--patch", required=True)
     p.add_argument("--clean-room")
+    p.add_argument("--scratch", help="where the scratch converter copies go (default: <work>-scratch)")
     sub.add_parser("status")
     p = sub.add_parser("stop")
     p.add_argument("why")
@@ -1970,6 +2146,8 @@ def main():
          "family-begin": cmd_family_begin, "register": cmd_register, "grade": cmd_grade, "reveal": cmd_reveal,
          "null": cmd_null, "stage2": cmd_stage2, "status": cmd_status, "stop": cmd_stop,
          "family-end": cmd_family_end}[args.cmd](args, work)
+    except (FileNotFoundError, NotADirectoryError, IsADirectoryError) as ex:
+        refuse("a file it needs does not exist: %s: %s" % (type(ex).__name__, ex))     # waiting does not fix it
     except (MemoryError, OSError) as ex:
         refuse("the machine stopped it: %s: %s" % (type(ex).__name__, ex), TEMPFAIL)
 
