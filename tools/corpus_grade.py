@@ -420,9 +420,16 @@ class Converter:
         try:
             with open(self._cache_path(key), encoding="utf-8") as f:
                 d = json.load(f)
-            return d["result"] if d.get("key") == key else None
-        except (OSError, ValueError, KeyError):
+            res = d["result"] if d.get("key") == key else None
+        except (OSError, ValueError, KeyError, TypeError, AttributeError):
             return None                                  # missing, 0-byte or torn: rebuild
+        # only a count is ever cached: anything else under a matching key (an error row, a count
+        # whose parts do not add up) is not believed, and is converted again
+        if not (isinstance(res, dict) and all(isinstance(res.get(k), int) and not isinstance(res.get(k), bool)
+                                              for k in ("taps", "ticks", "implied"))
+                and res["implied"] == res["taps"] + res["ticks"]):
+            return None
+        return res
 
     def _cache_put(self, key, result):
         if not self.use_cache:
@@ -688,11 +695,12 @@ def cmd_grade(args):
                legacy_oracle_reads=sorted(set(otree.legacy)), summary=summarize(rows, imp),
                charts=[rows[n] for n in sorted(rows)])
     s = out["summary"]
+    say = sys.stderr if args.out == "-" else sys.stdout      # with --out -, stdout carries the JSON alone
     print("%s: %d certified, %d exact (%d PROTECTED: %d import + %d promotion; %d PROVISIONAL), %d exact at %s, %d errors"
           % (blocks.label[:12], s["certified"], s["exact"], s["protected"], s["protected_by_import"],
-             s["protected_by_promotion"], s["provisional"], s["exact_at_import"], IMPORT_COMMIT, s["errors"]))
+             s["protected_by_promotion"], s["provisional"], s["exact_at_import"], IMPORT_COMMIT, s["errors"]), file=say)
     if s["protected_not_exact"]:
-        print("  PROTECTED but not exact: %s" % ", ".join(s["protected_not_exact"]))
+        print("  PROTECTED but not exact: %s" % ", ".join(s["protected_not_exact"]), file=say)
     if args.out == "-":
         sys.stdout.write(dump(out))
     elif args.out:
