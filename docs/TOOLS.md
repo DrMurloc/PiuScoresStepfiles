@@ -193,18 +193,28 @@ The counter scan (`work/combo/<vid>.<band>.jsonl`, `combo_reader`) is made on de
 **`corpus_grade.py grade [--rev <commit>] [--oracle-rev <commit>] [--out <path>|-]`**
 **`corpus_grade.py gate --base <rev> [--head <rev>] [--oracle-pass] [--declared N] [--json <path>]`**
 **`corpus_grade.py freeze [--repin]`** / **`conflicts [--write]`** / **`selfcheck`**
-(all take `--workers N` (default 6), `--no-cache`, `--cache-dir <dir>`, `--unpinned`; run with
-`-X utf8 -B`, or it refuses)
+(all take `--workers N` (default 6), `--no-cache`, `--cache-dir <dir>`, `--unpinned`,
+`--stall-timeout S` (default 600); run with `-X utf8 -B`, or it refuses)
 Grades every certified chart — the population the repair loops draw, `corpus_map.charts()` over
 the committed ledgers — through the converter, taps plus hold ticks against the certified count,
-and ratchets the result. `--rev` reads a commit's `.ssc` files as git blobs and never the
-working tree; without it the working tree is graded. The oracle is the working tree's unless
-`--oracle-rev` names a commit. The JSON is deterministic (sorted, no timings; timings go to
-stderr), so two grades of one tree are byte-identical: 1,479 charts in about 37 s cold on 6
-workers, about 10 s when every block is in the conversion cache (`work/corpus-grade-cache/`,
+and ratchets the result. **`--rev` takes only the blocks from the commit** (its `.ssc` files, read
+as git blobs, never the working tree); **the oracle — who is certified, and at what count — is
+still read from the working tree unless `--oracle-rev` names a commit too.** Without `--rev` the
+working tree's blocks are graded. The JSON is deterministic (sorted, no timings; timings go to
+stderr), so two grades of one tree are byte-identical: 1,490 charts, plus the import commit's
+blocks for the tiers, in about 40–60 s cold on 6 workers (depending on what else the shared box
+is running) and about 7 s when every block is in the conversion cache (`work/corpus-grade-cache/`,
 keyed by the converter pin, the conversion code's own source, the file's content with CRLF read
 as LF, and the block tag; a 0-byte or torn entry is a miss and is rebuilt; writes are tmp +
 `os.replace`). Workers run at BelowNormal priority.
+
+Only a count is cached. An error row is converted again on every run, and a second time in a
+fresh worker before it is believed; if the two answers differ the run refuses. (The converter
+catches its own exceptions while it builds the beat map, so a MemoryError there looks like an
+ordinary failure. A cached one would stay a wrong "not exact" until someone deleted it.) A
+MemoryError or OSError that reaches the grade refuses the run with exit 2, and nothing is cached
+for it. So does a pool that delivers no result for `--stall-timeout` seconds: a killed or hung
+worker loses its block without a word, and the pool would otherwise wait for ever.
 
 Two tiers. **PROTECTED**: exact when the import commit `a23cee5`'s blocks are graded under the
 current oracle (the corpus as upstream published it; the tool checks that `simfiles/` first
@@ -251,9 +261,10 @@ tree is compared by content with CRLF read as LF); an owner-revisit chart's bloc
 `owner-revisit.json` records; a chart in the ORACLE_CONFLICT set becomes exact (halt for review
 instead of taking the credit); `demotions.jsonl` or `protected-promotions.jsonl` lost or rewrote
 a line (both are append-only); `--declared N` is given and the net change in exact charts is not
-N. It exits 2 when it cannot judge (drift at the head, a revision that does not resolve). It
-writes nothing but `--json`, and never reads a grade file to decide anything — both sides are
-re-graded from blobs.
+N. It exits 2 when it cannot judge (drift at the head, a revision that does not resolve, a
+conversion the machine failed or a worker that died, a converter that answered twice
+differently). It writes nothing but `--json`, and never reads a grade file to decide anything —
+both sides are re-graded from blobs.
 
 The ledgers and lists it enforces. **`sources/demotions.jsonl`** (append-only, empty until the
 first demotion): one JSON object per line, `{"chart": <census chart name>, "block_sha": <the

@@ -18,9 +18,11 @@
 #   python -X utf8 -B tools/corpus_grade.py conflicts [--write]   (builds sources/oracle-conflict.json)
 #   python -X utf8 -B tools/corpus_grade.py selfcheck             (guards' block split == the converter's)
 #   common: [--workers N] (default 6)  [--no-cache]  [--cache-dir <dir>]  [--unpinned]
+#           [--stall-timeout S] (default 600)
 #
 # grade --rev reads the commit's .ssc files as git blobs (never the working tree); without --rev
-# it grades the working tree. The oracle is the working tree's unless --oracle-rev names one.
+# it grades the working tree. Only the blocks come from --rev: the oracle (who is certified, at
+# what count) is still the working tree's unless --oracle-rev names a commit too.
 # The output JSON is deterministic - sorted, no timings (timings go to stderr) - so two grades of
 # one tree are byte-identical.
 #
@@ -51,7 +53,9 @@
 #   - demotions.jsonl or protected-promotions.jsonl lost or rewrote a line (both are append-only);
 #   - --declared N is given and the net change in exact charts is not N.
 # It exits 2 when it cannot judge (converter or oracle drift at the head, a revision that does
-# not resolve). It writes nothing but --json, and it never reads a grade file to decide anything.
+# not resolve, a conversion the machine failed - MemoryError, OSError, a worker that died or hung
+# past --stall-timeout - or a converter that answers differently twice). It writes nothing but
+# --json, and it never reads a grade file to decide anything.
 import argparse
 import hashlib
 import inspect
@@ -350,8 +354,10 @@ def _worker_init(root):
 
 
 def convert_one(job):
-    """(path, tag, rel) -> ({taps, ticks, implied} or {error}, worker's converter pin, modules
-    loaded outside the pin). The arithmetic is tick_verify's."""
+    """(path, tag, rel) -> ({taps, ticks, implied}, {error} or {transient}, worker's converter
+    pin, modules loaded outside the pin). The arithmetic is tick_verify's. MemoryError and OSError
+    say something about the machine, not the file: they come back as `transient`, which the
+    parent never caches and refuses on."""
     path, tag, rel = job
     from piu_annotate.formats.sscfile import StepchartSSC
     from piu_annotate.formats.ssc_to_chartstruct import stepchart_ssc_to_chartstruct
@@ -360,13 +366,16 @@ def convert_one(job):
         if sc is None:
             res = dict(error="block not found")
         else:
-            df, ht, msg = stepchart_ssc_to_chartstruct(sc)
-            if df is None:
-                res = dict(error=("convert failed: %s" % msg)[:120])
+            out = stepchart_ssc_to_chartstruct(sc)       # (df, ticks, msg); (None, msg) on failure
+            if out[0] is None:
+                res = dict(error=("convert failed: %s" % out[-1]).replace(path, rel)[:120])
             else:
+                df, ht, msg = out
                 taps = int(df["Line"].str.contains("1", regex=False).sum())
                 ticks = int(sum(round(x[2]) for x in ht))
                 res = dict(taps=taps, ticks=ticks, implied=taps + ticks)
+    except (MemoryError, OSError) as ex:
+        res = dict(transient=("%s: %s" % (type(ex).__name__, ex)).replace(path, rel)[:120])
     except Exception as ex:
         res = dict(error=("%s: %s" % (type(ex).__name__, ex)).replace(path, rel)[:120])
     return res, _W.get("pin"), sorted(_converter_modules() - _W.get("modules", set()))
@@ -383,10 +392,19 @@ def content_sha(content):
 
 class Converter:
     """Converts (content, tag) pairs, deduplicated by content, through a worker pool, with an
-    optional on-disk cache keyed by (converter pin, convert_one's source, content sha, tag)."""
+    optional on-disk cache keyed by (converter pin, convert_one's source, content sha, tag).
 
-    def __init__(self, pin, workers=6, cache_dir=DEFAULT_CACHE, use_cache=True):
+    Only a count is cached. An error row is converted again on every run, and once more in a
+    fresh worker before it is believed (the two must agree, or the run refuses): the converter
+    swallows its own exceptions while building the beat map, so a MemoryError there reads as an
+    ordinary failure, and a cached one would stay a wrong "not exact" until someone deleted it.
+    A `transient` result (MemoryError or OSError in convert_one) refuses the run outright, and a
+    pool that delivers no result for `stall` seconds (a killed or hung worker loses its task
+    without a word) refuses it too - either way exit 2, never a verdict."""
+
+    def __init__(self, pin, workers=6, cache_dir=DEFAULT_CACHE, use_cache=True, stall=600):
         self.pin, self.workers, self.cache_dir, self.use_cache = pin, workers, cache_dir, use_cache
+        self.stall = stall
         self.memo = {}
         self.stats = dict(converted=0, cached=0)
 
@@ -442,7 +460,6 @@ class Converter:
             else:
                 todo[k] = (content, rel)
         if todo:
-            from multiprocessing import Pool
             t0 = time.time()
             tmpdir = tempfile.mkdtemp(prefix="corpus-grade-")
             try:
@@ -454,22 +471,51 @@ class Converter:
                             f.write(content)
                     jobs.append((path, tag, rel))
                     back[(path, tag)] = (csha, tag)
-                with Pool(self.workers, initializer=_worker_init, initargs=(CONVERTER,)) as pool:
-                    results = pool.map(convert_one, jobs, chunksize=4)
-                for job, (res, wpin, extra) in zip(jobs, results):
-                    if wpin != self.pin:
-                        refuse("a worker's converter pin %s is not the parent's %s" % (str(wpin)[:12], self.pin[:12]))
-                    if extra:
-                        refuse("the conversion loaded piu_annotate modules outside the pin: %s" % ", ".join(extra))
+                first = self._pool(jobs, self.workers)
+                again = [j for j in jobs if "error" in first[j]]
+                if again:                                # believe an error only when it repeats
+                    second = self._pool(again, 1)
+                    moved = [j[2] for j in again if second[j] != first[j]]
+                    if moved:
+                        refuse("the converter answered differently on a second try for %d block(s), so nothing is "
+                               "judged: %s" % (len(moved), "; ".join("%s: %s -> %s" % (j[2], first[j], second[j])
+                                                                     for j in again if second[j] != first[j])[:600]))
+                for job in jobs:
                     k = back[(job[0], job[1])]
-                    out[k] = res
-                    self._cache_put(self._key(*k), res)
+                    out[k] = first[job]
+                    if "implied" in first[job]:
+                        self._cache_put(self._key(*k), first[job])
                 self.stats["converted"] += len(jobs)
             finally:
                 shutil.rmtree(tmpdir, ignore_errors=True)
-            log("converted %d blocks in %.1fs on %d workers" % (len(todo), time.time() - t0, self.workers))
+            log("converted %d blocks in %.1fs on %d workers%s" % (len(todo), time.time() - t0, self.workers,
+                                                                  " (%d error(s) converted twice)" % len(again) if again else ""))
         self.memo.update(out)
         return out
+
+    def _pool(self, jobs, workers):
+        """{job: result} for every job, or a refusal: a worker with another pin or extra modules,
+        a transient result, or no result for `stall` seconds (the pool is terminated on the way out)."""
+        from multiprocessing import Pool, TimeoutError as PoolTimeout
+        results = {}
+        with Pool(workers, initializer=_worker_init, initargs=(CONVERTER,)) as pool:
+            it = pool.imap(convert_one, jobs)                # chunksize 1: a chunked imap has no timeout
+            for job in jobs:
+                try:
+                    res, wpin, extra = it.next(timeout=self.stall)
+                except PoolTimeout:
+                    refuse("no conversion result for %ds after %d of %d blocks, waiting on %s (a worker was killed "
+                           "or hung) - nothing is judged" % (self.stall, len(results), len(jobs), job[2]))
+                if wpin != self.pin:
+                    refuse("a worker's converter pin %s is not the parent's %s" % (str(wpin)[:12], self.pin[:12]))
+                if extra:
+                    refuse("the conversion loaded piu_annotate modules outside the pin: %s" % ", ".join(extra))
+                results[job] = res
+        transient = [(j[2], results[j]["transient"]) for j in jobs if "transient" in results[j]]
+        if transient:
+            refuse("the machine, not the file, failed %d conversion(s) - nothing cached, nothing judged; run again: %s"
+                   % (len(transient), "; ".join("%s: %s" % t for t in transient)[:600]))
+        return results
 
 
 # ---------------------------------------------------------------- grading
@@ -566,7 +612,8 @@ def assign_tiers(rows, import_exact, oracle):
 class Grader:
     def __init__(self, args, pin):
         self.args, self.pin = args, pin
-        self.conv = Converter(pin["pin"], workers=args.workers, cache_dir=args.cache_dir, use_cache=not args.no_cache)
+        self.conv = Converter(pin["pin"], workers=args.workers, cache_dir=args.cache_dir, use_cache=not args.no_cache,
+                              stall=args.stall_timeout)
         self.import_tree = None
 
     def import_exact(self, oracle):
@@ -1073,6 +1120,8 @@ def main():
     common.add_argument("--workers", type=int, default=6)
     common.add_argument("--no-cache", action="store_true")
     common.add_argument("--cache-dir", default=DEFAULT_CACHE)
+    common.add_argument("--stall-timeout", type=int, default=600,
+                        help="seconds without a conversion result before the run refuses (a killed or hung worker)")
     common.add_argument("--unpinned", action="store_true", help="run without (or despite) the oracle manifest")
     p = sub.add_parser("grade", parents=[common])
     p.add_argument("--rev")
