@@ -6,13 +6,25 @@
    "chart": "Destination - SHORT CUT - D21",
    "state": "repaired and verified exact at 1186 (Phoenix 1 note count), commit 3b5d4a1",
    "why_revisit": "Phoenix 2 lists this chart at 826 notes - a 360-note re-step. The file is right for P1 and wrong for P2, and one .ssc cannot serve both mixes.",
-   "accepted_as_is": true
+   "accepted_as_is": true,
+   "key": "Destination_-_SHORT_CUT_-_-_SHK_D21_SHORTCUT",
+   "ssc_rel": "08 - FIESTA/1064 - [Short Cut] Destination/1064 - [Short Cut] Destination.ssc",
+   "block": "D21_SHORTCUT",
+   "block_sha": "75a2777876437677a88dc47b75a880e602b24f6f4dfedd9d3fcfb40f90374be4",
+   "header_sha": "40be2aa9ce35a7e66ec2328fd649af12bde1b2a3ab36e8f249be86576ec6ae54"
   },
   {
    "chart": "Slam D24",
    "state": "open; grid_screen says MISMATCH against Phoenix 1 footage (re-step pile)",
    "why_revisit": "Phoenix 2 lists 704 notes against Phoenix 1's 1004 - a 300-note re-step, so the P1/P2 split is part of this chart's story too.",
-   "accepted_as_is": true
+   "accepted_as_is": true,
+   "key": "Slam_-_Novasonic_D24_ARCADE",
+   "ssc_rel": "02 - S.E.~EXTRA/(3) 516 - Slam/516 - Slam.ssc",
+   "block": "D24_ARCADE",
+   "block_sha": "6fd411632a6acc9a2f317e624fc6473a5e098ea27e9fafbd006278c7debc6a55",
+   "header_sha": "9d38eb2affef7082ec2b9d34a9ef8e2c43ed6ac14454bcac0e4f4adb5d888a6b"
   }
- ]
+ ],
+ "enforced": "Since 2026-09-27 by (file, block, content hash): each entry's block_sha and header_sha are the tools/guards.py hashes of its block and its file's song header in the accepted state. tools/guards.is_owner_revisit() is the skip every loop checks, and tools/corpus_grade.py gate fails a pass that changes either hash. Re-record them only when the owner changes the chart himself, in an oracle commit of its own.",
+ "hashed": "2026-09-27, the simfiles of main 8c9b5de (unchanged since)"
 }

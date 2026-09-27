@@ -1,7 +1,9 @@
 # Turns rows of the catalog sweep (sources/tail-*.json) into the two inputs the repair tools
 # need for charts beyond the census, so the same pipeline runs on them unchanged:
 #
-#   work/ssc-map-tail.json     chart name -> key + .ssc path (what every tool looks a chart up by)
+#   sources/ssc-map-tail.json  chart name -> key + .ssc path (what every tool looks a chart up by).
+#                              Committed and part of the corpus grade's oracle: rewriting it is an
+#                              oracle commit of its own, with `corpus_grade.py freeze` after it.
 #   work/tail-video-map.json   video -> the charts it should certify, in video-map.json's shape
 #
 # The chart's target count comes from the catalog (Phoenix, else Phoenix 2), and that is also
@@ -63,7 +65,7 @@ def main():
                                 judged_alt=r["p2nc"] if r["p2nc"] not in (None, target) else None,
                                 side=r["side"], shape=r["shape"], delta=r["delta"]))
     os.makedirs(os.path.join(ROOT, "work"), exist_ok=True)
-    mp = os.path.join(ROOT, "work", "ssc-map-tail.json")
+    mp = os.path.join(ROOT, "sources", "ssc-map-tail.json")
     vp = os.path.join(ROOT, "work", f"{tag}-video-map.json")
     atomicio.write_json(mp, smap, encoding="utf-8", ensure_ascii=False, indent=1)
     atomicio.write_json(vp, sorted(vmap.values(), key=lambda e: e["vid"]), encoding="utf-8", ensure_ascii=False, indent=1)

@@ -137,7 +137,7 @@ def main():
                           newest_footage=best.get("best_era") or "none matched"))
     if arg("--pilot"):
         pilot = json.load(open(arg("--pilot"), encoding="utf-8"))
-        smap = {o["chart"]: o for o in json.load(open(os.path.join(ROOT, "work", "ssc-map-tail.json"),
+        smap = {o["chart"]: o for o in json.load(open(os.path.join(ROOT, "sources", "ssc-map-tail.json"),
                                                      encoding="utf-8"))}
         for c in pilot["older_revision"]:
             cid = (smap.get(c["chart"], {}).get("chartId") or "").upper()

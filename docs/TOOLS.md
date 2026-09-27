@@ -288,6 +288,147 @@ report and candidate writes and the checked commits are the extraction loop's to
 `.ssc` the converter reads while a rate is searched is now private to the process
 (`tmp-<key>.<pid>.ssc`) and removed after use, where two surveys of one chart used to share one.
 
+## The corpus grade (the gate every loop commits through)
+
+**`corpus_grade.py grade [--rev <commit>] [--oracle-rev <commit>] [--out <path>|-]`**
+**`corpus_grade.py gate --base <rev> [--head <rev>] [--oracle-pass] [--declared N] [--json <path>]`**
+**`corpus_grade.py freeze [--repin]`** / **`conflicts [--write]`** / **`selfcheck`**
+(all take `--workers N` (default 6), `--no-cache`, `--cache-dir <dir>`, `--unpinned`,
+`--stall-timeout S` (default 600); run with `-X utf8 -B`, or it refuses)
+Grades every certified chart — the population the repair loops draw, `corpus_map.charts()` over
+the committed ledgers — through the converter, taps plus hold ticks against the certified count,
+and ratchets the result. **`--rev` takes only the blocks from the commit** (its `.ssc` files, read
+as git blobs, never the working tree); **the oracle — who is certified, and at what count — is
+still read from the working tree unless `--oracle-rev` names a commit too.** Without `--rev` the
+working tree's blocks are graded. The JSON is deterministic (sorted, no timings; timings go to
+stderr), so two grades of one tree are byte-identical: 1,490 charts, plus the import commit's
+blocks for the tiers, in about 40–60 s cold on 6 workers (depending on what else the shared box
+is running) and about 4–7 s when every block is in the conversion cache (`work/corpus-grade-cache/`,
+keyed by the converter pin, the conversion code's own source, the file's content with CRLF read
+as LF, and the block tag; a 0-byte or torn entry is a miss and is rebuilt; writes are tmp +
+`os.replace`). Workers run at BelowNormal priority.
+
+Only a count is cached. An error row is converted again on every run, and a second time in a
+fresh worker before it is believed; if the two answers differ the run refuses. (The converter
+catches its own exceptions while it builds the beat map, so a MemoryError there looks like an
+ordinary failure. A cached one would stay a wrong "not exact" until someone deleted it.) A
+MemoryError or OSError that reaches the grade refuses the run with exit 2, and nothing is cached
+for it. So does a pool that delivers no result for `--stall-timeout` seconds: a killed or hung
+worker loses its block without a word, and the pool would otherwise wait for ever.
+
+Two tiers. **PROTECTED**: exact when the import commit `a23cee5`'s blocks are graded under the
+current oracle (the corpus as upstream published it; the tool checks that `simfiles/` first
+appears in that commit), or promoted by a `sources/protected-promotions.jsonl` row whose
+`block_sha` is the chart's current block — `{"chart", "key", "block_sha", "audit": "FLAT",
+"covered": true, "audit_version", "run"}`, written by `trace_audit` when the interior passed a
+covered audit, read here. **PROVISIONAL**: every other exact chart. A `sources/demotions.jsonl`
+row takes the import protection away (a promotion of a block no demotion names gives it back).
+Flags ride on each row: `oracle_conflict`, `owner_revisit`, `quarantine`, `demoted`.
+
+The **oracle** is every file that decides who is certified and at what count — the census and
+corpus certification ledgers, `ssc-map.json` and `ssc-map-tail.json`, `census-final.json`, the
+sweep, the Phoenix 1 catalog counts, `video-map.json` — plus the three policy files the gate
+enforces (`oracle-conflict.json`, `owner-revisit.json`, `quarantine.json`).
+`sources/oracle-manifest.json` holds each one's sha256 (CRLF read as LF, so a CRLF checkout and
+an LF blob agree) and the **converter pin**: the sha256 over every `piu_annotate` module the
+conversion actually loads (`__init__`, `utils`, `formats/__init__`, `formats/notelines`,
+`formats/sscfile`, `formats/ssc_to_chartstruct` — taken from `sys.modules`, not a hand list; a
+worker that loads a module outside it after converting stops the grade), which catches a
+converter that drifts while keeping the lattice flag (the converter is the piu-annotate clone
+unless `PIU_ANNOTATE_ROOT` names another checkout, e.g. an exported copy of `e01246d`; the pin
+decides either way). `grade` and `gate` refuse when the working
+tree's oracle or the installed converter differs from the manifest. `freeze` rewrites the
+manifest in an oracle commit, never together with stepfile edits, and moves the converter pin
+only with `--repin`, as a commit of its own. Only committed ledgers are oracle:
+`work/certification-tail.json` is the live file `result_reader` appends to, and `grade` says on
+stderr when it holds videos the committed ledger does not.
+
+The **gate** grades `--base` and `--head` (default: the working tree), each under its own tree's
+oracle, prints every transition — LOST, GAINED, EDITED-EXACT (a block or its file header
+changed and it stayed exact), EDITED-OFF, EXPECTED-CHANGED, UNPROTECTED and PROMOTED (the
+PROTECTED tier changed and nothing else did: a demotion or promotion row, named with its reason
+or run, or the import grade under a new oracle), ENTERED/LEFT the population — and
+exits 1 when: a chart leaves exact without a `sources/demotions.jsonl` row naming the chart and
+its `block_sha` before the change, with a `reason` and `evidence` (a quarantined chart's row
+also needs `owner`, where he said yes); a PROTECTED chart leaves exact at all, or its block or
+file header changes while it stays exact (unless a promotion row names the new block) —
+protection is judged at the base, so demoting a PROTECTED chart is a commit of its own before
+the change that breaks it; the oracle hash or the converter pin differs between base and head
+(unless `--oracle-pass`, for commits that change only the oracle — and then any file under
+`simfiles/` that differs between base and head fails, certified or not, in the population or
+not, each named with the certified charts it holds; two commits compare blob ids, and the working
+tree is compared by content with CRLF read as LF); an owner-revisit chart's block or file header no longer hashes to what
+`owner-revisit.json` records; a chart in the ORACLE_CONFLICT set becomes exact (halt for review
+instead of taking the credit); `demotions.jsonl` or `protected-promotions.jsonl` lost or rewrote
+a line (both are append-only); `--declared N` is given and the net change in exact charts is not
+N. It exits 2 when it cannot judge (drift at the head, a revision that does not resolve, a
+conversion the machine failed or a worker that died, a converter that answered twice
+differently). It writes nothing but `--json`, and never reads a grade file to decide anything —
+both sides are re-graded from blobs.
+
+The ledgers and lists it enforces. **`sources/demotions.jsonl`** (append-only, empty until the
+first demotion): one JSON object per line, `{"chart": <census chart name>, "block_sha": <the
+block being demoted, before the change>, "reason": <why the exact total is not to be trusted>,
+"evidence": <what showed it: a trace audit, a video, a commit>, "owner": <where he said yes;
+required for a quarantined chart>, "date", "commit"}` — the only way the exact set may shrink.
+**`sources/quarantine.json`**: Houseplan S17 (3d17dae), Wedding Crashers S10 (c40c089) and
+Imagination S12 (2c374be) — exact in total, the counter shows them wrong inside: a review list
+for the owner, excluded from every benchmark, never reverted without his yes (each entry records
+the quarantined `block_sha`). **`sources/owner-revisit.json`**: each entry's `block_sha` and
+`header_sha` are the accepted state.
+
+`conflicts` builds `sources/oracle-conflict.json` from the data: a video that certifies two or
+more charts on one side (a result screen shows one total per side); a certified count that is
+not the chart's Phoenix 1 catalog count (`p1-note-counts`, matched by song, type and level)
+while the file already converts to that catalog count; a block whose converter inputs
+(STEPSTYPE, NOTES, BPMS, STOPS, DELAYS, WARPS, FAKES, TICKCOUNTS, header inherited) are
+identical to another block's in its file — HIDDEN / INFOBAR twins the grade cannot tell apart.
+`selfcheck` confirms `guards` splits every file into the blocks the converter sees, with the
+same tags.
+
+Drilled on 2026-09-27 with faults planted in a scratch clone (never in a branch's files), 25
+cases, each caught and named or passed as intended: `#TICKCOUNTS` doubled on a PROTECTED chart
+(fail) and on a PROVISIONAL one (fail; passes with a demotion row naming its block, fails with a
+row naming another block); a quarantined chart demoted without and with `owner`; one tap moved
+in Slam D24's block and a comment added to its file header (owner-revisit fails; a comment line
+inside a block breaks the converter for the whole file, which the gate also catches as every
+sibling leaving exact); a certification value changed (refused while the manifest is stale; an
+ORACLE failure once refrozen; with `--oracle-pass` the chart leaves exact without a demotion);
+an owner-revisit entry removed and refrozen; a repaired sibling reverted to its import block (the
+extract_repair whole-file-copy failure); an uncertified sibling edited (passes, no false alarm);
+a header `#OFFSET` and an in-block `#BPMS` change on a PROTECTED chart that keep every total;
+a compensating edit (one tap to another column, totals kept); Pump me Amadeus S16 padded to its
+wrong certified 871 (ORACLE_CONFLICT); a gain declared as 0 and as 1; an oracle pass carrying a
+stepfile edit; a line removed from `demotions.jsonl`; a converter copy that drifts but keeps the
+lattice flag (`PIU_ANNOTATE_ROOT`, refused). A 0-byte and a torn cache entry are rebuilt and the
+grade stays byte-identical.
+
+The first review found a hole. `--oracle-pass` looked only at charts certified on both sides, so
+an oracle commit could certify a chart, edit that chart's block, and take the credit. It was
+fixed and drilled the same day, with 18 more cases in a fresh scratch clone, and the 24 cases
+above were run again (all as intended). The oracle-pass cases: an untouched CRLF checkout
+passes. The reviewer's case fails whether committed or in the working tree: one note flipped in
+the uncertified Switronic SHORT CUT S17 block, and a ledger row certifying it at the new count.
+So do an uncertified block edited, a file added and an uncertified file removed. A policy-file
+change on its own passes with `--oracle-pass` and fails without it. The tier cases: a
+demotion-only commit prints UNPROTECTED with its reason, and a promotion row prints PROMOTED with
+its run. The conversion cases used a hooked copy of the converter, pinned in the clone. With no
+fault set it grades exactly as the real converter does. A MemoryError or OSError that reaches
+the grade is refused, and nothing is cached. A worker that kills itself is refused after
+`--stall-timeout`. A failure the converter returns as `(None, message)` keeps its message, and
+is converted again rather than cached. A swallowed MemoryError that does not repeat is refused.
+
+**`guards.py`** (library)
+The shared definitions the loops and the gate import. `block_sha(ssc_path, block_id)` is the
+contract between them: sha256 of one `#NOTEDATA` block — from the line that starts with
+`#NOTEDATA:` up to the next such line or EOF, decoded as UTF-8 (`errors="replace"`), CRLF and CR
+made LF, trailing whitespace at the end of the block stripped (`str.rstrip()`, so the newline
+and blank lines before the next block go too). `block_id` is an index or the converter's tag
+(`"S18_ARCADE"`, the first block carrying it, header tags inherited). `header_sha` hashes the
+text before the first block, which every block inherits. `is_owner_revisit(chart_or_key)` is the
+skip for `sources/owner-revisit.json`'s charts: a loop that gets True does not survey, re-fix or
+flag the chart. `tag_of(key)` is `extract_repair.block_tag`'s rule.
+
 ## Reading footage
 
 **`combo_reader.py --scan <vid> side=<L|R|C> [atlas=tools/atlas-combo-p2]`**
@@ -699,12 +840,24 @@ than the catalog, which is an older revision needing newer footage (see EVIDENCE
 `sources/certification-2026-08-30.json`, both immutable) with whatever a batch beyond the
 census has generated under `work/`. Every analysis tool reads through it, so a chart outside
 the 121 looks up exactly like one inside it. `catalog_sweep` and `rebuild_repairs` deliberately
-do NOT use it - they need the census key set to stay the census key set.
+do NOT use it - they need the census key set to stay the census key set. `charts()` is the
+certified population (the same rows as `extract_repair.charts()`), and the merges are also
+pure functions over loaded data (`merge_chart_map`, `merge_certification`, `certified_charts`)
+so `corpus_grade` can build the population from a commit's copies of the files;
+`certification(sources_only=True)` leaves out the live `work/certification-tail.json`. A video
+in more than one ledger keeps every ledger's charts: `charts` merges per chart, and where two
+ledgers carry the same chart or field the census wins. Until 2026-09-27 the merge was a shallow
+dict merge in which the corpus ledger's `charts` replaced the census entry's whole, silently
+dropping the 11 eye-verified census certifications whose videos the corpus certification had
+also read (Set me up S10, Chase Me S20, Final Audition S18, ...); restoring them took the
+certified population from 1,479 to 1,490 and the exact count from 738 to 749.
 
 **`tail_worklist.py <tail.json> [--shape ...] [--min-pct N] [--max-pct N] [--limit N] [--out-tag T]`**
-Turns rows of the catalog sweep into the two inputs a batch needs: `work/ssc-map-tail.json`
+Turns rows of the catalog sweep into the two inputs a batch needs: `sources/ssc-map-tail.json`
 (always the whole sweep - it is a lookup, and a later batch must not erase an earlier one's
-entries) and `work/<tag>-video-map.json` (just this batch, in `video-map.json`'s shape, so
+entries; committed since 2026-09-27, when the gitignored `work/` copy was the only one, and part
+of the corpus grade's oracle, so rewriting it is an oracle commit followed by
+`corpus_grade.py freeze`) and `work/<tag>-video-map.json` (just this batch, in `video-map.json`'s shape, so
 `download_videos --map` and `result_reader --map` take it unchanged).
 
 **`catalog_sweep.py <chart-json folder> <catalog.txt> <videos.txt> <out.json> [--pct 5]`**
