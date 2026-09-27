@@ -64,14 +64,24 @@ and commits" and "The corpus grade"):
 
 - Every loop runs under `tools/supervise.py` (slot pool, gaming freeze, per-job timeout,
   heartbeats, an append-only run ledger) in its own worktree on a local `loops/*` branch, made
-  with `supervise.py worktree`. Loops never commit to main and never push; whoever merges into
-  main holds `supervise.py mainlock` while doing it.
+  with `supervise.py worktree` from a main that has the rails. Loops never commit to main and
+  never push; whoever merges into main holds `supervise.py mainlock` while doing it, and first
+  runs `corpus_grade.py gate --base main --head loops/<x>` **from main's own checkout** (the
+  backstop for anything a pass did not see).
 - Loops commit only through `tools/loopcommit.py` (the one commit lock, explicit paths, a
-  `Loop-Run` trailer, checked results), and take work back only with `loopcommit.py revert-run`.
+  `Loop-Run` trailer, checked results), only inside an open pass, and take work back only with
+  `loopcommit.py revert-run`. A loop never commits what only the owner changes: the rails' own
+  code (corpus_grade, guards, trace_audit, loopcommit, supervise, atomicio, childsite, the
+  hooks), the oracle, `sources/demotions.jsonl` (a demotion is the owner's call and carries his
+  `owner` field), `sources/protected-promotions.jsonl` and `sources/footage-corrupt.json`.
 - Every commit pass runs through `tools/loopcommit.py pass`: `pass begin --run <run>` records
   the pass base, the loop commits, and `pass gate --run <run> --declared <N>` runs
   `corpus_grade.py gate --base <pass base> --head <HEAD> --declared <N>` (the commits, never the
-  working tree). The gate requires: PROTECTED does not shrink except through a
+  working tree). **No pass is judged by code the loop changed**: when the gate's own code (every
+  `tools/` module the gate imports, trace_audit's closure among them, and the atlases) differs
+  from main's, a pass that changes a stepfile is refused and the run halts until the owner merges
+  that code into main; a pass that changes no stepfile is tools-only and passes without a gate.
+  The gate requires: PROTECTED does not shrink except through a
   `sources/demotions.jsonl` row; the net gain equals the declared ships; owner-revisit blocks,
   the oracle and the converter pin stay put; and **every new ship's trace audit is FLAT with
   every edit covered** (a GAINED chart audited against the import `a23cee5`, a re-edited exact

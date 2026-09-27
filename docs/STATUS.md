@@ -545,9 +545,34 @@ base, and a "retry later" (the new exit 75, the machine and never the work) keep
 for the same base. Come to Me S17, re-shipped over its import block in a scratch loop worktree,
 is refused and reverted; Get Your Groove On D10 the same way passes.
 
-**The trace audit's corpus** (`sources/trace-audit-2026-09-27.json`, audit_version `d2cdb262`;
-a docstring-only change since moved it to `91c8875b`, under which a rerun matches this ledger
-chart for chart):
+**No pass is judged by code the loop changed (round 2).** The second review found the gate ran
+the worktree's own tools, so a loop could change what judged it: a commit that made the gate
+forget its failures let a Slam D24 edit pass, and a `corpus_map.py` that dropped BRAIN POWER D14
+from the population hid its break (PROTECTED 628 -> 628, PASS). `pass gate` now holds the gate's
+code (every `tools/` module the gate imports - trace_audit's closure among them, 20 modules - the
+atlases and childsite) to main's: a stepfile pass on a branch whose gate code differs is refused
+and the run halts until the owner merges that code into main; a pass that changes no stepfile is
+tools-only and passes without a gate. A loop never commits the rails' own code, the oracle,
+`demotions.jsonl` (every row a change adds needs the owner's `owner` field, which the gate
+enforces too), `protected-promotions.jsonl` or `footage-corrupt.json`; it commits only inside an
+open pass, and no pass begins over a `Loop-Run` commit no gate saw. In a scratch clone the
+review's probes - the neutered gate (committed through loopcommit, left in the working tree, or
+committed around it), the corpus_map population shift (in one pass and in two supervised
+passes), the two-pass self-demotion, a planted `tools/cv2.py` - are each refused before any gate
+runs, and the merge gate run from main's checkout FAILs the branches that went around loopcommit
+(OWNER-REVISIT Slam D24, LOST BRAIN POWER D14). **Before fast-forwarding any loop branch into
+main, run `corpus_grade.py gate --base main --head loops/<x>` from main's own checkout.** Loops
+must branch from a main that has the rails: until `loops/rails` is merged, every stepfile pass on
+a loop branch is refused, because its gate code is not main's.
+
+**The trace audit's corpus** (`sources/trace-audit-2026-09-27.json`, audit_version `d2cdb262`,
+head `02ce4ff`; changes since - docstrings in `atomicio` and `combo_reader`, then round 2's
+command-line check in `trace_audit` itself - moved the version to `1d0e0fac` without moving a
+verdict: a `--no-decode` rerun reproduces all 123 chart records and the same three promotable
+blocks. The ledger predates those moves, so a rerun marks its calibration and power sections
+stale; it is re-recorded once, on the merged tools, when the rails merge into main - `trace_audit.py
+controls`, `power` and then `corpus --out-dir sources`, which appends the three promotions again
+under the new version):
 the 123 edit-derived exact charts audit **3 FLAT, 10 OFF, 110 UNCOVERED**, 0 errors. FLAT means
 a strong counter read at level 0 within 8 judged rows on both sides of every edit; only those
 three are promoted. The 261 untouched exact controls give 0 OFF (17 FLAT, 244 UNCOVERED).

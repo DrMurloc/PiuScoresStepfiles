@@ -198,6 +198,16 @@ run (the timeout counts only time lock-exec was awake, not time a supervisor kep
 if not. `mainlock` takes and releases `work/.main.lock`, which whoever merges loop branches
 into main holds for the duration and which the pre-push hook below honors; it is
 existence-based (no PID), because the merge is done by a person or a session, not one process.
+Before fast-forwarding a loop branch into main, whoever merges runs the gate over the whole
+branch **from main's own checkout** (main's code, never the loop worktree's):
+`corpus_grade.py gate --base main --head loops/<x> --declared <the branch's net ships>`. It is
+the backstop for anything a pass did not see (a loop that edited the `loopcommit.py` it runs
+itself): the round-2 review's two probes - a neutered gate committed around loopcommit, and a
+`corpus_map.py` that hides BRAIN POWER D14 - both FAIL it (OWNER-REVISIT Slam D24, LOST BRAIN
+POWER D14). If the branch changes the gate's own code (`git diff main..loops/<x> -- tools`; its
+tools-only passes say so in `passes.jsonl`), that change's own effect is the owner's to see as
+well: grade the same revision with main's tools and with the branch's
+(`corpus_grade.py grade --rev loops/<x>` in each checkout) and compare.
 `pins` prints the converter and oracle pins.
 
 Library use, for a tool that decodes in-process: `with supervise.decode_slot(): ...` (a no-op
@@ -208,10 +218,18 @@ frozen, so keep each hold short) and `with supervise.commit_lock(run): ...`.
 **`loopcommit.py revert-run <run> --base <sha> [--reason TEXT] [--dry-run]`** / **`loopcommit.py list-run <run> --base <sha>`**
 The only way a loop commits. `commit` takes the commit lock (`work/.commit.lock`, one for every
 loop; a dead holder's lock is recovered), stages exactly the declared paths (files or folders,
-relative to the repository root) and refuses if the index already holds a staged change outside
+relative to the repository root) and refuses **unless the run has an open pass** begun in this
+repository on this branch whose base HEAD still descends from (a commit before `pass begin`, or
+after a pass closed, would sit under the next pass's base, and no gate would ever look at it),
+while a STOP applies to the run, if the index already holds a staged change outside
 them, if a declared path has nothing to commit or is outside the repository (another drive
-included), if HEAD is detached, or if the branch is main (or, without `--allow-branch`, anything
-outside `loops/*`). Before staging it checks the converter, the loop-bucket rule that the pin
+included), **if what it stages reaches a path only the owner changes** (below; nothing is left
+staged), if HEAD is detached, or if the branch is main (or, without `--allow-branch`, anything
+outside `loops/*`). Owner-only: the rails' own code (`tools/corpus_grade.py`, `guards.py`,
+`trace_audit.py`, `loopcommit.py`, `supervise.py`, `atomicio.py`, `tools/childsite/`,
+`.githooks/`), the oracle files and `sources/oracle-manifest.json`, `sources/demotions.jsonl`
+(a demotion is the owner's call), `sources/protected-promotions.jsonl` (the trace audit's corpus
+run writes it) and `sources/footage-corrupt.json`. Before staging it checks the converter, the loop-bucket rule that the pin
 is checked at every commit pass: if the run has a manifest (`work/runs/<run>/manifest.json`),
 the converter's source hash must still be the one the run began with, and the converter must
 match the pin frozen in `sources/oracle-manifest.json` - a manifest that is missing or has no pin
@@ -241,10 +259,42 @@ revert commit that fails its post-commit check is undone with `reset --soft` lik
 **`loopcommit.py pass begin --run <run>`** / **`pass gate --run <run> --declared N [--workers N] [--audit-no-decode]`** / **`pass show --run <run>`**
 The commit pass, packaged, so no loop hand-codes the base, the gate, the revert and the halt.
 `pass begin` records HEAD as the pass base in `work/runs/<run>/pass.json` (it refuses while a
-STOP applies to the run, and while the run has an open pass with commits after its base - a new
+STOP applies to the run, while the run has an open pass with commits after its base - a new
 pass would take a base that already holds them, and they would never be gated; a second begin
-with nothing committed yet is the same pass). The loop then commits, one chart per `commit`.
-`pass gate` runs `corpus_grade.py gate --base <recorded base> --head <HEAD> --declared N` -
+with nothing committed yet is the same pass - and while the run has `Loop-Run` commits no gated
+pass covers: after its last closed pass's head, or after the branch's merge-base with main when
+it has none; whether to take those back is the owner's call). The loop then commits, one chart
+per `commit`.
+
+**No pass is judged by code the loop changed.** `pass gate` runs the worktree's own
+`tools/corpus_grade.py`, so before running anything it compares **the gate's code** at HEAD and
+in the working tree with the same code at the merge-base of HEAD and main (the rails the owner
+merged). The gate's code is every file under `tools/` it can run or read: the modules reached by
+import from `corpus_grade`, `loopcommit` and `supervise` (20 today - `trace_audit` and everything
+it imports, `corpus_map`, `note_extract`, `tick_repair`, `extract_repair` and the rest among
+them), any `tools/` file named like a module they import (a `tools/json.py` or `tools/cv2.py`
+would be imported in the library's place), every folder (the counter atlases, `childsite`) and
+every file that is not a Python module; `__pycache__` is not, because the gate runs with an
+empty `PYTHONPYCACHEPREFIX` of its own, every `PYTHON*` variable the loop set removed, and
+`PYTHONPATH` set to `tools/childsite` alone. And it checks that `base..HEAD` touches no
+owner-only path (above). Then:
+- **owner-only path in the pass**: refused (exit 2), the run halted, nothing reverted.
+- **the gate's code is main's**: the gate runs, as below.
+- **it is not, and the pass changes a stepfile**: refused (exit 2), the run halted, nothing
+  reverted, the pass left open - a stepfile pass waits until the owner merges that code into
+  main, or the loop takes it back (clear the STOP and gate the same base again).
+- **it is not, and the pass changes no stepfile**: a **tools-only** pass. There is nothing for
+  the gate to judge, so it does not run: `--declared 0` passes (recorded `tools_only` in
+  `pass.json` and `passes.jsonl`), any other count fails as the gate's DECLARED would (halt,
+  revert). Such code judges nothing on the branch until main has it; `pass begin` prints a note
+  while the branch's gate code differs from main's.
+Which loops this binds: bucket #2 (`corpus_map`), #5 and #11 (`note_extract`, `sprites`), #4
+(`receptors`), #3 (the atlases, `combo_reader`) and #10 (`tick_repair`, which the trace audit
+imports for its counter reads) can commit their tools in tools-only passes, but a stepfile pass
+on such a branch waits for the owner's merge. A new tool module that nothing in the gate imports
+(`bench.py`, `flags.py`) is not the gate's code.
+
+`pass gate` then runs `corpus_grade.py gate --base <recorded base> --head <HEAD> --declared N` -
 the commits, never the working tree, and every ship trace-audited (below, "The corpus grade") -
 keeps each attempt's output and JSON report beside `pass.json`, and believes a verdict only from
 this attempt's report naming that base and head:
@@ -265,7 +315,8 @@ One pass command runs per run at a time (`pass.lock`).
 
 Exit codes: 0 done; 2 refused, nothing committed (every refusal above, the run's last pass gate
 failed, and the commit lock not taken within `--lock-timeout`, default 30 minutes of time it was
-awake; for `pass gate` also the gate refusing, which halts the run); 3 a post-commit check failed
+awake; for `pass gate` also the gate refusing, an owner-only path in the pass, or a stepfile pass
+over gate code that is not main's - each of which halts the run); 3 a post-commit check failed
 and the commit was undone; 4 `pass gate` failed (the run halted, its commits after the base
 reverted); 75 `pass gate` not judged, retry later (the pass stays open); 1 an unexpected error,
 with a traceback.
@@ -299,13 +350,20 @@ stale-slot recovery (including a 0-byte lock, and a lock-exec killed without its
 disk pause and its 40 GiB floor, a converter-drift halt and the frozen-pin comparison (a
 missing or pinless manifest fails it; a resume on a drifted converter is refused by the frozen pin,
 and with `--converter-unpinned` by the run's own pin),
-`--detach`, loopcommit's refusals (other drive, lock timeout, changed converter), its undo of a
+`--detach`, loopcommit's refusals (no open pass, owner-only paths by name or through a folder,
+other drive, lock timeout, changed converter), its undo of a
 commit or a revert that fails its check and a BOM'd body file or stdin, revert-run, the commit
-pass (a toy `tools/corpus_grade.py` in a throwaway repository answering each gate from a plan: a
+pass (a toy `tools/corpus_grade.py`, importing a toy `tools/` module of its own, in a throwaway
+repository answering each gate from a plan: a
 gate with no pass refused; a second begin over commits refused; 75 and a report-less exit 1 keep
 the pass open and every retry gates the recorded base; a changed `--declared` refused; FAIL halts
 the run and reverts its two commits after the base but not the owner's, then refuses its commits
-and a new pass; a refusing gate halts with nothing reverted), the pre-push hook against a throwaway
+and a new pass; a refusing gate halts with nothing reverted; a commit before begin and after a
+closed pass refused, and no begin over a `Loop-Run` commit made around loopcommit; a tools-only
+pass passes without calling the gate, a stepfile pass over it is refused until main has the code
+and is then gated, and a tools-only pass declaring a ship is reverted; a planted `tools/json.py`
+and an owner-only path committed around loopcommit refused; the gate run without the loop's
+`PYTHONPATH` and with an empty pycache prefix), the pre-push hook against a throwaway
 remote, junction unlinking, and worktree-remove's refusals and re-linking in a throwaway
 repository. Drills that need jobs to overlap make their toy jobs wait at a barrier until enough
 have started, so a slow machine cannot fail a correct pool (a pool that lets too many run is
@@ -732,7 +790,10 @@ not, each named with the certified charts it holds; two commits compare blob ids
 tree is compared by content with CRLF read as LF); an owner-revisit chart's block or file header no longer hashes to what
 `owner-revisit.json` records; a chart in the ORACLE_CONFLICT set becomes exact (halt for review
 instead of taking the credit); `demotions.jsonl` or `protected-promotions.jsonl` lost or rewrote
-a line (both are append-only); `--declared N` is given and the net change in exact charts is not
+a line (both are append-only); `demotions.jsonl` gains a row with no `owner` field - a demotion is
+the owner's call, whoever wrote the row and whatever reason and evidence it gives (the round-2
+review took BRAIN POWER D14 out of the ratchet in two loop passes with a row the loop wrote
+itself; loopcommit also refuses the file as owner-only); `--declared N` is given and the net change in exact charts is not
 N; **a ship's trace audit is not FLAT with every edit covered** (below). It exits 2 when it cannot
 judge (drift at the head, a revision that does not resolve, a ship audit that loaded another
 converter), and 75 when the machine stopped it (a conversion or a ship audit that hit MemoryError
@@ -761,7 +822,8 @@ The ledgers and lists it enforces. **`sources/demotions.jsonl`** (append-only, e
 first demotion): one JSON object per line, `{"chart": <census chart name>, "block_sha": <the
 block being demoted, before the change>, "reason": <why the exact total is not to be trusted>,
 "evidence": <what showed it: a trace audit, a video, a commit>, "owner": <where he said yes;
-required for a quarantined chart>, "date", "commit"}` — the only way the exact set may shrink.
+required on every row a change adds>, "date", "commit"}` — the only way the exact set may shrink,
+and the owner's alone: no loop commits it.
 **`sources/quarantine.json`**: Houseplan S17 (3d17dae), Wedding Crashers S10 (c40c089) and
 Imagination S12 (2c374be) — exact in total, the counter shows them wrong inside: a review list
 for the owner, excluded from every benchmark, never reverted without his yes (each entry records
@@ -779,8 +841,9 @@ same tags.
 
 Drilled on 2026-09-27 with faults planted in a scratch clone (never in a branch's files), 25
 cases, each caught and named or passed as intended: `#TICKCOUNTS` doubled on a PROTECTED chart
-(fail) and on a PROVISIONAL one (fail; passes with a demotion row naming its block, fails with a
-row naming another block); a quarantined chart demoted without and with `owner`; one tap moved
+(fail) and on a PROVISIONAL one (fail; with a demotion row naming its block it passes only when
+the row carries `owner` - since round 2 - and fails with a row naming another block); a
+quarantined chart demoted without and with `owner`; one tap moved
 in Slam D24's block and a comment added to its file header (owner-revisit fails; a comment line
 inside a block breaks the converter for the whole file, which the gate also catches as every
 sibling leaving exact); a certification value changed (refused while the manifest is stale; an
@@ -1154,7 +1217,7 @@ The acceptance gate. Runs piu-annotate's converter over the block in our tree an
 `taps + ticks = implied`. A repair is not real until this matches.
 
 **`trace_audit.py chart "<chart>" [--file <ssc>] [--base <ssc> | --base-rev <rev> | --whole] [--offset S --clock PCT] [--json]`**
-**`trace_audit.py controls | power [--per-chart N] [--seed S] | corpus [--date D] [--out-dir DIR] | crops ["<chart>" ...] [--out DIR] | version [--sources] | drills`** (`--workers N`, at most 6; `--no-decode`)
+**`trace_audit.py controls | power [--per-chart N] [--seed S] | corpus [--date D] [--out-dir DIR] | crops ["<chart>" ...] [--out DIR] | version [--sources] | drills`** (`--workers N`, at most 6; `--no-decode`; `corpus` writes `sources/` only with `--out-dir sources`, else `work/rails-audit-scratch/corpus-<date>/`; an unknown option refuses, exit 2; `-h`/`--help` prints the usage)
 `tick_verify` checks a file's total; this checks its INTERIOR, so a file that hits the total
 through compensating errors cannot pass. On a play the counter counted all the way (a full
 combo), a read of the combo counter minus the file's own running count F(t) at the same instant
@@ -1383,6 +1446,16 @@ committed ledger chart for chart - every one of the 123 records identical but fo
 the same counts, the same three promoted blocks - so the committed ledger and its promotion rows
 stand as they are. The corpus grade's gate now runs this audit on every ship (above, "The corpus
 grade").
+
+After round 2 the version is `1d0e0fac…`: the command line is checked before anything runs (an
+op or option the tool does not read refuses with exit 2; `-h`/`--help` prints the usage), and
+`corpus` writes the committed ledgers only with `--out-dir sources` - by default both files go
+to `work/rails-audit-scratch/corpus-<date>/`, the promotions appended to a copy of the committed
+file. Round 2's reviewer ran `trace_audit.py corpus --help` to read the options; the tool ignored
+the flag, ran the corpus and appended to `sources/protected-promotions.jsonl`. No verdict
+changed: a `--no-decode` rerun reproduces all 123 chart records. The committed ledger still
+carries `d2cdb262` and head `02ce4ff` (its calibration and power sections read as stale under a
+newer version); it is re-recorded once, when the rails merge into main (docs/STATUS.md).
 
 **`verify_release.py <release> [--old <release>]`**
 Checks a packaged release actually carries the repairs: the `.ssc` through the converter, the
