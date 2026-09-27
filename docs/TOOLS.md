@@ -674,9 +674,11 @@ also read (Set me up S10, Chase Me S20, Final Audition S18, ...); restoring them
 certified population from 1,479 to 1,490 and the exact count from 738 to 749.
 
 **`tail_worklist.py <tail.json> [--shape ...] [--min-pct N] [--max-pct N] [--limit N] [--out-tag T]`**
-Turns rows of the catalog sweep into the two inputs a batch needs: `work/ssc-map-tail.json`
+Turns rows of the catalog sweep into the two inputs a batch needs: `sources/ssc-map-tail.json`
 (always the whole sweep - it is a lookup, and a later batch must not erase an earlier one's
-entries) and `work/<tag>-video-map.json` (just this batch, in `video-map.json`'s shape, so
+entries; committed since 2026-09-27, when the gitignored `work/` copy was the only one, and part
+of the corpus grade's oracle, so rewriting it is an oracle commit followed by
+`corpus_grade.py freeze`) and `work/<tag>-video-map.json` (just this batch, in `video-map.json`'s shape, so
 `download_videos --map` and `result_reader --map` take it unchanged).
 
 **`catalog_sweep.py <chart-json folder> <catalog.txt> <videos.txt> <out.json> [--pct 5]`**

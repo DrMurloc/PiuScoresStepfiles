@@ -2,9 +2,9 @@
 #
 # The census's own evidence stays where it is and stays immutable: `sources/ssc-map.json`
 # (121 charts) and `sources/certification-2026-08-30.json` (113 videos, eye-verified). Work
-# beyond the census generates its own pair under work/ - `ssc-map-tail.json` from the catalog
-# sweep, `certification-tail.json` from result_reader - and these loaders merge them, census
-# first so a census entry always wins.
+# beyond the census generates its own pair - `sources/ssc-map-tail.json` from the catalog
+# sweep (tail_worklist; committed, it was the only copy), `work/certification-tail.json` from
+# result_reader - and these loaders merge them, census first so a census entry always wins.
 #
 # Tools that must NOT see the merge: catalog_sweep (uses the census key set to exclude the
 # 121 from its tail) and rebuild_repairs / audit_repair / triage (census bookkeeping). They
@@ -19,7 +19,7 @@ import os
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CENSUS_MAP = os.path.join(ROOT, "sources", "ssc-map.json")
 CENSUS_CERT = os.path.join(ROOT, "sources", "certification-2026-08-30.json")
-TAIL_MAP = os.path.join(ROOT, "work", "ssc-map-tail.json")
+TAIL_MAP = os.path.join(ROOT, "sources", "ssc-map-tail.json")
 TAIL_CERT = os.path.join(ROOT, "work", "certification-tail.json")
 # The corpus certification took many hours over 1,914 videos and work/ is gitignored, so the
 # ledger is also kept in sources/ as evidence. work/ wins when both exist - it is the live one
