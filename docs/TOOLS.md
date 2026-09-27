@@ -276,9 +276,11 @@ them), any `tools/` file named like a module they import (a `tools/json.py` or `
 would be imported in the library's place), every folder (the counter atlases, `childsite`) and
 every file that is not a Python module; `__pycache__` is not, because the gate runs with an
 empty `PYTHONPYCACHEPREFIX` of its own, every `PYTHON*` variable the loop set removed, and
-`PYTHONPATH` set to `tools/childsite` alone. And it checks that `base..HEAD` touches no
-owner-only path (above). Then:
-- **owner-only path in the pass**: refused (exit 2), the run halted, nothing reverted.
+`PYTHONPATH` set to `tools/childsite` alone. And it checks that no owner-only path (above) is
+touched by `base..HEAD` or changed in the working tree (the ship audit reads
+`footage-corrupt.json` from there). Then:
+- **owner-only path in the pass or the working tree**: refused (exit 2), the run halted, nothing
+  reverted.
 - **the gate's code is main's**: the gate runs, as below.
 - **it is not, and the pass changes a stepfile**: refused (exit 2), the run halted, nothing
   reverted, the pass left open - a stepfile pass waits until the owner merges that code into

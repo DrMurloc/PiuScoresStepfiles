@@ -45,7 +45,8 @@
 # And a pass may not change what only the owner changes (OWNER_ONLY: the rails' own code - the gate,
 # the pass, the pool, the block hash, the trace audit, the atomic writes, childsite, the push hook -
 # and the oracle, the ratchet's ledgers, demotions.jsonl among them, and footage-corrupt.json):
-# `commit` refuses to stage them, and a pass whose base..HEAD touches one anyway is REFUSED the same
+# `commit` refuses to stage them, and a pass whose base..HEAD touches one anyway, or whose working
+# tree changes one (the ship audit reads footage-corrupt.json from there), is REFUSED the same
 # way. The orchestrator's merge gate, `corpus_grade.py gate --base main --head loops/<x>` run from
 # main's own checkout, is the backstop for a loop that edits the code it runs itself.
 #
