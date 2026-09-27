@@ -1002,6 +1002,79 @@ geometry and field fits, the scan npz) are written atomically and read back thro
 keyed by their parameters and code (`field_path`, `field_key`, see `cachekey.py`); the compute is
 in `_fit_geometry` / `_fit_field`, which is what the stamp covers.
 
+**`laneband.py build --vids <vid> ... | --vids-file F [--retry-failed]`** / **`preflight [--limit N]`** / **`status`**
+The median receptor band of every cached video, decoded once, so a lane-fit rule is arithmetic
+(bucket #4 of the loop plan). `receptors.field()` fits a video's lanes from one picture - the
+per-pixel median of 64 frames seeked evenly through it, grey, cut to the band's rows - and
+everything after that picture is milliseconds; getting it is 64 seeks (about 5 s on h264 and a
+minute on AV1, uncontended). `build` stores that picture per video in
+`work/lanes/medband/<vid>.k<digest>.medband.npz` (its own cache suffix: the `.inset` field fits
+other loops read are never touched), taller than the band (rows 0.02h-0.30h) so a rule may look
+above or below it, lossless (`med2`, twice the median as uint16: the median of 64 uint8 values is a
+whole or half number), with which seeks decoded, an md5 of each frame's band, the frame shape,
+rate and duration. The digest is over the parameters and the code stamp of `_decode_median`, so a
+change to how the picture is made gets new files. A video that does not open writes a `.fail.json`
+beside it instead (the two moov-less downloads on `sources/footage-corrupt.json`). Everything
+after `build --vids` is read as an id, since YouTube ids may start with "-". About 150-180 KB a
+video. Run it under `supervise.py` (one decode slot a job).
+`fit_field_from()` is `receptors._fit_field`'s arithmetic applied to a cached picture, same types
+and same dict, and `preflight` proves it: it decodes 8 known videos afresh (five in band, three
+misfits; singles and doubles, both sides, L and C bands) and re-fits each through `_fit_field`
+itself and through `fit_field_from`; both must give the cached `.inset` bytes, and a cached
+picture must equal the fresh one, else exit 2 - cv2 or ffmpeg drift, or the copy of the arithmetic
+coming apart. 8 of 8 on 2026-09-27 under cv2 5.0.0. The invariants the lane rules are graded by
+live here too: `twin` (doubles: lane k and lane k+5 are the same receptor, mean correlation of
+the five pairs - mirror symmetry is not one, it is 0.91-0.99 on good and bad fits alike),
+`ncc` (singles: the five receptor crops, resampled to 48 columns, against a receptor library
+built from twin-passing doubles fits), plus `mirror`, `adjacent` and `pad_twin` (one field of a
+split screen against the other - which does NOT separate misfits, since both fields of an
+official singles upload misfit the same way).
+
+**`lanefit.py partitions|census|recompute|sample|bands|register|rule1|look`**
+The lane rules, and everything they are judged against, frozen before they run (bucket #4). All of
+it reads the median-band cache above and writes nothing but `sources/lanes/` (the frozen tables,
+committed) and `work/lanes/` (rule outputs). Parallel commands take `--workers` (default 3: with
+the parent, the four processes a loop may run outside the supervisor), at BelowNormal.
+- `partitions --write`: which charts are held out - the PHOENIX 2 official pack (charts on
+  Andamiro's uploads whose file converts to the map's count) and the 36 certified misfits (found
+  again from `sources/extract-loop-2026-09-23.json` and the cached fits: pitch outside 74-77).
+  A held-out chart named in the docs, the tools, the loop proposal or a research note that names
+  ten charts or fewer (a longer listing is a script's output over a population, not a look at any
+  one chart) is moved to `seen`, tune-only; the rest is grouped by song family and video and split
+  validate/sealed by a salted hash, stratum by stratum; quarantined and owner-revisit charts are
+  excluded. A chart the scorer cannot read later scores 0 and never leaves the set.
+- `census --write`: every fit the corpus asks for (each certified chart's band and side as
+  `note_extract.extract` reads it; both fields of an official singles upload, since the pad is
+  never taken from the map's stored side; every cached `.inset` fit), with a template from
+  metadata - channel group (NEVSISTER, OFFICIAL, OTHER, NOT_IN_MAP), band and columns, never pitch -
+  the strictest partition of its charts, and the fit on disk stamped with the rule that made it
+  (`field.inset@<_fit_field's code stamp>`).
+- `recompute`: every BEFORE fit recomputed from the cache; each cached `.inset` fit must come back
+  byte for byte, and a run that recomputes nothing exits 1.
+- `sample --write` then `bands --write`: the band sample (every non-AV1 tune video of an OFFICIAL
+  template, whose fits are mostly misfits; the first 40 in hash order of any other), frozen before
+  any band is computed; then per template, the 1st-99th percentile of the pitches of the sample
+  fits that pass their independent invariant (twin >= 0.80 for doubles, library NCC >= 0.80 for
+  singles), widened 0.5 px each side, or the channel group's pooled passing fits when a template has
+  fewer than 8; and the receptor library (`receptor-library-<date>.npz`, per channel group, from
+  the sample's twin-passing doubles fits). `bands --write` refuses until every sample video is
+  cached.
+- `register <rule>`: appends the rule's id, code stamp, parameters, statement and the pre-registered
+  effect the held-out validation must show to `sources/lanes/rules.jsonl` (hash-chained, like
+  `heldout-looks.jsonl`, which `look` appends to). `rule1` refuses to run unregistered code.
+- `rule1 [--partitions P]`: rule 1 (`r1-oob-sym-respan`) over the finished part of the cache. An
+  in-band fit is returned byte-identical. A fit out of its template's band whose band is
+  mirror-symmetric (>= 0.8) re-searches its span: pairs of profile peaks symmetric about the mirror
+  axis (2 px) whose pitch is inside the band, from floors 0.35/0.25/0.15 of the profile's top; failing
+  any pair, a single peak mirrored about the axis (one outer ridge can fail to stand as a peak of its
+  own where a split screen's art runs into it); nearest the band's centre wins. The search never
+  reads an invariant. A re-fit is accepted only when its invariant reaches 0.80 and beats the BEFORE
+  fit's by 0.10; one that cannot reach the band, is asymmetric, or has no invariant goes to the
+  exceptions ledger, and the band is never widened. A fit that raised is re-searched too and reported
+  as a rescued raise, never a gain. Every re-fit carries the key its derived caches must use (a
+  digest of xs, y0, y1 and the rule id). Exit 1 when nothing was recomputed, an in-band fit came
+  back changed, or a BEFORE fit did not recompute to its cache.
+
 **`extract_holds.py "<chart>" [offset]`**
 The per-chart extraction survey: scans the whole certified video, derives the offset from the
 flashes, lists every rail inside the chart with its head flash (the head *is* a judged event,

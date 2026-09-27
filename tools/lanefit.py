@@ -710,8 +710,9 @@ def _axis(med, w, band, side):
 def respan(med, w, band, ncols, axis, pband):
     """Rule 1's search: pairs of profile peaks standing symmetric about the field's mirror axis whose
     span puts the lane pitch inside the template's band, from the strongest floor that yields one.
-    The pair whose pitch is nearest the band's centre wins; a tie goes to the stronger pair. Returns
-    (lo, hi, pitch, floor) or None. It never looks at twin agreement, the library or any invariant."""
+    The pair whose pitch is nearest the band's centre wins; a tie goes to the stronger pair. Failing
+    any pair, a single peak mirrored about the axis. Returns (lo, hi, pitch, floor, mode) or None. It
+    never looks at twin agreement, the library or any invariant."""
     prof, lo_x, hi_x, top = _profile(med, w, band)
     lo_b, hi_b, centre = pband
     for th in R1_THRESHOLDS:
@@ -727,7 +728,25 @@ def respan(med, w, band, ncols, axis, pband):
                     cands.append((abs(p - centre), -min(prof[a], prof[b]), a, b, p))
         if cands:
             _, _, a, b, p = min(cands)
-            return a, b, p, th
+            return a, b, p, th, "pair"
+    # One outer ridge can fail to stand as a peak of its own (on a split screen it runs into the
+    # frame's art): the axis is known to half a pixel, so a single peak and its mirror image about it
+    # say the same span. Tried only when no pair reaches the band at any floor.
+    for th in R1_THRESHOLDS:
+        peaks = [x for x in range(max(8, lo_x), min(w - 8, hi_x))
+                 if prof[x] == prof[x - 8:x + 9].max() and prof[x] > th * top]
+        cands = []
+        for x in peaks:
+            half = abs(x - axis)
+            a, b = axis - half, axis + half
+            if half == 0 or a < max(8, lo_x) or b > min(w - 8, hi_x):
+                continue
+            p = 2 * half / (ncols - 2 * R.INSET)
+            if lo_b <= p <= hi_b:
+                cands.append((abs(p - centre), -prof[x], a, b, p))
+        if cands:
+            _, _, a, b, p = min(cands)
+            return a, b, p, th, "mirror"
     return None
 
 
@@ -749,15 +768,18 @@ def rule1_fit(med, w, band, ncols, side, y0, y1, before, pband):
     got = respan(med, w, band, ncols, axis, pband)
     if got is None:
         return kind + "no-pair-in-band", None
-    a, b, p, th = got
+    a, b, p, th, mode = got
     xs = [int(round(a + (k + 0.5 - R.INSET) * p)) for k in range(ncols)]
     fit = dict(y0=y0, y1=y1, xs=xs, pitch=round(p, 1), band=band, side=side,
-               fields=before["fields"] if before else None, axis=axis, symmetry=round(sym, 3), rule=RULE1, floor=th)
+               fields=before["fields"] if before else None, axis=axis, symmetry=round(sym, 3), rule=RULE1, floor=th,
+               mode=mode)
     return kind + "re-fit", fit
 
 
 def r1_code():
-    return cachekey.code_stamp(respan, rule1_fit, _profile, _axis)
+    """The registered stamp of rule 1: its search, and the acceptance with the invariants it grades by."""
+    return cachekey.code_stamp(respan, rule1_fit, _profile, _axis, _w_rule1, invariant,
+                               LB.twin, LB.ncc, LB.canon, LB.crops, LB._corr)
 
 
 def derived_key(fit, rule):
@@ -795,11 +817,12 @@ def _w_rule1(item):
         row["verdict"] = verdict
         if verdict == "in-band":
             row["identical"] = LB.fit_bytes(fit) == LB.fit_bytes(before)
+            row["invariant"], row["inv_before"] = invariant(mb, r["ncols"], r["template"], before, libs)
         elif verdict.endswith("re-fit"):
             kind, vb = invariant(mb, r["ncols"], r["template"], before, libs)
             kind, va = invariant(mb, r["ncols"], r["template"], fit, libs)
             row.update(after_pitch=fit["pitch"], xs_before=before["xs"] if before else None, xs_after=fit["xs"],
-                       floor=fit["floor"], invariant=kind, inv_before=vb, inv_after=va,
+                       floor=fit["floor"], mode=fit["mode"], invariant=kind, inv_before=vb, inv_after=va,
                        derived_key=derived_key(fit, RULE1))
             pre = "rescued-raise:" if verdict.startswith("raise-") else ""
             if va is None:
@@ -851,7 +874,16 @@ def cmd_rule1(a):
                            recomputed=recomputed, partitions=a.partitions or "all",
                            summary={p: dict(v) for p, v in summary.items()}, rows=rows_out),
                  encoding="utf-8", indent=1)
-    print("wrote", os.path.relpath(out, ROOT))
+    # the exceptions ledger: every fit out of band that this rule did not bring in, with why; the
+    # band is never widened for them
+    exc = [dict(key=x["key"], partition=x["partition"], template=x["template"], charts=x["charts"],
+                verdict=x["verdict"], before_pitch=x.get("before_pitch"), before_error=x.get("before_error"),
+                inv_before=x.get("inv_before"), inv_after=x.get("inv_after"), after_pitch=x.get("after_pitch"))
+           for x in rows_out if x["verdict"] not in ("in-band", "accepted", "not-cached")]
+    A.write_text(out[:-len(".json")] + ".exceptions.jsonl",
+                 "".join(json.dumps(e, sort_keys=True, ensure_ascii=False) + "\n" for e in exc),
+                 encoding="utf-8", newline="\n")
+    print("wrote", os.path.relpath(out, ROOT), "and its exceptions ledger (%d rows)" % len(exc))
     if recomputed == 0:
         print("FAIL: zero fits recomputed")
         return 1
