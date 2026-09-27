@@ -1,7 +1,7 @@
 {
- "generated": "2026-09-27 08:38",
+ "generated": "2026-09-27 09:29",
  "tool": "tools/trace_audit.py",
- "audit_version": "723351a179e356b4b97e189b5b192df7f47283f9d2ddf712f5da7e2a4c2d07b9",
+ "audit_version": "ed1b01e0154c60a6f03e54d048707abd6c9ff3e4acfb655590d919fb7f50c663",
  "audit_sources": {
   "tools/author_ticks.py": "af1214f18077c48b1c34052ee68390580a90bdffa0468d2c586cb2de59ef23ec",
   "tools/combo_reader.py": "af33195a0c86c47108ea15802370ab37ae00ee1e8c904ab9fff0bd74d99a826d",
@@ -15,7 +15,7 @@
   "tools/sprites.py": "5b9aea4f9b63cb49483bbc38ffb6a0188b18ff989ed78df2d914995a5b8542f5",
   "tools/tick_model.py": "b188f41010ac12c628ff6dd1e0cac284f35a3bcaf87a2d58d467cdc5fe78a032",
   "tools/tick_repair.py": "b9de1bd3a27bd284483a512847d82df85e69400b588eb240d8b25b29d08f6b3d",
-  "tools/trace_audit.py": "4c505253550c331f8f7afc4470acf7c9fcccb6df1fa7ad44ba39c9a3e17cb892",
+  "tools/trace_audit.py": "34ce86bfbd974f542fa2c45be7f3f182a5269f40507fb9a108d33ab63191c57f",
   "piu_annotate/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "piu_annotate/utils.py": "88fa36b9e274aa61388684307a566d8ff79c8b342b742c08063ccffd21991453",
   "piu_annotate/formats/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -64,7 +64,7 @@
    ]
   ]
  },
- "head": "4fecaf85f4dfea9a0ba28e2612a388976ada33f7",
+ "head": "b773f505af41e0a4e2f3bb398273081e9fec4735",
  "import_rev": "a23cee5",
  "converter": {
   "module": "piu_annotate/formats/ssc_to_chartstruct.py",
@@ -79,6 +79,7 @@
   "Wedding Crashers S10",
   "Imagination S12"
  ],
+ "quarantine_from": "the fallback in tools/trace_audit.py (sources/quarantine.json absent or unreadable)",
  "owner_revisit": [
   "Destination - SHORT CUT - D21"
  ],
@@ -106,7 +107,7 @@
   "independent UNCOVERED": 6,
   "None UNCOVERED": 77
  },
- "seconds": 9.5,
+ "seconds": 14.9,
  "charts": [
   {
    "chart": "2006. LOVE SONG D14",
@@ -156,7 +157,7 @@
      93.028
     ]
    ],
-   "seconds": 0.63,
+   "seconds": 0.78,
    "whole": {
     "strong": 2,
     "evidence": 984,
@@ -349,7 +350,7 @@
      84.85
     ]
    ],
-   "seconds": 0.5,
+   "seconds": 0.65,
    "whole": {
     "strong": 1,
     "evidence": 1925,
@@ -533,7 +534,7 @@
      71.452
     ]
    ],
-   "seconds": 0.56,
+   "seconds": 0.69,
    "whole": {
     "strong": 8,
     "evidence": 557,
@@ -641,7 +642,7 @@
      90.269
     ]
    ],
-   "seconds": 0.5,
+   "seconds": 0.47,
    "whole": {
     "strong": 3,
     "evidence": 912,
@@ -749,7 +750,7 @@
      "inner_gap_rows": 0,
      "covered": false,
      "verdict": "UNCOVERED",
-     "reason": "the nearest strong read before it is 34 rows away (the limit is 8)"
+     "reason": "a timing-sensitive stretch (40.85-43.52s) lies within 8 rows; the frames decide it"
     },
     {
      "lo": 47.647,
@@ -923,7 +924,7 @@
      63.743
     ]
    ],
-   "seconds": 1.08,
+   "seconds": 1.14,
    "whole": {
     "strong": 8,
     "evidence": 1291,
@@ -1242,7 +1243,7 @@
      66.501
     ]
    ],
-   "seconds": 0.39,
+   "seconds": 0.36,
    "whole": {
     "strong": 11,
     "evidence": 1074,
@@ -1379,7 +1380,7 @@
     "miss": 0
    },
    "timing_change": 104.5946,
-   "seconds": 0.1,
+   "seconds": 0.11,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for UJjQiElua9w band C"
@@ -1479,7 +1480,7 @@
      122.828
     ]
    ],
-   "seconds": 1.16,
+   "seconds": 1.23,
    "whole": {
     "strong": 1,
     "evidence": 63,
@@ -1881,7 +1882,7 @@
      84.694
     ]
    ],
-   "seconds": 0.32,
+   "seconds": 0.7,
    "whole": {
     "strong": 8,
     "evidence": 724,
@@ -1973,7 +1974,7 @@
      83.452
     ]
    ],
-   "seconds": 0.29,
+   "seconds": 0.32,
    "whole": {
     "strong": 6,
     "evidence": 526,
@@ -2074,7 +2075,7 @@
      98.007
     ]
    ],
-   "seconds": 0.32,
+   "seconds": 0.29,
    "whole": {
     "strong": 8,
     "evidence": 1100,
@@ -2181,7 +2182,7 @@
      95.878
     ]
    ],
-   "seconds": 0.36,
+   "seconds": 0.49,
    "whole": {
     "strong": 7,
     "evidence": 525,
@@ -2353,7 +2354,7 @@
      80.252
     ]
    ],
-   "seconds": 0.29,
+   "seconds": 0.3,
    "whole": {
     "strong": 13,
     "evidence": 811,
@@ -2447,7 +2448,7 @@
      102.191
     ]
    ],
-   "seconds": 0.22,
+   "seconds": 0.34,
    "whole": {
     "strong": 5,
     "evidence": 265,
@@ -2684,7 +2685,7 @@
      49.523
     ]
    ],
-   "seconds": 0.29,
+   "seconds": 0.3,
    "whole": {
     "strong": 2,
     "evidence": 42,
@@ -2842,7 +2843,7 @@
      49.523
     ]
    ],
-   "seconds": 0.21,
+   "seconds": 0.29,
    "whole": {
     "strong": 2,
     "evidence": 178,
@@ -3040,7 +3041,7 @@
      4.017
     ]
    ],
-   "seconds": 0.42,
+   "seconds": 0.93,
    "whole": {
     "strong": 10,
     "evidence": 847,
@@ -3112,7 +3113,7 @@
     "bad": 1,
     "miss": 4
    },
-   "seconds": 0.28,
+   "seconds": 0.56,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for 26lAell5CFk band C"
@@ -3303,7 +3304,7 @@
      84.398
     ]
    ],
-   "seconds": 0.17,
+   "seconds": 0.4,
    "whole": {
     "strong": 1,
     "evidence": 1659,
@@ -3423,7 +3424,7 @@
      89.983
     ]
    ],
-   "seconds": 0.33,
+   "seconds": 0.64,
    "whole": {
     "strong": 4,
     "evidence": 461,
@@ -3590,7 +3591,7 @@
      "inner_gap_rows": 0,
      "covered": true,
      "verdict": "OFF",
-     "reason": "a strong read 7 rows before the edit (at 53.44s) is +5 against the file; the nearest reads either side are +5 and +1"
+     "reason": "a strong read 8 rows before the edit (at 52.91s) is +5 against the file; the nearest reads either side are +5 and +1"
     },
     {
      "lo": 59.95,
@@ -3734,7 +3735,7 @@
      102.683
     ]
    ],
-   "seconds": 0.32,
+   "seconds": 0.71,
    "whole": {
     "strong": 7,
     "evidence": 823,
@@ -3845,7 +3846,7 @@
      66.131
     ]
    ],
-   "seconds": 0.26,
+   "seconds": 0.65,
    "whole": {
     "strong": 1,
     "evidence": 45,
@@ -4134,7 +4135,7 @@
      140.6
     ]
    ],
-   "seconds": 0.83,
+   "seconds": 1.67,
    "whole": {
     "strong": 0,
     "evidence": 0,
@@ -4612,7 +4613,7 @@
      53.0
     ]
    ],
-   "seconds": 0.23,
+   "seconds": 0.56,
    "whole": {
     "strong": 3,
     "evidence": 81,
@@ -5028,7 +5029,7 @@
      53.4
     ]
    ],
-   "seconds": 0.26,
+   "seconds": 0.53,
    "whole": {
     "strong": 0,
     "evidence": 0,
@@ -5100,7 +5101,7 @@
    "header_sha": "ae21ab1bbb9ed35ee18e4b52ae9d970fc6641dc9bd229261f3676eadd50fd4e8",
    "base_sha": "46b99c427043d8b79c82c0fbc16d4a09073650b68d418cf720d54281304ce622",
    "verdict": "UNCOVERED",
-   "reason": "no strong read after it (the limit is 8)",
+   "reason": "a timing-sensitive stretch (89.63-92.43s) lies within 8 rows; the frames decide it",
    "play": {
     "band": "C",
     "judged": 394,
@@ -5137,7 +5138,7 @@
      97.531
     ]
    ],
-   "seconds": 0.29,
+   "seconds": 0.63,
    "whole": {
     "strong": 9,
     "evidence": 1029,
@@ -5219,7 +5220,7 @@
      "inner_gap_rows": 1,
      "covered": false,
      "verdict": "UNCOVERED",
-     "reason": "no strong read after it (the limit is 8)"
+     "reason": "a timing-sensitive stretch (89.63-92.43s) lies within 8 rows; the frames decide it"
     }
    ],
    "promotable": false,
@@ -5281,7 +5282,7 @@
      69.186
     ]
    ],
-   "seconds": 0.31,
+   "seconds": 0.71,
    "whole": {
     "strong": 8,
     "evidence": 563,
@@ -5456,7 +5457,7 @@
      97.557
     ]
    ],
-   "seconds": 0.28,
+   "seconds": 0.6,
    "whole": {
     "strong": 2,
     "evidence": 778,
@@ -5565,7 +5566,7 @@
      "inner_gap_rows": 1,
      "covered": false,
      "verdict": "OFF",
-     "reason": "a strong read 7 rows before the edit (at 91.95s) is +1 against the file; the nearest reads either side are +1 and none within 8 rows"
+     "reason": "a strong read 8 rows before the edit (at 91.74s) is +1 against the file; the nearest reads either side are +1 and none within 8 rows"
     }
    ],
    "promotable": false,
@@ -5631,7 +5632,7 @@
      110.35
     ]
    ],
-   "seconds": 0.38,
+   "seconds": 0.69,
    "whole": {
     "strong": 2,
     "evidence": 763,
@@ -5827,7 +5828,7 @@
      107.6
     ]
    ],
-   "seconds": 0.5,
+   "seconds": 0.95,
    "whole": {
     "strong": 8,
     "evidence": 546,
@@ -6088,7 +6089,7 @@
     "bad": 1,
     "miss": 2
    },
-   "seconds": 0.1,
+   "seconds": 0.15,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for QAPaDpe5AVM band C"
@@ -6234,7 +6235,7 @@
      56.908
     ]
    ],
-   "seconds": 0.21,
+   "seconds": 0.44,
    "whole": {
     "strong": 5,
     "evidence": 226,
@@ -6350,7 +6351,7 @@
      92.504
     ]
    ],
-   "seconds": 0.29,
+   "seconds": 0.57,
    "whole": {
     "strong": 7,
     "evidence": 1189,
@@ -6449,7 +6450,7 @@
      22.389
     ]
    ],
-   "seconds": 0.36,
+   "seconds": 0.67,
    "whole": {
     "strong": 7,
     "evidence": 350,
@@ -6550,7 +6551,7 @@
      60.37
     ]
    ],
-   "seconds": 0.23,
+   "seconds": 0.39,
    "whole": {
     "strong": 3,
     "evidence": 249,
@@ -6613,7 +6614,7 @@
     "bad": 1,
     "miss": 0
    },
-   "seconds": 0.13,
+   "seconds": 0.21,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for Ys-1MMRxwL0 band C"
@@ -6749,7 +6750,7 @@
      57.075
     ]
    ],
-   "seconds": 0.22,
+   "seconds": 0.38,
    "whole": {
     "strong": 3,
     "evidence": 139,
@@ -6850,7 +6851,7 @@
      "inner_gap_rows": 0,
      "covered": false,
      "verdict": "UNCOVERED",
-     "reason": "the nearest strong read before it is 48 rows away; no strong read after it (the limit is 8)"
+     "reason": "a timing-sensitive stretch (52.80-54.55s) lies within 8 rows; the frames decide it"
     }
    ],
    "promotable": false,
@@ -6877,7 +6878,7 @@
     "bad": 1,
     "miss": 1
    },
-   "seconds": 0.13,
+   "seconds": 0.21,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for D5zLc3PhQtE band C"
@@ -6956,7 +6957,7 @@
      96.692
     ]
    ],
-   "seconds": 0.34,
+   "seconds": 0.59,
    "whole": {
     "strong": 2,
     "evidence": 893,
@@ -7059,7 +7060,7 @@
      97.663
     ]
    ],
-   "seconds": 0.28,
+   "seconds": 0.51,
    "whole": {
     "strong": 9,
     "evidence": 826,
@@ -7224,7 +7225,7 @@
      99.25
     ]
    ],
-   "seconds": 0.65,
+   "seconds": 1.12,
    "whole": {
     "strong": 1,
     "evidence": 12,
@@ -7540,7 +7541,7 @@
     "bad": 1,
     "miss": 2
    },
-   "seconds": 0.24,
+   "seconds": 0.4,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for iOyrIsbNATA band C"
@@ -7602,7 +7603,7 @@
     "rest_dropped": 21
    },
    "brackets": [],
-   "seconds": 0.48,
+   "seconds": 0.77,
    "whole": {
     "strong": 5,
     "evidence": 353,
@@ -7729,7 +7730,7 @@
      92.339
     ]
    ],
-   "seconds": 0.3,
+   "seconds": 0.45,
    "whole": {
     "strong": 1,
     "evidence": 1045,
@@ -7823,7 +7824,7 @@
      58.569
     ]
    ],
-   "seconds": 0.2,
+   "seconds": 0.32,
    "whole": {
     "strong": 1,
     "evidence": 2004,
@@ -7892,7 +7893,7 @@
     "bad": 0,
     "miss": 2
    },
-   "seconds": 0.2,
+   "seconds": 0.34,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for nhAI_6qN6gs band C"
@@ -7957,7 +7958,7 @@
      97.379
     ]
    ],
-   "seconds": 0.36,
+   "seconds": 0.51,
    "whole": {
     "strong": 16,
     "evidence": 664,
@@ -8046,7 +8047,7 @@
     "bad": 0,
     "miss": 0
    },
-   "seconds": 0.15,
+   "seconds": 0.25,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for AMUXSFsvko4 band C"
@@ -8108,7 +8109,7 @@
     "rest_dropped": 0
    },
    "brackets": [],
-   "seconds": 0.42,
+   "seconds": 0.62,
    "whole": {
     "strong": 3,
     "evidence": 309,
@@ -8245,7 +8246,7 @@
      50.152
     ]
    ],
-   "seconds": 0.2,
+   "seconds": 0.34,
    "whole": {
     "strong": 0,
     "evidence": 0,
@@ -8366,7 +8367,7 @@
      50.152
     ]
    ],
-   "seconds": 0.25,
+   "seconds": 0.42,
    "whole": {
     "strong": 0,
     "evidence": 0,
@@ -8471,7 +8472,7 @@
     "rest_dropped": 24
    },
    "brackets": [],
-   "seconds": 0.26,
+   "seconds": 0.52,
    "whole": {
     "strong": 8,
     "evidence": 739,
@@ -8632,7 +8633,7 @@
      124.933
     ]
    ],
-   "seconds": 0.31,
+   "seconds": 0.67,
    "whole": {
     "strong": 0,
     "evidence": 0,
@@ -8750,7 +8751,7 @@
      54.061
     ]
    ],
-   "seconds": 0.23,
+   "seconds": 0.47,
    "whole": {
     "strong": 4,
     "evidence": 248,
@@ -9142,7 +9143,7 @@
      54.159
     ]
    ],
-   "seconds": 0.24,
+   "seconds": 0.59,
    "whole": {
     "strong": 1,
     "evidence": 9,
@@ -9543,7 +9544,7 @@
     "bad": 0,
     "miss": 1
    },
-   "seconds": 0.14,
+   "seconds": 0.24,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for LCMJoe7QjKM band C"
@@ -9645,7 +9646,7 @@
      55.457
     ]
    ],
-   "seconds": 0.14,
+   "seconds": 0.29,
    "whole": {
     "strong": 1,
     "evidence": 306,
@@ -9757,7 +9758,7 @@
      46.35
     ]
    ],
-   "seconds": 0.29,
+   "seconds": 0.53,
    "whole": {
     "strong": 2,
     "evidence": 860,
@@ -10029,7 +10030,7 @@
      57.637
     ]
    ],
-   "seconds": 0.23,
+   "seconds": 0.7,
    "whole": {
     "strong": 1,
     "evidence": 11,
@@ -10301,7 +10302,7 @@
      109.998
     ]
    ],
-   "seconds": 0.29,
+   "seconds": 0.74,
    "whole": {
     "strong": 1,
     "evidence": 330,
@@ -10390,7 +10391,7 @@
     "rest_dropped": 6
    },
    "brackets": [],
-   "seconds": 0.17,
+   "seconds": 1.09,
    "whole": {
     "strong": 5,
     "evidence": 1012,
@@ -10511,7 +10512,7 @@
      37.933
     ]
    ],
-   "seconds": 0.18,
+   "seconds": 0.4,
    "whole": {
     "strong": 1,
     "evidence": 8,
@@ -10653,7 +10654,7 @@
      96.166
     ]
    ],
-   "seconds": 0.23,
+   "seconds": 1.47,
    "whole": {
     "strong": 5,
     "evidence": 495,
@@ -10757,7 +10758,7 @@
      70.889
     ]
    ],
-   "seconds": 0.29,
+   "seconds": 1.04,
    "whole": {
     "strong": 5,
     "evidence": 236,
@@ -10966,7 +10967,7 @@
      98.863
     ]
    ],
-   "seconds": 0.28,
+   "seconds": 1.57,
    "whole": {
     "strong": 2,
     "evidence": 1063,
@@ -11078,7 +11079,7 @@
      99.29
     ]
    ],
-   "seconds": 0.25,
+   "seconds": 1.51,
    "whole": {
     "strong": 13,
     "evidence": 916,
@@ -11189,7 +11190,7 @@
     "bad": 0,
     "miss": 1
    },
-   "seconds": 0.19,
+   "seconds": 0.85,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for yy6EH4q9-QI band R"
@@ -11254,7 +11255,7 @@
      95.851
     ]
    ],
-   "seconds": 0.22,
+   "seconds": 1.42,
    "whole": {
     "strong": 7,
     "evidence": 1660,
@@ -11319,7 +11320,7 @@
     "bad": 0,
     "miss": 0
    },
-   "seconds": 0.16,
+   "seconds": 0.82,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for XX3igOboGV8 band L"
@@ -11347,7 +11348,7 @@
    "header_sha": "8355377cff5f6268f80427646d40189efe3b8c19fcb322eb576aaaa521b011d7",
    "base_sha": "e01a536a9038e2fbe76a7dfc959f010062ab0cc94d9d9647f24ce2a686379d85",
    "verdict": "OFF",
-   "reason": "the nearest strong read after the edit, 8 rows away with nothing read between, is +2 against the file (at 20.34s)",
+   "reason": "a strong read 8 rows after the edit (at 20.34s) is +2 against the file; the nearest reads either side are +0 and +2",
    "play": {
     "band": "C",
     "judged": 882,
@@ -11408,7 +11409,7 @@
      59.194
     ]
    ],
-   "seconds": 0.23,
+   "seconds": 1.41,
    "whole": {
     "strong": 2,
     "evidence": 304,
@@ -11490,9 +11491,7 @@
      "inner_gap_rows": 0,
      "covered": true,
      "verdict": "OFF",
-     "distant": false,
-     "distance_rows": 8,
-     "reason": "the nearest strong read after the edit, 8 rows away with nothing read between, is +2 against the file (at 20.34s)"
+     "reason": "a strong read 8 rows after the edit (at 20.34s) is +2 against the file; the nearest reads either side are +0 and +2"
     },
     {
      "lo": 38.644,
@@ -11723,7 +11722,7 @@
      45.6
     ]
    ],
-   "seconds": 0.19,
+   "seconds": 0.86,
    "whole": {
     "strong": 0,
     "evidence": 0,
@@ -11857,7 +11856,7 @@
      45.6
     ]
    ],
-   "seconds": 0.16,
+   "seconds": 0.9,
    "whole": {
     "strong": 1,
     "evidence": 233,
@@ -11986,7 +11985,7 @@
      45.6
     ]
    ],
-   "seconds": 0.18,
+   "seconds": 0.61,
    "whole": {
     "strong": 1,
     "evidence": 53,
@@ -12129,7 +12128,7 @@
      45.6
     ]
    ],
-   "seconds": 0.21,
+   "seconds": 1.06,
    "whole": {
     "strong": 0,
     "evidence": 0,
@@ -12259,7 +12258,7 @@
      96.468
     ]
    ],
-   "seconds": 0.29,
+   "seconds": 0.61,
    "whole": {
     "strong": 12,
     "evidence": 800,
@@ -12398,7 +12397,7 @@
      58.007
     ]
    ],
-   "seconds": 0.22,
+   "seconds": 0.66,
    "whole": {
     "strong": 3,
     "evidence": 63,
@@ -12800,7 +12799,7 @@
     "rest_dropped": 20
    },
    "brackets": [],
-   "seconds": 0.34,
+   "seconds": 0.67,
    "whole": {
     "strong": 8,
     "evidence": 487,
@@ -12903,7 +12902,7 @@
      85.24
     ]
    ],
-   "seconds": 0.24,
+   "seconds": 0.56,
    "whole": {
     "strong": 1,
     "evidence": 1182,
@@ -12995,7 +12994,7 @@
      87.071
     ]
    ],
-   "seconds": 0.2,
+   "seconds": 0.43,
    "whole": {
     "strong": 1,
     "evidence": 893,
@@ -13087,7 +13086,7 @@
      96.055
     ]
    ],
-   "seconds": 0.33,
+   "seconds": 0.72,
    "whole": {
     "strong": 9,
     "evidence": 621,
@@ -13188,7 +13187,7 @@
      95.6
     ]
    ],
-   "seconds": 0.27,
+   "seconds": 0.5,
    "whole": {
     "strong": 17,
     "evidence": 732,
@@ -13287,7 +13286,7 @@
      95.6
     ]
    ],
-   "seconds": 0.31,
+   "seconds": 0.63,
    "whole": {
     "strong": 10,
     "evidence": 325,
@@ -13399,7 +13398,7 @@
     "rest_dropped": 0
    },
    "brackets": [],
-   "seconds": 0.23,
+   "seconds": 0.38,
    "whole": {
     "strong": 1,
     "evidence": 1940,
@@ -13462,7 +13461,7 @@
     "bad": 6,
     "miss": 16
    },
-   "seconds": 0.22,
+   "seconds": 0.52,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for FEXpbeWpYrI band C"
@@ -13542,7 +13541,7 @@
      47.255
     ]
    ],
-   "seconds": 0.21,
+   "seconds": 0.33,
    "whole": {
     "strong": 1,
     "evidence": 33,
@@ -13657,7 +13656,7 @@
     "bad": 0,
     "miss": 0
    },
-   "seconds": 0.08,
+   "seconds": 0.19,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for Ip9-ro43B1M band C"
@@ -13737,7 +13736,7 @@
      57.6
     ]
    ],
-   "seconds": 0.17,
+   "seconds": 0.32,
    "whole": {
     "strong": 7,
     "evidence": 434,
@@ -13910,7 +13909,7 @@
      115.5
     ]
    ],
-   "seconds": 1.03,
+   "seconds": 1.98,
    "whole": {
     "strong": 2,
     "evidence": 37,
@@ -14185,7 +14184,7 @@
     "bad": 0,
     "miss": 3
    },
-   "seconds": 1.15,
+   "seconds": 1.71,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no video clock: no extraction or tick-loop alignment; measuring one failed (the measured clock fitted only 6 notes)"
@@ -14330,7 +14329,7 @@
      115.5
     ]
    ],
-   "seconds": 0.96,
+   "seconds": 1.99,
    "whole": {
     "strong": 3,
     "evidence": 124,
@@ -14714,7 +14713,7 @@
      115.65
     ]
    ],
-   "seconds": 1.2,
+   "seconds": 1.84,
    "whole": {
     "strong": 0,
     "evidence": 0,
@@ -14983,7 +14982,7 @@
    "header_sha": "083c6d706c9aad8d816d176d8b9a92977e9feb6091534e708939ea6d47064638",
    "base_sha": "624eb3c7d49a93cf6ed0f0b74c1e72130151ebc11195dbe0a28b8c5ff8f6d00f",
    "verdict": "UNCOVERED",
-   "reason": "the nearest strong read after it is 29 rows away (the limit is 8)",
+   "reason": "a timing-sensitive stretch (34.88-38.75s) lies within 8 rows; the frames decide it",
    "play": {
     "band": "C",
     "judged": 668,
@@ -15028,7 +15027,7 @@
      56.457
     ]
    ],
-   "seconds": 0.17,
+   "seconds": 0.45,
    "whole": {
     "strong": 3,
     "evidence": 303,
@@ -15095,7 +15094,7 @@
      "inner_gap_rows": 10,
      "covered": false,
      "verdict": "UNCOVERED",
-     "reason": "the nearest strong read after it is 29 rows away (the limit is 8)"
+     "reason": "a timing-sensitive stretch (34.88-38.75s) lies within 8 rows; the frames decide it"
     },
     {
      "lo": 45.772,
@@ -15203,7 +15202,7 @@
      90.7
     ]
    ],
-   "seconds": 0.28,
+   "seconds": 0.68,
    "whole": {
     "strong": 5,
     "evidence": 1385,
@@ -15321,7 +15320,7 @@
      96.001
     ]
    ],
-   "seconds": 0.29,
+   "seconds": 0.66,
    "whole": {
     "strong": 11,
     "evidence": 659,
@@ -15417,7 +15416,7 @@
      97.081
     ]
    ],
-   "seconds": 0.39,
+   "seconds": 0.72,
    "whole": {
     "strong": 8,
     "evidence": 152,
@@ -15579,7 +15578,7 @@
      3.397
     ]
    ],
-   "seconds": 0.26,
+   "seconds": 0.53,
    "whole": {
     "strong": 1,
     "evidence": 2083,
@@ -15691,7 +15690,7 @@
      56.6
     ]
    ],
-   "seconds": 0.17,
+   "seconds": 0.41,
    "whole": {
     "strong": 4,
     "evidence": 562,
@@ -15768,7 +15767,7 @@
      "inner_gap_rows": 0,
      "covered": false,
      "verdict": "OFF",
-     "reason": "a strong read 6 rows before the edit (at 21.91s) is +2 against the file; the nearest reads either side are +2 and none within 8 rows"
+     "reason": "a strong read 8 rows before the edit (at 20.44s) is +2 against the file; the nearest reads either side are +2 and none within 8 rows"
     },
     {
      "lo": 31.636,
@@ -15914,7 +15913,7 @@
      "inner_gap_rows": 0,
      "covered": false,
      "verdict": "OFF",
-     "reason": "a strong read 7 rows before the edit (at 50.64s) is +7 against the file; the nearest reads either side are +7 and none within 8 rows"
+     "reason": "a strong read 8 rows before the edit (at 50.27s) is +7 against the file; the nearest reads either side are +7 and none within 8 rows"
     }
    ],
    "promotable": false,
@@ -15965,7 +15964,7 @@
     "rest_dropped": 30
    },
    "brackets": [],
-   "seconds": 0.35,
+   "seconds": 0.86,
    "whole": {
     "strong": 3,
     "evidence": 595,
@@ -16066,7 +16065,7 @@
      89.975
     ]
    ],
-   "seconds": 0.3,
+   "seconds": 0.53,
    "whole": {
     "strong": 10,
     "evidence": 564,
@@ -16175,7 +16174,7 @@
      89.743
     ]
    ],
-   "seconds": 0.31,
+   "seconds": 0.62,
    "whole": {
     "strong": 9,
     "evidence": 323,
@@ -16289,7 +16288,7 @@
      89.529
     ]
    ],
-   "seconds": 0.38,
+   "seconds": 0.64,
    "whole": {
     "strong": 1,
     "evidence": 579,
@@ -16381,7 +16380,7 @@
      80.689
     ]
    ],
-   "seconds": 0.33,
+   "seconds": 0.54,
    "whole": {
     "strong": 9,
     "evidence": 334,
@@ -16482,7 +16481,7 @@
      82.029
     ]
    ],
-   "seconds": 0.41,
+   "seconds": 0.6,
    "whole": {
     "strong": 4,
     "evidence": 314,
@@ -16598,7 +16597,7 @@
      79.975
     ]
    ],
-   "seconds": 0.4,
+   "seconds": 0.6,
    "whole": {
     "strong": 7,
     "evidence": 339,
@@ -16696,7 +16695,7 @@
     "bad": 0,
     "miss": 1
    },
-   "seconds": 0.31,
+   "seconds": 0.63,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for 1juO2049sp8 band C"
@@ -16776,7 +16775,7 @@
     "bad": 0,
     "miss": 0
    },
-   "seconds": 0.12,
+   "seconds": 0.25,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for v58t4Vqw4ZE band R"
@@ -16845,7 +16844,7 @@
      44.143
     ]
    ],
-   "seconds": 0.17,
+   "seconds": 0.36,
    "whole": {
     "strong": 3,
     "evidence": 566,
@@ -16922,7 +16921,7 @@
      "inner_gap_rows": 8,
      "covered": true,
      "verdict": "OFF",
-     "reason": "a strong read 7 rows before the edit (at 31.29s) is -1 against the file; the nearest reads either side are -1 and +0"
+     "reason": "a strong read 8 rows before the edit (at 31.11s) is -1 against the file; the nearest reads either side are -1 and +0"
     }
    ],
    "promotable": false,
@@ -17028,7 +17027,7 @@
      100.863
     ]
    ],
-   "seconds": 0.48,
+   "seconds": 0.89,
    "whole": {
     "strong": 3,
     "evidence": 125,
@@ -17532,7 +17531,7 @@
      4.93
     ]
    ],
-   "seconds": 0.28,
+   "seconds": 0.57,
    "whole": {
     "strong": 1,
     "evidence": 136,
@@ -17583,7 +17582,7 @@
   },
   "clean_plays": 85,
   "covered": 20,
-  "seconds": 49.3,
+  "seconds": 93.6,
   "off": [],
   "unsettled": [
    {
@@ -20602,7 +20601,7 @@
   ]
  },
  "power": {
-  "method": "one #TICKCOUNTS-only compensating pair per plant in a scratch copy of an untouched exact chart on a full-combo play: a lattice point removed (rate 0 over +-1/2r) in one hold region and one added (rate 2r over [x, x+1/2r) at a midpoint) in another, the converter's total unchanged and the event diff exactly +1/-1; separation = judged rows between the two",
+  "method": "one #TICKCOUNTS-only compensating pair per plant in a scratch copy of an untouched exact chart (every control with a clock but the three blind-review charts, tabled by its certified play: full combo, breaks with no GOOD, GOODs): a lattice point removed (rate 0 over +-1/2r) in one hold region and one added (rate 2r over [x, x+1/2r) at a midpoint) in another, the converter's total unchanged and the event diff exactly +1/-1; separation = judged rows between the two",
   "variants": {
    "counter-derived": {},
    "independent": {
@@ -20616,12 +20615,21 @@
    }
   },
   "seed": "2026-09-27",
-  "per_chart": 8,
-  "charts": 82,
-  "plants": 569,
+  "per_chart": {
+   "full combo": 8,
+   "breaks, no GOOD": 8,
+   "GOODs": 2
+  },
+  "charts": 257,
+  "charts_by_play": {
+   "full combo": 82,
+   "GOODs": 139,
+   "breaks, no GOOD": 36
+  },
+  "plants": 1072,
   "refused": 0,
   "errors": 0,
-  "seconds": 208.0,
+  "seconds": 470.3,
   "table": [
    {
     "rows": "0-4",
@@ -20877,7 +20885,808 @@
     "UNCOVERED": 0,
     "FLAT": 0
    }
-  ]
+  ],
+  "by_class": {
+   "full combo": {
+    "charts": 82,
+    "per_chart": 8,
+    "plants": 569,
+    "OFF": 270,
+    "UNCOVERED": 267,
+    "FLAT": 32,
+    "flat_beyond_k": 0
+   },
+   "breaks, no GOOD": {
+    "charts": 36,
+    "per_chart": 8,
+    "plants": 235,
+    "OFF": 0,
+    "UNCOVERED": 233,
+    "FLAT": 2,
+    "flat_beyond_k": 0
+   },
+   "GOODs": {
+    "charts": 139,
+    "per_chart": 2,
+    "plants": 268,
+    "OFF": 6,
+    "UNCOVERED": 262,
+    "FLAT": 0,
+    "flat_beyond_k": 0
+   }
+  },
+  "tables": {
+   "full combo": [
+    {
+     "rows": "0-4",
+     "plants": 80,
+     "counter-derived": {
+      "OFF": 0,
+      "UNCOVERED": 53,
+      "FLAT": 27,
+      "detected": 0.0,
+      "missed": 0.338
+     },
+     "independent": {
+      "OFF": 2,
+      "UNCOVERED": 46,
+      "FLAT": 32,
+      "detected": 0.025,
+      "missed": 0.4
+     },
+     "counter-derived k=16": {
+      "OFF": 0,
+      "UNCOVERED": 36,
+      "FLAT": 44,
+      "detected": 0.0,
+      "missed": 0.55
+     },
+     "counter-derived k=32": {
+      "OFF": 0,
+      "UNCOVERED": 28,
+      "FLAT": 52,
+      "detected": 0.0,
+      "missed": 0.65
+     }
+    },
+    {
+     "rows": "5-8",
+     "plants": 57,
+     "counter-derived": {
+      "OFF": 9,
+      "UNCOVERED": 43,
+      "FLAT": 5,
+      "detected": 0.158,
+      "missed": 0.088
+     },
+     "independent": {
+      "OFF": 22,
+      "UNCOVERED": 33,
+      "FLAT": 2,
+      "detected": 0.386,
+      "missed": 0.035
+     },
+     "counter-derived k=16": {
+      "OFF": 9,
+      "UNCOVERED": 30,
+      "FLAT": 18,
+      "detected": 0.158,
+      "missed": 0.316
+     },
+     "counter-derived k=32": {
+      "OFF": 9,
+      "UNCOVERED": 18,
+      "FLAT": 30,
+      "detected": 0.158,
+      "missed": 0.526
+     }
+    },
+    {
+     "rows": "9-16",
+     "plants": 52,
+     "counter-derived": {
+      "OFF": 12,
+      "UNCOVERED": 40,
+      "FLAT": 0,
+      "detected": 0.231,
+      "missed": 0.0
+     },
+     "independent": {
+      "OFF": 21,
+      "UNCOVERED": 31,
+      "FLAT": 0,
+      "detected": 0.404,
+      "missed": 0.0
+     },
+     "counter-derived k=16": {
+      "OFF": 12,
+      "UNCOVERED": 37,
+      "FLAT": 3,
+      "detected": 0.231,
+      "missed": 0.058
+     },
+     "counter-derived k=32": {
+      "OFF": 12,
+      "UNCOVERED": 24,
+      "FLAT": 16,
+      "detected": 0.231,
+      "missed": 0.308
+     }
+    },
+    {
+     "rows": "17-32",
+     "plants": 74,
+     "counter-derived": {
+      "OFF": 29,
+      "UNCOVERED": 45,
+      "FLAT": 0,
+      "detected": 0.392,
+      "missed": 0.0
+     },
+     "independent": {
+      "OFF": 32,
+      "UNCOVERED": 42,
+      "FLAT": 0,
+      "detected": 0.432,
+      "missed": 0.0
+     },
+     "counter-derived k=16": {
+      "OFF": 29,
+      "UNCOVERED": 44,
+      "FLAT": 1,
+      "detected": 0.392,
+      "missed": 0.014
+     },
+     "counter-derived k=32": {
+      "OFF": 29,
+      "UNCOVERED": 40,
+      "FLAT": 5,
+      "detected": 0.392,
+      "missed": 0.068
+     }
+    },
+    {
+     "rows": "33-64",
+     "plants": 86,
+     "counter-derived": {
+      "OFF": 44,
+      "UNCOVERED": 42,
+      "FLAT": 0,
+      "detected": 0.512,
+      "missed": 0.0
+     },
+     "independent": {
+      "OFF": 57,
+      "UNCOVERED": 29,
+      "FLAT": 0,
+      "detected": 0.663,
+      "missed": 0.0
+     },
+     "counter-derived k=16": {
+      "OFF": 44,
+      "UNCOVERED": 42,
+      "FLAT": 0,
+      "detected": 0.512,
+      "missed": 0.0
+     },
+     "counter-derived k=32": {
+      "OFF": 44,
+      "UNCOVERED": 42,
+      "FLAT": 0,
+      "detected": 0.512,
+      "missed": 0.0
+     }
+    },
+    {
+     "rows": "65-128",
+     "plants": 99,
+     "counter-derived": {
+      "OFF": 73,
+      "UNCOVERED": 26,
+      "FLAT": 0,
+      "detected": 0.737,
+      "missed": 0.0
+     },
+     "independent": {
+      "OFF": 78,
+      "UNCOVERED": 21,
+      "FLAT": 0,
+      "detected": 0.788,
+      "missed": 0.0
+     },
+     "counter-derived k=16": {
+      "OFF": 73,
+      "UNCOVERED": 26,
+      "FLAT": 0,
+      "detected": 0.737,
+      "missed": 0.0
+     },
+     "counter-derived k=32": {
+      "OFF": 73,
+      "UNCOVERED": 26,
+      "FLAT": 0,
+      "detected": 0.737,
+      "missed": 0.0
+     }
+    },
+    {
+     "rows": "129-+",
+     "plants": 121,
+     "counter-derived": {
+      "OFF": 103,
+      "UNCOVERED": 18,
+      "FLAT": 0,
+      "detected": 0.851,
+      "missed": 0.0
+     },
+     "independent": {
+      "OFF": 104,
+      "UNCOVERED": 17,
+      "FLAT": 0,
+      "detected": 0.86,
+      "missed": 0.0
+     },
+     "counter-derived k=16": {
+      "OFF": 103,
+      "UNCOVERED": 18,
+      "FLAT": 0,
+      "detected": 0.851,
+      "missed": 0.0
+     },
+     "counter-derived k=32": {
+      "OFF": 103,
+      "UNCOVERED": 18,
+      "FLAT": 0,
+      "detected": 0.851,
+      "missed": 0.0
+     }
+    }
+   ],
+   "breaks, no GOOD": [
+    {
+     "rows": "0-4",
+     "plants": 30,
+     "counter-derived": {
+      "OFF": 0,
+      "UNCOVERED": 28,
+      "FLAT": 2,
+      "detected": 0.0,
+      "missed": 0.067
+     },
+     "independent": {
+      "OFF": 0,
+      "UNCOVERED": 28,
+      "FLAT": 2,
+      "detected": 0.0,
+      "missed": 0.067
+     },
+     "counter-derived k=16": {
+      "OFF": 0,
+      "UNCOVERED": 26,
+      "FLAT": 4,
+      "detected": 0.0,
+      "missed": 0.133
+     },
+     "counter-derived k=32": {
+      "OFF": 0,
+      "UNCOVERED": 22,
+      "FLAT": 8,
+      "detected": 0.0,
+      "missed": 0.267
+     }
+    },
+    {
+     "rows": "5-8",
+     "plants": 15,
+     "counter-derived": {
+      "OFF": 0,
+      "UNCOVERED": 15,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     },
+     "independent": {
+      "OFF": 0,
+      "UNCOVERED": 14,
+      "FLAT": 1,
+      "detected": 0.0,
+      "missed": 0.067
+     },
+     "counter-derived k=16": {
+      "OFF": 0,
+      "UNCOVERED": 13,
+      "FLAT": 2,
+      "detected": 0.0,
+      "missed": 0.133
+     },
+     "counter-derived k=32": {
+      "OFF": 0,
+      "UNCOVERED": 12,
+      "FLAT": 3,
+      "detected": 0.0,
+      "missed": 0.2
+     }
+    },
+    {
+     "rows": "9-16",
+     "plants": 25,
+     "counter-derived": {
+      "OFF": 0,
+      "UNCOVERED": 25,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     },
+     "independent": {
+      "OFF": 0,
+      "UNCOVERED": 25,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     },
+     "counter-derived k=16": {
+      "OFF": 0,
+      "UNCOVERED": 25,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     },
+     "counter-derived k=32": {
+      "OFF": 0,
+      "UNCOVERED": 25,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     }
+    },
+    {
+     "rows": "17-32",
+     "plants": 29,
+     "counter-derived": {
+      "OFF": 0,
+      "UNCOVERED": 29,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     },
+     "independent": {
+      "OFF": 0,
+      "UNCOVERED": 29,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     },
+     "counter-derived k=16": {
+      "OFF": 0,
+      "UNCOVERED": 29,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     },
+     "counter-derived k=32": {
+      "OFF": 0,
+      "UNCOVERED": 28,
+      "FLAT": 1,
+      "detected": 0.0,
+      "missed": 0.034
+     }
+    },
+    {
+     "rows": "33-64",
+     "plants": 38,
+     "counter-derived": {
+      "OFF": 0,
+      "UNCOVERED": 38,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     },
+     "independent": {
+      "OFF": 0,
+      "UNCOVERED": 38,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     },
+     "counter-derived k=16": {
+      "OFF": 0,
+      "UNCOVERED": 38,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     },
+     "counter-derived k=32": {
+      "OFF": 0,
+      "UNCOVERED": 38,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     }
+    },
+    {
+     "rows": "65-128",
+     "plants": 35,
+     "counter-derived": {
+      "OFF": 0,
+      "UNCOVERED": 35,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     },
+     "independent": {
+      "OFF": 0,
+      "UNCOVERED": 35,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     },
+     "counter-derived k=16": {
+      "OFF": 0,
+      "UNCOVERED": 35,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     },
+     "counter-derived k=32": {
+      "OFF": 0,
+      "UNCOVERED": 35,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     }
+    },
+    {
+     "rows": "129-+",
+     "plants": 63,
+     "counter-derived": {
+      "OFF": 0,
+      "UNCOVERED": 63,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     },
+     "independent": {
+      "OFF": 0,
+      "UNCOVERED": 63,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     },
+     "counter-derived k=16": {
+      "OFF": 0,
+      "UNCOVERED": 63,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     },
+     "counter-derived k=32": {
+      "OFF": 0,
+      "UNCOVERED": 63,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     }
+    }
+   ],
+   "GOODs": [
+    {
+     "rows": "0-4",
+     "plants": 30,
+     "counter-derived": {
+      "OFF": 0,
+      "UNCOVERED": 30,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     },
+     "independent": {
+      "OFF": 0,
+      "UNCOVERED": 30,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     },
+     "counter-derived k=16": {
+      "OFF": 0,
+      "UNCOVERED": 30,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     },
+     "counter-derived k=32": {
+      "OFF": 0,
+      "UNCOVERED": 30,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     }
+    },
+    {
+     "rows": "5-8",
+     "plants": 15,
+     "counter-derived": {
+      "OFF": 0,
+      "UNCOVERED": 15,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     },
+     "independent": {
+      "OFF": 0,
+      "UNCOVERED": 15,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     },
+     "counter-derived k=16": {
+      "OFF": 0,
+      "UNCOVERED": 15,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     },
+     "counter-derived k=32": {
+      "OFF": 0,
+      "UNCOVERED": 15,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     }
+    },
+    {
+     "rows": "9-16",
+     "plants": 30,
+     "counter-derived": {
+      "OFF": 1,
+      "UNCOVERED": 29,
+      "FLAT": 0,
+      "detected": 0.033,
+      "missed": 0.0
+     },
+     "independent": {
+      "OFF": 1,
+      "UNCOVERED": 29,
+      "FLAT": 0,
+      "detected": 0.033,
+      "missed": 0.0
+     },
+     "counter-derived k=16": {
+      "OFF": 1,
+      "UNCOVERED": 29,
+      "FLAT": 0,
+      "detected": 0.033,
+      "missed": 0.0
+     },
+     "counter-derived k=32": {
+      "OFF": 1,
+      "UNCOVERED": 29,
+      "FLAT": 0,
+      "detected": 0.033,
+      "missed": 0.0
+     }
+    },
+    {
+     "rows": "17-32",
+     "plants": 33,
+     "counter-derived": {
+      "OFF": 1,
+      "UNCOVERED": 32,
+      "FLAT": 0,
+      "detected": 0.03,
+      "missed": 0.0
+     },
+     "independent": {
+      "OFF": 1,
+      "UNCOVERED": 32,
+      "FLAT": 0,
+      "detected": 0.03,
+      "missed": 0.0
+     },
+     "counter-derived k=16": {
+      "OFF": 1,
+      "UNCOVERED": 32,
+      "FLAT": 0,
+      "detected": 0.03,
+      "missed": 0.0
+     },
+     "counter-derived k=32": {
+      "OFF": 1,
+      "UNCOVERED": 32,
+      "FLAT": 0,
+      "detected": 0.03,
+      "missed": 0.0
+     }
+    },
+    {
+     "rows": "33-64",
+     "plants": 44,
+     "counter-derived": {
+      "OFF": 0,
+      "UNCOVERED": 44,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     },
+     "independent": {
+      "OFF": 0,
+      "UNCOVERED": 44,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     },
+     "counter-derived k=16": {
+      "OFF": 0,
+      "UNCOVERED": 44,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     },
+     "counter-derived k=32": {
+      "OFF": 0,
+      "UNCOVERED": 44,
+      "FLAT": 0,
+      "detected": 0.0,
+      "missed": 0.0
+     }
+    },
+    {
+     "rows": "65-128",
+     "plants": 52,
+     "counter-derived": {
+      "OFF": 2,
+      "UNCOVERED": 50,
+      "FLAT": 0,
+      "detected": 0.038,
+      "missed": 0.0
+     },
+     "independent": {
+      "OFF": 3,
+      "UNCOVERED": 49,
+      "FLAT": 0,
+      "detected": 0.058,
+      "missed": 0.0
+     },
+     "counter-derived k=16": {
+      "OFF": 2,
+      "UNCOVERED": 50,
+      "FLAT": 0,
+      "detected": 0.038,
+      "missed": 0.0
+     },
+     "counter-derived k=32": {
+      "OFF": 2,
+      "UNCOVERED": 50,
+      "FLAT": 0,
+      "detected": 0.038,
+      "missed": 0.0
+     }
+    },
+    {
+     "rows": "129-+",
+     "plants": 64,
+     "counter-derived": {
+      "OFF": 2,
+      "UNCOVERED": 62,
+      "FLAT": 0,
+      "detected": 0.031,
+      "missed": 0.0
+     },
+     "independent": {
+      "OFF": 3,
+      "UNCOVERED": 61,
+      "FLAT": 0,
+      "detected": 0.047,
+      "missed": 0.0
+     },
+     "counter-derived k=16": {
+      "OFF": 2,
+      "UNCOVERED": 62,
+      "FLAT": 0,
+      "detected": 0.031,
+      "missed": 0.0
+     },
+     "counter-derived k=32": {
+      "OFF": 2,
+      "UNCOVERED": 62,
+      "FLAT": 0,
+      "detected": 0.031,
+      "missed": 0.0
+     }
+    }
+   ]
+  },
+  "by_meter_class": {
+   "full combo": [
+    {
+     "levels": "1-15",
+     "plants": 423,
+     "OFF": 219,
+     "UNCOVERED": 176,
+     "FLAT": 28
+    },
+    {
+     "levels": "16-19",
+     "plants": 130,
+     "OFF": 46,
+     "UNCOVERED": 80,
+     "FLAT": 4
+    },
+    {
+     "levels": "20-23",
+     "plants": 16,
+     "OFF": 5,
+     "UNCOVERED": 11,
+     "FLAT": 0
+    },
+    {
+     "levels": "24-99",
+     "plants": 0,
+     "OFF": 0,
+     "UNCOVERED": 0,
+     "FLAT": 0
+    }
+   ],
+   "breaks, no GOOD": [
+    {
+     "levels": "1-15",
+     "plants": 144,
+     "OFF": 0,
+     "UNCOVERED": 142,
+     "FLAT": 2
+    },
+    {
+     "levels": "16-19",
+     "plants": 79,
+     "OFF": 0,
+     "UNCOVERED": 79,
+     "FLAT": 0
+    },
+    {
+     "levels": "20-23",
+     "plants": 12,
+     "OFF": 0,
+     "UNCOVERED": 12,
+     "FLAT": 0
+    },
+    {
+     "levels": "24-99",
+     "plants": 0,
+     "OFF": 0,
+     "UNCOVERED": 0,
+     "FLAT": 0
+    }
+   ],
+   "GOODs": [
+    {
+     "levels": "1-15",
+     "plants": 38,
+     "OFF": 1,
+     "UNCOVERED": 37,
+     "FLAT": 0
+    },
+    {
+     "levels": "16-19",
+     "plants": 118,
+     "OFF": 4,
+     "UNCOVERED": 114,
+     "FLAT": 0
+    },
+    {
+     "levels": "20-23",
+     "plants": 84,
+     "OFF": 1,
+     "UNCOVERED": 83,
+     "FLAT": 0
+    },
+    {
+     "levels": "24-99",
+     "plants": 28,
+     "OFF": 0,
+     "UNCOVERED": 28,
+     "FLAT": 0
+    }
+   ]
+  }
  },
  "promotions_not_reconfirmed": []
 }
