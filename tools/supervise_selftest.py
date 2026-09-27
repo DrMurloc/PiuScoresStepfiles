@@ -50,7 +50,10 @@ def grandchild(flags=0):
     subprocess.Popen([sys.executable, "-c", GC, f], creationflags=flags)
     for _ in range(400):
         if os.path.exists(f):
-            return int(open(f).read())
+            try:
+                return int(open(f).read())
+            except (OSError, ValueError):     # a scanner can hold a file that was just renamed into place
+                pass
         time.sleep(0.05)
 def started():
     return sum(1 for f in os.listdir(out) if f.endswith(".start.json"))
@@ -234,8 +237,8 @@ class Drill:
         rows = []
         for f in os.listdir(self.out):
             if f.endswith(".json"):
-                with open(os.path.join(self.out, f)) as fh:
-                    r = json.load(fh)
+                path = os.path.join(self.out, f)
+                r = S._retry(lambda: json.load(open(path)))    # a scanner can hold a just-renamed file
                 if kind is None or r["kind"] == kind:
                     rows.append(r)
         return rows
@@ -568,7 +571,9 @@ def d_late_assign(d):
     starts is still inside the job."""
     late = d.script("late.py", LATE_ASSIGN)
     record = os.path.join(d.dir, "jobpids.json")
-    path = d.jobs("j", [d.toyjob(f"a{i}", "sleep", 2.5) for i in range(4)])
+    # the toys wait for each other and linger 3 s: the launch step itself takes seconds (four delayed
+    # assignments), and a toy that ended before the first snapshot after it would show an empty job
+    path = d.jobs("j", [d.toyjob(f"a{i}", "hold", 4, BARRIER_WAIT_S, 3.0) for i in range(4)])
     r = d.sup(record, "run", "late", "--jobs", path, "--parallel", "4", wrapper=late)
     seen = json.load(open(record)) if os.path.exists(record) else {}
     starts = {m["job"]: m["pid"] for m in d.marks("start")}
@@ -640,6 +645,8 @@ def d_stop_grace_kill(d):
     d.sup("stop", "grace")
     rc = p.wait(120)
     rows = d.ledger("grace")
+    if not d.expect(m, f"the toy never started its grandchild; ledger {rows}"):
+        return "no start mark"
     gc, child = m[0]["gc"], m[0]["pid"]
     d.expect(rc == 3, f"exit {rc}")
     d.expect(rows and rows[0]["outcome"] == "stopped" and rows[0]["verdict"] == "STOPPED", f"ledger {rows}")
@@ -903,8 +910,10 @@ def d_detach(d):
     d.expect(hb, "no heartbeat from the detached supervisor")
     done = wait_for(lambda: d.heartbeat("bg").get("state") == "finished", BARRIER_WAIT_S)
     d.expect(done and len(d.ledger("bg")) == 3, "the detached run did not finish")
-    log = open(os.path.join(d.run_dir("bg"), "supervisor.log"), encoding="utf-8").read()
-    d.expect(" start " in log and " end " in log, "the detached supervisor did not log its start and end")
+    log_path = os.path.join(d.run_dir("bg"), "supervisor.log")
+    # the heartbeat says finished a moment before the end line is written: wait for it, do not race it
+    logged = wait_for(lambda: (lambda t: " start " in t and " end " in t)(open(log_path, encoding="utf-8").read()), 30)
+    d.expect(logged, "the detached supervisor did not log its start and end")
     return f"returned in {returned:.1f}s with {rows_at_return}/3 done; detached pid {(hb or {}).get('pid')} finished 3 jobs"
 
 
