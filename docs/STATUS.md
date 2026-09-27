@@ -703,6 +703,16 @@ Hypnosis(SynthWulf Mix) S11 -> S13 763, My Way S4 -> S6 201, Solitary S6 -> S11 
 each pad would let the notes decide. Across the whole chart map, 29 rows carry a name level that is not
 their chartId's catalog level (24 certified, none exact).
 
+**The second pad, not started** (the bucket's second checkpoint; measured with a scratch survey,
+`work/identity-1-scratch/second_pad_survey.py`, no decode). 232 two-column result screens certify
+exactly one side. On 182 of them the other side's total is exactly one other catalog chart of the same
+song (14 match more than one, 36 none); 14 of the 182 are round hundreds. None of those 182 pads has a
+cached sprite pass, so each needs its one decode (a slot) before the notes can pick a block. 171 of the
+182 target charts are not in the tail sweep's list of charts whose file disagrees with the catalog, so
+most would be exact on arrival - but only 11 have a chart-map row. A second-pad certification
+therefore has to name its block itself, and `corpus_map` has to read that file the way it reads the
+overlay: a change to gate code, landed the same way.
+
 ## Beyond the census (sized 2026-09-06, listed in full 2026-09-08)
 
 The census was the *blatantly* wrong 121 — its cut was narrow on purpose: taps above the
