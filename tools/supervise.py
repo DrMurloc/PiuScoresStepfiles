@@ -24,7 +24,8 @@
 #   work/.main.lock     held by whoever is merging into main; .githooks/pre-push refuses pushes
 #   work/STOP           stops every loop;  work/runs/<run>/STOP stops one
 #   work/runs/<run>/    manifest.json, jobs.jsonl (frozen), ledger.jsonl (append-only),
-#                       events.jsonl, heartbeat.json, supervisor.log, logs/<job>.log
+#                       events.jsonl, heartbeat.json, supervisor.log, logs/<job>.log; and
+#                       loopcommit.py's pass.json, passes.jsonl, pass-<base>-gate<n>.json/.log
 #   work/rails-events.jsonl   machine-wide log of stale slots and locks recovered
 #
 # Why each piece exists:

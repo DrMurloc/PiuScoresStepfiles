@@ -27,10 +27,15 @@ later" rather than a result: such an exit is recorded as outcome `deferred` (ver
 RETRY_LATER, not a finished row) and the job goes to the back of the queue, launched again no
 sooner than `retry_after` seconds (default 300) later, up to `retry_limit` deferrals in a row
 (default 12), after which the exit is final with verdict RETRY_EXHAUSTED (`--retry nonzero`
-re-runs it on resume). A job whose command runs `tools/corpus_grade.py` gets `retry_exit [2]`
-unless it says otherwise: the grade exits 2 when it refuses - a pool starved past
-`--stall-timeout` while the owner games, a transient MemoryError or OSError, a worker that died -
-never as a verdict on the corpus (that is 0 or 1). A jobs
+re-runs it on resume). A job whose command runs `tools/corpus_grade.py` or `tools/loopcommit.py`
+gets `retry_exit [75]` unless it says otherwise: both exit 75 (`EX_TEMPFAIL`) only when the
+machine, not the work, stopped the judgement - a pool starved past `--stall-timeout` while the
+owner games, a MemoryError or OSError, a worker that died, a converter that answered two ways; for
+`loopcommit.py pass gate`, a gate that said so, with the pass left open so the retry gates the
+same base. Their exit 2 is a refusal that waiting does not fix (an oracle edited without a freeze,
+a converter or manifest that is not the pin, a revision that does not resolve) and is a finished
+FAIL at once, never deferred; neither is ever a verdict on the corpus (that is 0 or 1). A job that
+wraps them in a script of its own names `"retry_exit": [75]` itself. A jobs
 file that does not parse is refused with its line number, before any run folder is created; a
 byte-order mark and CRLF line ends (what PowerShell 5.1's `Out-File` and pipes write) are fine,
 as they are in `slots`' `config.json`.
@@ -138,7 +143,9 @@ checkout's, so all loops see one copy:
   run id names one list, so a changed list needs a new id), `ledger.jsonl` (job, attempt, start,
   end, duration, exit code, outcome, verdict, log, frozen time), `events.jsonl`,
   `heartbeat.json` (after every job, every freeze and thaw, and every 30 s), `supervisor.log`,
-  `logs/`.
+  `logs/`; and, for a run that commits through `loopcommit.py pass`, `pass.json` (the open or
+  last pass: its base, every gate attempt, the revert), `passes.jsonl` (finished passes) and each
+  attempt's `pass-<base>-gate<n>.json` / `.log`, plus the `STOP` a failed or refused gate writes.
 - **Resume**: running the same run id again skips every job whose latest row finished (outcome
   `exit`, `timeout` or `launch-error`; `--retry` names kinds to re-run). A job killed by STOP, a
   halt, a crash or a preemption, deferred by its `retry_exit`, or in flight when a supervisor
@@ -159,8 +166,11 @@ checkout's, so all loops see one copy:
   (and for how long yet), a blocked freeze, plus the slot pool, the commit lock, the main lock and
   the global STOP. Only `finished` means done.
 
-Exit codes: 0 finished (every job has a finished row, whatever its verdict), 3 stopped,
-4 halted, 5 crashed.
+Exit codes: 0 finished (every job has a finished row, whatever its verdict), 1 refused to start
+and nothing ran (a run or global STOP is present, the converter is not the frozen pin, the jobs
+file does not parse or is not the run's frozen list, the run is already supervised, a pin changed
+since the run began, a bad option value) or a `--detach` child that exited at once, 3 stopped,
+4 halted, 5 crashed (2 is argparse's own: the command line did not parse).
 
 **`supervise.py worktree <name> --base <rev>`** / **`supervise.py worktree-remove <name> [--delete-branch] [--force-branch]`** / **`supervise.py preflight [--videos] [--open-videos]`**
 `worktree` creates `../psf-wt/<name>` on a new branch `loops/<name>` from `--base`, junctions
@@ -228,9 +238,37 @@ rewrote the same lines, it stops there and says so, with the reverts before it c
 revert commit that fails its post-commit check is undone with `reset --soft` like any other
 (exit 3, the reversal left staged for inspection).
 
-Exit codes: 0 done; 2 refused, nothing committed (every refusal above, and the commit lock not
-taken within `--lock-timeout`, default 30 minutes of time it was awake); 3 a post-commit check
-failed and the commit was undone; 1 an unexpected error, with a traceback.
+**`loopcommit.py pass begin --run <run>`** / **`pass gate --run <run> --declared N [--workers N] [--audit-no-decode]`** / **`pass show --run <run>`**
+The commit pass, packaged, so no loop hand-codes the base, the gate, the revert and the halt.
+`pass begin` records HEAD as the pass base in `work/runs/<run>/pass.json` (it refuses while a
+STOP applies to the run, and while the run has an open pass with commits after its base - a new
+pass would take a base that already holds them, and they would never be gated; a second begin
+with nothing committed yet is the same pass). The loop then commits, one chart per `commit`.
+`pass gate` runs `corpus_grade.py gate --base <recorded base> --head <HEAD> --declared N` -
+the commits, never the working tree, and every ship trace-audited (below, "The corpus grade") -
+keeps each attempt's output and JSON report beside `pass.json`, and believes a verdict only from
+this attempt's report naming that base and head:
+- **PASS** (exit 0): the pass is closed and appended to `passes.jsonl`.
+- **FAIL** (exit 4): the run is halted first - its `work/runs/<run>/STOP` is written with the
+  failures, and the pass marked failed, after which `commit` refuses for the run - and then this
+  run's `Loop-Run` commits after the base are reverted (`revert-run`, under the commit lock, so a
+  commit racing the halt is reverted too). `pass show` says how many were reverted, whether every
+  reversal applied, and which of their files still differ from the base because another commit
+  touched them.
+- **the gate refused** (its exit 2: drift, an oracle not frozen, an internal error): the run is
+  halted, nothing is reverted, and the pass stays open (exit 2) - once the cause is fixed and the
+  owner clears the STOP, gate the same base.
+- **not judged** (the gate's exit 75, or an exit with no report of this attempt, e.g. a gate
+  killed mid-run): the pass stays open (exit 75, which `supervise.py` defers by default), and the
+  next `pass gate` gates the same base. The declared count is fixed at a pass's first gate.
+One pass command runs per run at a time (`pass.lock`).
+
+Exit codes: 0 done; 2 refused, nothing committed (every refusal above, the run's last pass gate
+failed, and the commit lock not taken within `--lock-timeout`, default 30 minutes of time it was
+awake; for `pass gate` also the gate refusing, which halts the run); 3 a post-commit check failed
+and the commit was undone; 4 `pass gate` failed (the run halted, its commits after the base
+reverted); 75 `pass gate` not judged, retry later (the pass stays open); 1 an unexpected error,
+with a traceback.
 
 **`.githooks/pre-push`** (enable once per clone: `git config core.hooksPath .githooks`)
 Refuses every push while `work/.main.lock` exists and prints the lock's note, so nobody
@@ -249,11 +287,12 @@ a job that holds the commit lock's mutex 80% of the time each leaving the mutex 
 freeze left it held all ten times), a job frozen past its lock-exec `--timeout` while waiting
 still taking the lock after it thaws, every interpreter inside its job object with the
 assignment delayed 0.5 s (all four escaped before `CREATE_SUSPENDED`), BOM'd jobs files and slot
-config, STOP within one job (run and global), the grace kill, the timeout kill with
-grandchildren and orphan reaping, resume after killing a supervisor, `retry_exit` (a job exiting
-2, 2 then 0 deferred twice and then OK, relaunched no sooner than `retry_after`; a toy named
-`corpus_grade.py` deferred on 2 by default; `retry_limit` exhausted; a plain exit 2 still FAIL;
-`retry_exit [0]` refused), a transient supervisor
+config, STOP within one job (run and global; a run refused under a STOP exits 1), the grace
+kill, the timeout kill with grandchildren and orphan reaping, resume after killing a supervisor,
+`retry_exit` (a job exiting 2, 2 then 0 deferred twice and then OK, relaunched no sooner than
+`retry_after`; toys named `corpus_grade.py` and `loopcommit.py` deferred on 75 by default, and the
+grade's 2 final at once; `retry_limit` exhausted; a plain exit 2 still FAIL; `retry_exit [0]`
+refused), a transient supervisor
 error retried to completion and a persistent one or a planted bug ending as crashed (never
 finished) with no slot leaked, two supervisors serialized by the commit lock, stale-lock and
 stale-slot recovery (including a 0-byte lock, and a lock-exec killed without its child), the
@@ -261,15 +300,19 @@ disk pause and its 40 GiB floor, a converter-drift halt and the frozen-pin compa
 missing or pinless manifest fails it; a resume on a drifted converter is refused by the frozen pin,
 and with `--converter-unpinned` by the run's own pin),
 `--detach`, loopcommit's refusals (other drive, lock timeout, changed converter), its undo of a
-commit or a revert that fails its check and a BOM'd body file or stdin, revert-run, the pre-push
-hook against a throwaway
+commit or a revert that fails its check and a BOM'd body file or stdin, revert-run, the commit
+pass (a toy `tools/corpus_grade.py` in a throwaway repository answering each gate from a plan: a
+gate with no pass refused; a second begin over commits refused; 75 and a report-less exit 1 keep
+the pass open and every retry gates the recorded base; a changed `--declared` refused; FAIL halts
+the run and reverts its two commits after the base but not the owner's, then refuses its commits
+and a new pass; a refusing gate halts with nothing reverted), the pre-push hook against a throwaway
 remote, junction unlinking, and worktree-remove's refusals and re-linking in a throwaway
 repository. Drills that need jobs to overlap make their toy jobs wait at a barrier until enough
 have started, so a slow machine cannot fail a correct pool (a pool that lets too many run is
 still caught). Faults are planted by small wrapper scripts that patch the tool in memory, never
 by hooks in the tools themselves. Every drill uses its own state folder (`PSF_RAILS_STATE`) and
 its own repositories under `--dir` (default `work/rails-selftest/<time>`), so the real pool,
-locks and branches are never touched. 26 drills, about seven minutes (more on a busy machine);
+locks and branches are never touched. 27 drills, about seven minutes (more on a busy machine);
 run it after any change to these tools.
 
 Known limit of the freeze, not fixed: a slot a tool takes in-process through `decode_slot()`
@@ -598,10 +641,17 @@ report and candidate writes and the checked commits are the extraction loop's to
 ## The corpus grade (the gate every loop commits through)
 
 **`corpus_grade.py grade [--rev <commit>] [--oracle-rev <commit>] [--out <path>|-]`**
-**`corpus_grade.py gate --base <rev> [--head <rev>] [--oracle-pass] [--declared N] [--json <path>]`**
+**`corpus_grade.py gate --base <rev> [--head <rev> | --worktree] [--oracle-pass] [--declared N] [--json <path>] [--audit-no-decode]`**
 **`corpus_grade.py freeze [--repin]`** / **`conflicts [--write]`** / **`selfcheck`**
 (all take `--workers N` (default 6), `--no-cache`, `--cache-dir <dir>`, `--unpinned`,
 `--stall-timeout S` (default 600); run with `-X utf8 -B`, or it refuses)
+Exit codes: 0 done (the gate: PASS); 1 the gate FAILs (`selfcheck`: a mismatch); **2 REFUSED** -
+it cannot judge until something is fixed (an oracle or converter that is not the manifest's, an
+oracle edited without a freeze, a revision that does not resolve, a converter without the lattice,
+an incomplete oracle tree, an internal error); **75 REFUSED, RETRY LATER** (`EX_TEMPFAIL`) - the
+machine, not the work, stopped it (a pool starved or a worker hung past `--stall-timeout`, a
+MemoryError or OSError, a converter that answered two ways, a ship audit the machine stopped).
+Only 75 means the same command may succeed later.
 Grades every certified chart — the population the repair loops draw, `corpus_map.charts()` over
 the committed ledgers — through the converter, taps plus hold ticks against the certified count,
 and ratchets the result. **`--rev` takes only the blocks from the commit** (its `.ssc` files, read
@@ -621,10 +671,11 @@ key that is not `{taps, ticks, implied}` with `implied == taps + ticks` is a mis
 again. An error row is converted again on every run, and a second time in a
 fresh worker before it is believed; if the two answers differ the run refuses. (The converter
 catches its own exceptions while it builds the beat map, so a MemoryError there looks like an
-ordinary failure. A cached one would stay a wrong "not exact" until someone deleted it.) A
-MemoryError or OSError that reaches the grade refuses the run with exit 2, and nothing is cached
-for it. So does a pool that delivers no result for `--stall-timeout` seconds: a killed or hung
-worker loses its block without a word, and the pool would otherwise wait for ever.
+ordinary failure. A cached one would stay a wrong "not exact" until someone deleted it; two
+answers that differ exit 75.) A MemoryError or OSError that reaches the grade refuses the run with
+exit 75, and nothing is cached for it. So does a pool that delivers no result for
+`--stall-timeout` seconds: a killed or hung worker loses its block without a word, and the pool
+would otherwise wait for ever. A worker that loaded another converter is exit 2 (drift).
 
 Two tiers. **PROTECTED**: exact when the import commit `a23cee5`'s blocks are graded under the
 current oracle (the corpus as upstream published it; the tool checks that `simfiles/` first
@@ -653,13 +704,20 @@ only with `--repin`, as a commit of its own. Only committed ledgers are oracle:
 `work/certification-tail.json` is the live file `result_reader` appends to, and `grade` says on
 stderr when it holds videos the committed ledger does not.
 
-A supervised job that runs the grade or the gate gets `retry_exit [2]` by default
-(`supervise.py`): exit 2 is the grade refusing - often a pool starved past `--stall-timeout` while
-the owner games - so it is retried later, never recorded as a failed commit pass.
+A supervised job that runs the grade or the gate gets `retry_exit [75]` by default
+(`supervise.py`): 75 is the machine stopping the grade - often a pool starved past
+`--stall-timeout` while the owner games - so it is retried later, never recorded as a failed
+commit pass. Its 2 is final at once: a refusal like an oracle edited without a freeze does not go
+away by waiting an hour.
 
-The **gate** grades `--base` and `--head` (default: the working tree), each under its own tree's
-oracle, prints every transition — LOST, GAINED, EDITED-EXACT (a block or its file header
-changed and it stayed exact), EDITED-OFF, EXPECTED-CHANGED, UNPROTECTED and PROMOTED (the
+The **gate** grades `--base` and `--head` (default **HEAD**: the commits a pass made; `--worktree`
+grades the working tree instead, as a check before committing, and is never a pass's gate), each
+under its own tree's oracle. With the default head it says in a note when the working tree
+differs from HEAD under `simfiles/` or `sources/`: those edits are not what it judged (the
+integration review's case - a PROTECTED regression committed and then restored in the working
+tree - passed a working-tree gate; graded at HEAD it fails). It prints every transition — LOST,
+GAINED, EDITED-EXACT (a block or its file header changed and it stayed exact), EDITED-OFF,
+EXPECTED-CHANGED, UNPROTECTED and PROMOTED (the
 PROTECTED tier changed and nothing else did: a demotion or promotion row, named with its reason
 or run, or the import grade under a new oracle), ENTERED/LEFT the population — and
 exits 1 when: a chart leaves exact without a `sources/demotions.jsonl` row naming the chart and
@@ -675,10 +733,29 @@ tree is compared by content with CRLF read as LF); an owner-revisit chart's bloc
 `owner-revisit.json` records; a chart in the ORACLE_CONFLICT set becomes exact (halt for review
 instead of taking the credit); `demotions.jsonl` or `protected-promotions.jsonl` lost or rewrote
 a line (both are append-only); `--declared N` is given and the net change in exact charts is not
-N. It exits 2 when it cannot judge (drift at the head, a revision that does not resolve, a
-conversion the machine failed or a worker that died, a converter that answered twice
-differently). It writes nothing but `--json`, and never reads a grade file to decide anything —
-both sides are re-graded from blobs.
+N; **a ship's trace audit is not FLAT with every edit covered** (below). It exits 2 when it cannot
+judge (drift at the head, a revision that does not resolve, a ship audit that loaded another
+converter), and 75 when the machine stopped it (a conversion or a ship audit that hit MemoryError
+or OSError, a worker that died, a converter that answered twice differently). It writes nothing
+but `--json` and the trace audit's own scratch (`work/rails-audit-scratch/`: clocks, file blobs,
+overlays), and never reads a grade file to decide anything — both sides are re-graded from blobs.
+
+**Every ship is trace-audited.** A ship is a chart exact at the head whose block or file header the
+change edited: GAINED, or EDITED-EXACT (a PROTECTED chart's re-edit too, promotion row or not). The
+gate runs `trace_audit.audit_chart` on the head's file in a child process (`corpus_grade.py
+audit-ships`, which loads the converter the grade pinned before the audit's own imports, and is
+refused if any pinned module differs): a GAINED chart against the import `a23cee5` - its whole
+interior since upstream, the audit the ledger gives it - and an EDITED-EXACT chart against
+`--base`, the change alone (the chart shipped before this pass). The ship passes when the audit
+is FLAT, every edit FLAT and covered and the whole trace not OFF, or when its judged events are
+the audit base's (the block differs in nothing the converter judges: no edit). OFF, UNCOVERED and
+UNAUDITED (an audit that raised, a chart with no scan or no clock, the audit reading another block
+than the grade) fail; an audit the machine stopped is exit 75. A clock the caches cannot serve is
+measured by decoding the footage in a machine-wide slot; `--audit-no-decode` makes such a ship
+UNCOVERED instead. A ship whose clock and scan are cached audits in about a second. Found by the
+integration review: `Come to Me S17`, put back at its import block and re-shipped as its current
+file, passed `--declared 1` although the audit ledger reads it OFF; it now fails
+(`AUDIT GAINED Come to Me S17: trace audit vs import a23cee5be405: OFF ...`).
 
 The ledgers and lists it enforces. **`sources/demotions.jsonl`** (append-only, empty until the
 first demotion): one JSON object per line, `{"chart": <census chart name>, "block_sha": <the
@@ -737,6 +814,22 @@ fresh scratch clone of its HEAD, the two tier cases' expected counts moved up by
 promotions the integrated ledger carries): 24 of 24, 11 of 11 and 7 of 7 as intended. The
 numbers are in docs/STATUS.md, "The rails".
 
+After the integration review's round 1 (the gate's head default, the ship audit, exit 75), the
+same drills were run again in the two scratch clones moved to the new head, with the planted
+working-tree faults now gated `--worktree`: 26 of 26 and 18 of 18 as intended. What changed in
+them: a gain declared as 1 (Chicken Wing S21, one tap added) now fails, because its trace audit
+is UNCOVERED in a clone with no scans; a PROTECTED regression that is committed and then restored
+in the working tree fails at the default head and passes only with `--worktree` (two new cases);
+the MemoryError, OSError, dead-worker and flaky-converter cases exit 75, while an oracle edited
+without a freeze and a drifted converter still exit 2. A planted OSError in the ship audit exits 75
+(NOT JUDGED) and a planted bug in it fails the ship as UNAUDITED. End to end on real data, in a
+loop worktree made by `supervise.py worktree` (rails state in scratch): Come to Me S17 re-shipped
+over its import block fails the pass (OFF, the audit ledger's distant +5), the pass reverts the
+run's commit to the base and halts it, and the halted run can neither commit nor begin a pass; Get
+Your Groove On D10 re-shipped the same way passes (FLAT, its one edit covered) as a supervised
+job; the committed %X regression fails `pass gate` and is reverted; a tap moved to another column
+on YOU AND I D20 (EDITED-EXACT, no judged event moved) passes - 23 of 23 checks.
+
 **`guards.py`** (library)
 The shared definitions the loops and the gate import. `block_sha(ssc_path, block_id)` is the
 contract between them: sha256 of one `#NOTEDATA` block — from the line that starts with
@@ -757,8 +850,8 @@ lattice_reauthor all check it). `footage_corrupt_reason(vid, band)` reads
 
 **`combo_reader.py --scan <vid> side=<L|R|C> [atlas=tools/atlas-combo-p2]`**
 OCRs the in-game combo counter frame by frame into `work/combo/<vid>.<band>.jsonl` as
-`[time, value, confidence]`. The scan is written as `<file>.partial` and renamed into place only
-when it completes, beside `<file>.done.json`: its line and byte counts and sha256, the atlas's
+`[time, value, confidence]`. The scan is written as `<file>.<pid>.partial` (one per process) and
+renamed into place only when it completes, beside `<file>.done.json`: its line and byte counts and sha256, the atlas's
 digest, the reading code's stamp, and whether it ran to the end of the video or the decoder
 stopped early - a scan killed part-way is never left under the real name looking like a short
 video. The file's name is its key (`scan_path`, see `cachekey.py`): today's atlases and code keep
@@ -1282,6 +1375,14 @@ Get Your Groove On D10 again, under the new version), **My Way S15 audits OFF** 
 from 77.0 s to 96.3 s over 267 reads, 8 rows before its finale edit), and eight are UNCOVERED.
 The corpus takes 106 s with `--no-decode` when every clock must be re-measured from cached
 passes, 262 s when 10 of them decode, and 8 s once the clocks are cached.
+
+After the integration review's round 1 the version is `91c8875b…`: the only change in the audit's
+closure was the partial-file name in the docstrings of `atomicio` and `combo_reader`. A corpus
+rerun under it into a scratch folder (`--out-dir`, nothing written to `sources/`) matched the
+committed ledger chart for chart - every one of the 123 records identical but for its seconds,
+the same counts, the same three promoted blocks - so the committed ledger and its promotion rows
+stand as they are. The corpus grade's gate now runs this audit on every ship (above, "The corpus
+grade").
 
 **`verify_release.py <release> [--old <release>]`**
 Checks a packaged release actually carries the repairs: the `.ssc` through the converter, the

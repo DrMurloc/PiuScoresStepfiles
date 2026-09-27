@@ -68,11 +68,18 @@ and commits" and "The corpus grade"):
   main holds `supervise.py mainlock` while doing it.
 - Loops commit only through `tools/loopcommit.py` (the one commit lock, explicit paths, a
   `Loop-Run` trailer, checked results), and take work back only with `loopcommit.py revert-run`.
-- Every commit pass is gated by `tools/corpus_grade.py gate --base <pass base> --declared <N>`:
-  PROTECTED may not shrink except through a `sources/demotions.jsonl` row, the net gain must
-  equal the declared ships, and owner-revisit blocks, the oracle and the converter pin stay put.
-  On failure, revert this run's commits back to the pass base and halt. Oracle changes are their
-  own `--oracle-pass` commits, never mixed with stepfile edits.
+- Every commit pass runs through `tools/loopcommit.py pass`: `pass begin --run <run>` records
+  the pass base, the loop commits, and `pass gate --run <run> --declared <N>` runs
+  `corpus_grade.py gate --base <pass base> --head <HEAD> --declared <N>` (the commits, never the
+  working tree). The gate requires: PROTECTED does not shrink except through a
+  `sources/demotions.jsonl` row; the net gain equals the declared ships; owner-revisit blocks,
+  the oracle and the converter pin stay put; and **every new ship's trace audit is FLAT with
+  every edit covered** (a GAINED chart audited against the import `a23cee5`, a re-edited exact
+  chart against the pass base) - OFF, UNCOVERED and UNAUDITED do not ship. On FAIL, `pass gate`
+  halts the run (its STOP) and reverts this run's commits back to the pass base. On exit 75
+  ("retry later": the machine stopped the judgement) the pass stays open and the next `pass gate`
+  gates the same base; never begin a new pass over an open one (`pass begin` refuses). Oracle
+  changes are their own `--oracle-pass` commits, never mixed with stepfile edits.
 - `work/STOP` stops every loop (`work/runs/<run>/STOP` one run); only the owner clears it.
 - The snapshot rule is unchanged (hard rule 1): no loop regenerates or repackages a snapshot;
   each run reports "snapshot now N charts behind" and nothing more.

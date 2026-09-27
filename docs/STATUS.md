@@ -536,7 +536,18 @@ and converter-pin change (none -> `e82d48350c50`) allowed as an oracle pass; wit
 `--oracle-pass` it fails on ORACLE alone. The planted-fault drills (24 gate cases, 11 oracle-pass
 and tier cases, 7 on a hooked converter copy) all come out as intended on the integrated tree.
 
-**The trace audit's corpus** (`sources/trace-audit-2026-09-27.json`, audit_version `d2cdb262`):
+**The commit pass, after the integration review.** The gate now judges HEAD - the commits - unless
+told `--worktree`, and it trace-audits every ship: a chart that becomes exact (audited against the
+import) or a re-edited exact chart (against the pass base) must audit FLAT with every edit
+covered, so OFF, UNCOVERED and UNAUDITED do not ship. `loopcommit.py pass begin` / `pass gate`
+package the pass: the base is recorded, a FAIL halts the run and reverts its commits after the
+base, and a "retry later" (the new exit 75, the machine and never the work) keeps the pass open
+for the same base. Come to Me S17, re-shipped over its import block in a scratch loop worktree,
+is refused and reverted; Get Your Groove On D10 the same way passes.
+
+**The trace audit's corpus** (`sources/trace-audit-2026-09-27.json`, audit_version `d2cdb262`;
+a docstring-only change since moved it to `91c8875b`, under which a rerun matches this ledger
+chart for chart):
 the 123 edit-derived exact charts audit **3 FLAT, 10 OFF, 110 UNCOVERED**, 0 errors. FLAT means
 a strong counter read at level 0 within 8 judged rows on both sides of every edit; only those
 three are promoted. The 261 untouched exact controls give 0 OFF (17 FLAT, 244 UNCOVERED).
