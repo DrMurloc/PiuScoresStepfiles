@@ -16,7 +16,7 @@
 #   python -X utf8 -B tools/trace_audit.py power    [--workers N] [--per-chart N] [--seed S]
 #   python -X utf8 -B tools/trace_audit.py corpus   [--workers N] [--date YYYY-MM-DD] [--out-dir DIR]
 #   python -X utf8 -B tools/trace_audit.py crops    ["<chart>" ...] [--out <dir under work/rails-audit-scratch>]
-#   python -X utf8 -B tools/trace_audit.py version
+#   python -X utf8 -B tools/trace_audit.py version  [--sources]
 # (--workers is capped at 6; --no-decode never decodes footage to measure a missing clock)
 #
 # WHAT IS READ. F(t) is the file's judged events in chart time, enumerated from piu-annotate's own
@@ -30,7 +30,11 @@
 # them (a write guard refuses it); the display lag comes from tick_repair.measure_lag on the
 # chart's isolated taps. A read counts only at a QUIET instant: its cut at least `quiet` from every
 # judged event (a player's GREAT lands up to ~80 ms off the note, and a 30 fps frame adds 33 ms)
-# and outside every hold region. A play with no BAD or MISS is one run (nothing resets the
+# and outside every hold region. A read whose cut falls at or after the file's LAST judged event
+# (F(cut) == the file's total) is dropped before anything is fitted: there the counter rests at
+# maxcombo, which on an exact chart is the certified total by construction, so it says nothing
+# about the interior - and a finale priced by closure would otherwise be vouched for by the very
+# number that priced it. A play with no BAD or MISS is one run (nothing resets the
 # counter), filtered to its non-decreasing chain; a play with breaks is cut into runs at resets
 # (tick_repair.runs). Each run is fitted with a piecewise-constant level (err = read - F), and a
 # level held by `strong_reads` agreeing reads over at least `strong_span` seconds is STRONG. Only
@@ -56,11 +60,15 @@
 #              read in that neighbourhood at level 0, and no stretch inside it longer than
 #              2 x k_rows judged rows without one;
 #   OFF        a strong read in or within k_rows rows of it at a level other than 0 - the reads
-#              disagree with the file around this edit (the reason says on which side);
+#              disagree with the file around this edit (the reason says on which side); on a
+#              full combo also the nearest strong read on a side, however far, when nothing is
+#              read between it and the edit - such a row carries `distant` and its distance in
+#              rows, because the step may have come from anywhere in that blind stretch;
 #   UNCOVERED  anything else: no strong read near enough on a side, a reset between the two
 #              sides, a GOOD that could hide an event, a timing change, no scan, no clock.
 # Never FLAT without reads: no structural anchor (the counter's blank start, its rest at maxcombo)
-# stands in for one, because on an exact chart the rest is the certified total by construction.
+# stands in for one - the rest is dropped (above), so an edit in the chart's last rows has no read
+# after it and is UNCOVERED, whatever the reads before it say.
 # On a play with breaks the level is relative to its run, so the two sides must be in one run and
 # agree with each other. A play with GOODs never audits FLAT (a GOOD neither breaks nor increments
 # the counter, so it could hide exactly the event an edit lost). A level that moves within a run
@@ -73,7 +81,12 @@
 # closure. The reads that priced it cannot also vouch for it, so for such a chart every read whose
 # cut falls within `bracket` seconds of a hold region those edits touch is removed before anything
 # is fitted, the edit is labelled counter-derived, and FLAT then means the counter OUTSIDE those
-# brackets agrees.
+# brackets agrees. A chart audited whole (its timing changed, it has no base block, or --whole)
+# is bracketed per hold region instead: with a base whose tick schedule differs, every hold region
+# whose tick points or rates differ from the base's (matched by beat), and every base region with
+# ticks that no longer exists; with no base block at all, every hold region that carries a tick.
+# Each such priced region is then judged like an edit (reads on both sides within k_rows, outside
+# its bracket), and the chart is FLAT only when every one of them is.
 #
 # TIMING-SENSITIVE STRETCHES. The same trace fitted at the strict margin `quiet_strict` (35 ms, the
 # tick loop's JIT) shows levels of +1/-1 on unedited, exact charts - a player hitting early or late
@@ -88,8 +101,10 @@
 # +1 held at 80 ms and not at 150). Unconfirmed, it is unsettled too.
 #
 # WHOLE-CHART MODE (no base, or --whole): the worst disagreement anywhere - OFF if any strong level
-# is not 0 (full combo) or changes within a run (breaks), FLAT if every strong level agrees, with
-# `covered` saying whether every judged row sits within k_rows of a strong read.
+# is not 0 (full combo) or changes within a run (breaks), FLAT if every strong level agrees AND every
+# judged row sits within k_rows of a strong read (`covered`; the first and last rows included, so
+# the edges need real reads too), UNCOVERED otherwise. A block that derives the same judged events
+# as its base has no edits and is judged the same way.
 #
 # THE LEDGERS. `corpus` audits every edit-derived exact chart (exact at HEAD, not at a23cee5) and
 # writes sources/trace-audit-<date>.json (every edit's verdict and reason, plus the controls'
@@ -98,9 +113,15 @@
 # chart whose every edit is FLAT and covered, whose whole trace has no OFF, and which is neither in
 # the quarantine list nor on the owner's revisit list (sources/owner-revisit.json: recorded, not
 # acted on). A promotion is bound to the block's content hash (block_sha, the contract in
-# tools/guards.py) and to this tool's audit_version: sha256 of this file's source (newlines as LF)
-# plus PARAMS, so any change to the rules or the numbers is a new version.
+# tools/guards.py; header_sha rides along for the song header the block inherits) and to this
+# tool's audit_version: sha256 over PARAMS and every source a verdict depends on - this file, every
+# tools/ module it imports directly or through another (read from the source text, so the set does
+# not depend on who imported what first; tools/supervise.py, which only decides WHEN a decode runs,
+# is left out), and the converter's modules (the six piu_annotate files the corpus grade pins).
+# A chart whose audit raised is an ERROR, never a verdict: controls, power and corpus count errors
+# on their own line, and exit 2 with nothing written to sources/ when there is any.
 import bisect
+import contextlib
 import glob
 import hashlib
 import json
@@ -110,6 +131,7 @@ import random
 import re
 import subprocess
 import sys
+import threading
 import time
 from collections import Counter
 from fractions import Fraction
@@ -141,8 +163,8 @@ PARAMS = dict(
     seg_min=4,           # a fitted segment keeps this many agreeing reads, or is dropped
     strong_reads=8,      # a STRONG level: this many agreeing reads...
     strong_span=0.5,     # ...spanning at least this many seconds
-    k_rows=8,            # judged rows: evidence this close on each side covers an edit (8 misses half the
-                         # planted pairs 16 does, and promoted the same three charts on 2026-09-27)
+    k_rows=8,            # judged rows: evidence this close on each side covers an edit (8 misses about half
+                         # the planted pairs 16 does, and 16 promoted the same one chart on 2026-09-27)
     merge_gap=1.0,       # s: difference events closer than this are one edit
     bracket=0.60,        # s: the priced bracket around a counter-derived region (tick_repair.SPAN)
     min_fit=20,          # the clock must have been fitted on this many notes
@@ -150,8 +172,54 @@ PARAMS = dict(
     small_move=3,        # on a play with breaks, a within-run move larger than this is a run-structure question
     confusions=[[9, 5, [0, 1, 2, 3]], [9, 8, [0, 1, 2, 3]]],  # [true digit, read digit, positions]
 )
-_SRC = open(os.path.abspath(__file__), "rb").read().replace(b"\r\n", b"\n")
-AUDIT_VERSION = hashlib.sha256(_SRC + json.dumps(PARAMS, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+TOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
+# the converter's modules, as tools/corpus_grade.py's converter pin names them
+CONVERTER_FILES = ("__init__.py", "utils.py", "formats/__init__.py", "formats/notelines.py", "formats/sscfile.py",
+                   "formats/ssc_to_chartstruct.py")
+# tools/ modules that decide when work runs, never what a verdict is: left out of audit_version
+NOT_VERDICT = ("supervise.py",)
+
+
+def _lf(path):
+    with open(path, "rb") as f:
+        return f.read().replace(b"\r\n", b"\n")
+
+
+def tool_closure(start="trace_audit.py"):
+    """Every tools/ module `start` imports, directly or through another tools/ module, at module
+    level or inside a function - read from the source text, so the set is the same whoever
+    imported what first."""
+    import ast
+    seen, todo = set(), [start]
+    while todo:
+        f = todo.pop()
+        p = os.path.join(TOOLS_DIR, f)
+        if f in seen or f in NOT_VERDICT or not os.path.exists(p):
+            continue
+        seen.add(f)
+        for node in ast.walk(ast.parse(_lf(p), filename=p)):
+            if isinstance(node, ast.Import):
+                names = [a.name for a in node.names]
+            elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+                names = [node.module]
+            else:
+                continue
+            todo += [n.split(".")[0] + ".py" for n in names]
+    return sorted(seen)
+
+
+def audit_sources():
+    """{path: sha256} of every source a verdict depends on (see THE LEDGERS above)."""
+    out = {"tools/" + f: hashlib.sha256(_lf(os.path.join(TOOLS_DIR, f))).hexdigest() for f in tool_closure()}
+    pkg = os.path.dirname(os.path.dirname(os.path.abspath(_C.__file__)))
+    for f in CONVERTER_FILES:
+        out["piu_annotate/" + f] = hashlib.sha256(_lf(os.path.join(pkg, *f.split("/")))).hexdigest()
+    return out
+
+
+AUDIT_SOURCES = audit_sources()
+AUDIT_VERSION = hashlib.sha256(("".join("%s\0%s\n" % kv for kv in sorted(AUDIT_SOURCES.items())) +
+                                json.dumps(PARAMS, sort_keys=True, separators=(",", ":"))).encode()).hexdigest()
 
 
 def arg(name, default=None):
@@ -279,13 +347,21 @@ def load_events(path, tag):
     1/TICKCOUNT on the beat grid) after a head and up to a release where a real hold is held, not in
     a warp or fake range and not on a tap or head row (that row is the event). This is
     ssc_to_chartstruct.lattice_hold_ticks point for point; the count must equal the converter's
-    taps + ticks or the chart is refused."""
-    sc = StepchartSSC.from_song_ssc_file(path, tag)
+    taps + ticks or the chart is refused. A file the converter cannot parse or convert is an error
+    in the file (returned); the machine failing (MemoryError, OSError) is raised."""
+    try:
+        sc = StepchartSSC.from_song_ssc_file(path, tag)
+    except (MemoryError, OSError):
+        raise
+    except Exception as ex:
+        return dict(error="parse failed: %s" % ("%s: %s" % (type(ex).__name__, ex))[:120])
     if sc is None:
         return dict(error="block %s not found" % tag)
     ctx = {}
     try:
         df, ht, msg = _C.stepchart_ssc_to_chartstruct(sc, context=ctx)
+    except (MemoryError, OSError):
+        raise
     except Exception as ex:
         return dict(error="convert failed: %s" % ("%s: %s" % (type(ex).__name__, ex))[:120])
     if df is None:
@@ -346,7 +422,8 @@ def load_events(path, tag):
     sched = sorted((fr(b), fr(r)) for b, r in (ctx.get("holdticks") or {}).items())
     return dict(times=[t for t, _, _ in ev], kinds=[k for _, k, _ in ev], ebeats=[b for _, _, b in ev], taps=taps, ticks=ticks, implied=taps + ticks,
                 tap_times=sorted(t for t, x in zip(times, lines) if "1" in x), rowt=rowt, regions=regions,
-                sched=sched, at=at, breakpoints=bp, beats=beats)
+                sched=sched, at=at, breakpoints=bp, beats=beats,
+                held=[(h, t) for h, t in held], rate_spans=[(a, b, r) for a, b, r in spans.items])
 
 
 def same_clock(ev_a, ev_b, tol):
@@ -363,9 +440,10 @@ _ALIGN = None
 
 
 def alignment_index():
-    """chart -> [(source, commit, offset, clock %, fitted_on)], newest census first: the extraction
-    and tick loops' records, each measured by extract_repair.align against the file as it stood when
-    that census was committed."""
+    """chart -> [(source, commit, vid, side, offset, clock %, fitted_on)], newest census first: the
+    extraction and tick loops' records, each measured by extract_repair.align against the file as it
+    stood when that census was committed, on the video and side the record names (a clock is served
+    only to a chart certified on that same video and side)."""
     global _ALIGN
     if _ALIGN is None:
         _ALIGN = {}
@@ -383,8 +461,9 @@ def alignment_index():
                 al = r.get("alignment")
                 if not al or "offset" not in al:
                     continue
-                _ALIGN.setdefault(r["chart"], []).append(dict(source=os.path.basename(p), commit=commit[:10], offset=al["offset"],
-                                                              clock=al["clock"], fitted_on=al.get("fitted_on") or 0))
+                _ALIGN.setdefault(r["chart"], []).append(dict(source=os.path.basename(p), commit=commit[:10], vid=r.get("vid"),
+                                                              side=r.get("side"), offset=al["offset"], clock=al["clock"],
+                                                              fitted_on=al.get("fitted_on") or 0))
     return _ALIGN
 
 
@@ -426,7 +505,38 @@ def _write_guard(event, args):
             raise PermissionError("trace_audit: a write outside %s was refused: %r" % (SCRATCH, p))
 
 
-LOCK_STALE = 900    # s: an overlay lock older than this was left behind by a killed run
+LOCK_STALE = 900    # s: an overlay lock its holder has not refreshed for this long was left by a killed run
+LOCK_BEAT = 60      # s: the holder refreshes its lock this often for as long as it holds it, however long a decode runs
+
+
+class _Heartbeat:
+    """Keeps a held lock's mtime fresh from a daemon thread, so a decode longer than LOCK_STALE never
+    looks abandoned to another worker."""
+    def __init__(self, path):
+        self.path, self.done = path, threading.Event()
+        self.thread = threading.Thread(target=self._run, daemon=True)
+        self.thread.start()
+
+    def _run(self):
+        while not self.done.wait(LOCK_BEAT):
+            try:
+                os.utime(self.path)
+            except OSError:
+                pass
+
+    def stop(self):
+        self.done.set()
+        self.thread.join(5)
+
+
+def _decode_slot(job):
+    """A machine-wide decode slot from tools/supervise.py's pool when that tool is present (the
+    loops' shared limit on decoding processes), otherwise nothing: this tool's own pool is capped at 6."""
+    try:
+        import supervise
+    except ImportError:
+        return contextlib.nullcontext()
+    return supervise.decode_slot(job=job)
 
 
 def _seed_overlay(vid, ov, fresh=False):
@@ -554,16 +664,21 @@ def measure_clock(c, blk, decode=True):
                     os.remove(lock)     # a decode takes minutes; a lock this old was left by a killed run
             except OSError:
                 pass
-            if time.time() - t0 > 2 * LOCK_STALE:
+            if time.time() - t0 > 4 * LOCK_STALE:
                 return dict(error="the overlay for %s stayed locked" % c["vid"])
             time.sleep(2)
+    beat = _Heartbeat(lock)
     try:
         if os.path.exists(ck):
             return json.load(open(ck, encoding="utf-8"))
         notes = None
         for attempt in (0, 1):
             _seed_overlay(c["vid"], ov, fresh=attempt > 0)
-            notes, err = _extract_in_overlay(c, ov)
+            # a decode (no pass to read, or a broken one thrown away) takes a machine-wide slot,
+            # acquired before the write guard goes on (the slot pool writes its own files)
+            decoding = attempt > 0 or not have_pass
+            with (_decode_slot("trace_audit clock %s" % c["vid"]) if decoding else contextlib.nullcontext()):
+                notes, err = _extract_in_overlay(c, ov)
             if notes is not None:
                 break
         if notes is None:
@@ -574,10 +689,12 @@ def measure_clock(c, blk, decode=True):
         _write_json(ck, out)
         return out
     finally:
+        beat.stop()
         try:
             os.remove(lock)
         except OSError:
             pass
+
 
 
 def play_of(vid, side):
@@ -708,12 +825,16 @@ def trace(ev, raw, a, b, play, brackets, P):
                 level = Counter(recent).most_common(1)[0][0]
     reads = [(t, v, 0) for t, v in T.chain(keep)] if monotone else T.runs(keep)
     holds = [(r[0] - P["hold_margin"], r[1] + P["hold_margin"]) for r in ev["regions"]]
+    # at or after the last judged event the counter rests at maxcombo: on an exact chart that is the
+    # certified total by construction, and never evidence about the interior
+    last = E_[-1] if E_ else -1e9
+    rest = sum(1 for t, _, _ in reads if clock.cut(t) >= last)
 
     def points(quiet):
         per = {}
         for t, v, run in reads:
             cut = clock.cut(t)
-            if in_spans(cut, holds) or in_spans(cut, brackets):
+            if cut >= last or in_spans(cut, holds) or in_spans(cut, brackets):
                 continue
             k = bisect.bisect_left(E_, cut - quiet)
             if k < len(E_) and E_[k] <= cut + quiet:
@@ -791,7 +912,7 @@ def trace(ev, raw, a, b, play, brackets, P):
                 evidence.append((c, s["level"], s["run"]))
     evidence.sort()
     n_runs = len({r for _, _, r in reads})
-    return dict(lag=lag, lag_taps=n_lag, clean=clean, reads=len(raw), on_chain=len(reads), misreads_dropped=dropped,
+    return dict(lag=lag, lag_taps=n_lag, clean=clean, reads=len(raw), on_chain=len(reads), misreads_dropped=dropped, rest_dropped=rest,
                 structure_ok=monotone or n_runs - 1 <= breaks,
                 quiet_points=sum(len(v) for v in per.values()), segments=segs, strong=strong, unsettled=unsettled,
                 evidence=evidence, runs=n_runs)
@@ -854,8 +975,12 @@ def judge_edit(e, tr, rowt, play, P):
             # running count is wrong at the edit, whether or not the edit is what made it so
             w = far[0]
             n = out["left_rows"] if w is left else out["right_rows"]
-            return dict(out, verdict="OFF", reason="the nearest strong read %s the edit, %d rows away with nothing read between, is %+d against the file (at %.2fs)" % (
-                "before" if w is left else "after", n, w[1], w[0]))
+            # past k_rows the step lies somewhere in a blind stretch between that read and the
+            # edit, so pinning it on this edit is a distant attribution, and the row says so
+            far_off = n > K
+            return dict(out, verdict="OFF", distant=far_off, distance_rows=n,
+                        reason="%sthe nearest strong read %s the edit, %d rows away with nothing read between, is %+d against the file (at %.2fs)" % (
+                            "distant: " if far_off else "", "before" if w is left else "after", n, w[1], w[0]))
         if bad:
             w = max(bad, key=lambda x: abs(x[1]))
             if w[0] < lo:
@@ -1022,6 +1147,50 @@ def region_spans(ev, lo, hi):
     return [(a, b) for a, b, _ in ev["regions"] if b >= lo - 1e-6 and a <= hi + 1e-6]
 
 
+def _tick_beats(ev, h, t):
+    return sorted(b for b, k in zip(ev["ebeats"], ev["kinds"]) if k == "tick" and h <= b <= t)
+
+
+def _rates_over(ev, h, t):
+    """The file's tick rate as pieces over the beat span [h, t]: [(from, to, rate)]."""
+    out = []
+    for a, b, r in ev["rate_spans"]:
+        if (b is not None and b <= h) or a > t:
+            continue
+        out.append((max(a, h), t if b is None else min(b, t), r))
+    return out
+
+
+def priced_regions(ev, base_ev):
+    """The hold regions of a chart audited whole that the counter (or closure) may have priced, in
+    the audited file's chart time: with no base block, every hold region that carries a tick
+    (nothing says how its ticks were priced); with a base whose tick schedule differs, every hold
+    region whose tick points or rates differ from the base's over the same beats, and every base
+    region with ticks that no longer exists; with the base's schedule unchanged, none.
+    -> ([(t0, t1)], [why, ...])"""
+    at = ev["at"]
+    spans, why = [], []
+    if base_ev is None:
+        for h, t in ev["held"]:
+            if _tick_beats(ev, h, t):
+                spans.append((at(h), at(t)))
+        if spans:
+            why.append("no base block: all %d tick-bearing hold region(s) treated as priced" % len(spans))
+        return spans, why
+    if base_ev["sched"] == ev["sched"]:
+        return [], []
+    for h, t in ev["held"]:
+        if _tick_beats(ev, h, t) != _tick_beats(base_ev, h, t) or _rates_over(ev, h, t) != _rates_over(base_ev, h, t):
+            spans.append((at(h), at(t)))
+    n_new = len(spans)
+    for h, t in base_ev["held"]:
+        if not any(x <= t and h <= y for x, y in ev["held"]) and _tick_beats(base_ev, h, t):
+            spans.append((at(h), at(t)))
+    why.append("the tick schedule differs from the base: %d hold region(s) whose ticks or rates changed and %d removed, treated as priced" % (
+        n_new, len(spans) - n_new))
+    return spans, why
+
+
 # ---------------------------------------------------------------- one chart
 
 _CHARTS = None
@@ -1054,26 +1223,29 @@ def audit_chart(c, new_path=None, base_path=None, whole=False, clock=None, P=PAR
     rec = dict(chart=c["chart"], key=c["key"], ssc_rel=c["ssc_rel"], vid=c["vid"], side=c["side"], expected=c["expected"])
     data = open(new_path, "rb").read()
     rec["block_sha"] = block_sha(data, tag)
+    rec["header_sha"] = hashlib.sha256(_header(data).encode("utf-8")).hexdigest()
     ev = load_events(new_path, tag)
     if ev.get("error"):
         return dict(rec, verdict="UNCOVERED", reason="file: " + ev["error"], edits=[])
     rec["file"] = dict(taps=ev["taps"], ticks=ev["ticks"], implied=ev["implied"], rows=len(ev["rowt"]), regions=len(ev["regions"]))
     rec["exact"] = ev["implied"] == c["expected"]
-    # the edits
-    edits, timing_changed, base_ev = None, False, None
-    if not whole:
-        if base_path is None:
-            base_path = blob_path(IMPORT_REV, c["ssc_rel"])
-        if base_path:
-            base_data = open(base_path, "rb").read()
-            rec["base_sha"] = block_sha(base_data, tag)
-            base_ev = load_events(base_path, tag)
-            if base_ev.get("error"):
-                base_ev = None
-        if base_ev is None:
-            rec["base"] = "no base block"
-        elif rec.get("base_sha") == rec["block_sha"] and _header(base_data) == _header(data):
+    # the base (loaded in whole mode too: which hold regions were priced depends on it) and the edits
+    edits, timing_changed, base_ev, base_data = None, False, None, None
+    if base_path is None:
+        base_path = blob_path(IMPORT_REV, c["ssc_rel"])
+    if base_path:
+        base_data = open(base_path, "rb").read()
+        rec["base_sha"] = block_sha(base_data, tag)
+        base_ev = load_events(base_path, tag)
+        if base_ev.get("error"):
+            rec["base_error"] = base_ev["error"]
+            base_ev = None
+    if base_ev is None:
+        rec["base"] = "no base block"
+    elif not whole:
+        if rec.get("base_sha") == rec["block_sha"] and _header(base_data) == _header(data):
             edits = []
+            rec["base"] = "the block and song header are the base's"
         else:
             same, worst = same_clock(ev, base_ev, P["timing_tol"])
             if not same:
@@ -1099,6 +1271,11 @@ def audit_chart(c, new_path=None, base_path=None, whole=False, clock=None, P=PAR
         for cand in alignment_index().get(c["chart"], []):
             if cand["fitted_on"] < P["min_fit"]:
                 continue
+            if (cand.get("vid"), cand.get("side")) != (c["vid"], c["side"]):
+                # a clock measured on another video (a re-pairing since) or the other pad
+                rec.setdefault("clock_refused", []).append(dict(source=cand["source"], vid=cand.get("vid"), side=cand.get("side"),
+                                                                why="measured on another video or side"))
+                continue
             ref = blob_path(cand["commit"], c["ssc_rel"])
             ref_ev = load_events(ref, tag) if ref else None
             if not ref_ev or ref_ev.get("error"):
@@ -1119,13 +1296,21 @@ def audit_chart(c, new_path=None, base_path=None, whole=False, clock=None, P=PAR
         else:
             al = m
     if not al:
-        why = "no video clock: " + ("no census clock fits this file's timing" if rec.get("clock_refused") else "no extraction or tick-loop alignment") +               ("; measuring one failed (%s)" % rec["clock_error"] if rec.get("clock_error") else "")
+        why = "no video clock: " + ("no census clock fits this file (its timing, video or side)" if rec.get("clock_refused") else "no extraction or tick-loop alignment") + \
+              ("; measuring one failed (%s)" % rec["clock_error"] if rec.get("clock_error") else "")
         return _unaudited(rec, edits, why, t_start)
     b = 1 + al["clock"] / 100.0
     a = -al["offset"] * b
     # counter-derived edits: their brackets' reads may not vouch
-    brackets = []
-    if edits:
+    brackets, bracket_why, priced = [], [], []
+    whole_mode = whole or edits is None or timing_changed
+    if whole_mode:
+        # audited whole: the hold regions that may have been priced lose their brackets' reads,
+        # and each must still be read on both sides, as an edit would
+        priced, bracket_why = priced_regions(ev, base_ev)
+        if P["bracket"] is not None:
+            brackets = [(t0 - P["bracket"], t1 + P["bracket"]) for t0, t1 in priced]
+    elif edits:
         for e in edits:
             e["basis"] = "counter-derived" if (tick_sched_changed and "tick" in e["kinds"]) else "independent"
             if e["basis"] == "counter-derived" and P["bracket"] is not None:
@@ -1136,19 +1321,32 @@ def audit_chart(c, new_path=None, base_path=None, whole=False, clock=None, P=PAR
     rec["reads"] = dict(confident=tr["reads"], on_chain=tr["on_chain"], misreads_dropped=tr["misreads_dropped"], quiet=tr["quiet_points"],
                         strong=len(tr["strong"]), evidence=len(tr["evidence"]), runs=tr["runs"], unsettled=len(tr["unsettled"]))
     rec["whole"] = judge_whole(tr, ev["rowt"], play, P)
+    rec["reads"]["rest_dropped"] = tr["rest_dropped"]
     rec["brackets"] = [[round(x, 3), round(y, 3)] for x, y in _merge(brackets)]
-    if whole or edits is None or timing_changed:
+    if bracket_why:
+        rec["brackets_why"] = bracket_why
+    if whole_mode:
         # no base, or the timing moved every event: the chart is audited whole, and FLAT needs
-        # every row covered
-        w = rec["whole"]
-        v = w["verdict"]
-        if v == "FLAT" and not w["covered"]:
-            v, why = "UNCOVERED", "no disagreement, but not every row is within %d rows of a strong read (the longest blind stretch is %d rows)" % (P["k_rows"], w["blind_rows"])
-        else:
-            why = w["reason"]
+        # every row covered and every priced region read on both sides
+        v, why = whole_verdict(rec["whole"], P)
+        rec["priced_regions"] = []
+        for t0, t1 in sorted(priced):
+            j = judge_edit(dict(lo=t0, hi=t1), tr, ev["rowt"], play, P)
+            rec["priced_regions"].append(dict(lo=round(t0, 3), hi=round(t1, 3), verdict=j["verdict"], reason=j["reason"]))
+            if j["verdict"] == "OFF" and v != "OFF":
+                v, why = "OFF", "the priced hold region at %.2f-%.2fs: %s" % (t0, t1, j["reason"])
+            elif j["verdict"] != "FLAT" and v == "FLAT":
+                v, why = "UNCOVERED", "the priced hold region at %.2f-%.2fs: %s" % (t0, t1, j["reason"])
         kind = "timing" if timing_changed else "whole"
-        rec["edits"] = [dict(lo=ev["rowt"][0] if ev["rowt"] else 0.0, hi=ev["rowt"][-1] if ev["rowt"] else 0.0, kind=kind, basis="counter-derived" if tick_sched_changed else "independent",
+        rec["edits"] = [dict(lo=ev["rowt"][0] if ev["rowt"] else 0.0, hi=ev["rowt"][-1] if ev["rowt"] else 0.0, kind=kind,
+                             basis="counter-derived" if (tick_sched_changed or priced) else "independent",
                              verdict=v, covered=v == "FLAT", reason=("the file's timing changed (by up to %.3fs): audited whole - " % rec["timing_change"] if timing_changed else "") + why)]
+    elif not edits:
+        # nothing in the block's judged events differs from the base's: there is no edit to judge,
+        # so the chart is judged whole, FLAT only when every row is covered
+        v, why = whole_verdict(rec["whole"], P)
+        rec["edits"] = []
+        rec["verdict"], rec["reason"] = v, "no edits against the base (%s); the whole trace: %s" % (rec.get("base"), why)
     else:
         out = []
         for e in edits:
@@ -1158,6 +1356,14 @@ def audit_chart(c, new_path=None, base_path=None, whole=False, clock=None, P=PAR
                             basis=e["basis"], **j))
         rec["edits"] = out
     return _finish(rec, t_start)
+
+
+def whole_verdict(w, P):
+    """A whole-chart verdict as a chart's verdict: FLAT only when every row is covered."""
+    if w["verdict"] == "FLAT" and not w.get("covered"):
+        return "UNCOVERED", "no disagreement, but not every row is within %d rows of a strong read (the longest blind stretch is %d rows)" % (
+            P["k_rows"], w.get("blind_rows") or 0)
+    return w["verdict"], w.get("reason", "")
 
 
 def _header(data):
@@ -1191,7 +1397,8 @@ def _finish(rec, t_start):
     elif vs and all(v == "FLAT" for v in vs):
         rec["verdict"] = "FLAT"
     elif not vs:
-        rec["verdict"] = w or "UNCOVERED"
+        # no edits: the whole trace decides, and it is FLAT only when covered end to end
+        rec["verdict"] = "UNCOVERED" if not w or (w == "FLAT" and not rec["whole"].get("covered")) else w
     else:
         rec["verdict"] = "UNCOVERED"
     if "reason" not in rec:
@@ -1244,12 +1451,35 @@ def grade_job(c):
     return out
 
 
+def population_key():
+    """Everything a population depends on: audit_version (this tool, every tools/ module it imports -
+    extract_repair's grading among them - the converter and PARAMS), the import commit, the
+    certification as extract_repair.charts() builds it (who is certified, on which video and side,
+    at what count - corpus_map and its overlays), the committed simfiles tree, and every uncommitted
+    change under simfiles/ with its content."""
+    h = hashlib.sha256()
+    h.update(("%s\n%s\n" % (AUDIT_VERSION, IMPORT_REV)).encode())
+    h.update(json.dumps(sorted(charts().values(), key=lambda c: c["chart"]), sort_keys=True, default=str).encode())
+    h.update(git("rev-parse", "HEAD:simfiles"))
+    st = git("status", "--porcelain=v1", "-z", "--untracked-files=all", "--", "simfiles")
+    h.update(st)
+    for entry in st.split(b"\0"):
+        p = os.path.join(ROOT, entry[3:].decode("utf-8", "replace")) if len(entry) > 3 else None
+        if p and os.path.isfile(p):
+            with open(p, "rb") as f:
+                h.update(hashlib.sha256(f.read()).digest())
+    return h.hexdigest()
+
+
 def populations(workers):
-    """Every certified chart graded at HEAD and at the import commit (cached per HEAD commit)."""
-    tree = git("rev-parse", "HEAD:simfiles").decode().strip()
-    cache = os.path.join(SCRATCH, "grade-%s.json" % tree[:12])
+    """Every certified chart graded at HEAD and at the import commit, cached under population_key()
+    (an unreadable cache is rebuilt)."""
+    cache = os.path.join(SCRATCH, "grade-%s.json" % population_key()[:16])
     if os.path.exists(cache):
-        return json.load(open(cache, encoding="utf-8"))
+        try:
+            return json.load(open(cache, encoding="utf-8"))
+        except ValueError:
+            pass
     ch = charts()
     rows = pool_map(grade_job, list(ch.values()), workers)
     for r in rows:
@@ -1272,20 +1502,35 @@ def _write_json(path, obj, indent=1):
     os.replace(tmp, path)
 
 
+def _error_row(name, ex):
+    """An audit that raised: an ERROR, counted on its own, never a verdict."""
+    import traceback
+    return dict(chart=name, verdict="ERROR", error="%s: %s" % (type(ex).__name__, str(ex)[:200]),
+                reason="error: %s: %s" % (type(ex).__name__, str(ex)[:120]), trace=traceback.format_exc()[-1500:], edits=[])
+
+
 def _whole_job(name):
-    c = charts()[name]
     try:
-        return audit_chart(c, whole=True)
+        return audit_chart(charts()[name], whole=True)
     except Exception as ex:
-        return dict(chart=name, verdict="UNCOVERED", reason="error: %s: %s" % (type(ex).__name__, str(ex)[:120]), edits=[])
+        return _error_row(name, ex)
 
 
 def _edit_job(name):
-    c = charts()[name]
     try:
-        return audit_chart(c)
+        return audit_chart(charts()[name])
     except Exception as ex:
-        return dict(chart=name, verdict="UNCOVERED", reason="error: %s: %s" % (type(ex).__name__, str(ex)[:120]), edits=[])
+        return _error_row(name, ex)
+
+
+def fail_on_errors(what, rows):
+    """Any ERROR fails the run loudly (exit 2), after its output has been written for diagnosis."""
+    errs = [r for r in rows if r.get("verdict") == "ERROR" or r.get("error")]
+    if errs:
+        print("%s: %d ERROR(s) - the run fails; nothing it concluded may be used" % (what, len(errs)), file=sys.stderr)
+        for r in errs[:20]:
+            print("  ERROR", r.get("chart"), "-", r.get("error"), file=sys.stderr)
+        raise SystemExit(2)
 
 
 def controls(workers):
@@ -1299,7 +1544,7 @@ def controls(workers):
     cnt = Counter(r["verdict"] for r in rows)
     out = dict(generated=time.strftime("%Y-%m-%d %H:%M"), audit_version=AUDIT_VERSION, params=PARAMS,
                population="certified charts exact at HEAD whose block and song header are byte-identical to %s's, with a counter scan" % IMPORT_REV,
-               counts=dict(cnt), clean_plays=sum(1 for r in rows if (r.get("play") or {}).get("clean")),
+               counts=dict(cnt), errors=cnt["ERROR"], clean_plays=sum(1 for r in rows if (r.get("play") or {}).get("clean")),
                covered=sum(1 for r in rows if (r.get("whole") or {}).get("covered")),
                seconds=round(time.time() - t0, 1), charts=[_slim(r) for r in rows])
     _write_json(os.path.join(SCRATCH, "controls.json"), out)
@@ -1311,12 +1556,13 @@ def controls(workers):
     for r in rows:
         if (r.get("whole") or {}).get("unsettled"):
             print("  unsettled", r["chart"], r["whole"]["unsettled"][:3])
+    fail_on_errors("controls", rows)
     return out
 
 
 def _slim(r):
-    keep = ("chart", "key", "vid", "side", "expected", "exact", "block_sha", "base_sha", "verdict", "reason", "play", "clock", "reads", "brackets",
-            "timing_change", "clock_refused", "base", "seconds")
+    keep = ("chart", "key", "vid", "side", "expected", "exact", "block_sha", "header_sha", "base_sha", "verdict", "reason", "error", "play", "clock",
+            "reads", "brackets", "brackets_why", "priced_regions", "timing_change", "clock_refused", "base", "base_error", "seconds")
     out = {k: r[k] for k in keep if k in r}
     if "whole" in r:
         out["whole"] = {k: v for k, v in r["whole"].items() if k != "off"}
@@ -1454,7 +1700,8 @@ def _power_job(job):
                 row[variant + "_why"] = [e.get("reason") for e in r.get("edits", [])][:2]
             out.append(row)
     except Exception as ex:
-        out.append(dict(chart=name, planted=False, why="error: %s: %s" % (type(ex).__name__, str(ex)[:120])))
+        # an ERROR, never a refused plant: the power run counts these on their own and fails
+        out.append(dict(chart=name, planted=False, error="%s: %s" % (type(ex).__name__, str(ex)[:200])))
     return out
 
 
@@ -1469,6 +1716,7 @@ def power(workers, per_chart, seed):
     names = sorted(r["chart"] for r in ctl["charts"] if (r.get("play") or {}).get("clean") and r.get("clock") and r["chart"] not in BLIND_REVIEW)
     rows = [x for part in pool_map(_power_job, [(n, seed, per_chart) for n in names], workers) for x in part]
     ok = [r for r in rows if r.get("planted")]
+    errors = [r for r in rows if r.get("error")]
     table = []
     for lo, hi in SEP_BUCKETS:
         rs = [r for r in ok if lo <= r["sep"] <= hi]
@@ -1486,13 +1734,13 @@ def power(workers, per_chart, seed):
         by_meter.append(dict(levels="%d-%d" % (lo, hi), plants=len(rs), OFF=cnt["OFF"], UNCOVERED=cnt["UNCOVERED"], FLAT=cnt["FLAT"]))
     out = dict(generated=time.strftime("%Y-%m-%d %H:%M"), audit_version=AUDIT_VERSION, params=PARAMS, seed=seed, per_chart=per_chart,
                variants={v: p for v, p in POWER_VARIANTS},
-               charts=len(names), plants=len(ok), refused=len(rows) - len(ok), seconds=round(time.time() - t0, 1),
+               charts=len(names), plants=len(ok), refused=len(rows) - len(ok) - len(errors), errors=len(errors), seconds=round(time.time() - t0, 1),
                method="one #TICKCOUNTS-only compensating pair per plant in a scratch copy of an untouched exact chart on a full-combo play: "
                       "a lattice point removed (rate 0 over +-1/2r) in one hold region and one added (rate 2r over [x, x+1/2r) at a midpoint) "
                       "in another, the converter's total unchanged and the event diff exactly +1/-1; separation = judged rows between the two",
                table=table, by_meter=by_meter, rows=rows)
     _write_json(os.path.join(SCRATCH, "power.json"), out)
-    print("power: %d plants on %d charts in %.0fs (%d refused)" % (len(ok), len(names), out["seconds"], out["refused"]))
+    print("power: %d plants on %d charts in %.0fs (%d refused, %d errors)" % (len(ok), len(names), out["seconds"], out["refused"], len(errors)))
     for variant, _ in POWER_VARIANTS:
         print("  %s: rows apart, plants, OFF / UNCOVERED / FLAT (detected, missed)" % variant)
         for line in table:
@@ -1500,6 +1748,7 @@ def power(workers, per_chart, seed):
             print("    %-9s %4d  %4d %4d %4d  (%s, %s)" % (line["rows"], line["plants"], x["OFF"], x["UNCOVERED"], x["FLAT"], x["detected"], x["missed"]))
     for m in by_meter:
         print("  levels %-6s plants %4d  OFF %4d UNC %4d FLAT %4d" % (m["levels"], m["plants"], m["OFF"], m["UNCOVERED"], m["FLAT"]))
+    fail_on_errors("power", errors)
     return out
 
 
@@ -1524,18 +1773,20 @@ def corpus(workers, date, out_dir=None):
         r["promotable"] = ok and not r.get("quarantined") and not r.get("owner_revisit") and r.get("block_sha") is not None
         if r["promotable"]:
             promotions.append(dict(chart=r["chart"], key=r["key"], block_sha=r["block_sha"], audit="FLAT", covered=True,
-                                   audit_version=AUDIT_VERSION, run="trace-audit %s at %s" % (date, head[:7])))
+                                   audit_version=AUDIT_VERSION, run="trace-audit %s at %s" % (date, head[:7]), header_sha=r.get("header_sha")))
     cnt = Counter(r["verdict"] for r in rows)
     ecnt = Counter(e["verdict"] for r in rows for e in r.get("edits", []))
     basis = Counter((e.get("basis"), e["verdict"]) for r in rows for e in r.get("edits", []))
+    distant = sum(1 for r in rows for e in r.get("edits", []) if e["verdict"] == "OFF" and e.get("distant"))
     ledger = dict(
-        generated=time.strftime("%Y-%m-%d %H:%M"), tool="tools/trace_audit.py", audit_version=AUDIT_VERSION, params=PARAMS,
-        head=head, import_rev=IMPORT_REV, converter=_converter_id(),
+        generated=time.strftime("%Y-%m-%d %H:%M"), tool="tools/trace_audit.py", audit_version=AUDIT_VERSION, audit_sources=AUDIT_SOURCES,
+        params=PARAMS, head=head, import_rev=IMPORT_REV, converter=_converter_id(),
         block_sha="sha256 of the chart's #NOTEDATA block: from its '#NOTEDATA:' line to the next or EOF, UTF-8 (errors=replace), "
-                  "CRLF/CR as LF, str.rstrip()'d (tools/guards.py)",
+                  "CRLF/CR as LF, str.rstrip()'d (tools/guards.py); header_sha the same over the text before the first #NOTEDATA line",
         population="certified charts exact at HEAD and not at %s: the edit-derived exact set" % IMPORT_REV,
-        quarantine=list(QUARANTINE), owner_revisit=sorted(revisit & set(gained)), counts=dict(charts=len(rows), **{k: cnt[k] for k in ("FLAT", "OFF", "UNCOVERED")},
-                                                 edits=dict(ecnt), promoted=len(promotions)),
+        quarantine=list(QUARANTINE), owner_revisit=sorted(revisit & set(gained)),
+        counts=dict(charts=len(rows), **{k: cnt[k] for k in ("FLAT", "OFF", "UNCOVERED", "ERROR")}, edits=dict(ecnt),
+                    edits_off_distant=distant, promoted=len(promotions)),
         by_basis={"%s %s" % k: v for k, v in sorted(basis.items(), key=str)},
         seconds=round(time.time() - t0, 1), charts=[dict(_slim(r), promotable=r["promotable"], quarantined=r.get("quarantined", False),
                                                      **({"owner_revisit": r["owner_revisit"]} if r.get("owner_revisit") else {})) for r in rows])
@@ -1552,21 +1803,64 @@ def corpus(workers, date, out_dir=None):
                                     unsettled=[dict(chart=r["chart"], stretches=r["whole"].get("unsettled")) for r in d["charts"] if (r.get("whole") or {}).get("unsettled")],
                                     charts=[dict(chart=r["chart"], verdict=r["verdict"], covered=(r.get("whole") or {}).get("covered"), reason=r.get("reason")) for r in d["charts"]])
             else:
-                ledger[part] = {k: d[k] for k in ("method", "variants", "seed", "per_chart", "charts", "plants", "refused", "seconds", "table", "by_meter")}
+                ledger[part] = {k: d[k] for k in ("method", "variants", "seed", "per_chart", "charts", "plants", "refused", "errors", "seconds", "table", "by_meter")
+                                if k in d}
+    if cnt["ERROR"]:
+        # a run with any error writes nothing to sources/: its ledger goes to the scratch dir for diagnosis
+        fail = os.path.join(SCRATCH, "corpus-failed-%s.json" % date)
+        _write_json(fail, ledger)
+        print("corpus: ledger written to %s only" % fail, file=sys.stderr)
+        fail_on_errors("corpus", rows)
     out_dir = out_dir or os.path.join(ROOT, "sources")
+    pj = os.path.join(out_dir, "protected-promotions.jsonl")
+    appended, unconfirmed = append_promotions(pj, promotions, {(r["chart"], r.get("block_sha")) for r in rows if r.get("promotable")})
+    ledger["counts"]["appended"] = len(appended)
+    # rows already in the file that this run does not promote again: never removed here (the file is
+    # append-only; protection shrinks through sources/demotions.jsonl), reported for that review
+    ledger["promotions_not_reconfirmed"] = unconfirmed
     out = os.path.join(out_dir, "trace-audit-%s.json" % date)
     _write_json(out, ledger)
-    pj = os.path.join(out_dir, "protected-promotions.jsonl")
-    tmp = pj + ".%d.tmp" % os.getpid()
-    with open(tmp, "w", encoding="utf-8", newline="\n") as f:
-        for p in sorted(promotions, key=lambda p: p["chart"]):
-            f.write(json.dumps(p, ensure_ascii=False, separators=(", ", ": ")) + "\n")
-    os.replace(tmp, pj)
-    print("corpus: %d edit-derived exact charts in %.0fs - %s; edits %s; %d promoted" % (len(rows), ledger["seconds"], dict(cnt), dict(ecnt), len(promotions)))
+    print("corpus: %d edit-derived exact charts in %.0fs - %s; edits %s (%d OFF distant); %d promotable, %d appended to %s" % (
+        len(rows), ledger["seconds"], dict(cnt), dict(ecnt), distant, len(promotions), len(appended), pj))
     for r in rows:
         if r["verdict"] == "OFF":
             print("  OFF", r["chart"], "-", r.get("reason"))
+    for u in unconfirmed:
+        print("  NOT RECONFIRMED (in the file, not promoted by this run):", u["chart"], u["block_sha"][:12], "-", u["why"])
     return ledger
+
+
+def append_promotions(path, promotions, promotable):
+    """sources/protected-promotions.jsonl is append-only (tools/corpus_grade.py fails a pass that
+    loses or rewrites a line): the lines already there are kept byte for byte, and a row is appended
+    for each promotion whose (chart, block_sha) is not in the file yet. -> (appended rows, rows in the
+    file this run did not find promotable at their block_sha)."""
+    lines, have = [], set()
+    if os.path.exists(path):
+        with open(path, encoding="utf-8", newline="") as f:
+            lines = f.read().splitlines(keepends=True)
+        for ln in lines:
+            try:
+                r = json.loads(ln)
+                have.add((r.get("chart"), r.get("block_sha")))
+            except ValueError:
+                continue
+    unconfirmed = []
+    for (chart, sha) in sorted(have, key=str):
+        if (chart, sha) not in promotable:
+            unconfirmed.append(dict(chart=chart, block_sha=sha, why="the chart is not promotable at that block in this run (another block now, or its audit is no longer FLAT and covered)"))
+    new = [p for p in sorted(promotions, key=lambda p: p["chart"]) if (p["chart"], p["block_sha"]) not in have]
+    if new or not os.path.exists(path):
+        if lines and not lines[-1].endswith("\n"):
+            lines[-1] += "\n"
+        tmp = path + ".%d.tmp" % os.getpid()
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(tmp, "w", encoding="utf-8", newline="") as f:
+            f.write("".join(lines))
+            for p in new:
+                f.write(json.dumps(p, ensure_ascii=False, separators=(", ", ": ")) + "\n")
+        os.replace(tmp, path)
+    return new, unconfirmed
 
 
 def owner_revisit():
@@ -1664,6 +1958,10 @@ def show(rec):
     if rec.get("whole"):
         w = rec["whole"]
         print("   whole: %s - %s (covered %s, blind %s rows)" % (w["verdict"], w.get("reason"), w.get("covered"), w.get("blind_rows")))
+    for why in rec.get("brackets_why") or []:
+        print("   priced:", why, rec.get("brackets"))
+    for p in rec.get("priced_regions") or []:
+        print("   priced region %s-%s: %s - %s" % (p["lo"], p["hi"], p["verdict"], p["reason"]))
     for e in rec.get("edits", []):
         print("   edit %s-%s %s %s: %s - %s" % (e.get("lo"), e.get("hi"), e.get("basis", ""), (e.get("events") or {}).get("net", ""), e["verdict"], e["reason"]))
 
@@ -1704,6 +2002,9 @@ def _main(op, workers):
         crops(names or list(BLIND_REVIEW), arg("--out", "blind-35ms"))
     elif op == "version":
         print(AUDIT_VERSION)
+        if "--sources" in sys.argv:
+            for k, v in sorted(AUDIT_SOURCES.items()):
+                print("  %s  %s" % (v[:16], k))
     else:
         raise SystemExit("unknown op %r" % op)
 
