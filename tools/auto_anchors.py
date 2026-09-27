@@ -18,6 +18,7 @@ import run_structure  # noqa: E402
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import corpus_map  # noqa: E402
+import combo_reader  # noqa: E402  (load_band/load_scan: the scan by scan_path, a broken one read as missing)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PY = r"C:\Users\jonec\repos\piu-annotate\.venv\Scripts\python.exe"
@@ -35,10 +36,8 @@ def main():
     band = "C" if not other.get("judged") else ("L" if side == "1p" else "R")
     smap = corpus_map.chart_map()
     key = smap[chart]["key"]
-    path = os.path.join(ROOT, "work", "combo", f"{vid}.{band}.jsonl")
-    if not os.path.exists(path):
-        path = os.path.join(ROOT, "work", "combo", f"{vid}.C.jsonl")
-    pts = sorted((t, v) for t, v, c in (json.loads(l) for l in open(path, encoding="utf-8")) if v is not None and c >= 0.6 and v <= mc)
+    rows, _ = combo_reader.load_band(vid, band)       # this band's scan, else the C scan
+    pts = sorted((t, v) for t, v, c in rows if v is not None and c >= 0.6 and v <= mc)
     # reads before the chart starts are title-card junk (We will meet again read "5" at 2.0s
     # on a PUMP TO NX splash); the chart's first row at the offset is the earliest real one
     import csv

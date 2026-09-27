@@ -10,6 +10,9 @@ import os
 import subprocess
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import combo_reader  # noqa: E402  (load_band/load_scan: the scan by scan_path, a broken one read as missing)
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PY = sys.executable
 
@@ -31,8 +34,7 @@ def main():
       # noqa
         side = cert["side"]
         band = band_for(r, side)
-        jsonl = os.path.join(ROOT, "work", "combo", f"{vid}.{band}.jsonl")
-        if not os.path.exists(jsonl):
+        if combo_reader.load_scan(vid, band) is None:     # missing, or broken and read as missing
             print(f"[scan] {name} ({vid}, band {band})", flush=True)
             subprocess.run([PY, os.path.join(ROOT, "tools", "combo_reader.py"), "--scan", vid, f"side={band}"], check=True)
         s = led[vid][side]

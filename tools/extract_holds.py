@@ -14,6 +14,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import corpus_map  # noqa: E402
+import combo_reader  # noqa: E402  (load_band/load_scan: the scan by scan_path, a broken one read as missing)
 import receptors as R  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -59,12 +60,11 @@ def main():
     else:
         a = a_given
     # counter reads, for the accrual across each rail
-    reads = []
-    for b in (band, "C", "L", "R"):
-        p = os.path.join(ROOT, "work", "combo", f"{vid}.{b}.jsonl")
-        if os.path.exists(p):
-            reads = sorted((t, v) for t, v, c in (json.loads(l) for l in open(p, encoding="utf-8")) if v is not None and c >= 0.6 and v <= mc)
-            break
+    try:
+        rows, _ = combo_reader.load_band(vid, band, fallback=("C", "L", "R"))
+    except FileNotFoundError:
+        rows = []                                   # no scan: the rails print without an accrual
+    reads = sorted((t, v) for t, v, c in rows if v is not None and c >= 0.6 and v <= mc)
     rt = [t for t, _ in reads]
     all_taps = sorted(t for v in taps.values() for t in v)
     def taps_in(c0, c1):

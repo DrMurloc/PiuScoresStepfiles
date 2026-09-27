@@ -13,6 +13,7 @@ import json
 import os
 import sys
 import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
+import combo_reader  # noqa: E402  (load_band/load_scan: the scan by scan_path, a broken one read as missing)
 
 CS = r"C:\Users\jonec\repos\piu-annotate\artifacts\chartstructs\p2-082626"
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -73,12 +74,12 @@ def main():
     vid, key, a, judged = sys.argv[1], sys.argv[2], float(sys.argv[3]), int(sys.argv[4])
     band = sys.argv[5] if len(sys.argv) > 5 else "C"
     taps, spans = load(key)
-    anchors = [tuple(x) for x in json.load(open(os.path.join(ROOT, "work", "combo", f"{vid}.{band}.anchors.json")))]
+    anchors = [tuple(x) for x in combo_reader.load_anchors(vid, band)]
     if len(sys.argv) > 6:
         for pt, pv in json.load(open(sys.argv[6], encoding="utf-8")):
             anchors.append((pt, pt, pv))
         anchors.sort()
-    reads = [json.loads(l) for l in open(os.path.join(ROOT, "work", "combo", f"{vid}.{band}.jsonl"), encoding="utf-8")]
+    reads, _ = combo_reader.load_band(vid, band, fallback=())
     total_ticks = judged - len(taps)
     print(f"taps {len(taps)}, holds {len(spans)}, target total hold events {total_ticks}")
     # partition time at hold-gap midpoints so every judged event is attributed to

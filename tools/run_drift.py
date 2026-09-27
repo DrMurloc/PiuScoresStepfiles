@@ -22,6 +22,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import corpus_map  # noqa: E402
+import combo_reader  # noqa: E402  (load_band/load_scan: the scan by scan_path, a broken one read as missing)
 import receptors as R  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -43,12 +44,10 @@ def main():
     rows, _, _ = R.chartstruct(smap[chart]["key"], ncols)
     taps = sorted(float(r["Time"]) for r in rows if "1" in r["Line"])
     holds = sorted(float(r["Time"]) for r in rows if "2" in r["Line"])
-    path = os.path.join(ROOT, "work", "combo", f"{vid}.{band}.jsonl")
-    if not os.path.exists(path):
-        path = os.path.join(ROOT, "work", "combo", f"{vid}.C.jsonl")
+    rows, _ = combo_reader.load_band(vid, band)       # this band's scan, else the C scan
     # the counter is BLANK below 4, so any read under 4 is the reader inventing a number from
     # an empty box - and one of those opens a bogus run that double-counts the climb before it
-    good = [(t, v) for t, v, c in (json.loads(l) for l in open(path, encoding="utf-8"))
+    good = [(t, v) for t, v, c in rows
             if v is not None and c >= conf and 4 <= v <= mc]
     pers = [(t, v) for i, (t, v) in enumerate(good) if any(v2 == v for _, v2 in good[i + 1:i + 3])]
     # A drop only starts a new run if what FOLLOWS continues from it. A lone low read is junk

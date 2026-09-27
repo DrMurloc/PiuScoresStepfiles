@@ -27,6 +27,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import corpus_map  # noqa: E402
+import combo_reader  # noqa: E402  (load_band/load_scan: the scan by scan_path, a broken one read as missing)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CS_DIR = r"C:\Users\jonec\repos\piu-annotate\artifacts\chartstructs\p2-082626"
@@ -35,7 +36,7 @@ def main():
     name, vid, band, a = sys.argv[1], sys.argv[2], sys.argv[3], float(sys.argv[4])
     smap = corpus_map.chart_map()
     key = smap[name]["key"]
-    anchors = json.load(open(os.path.join(ROOT, "work", "combo", f"{vid}.{band}.anchors.json"), encoding="utf-8"))
+    anchors = combo_reader.load_anchors(vid, band)
 
     # ONE judged event per step row, not per arrow. PIU judges a timing window, so a jump on
     # two panels is a single judgement and a single combo increment - counting the '1's

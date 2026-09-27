@@ -14,12 +14,13 @@ import json
 import os
 import sys
 import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
+import combo_reader  # noqa: E402  (load_band/load_scan: the scan by scan_path, a broken one read as missing)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RATE = 25.0
 
 def assemble(vid, band="C"):
-    pts = [json.loads(l) for l in open(os.path.join(ROOT, "work", "combo", f"{vid}.{band}.jsonl"), encoding="utf-8")]
+    pts, _ = combo_reader.load_band(vid, band, fallback=())
     vals = [(t, v, c) for t, v, c in pts if v is not None]
     cands = []
     i = 0
@@ -96,6 +97,6 @@ if __name__ == "__main__":
         tot += r[-1][2]
         print(f"  {r[0][0]:7.2f}s -> {r[-1][1]:7.2f}s  combo {r[0][2]}..{r[-1][2]}  anchors {len(r)}")
     print(f"runs {len(runs)}, sum of run-final {tot}", sys.argv[2:] and f"(target P+G {sys.argv[2]})" or "")
-    out = os.path.join(ROOT, "work", "combo", f"{vid}.{band}.anchors.json")
+    out = combo_reader.anchors_path(vid, band)
     atomicio.write_json(out, [[round(a[0], 3), round(a[1], 3), a[2]] for a in chain])
     print("anchors ->", out)

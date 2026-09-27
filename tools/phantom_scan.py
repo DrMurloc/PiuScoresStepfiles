@@ -14,6 +14,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import corpus_map  # noqa: E402
+import combo_reader  # noqa: E402  (load_band/load_scan: the scan by scan_path, a broken one read as missing)
 import receptors as R  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -32,10 +33,8 @@ def main():
     smap = corpus_map.chart_map()
     rows, _, beat_at = R.chartstruct(smap[chart]["key"], ncols)
     taps = sorted({float(r["Time"]) for r in rows if "1" in r["Line"]})
-    path = os.path.join(ROOT, "work", "combo", f"{vid}.{band}.jsonl")
-    if not os.path.exists(path):
-        path = os.path.join(ROOT, "work", "combo", f"{vid}.C.jsonl")
-    reads = [(t, v) for t, v, c in (json.loads(l) for l in open(path, encoding="utf-8")) if v is not None and c >= conf and v <= mc]
+    rows, _ = combo_reader.load_band(vid, band)       # this band's scan, else the C scan
+    reads = [(t, v) for t, v, c in rows if v is not None and c >= conf and v <= mc]
     print(f"{chart}: {vid} band {band}, judged {judged}, maxcombo {mc}, file taps {len(taps)} ({len(taps) - judged:+d}), {len(reads)} reads at conf>={conf}")
 
     def diffs(a):

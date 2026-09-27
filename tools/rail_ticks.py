@@ -16,6 +16,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import corpus_map  # noqa: E402
+import combo_reader  # noqa: E402  (load_band/load_scan: the scan by scan_path, a broken one read as missing)
 import receptors as R  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -44,13 +45,11 @@ def main():
     sc = R.scan(vid, 0.5, float(e.get("t") or 150) - 0.5, band, ncols)
     ons, _ = R.onsets(sc, 60.0)
     rl = R.rails(sc, occ_th=occ, min_len=min_len)
-    path = os.path.join(ROOT, "work", "combo", f"{vid}.{band}.jsonl")
-    if not os.path.exists(path):
-        path = os.path.join(ROOT, "work", "combo", f"{vid}.C.jsonl")
+    rows, _ = combo_reader.load_band(vid, band)       # this band's scan, else the C scan
     # the window agreement below is what keeps a shaky read honest, so the confidence floor can
     # sit lower than it could when a single nearest read decided a rail on its own
     conf = float(sys.argv[sys.argv.index("--conf") + 1]) if "--conf" in sys.argv else 0.6
-    reads = sorted((t, v) for t, v, c in (json.loads(l) for l in open(path, encoding="utf-8")) if v is not None and c >= conf and v <= mc)
+    reads = sorted((t, v) for t, v, c in rows if v is not None and c >= conf and v <= mc)
 
     rt = [t for t, _ in reads]
     # how far from the rail a bracketing read may sit. Widening it is not a loosening: every

@@ -266,6 +266,37 @@ def load_scan(vid, side, atlas_dir=ATLAS):
     a fresh --scan replaces it."""
     return A.read_jsonl(scan_path(vid, side, atlas_dir))
 
+
+def load_band(vid, band, fallback=("C",), atlas_dir=ATLAS):
+    """(rows, band read) of the first usable scan among `band` and then each `fallback` band - the
+    analysis tools' old "this band's scan, else the C scan" rule, but through scan_path and the
+    broken-scan loader: a scan keyed after an atlas change is found under its keyed name, and a
+    broken one reads as missing instead of crashing the tool or handing it a truncated trace.
+    Raises FileNotFoundError naming every path tried when none is usable."""
+    tried = []
+    for b in (band,) + tuple(x for x in fallback if x != band):
+        rows = load_scan(vid, b, atlas_dir)
+        if rows is not None:
+            return rows, b
+        tried.append(os.path.relpath(scan_path(vid, b, atlas_dir), ROOT).replace(os.sep, "/"))
+    raise FileNotFoundError("no usable counter scan for %s (tried %s: missing, or broken and read as missing) - "
+                            "`combo_reader.py --scan %s side=%s` makes one" % (vid, ", ".join(tried), vid, band))
+
+
+def anchors_path(vid, band):
+    return os.path.join(ROOT, "work", "combo", f"{vid}.{band}.anchors.json")
+
+
+def load_anchors(vid, band):
+    """The anchors a curve builder (curve_assembler, auto_anchors, triage) wrote for this band, or
+    FileNotFoundError when there are none or the file is broken (atomicio.load_json)."""
+    p = anchors_path(vid, band)
+    a = A.load_json(p)
+    if a is None:
+        raise FileNotFoundError("no usable anchors for %s band %s (%s missing, or broken and read as missing)" % (
+            vid, band, os.path.relpath(p, ROOT).replace(os.sep, "/")))
+    return a
+
 def scan(vid, side, t0, t1, atlas_dir=ATLAS):
     """Read every frame into the band's scan file. It is written as <file>.partial and renamed into
     place only when the scan completes, beside a <file>.done.json saying how many lines it has, its

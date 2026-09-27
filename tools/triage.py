@@ -14,12 +14,13 @@ import json
 import os
 import sys
 import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
+import combo_reader  # noqa: E402  (load_band/load_scan: the scan by scan_path, a broken one read as missing)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CS_DIR = r"C:\Users\jonec\repos\piu-annotate\artifacts\chartstructs\p2-082626"
 
 def assemble(vid, band, pg, mc):
-    reads = [json.loads(l) for l in open(os.path.join(ROOT, "work", "combo", f"{vid}.{band}.jsonl"), encoding="utf-8")]
+    reads, _ = combo_reader.load_band(vid, band, fallback=())
     pts = sorted((t, v) for t, v, c in reads if v is not None and c >= 0.8 and v <= mc)
     if len(pts) < 40:
         return None, None
@@ -94,24 +95,23 @@ def main():
             mc = int(p.get("maxcombo") or 0)
         except ValueError:
             print(f"{name[:40]:40} bad cert"); continue
-        band = None
-        for f in glob.glob(os.path.join(ROOT, "work", "combo", f"{vid}.*.jsonl")):
-            b = os.path.basename(f).split(".")[-2]
-            n = sum(1 for l in open(f, encoding="utf-8") if '"' not in l or True)
-            band = b if band is None else band
-        # pick the band with the most usable reads
+        # pick the band with the most usable reads, among the scans combo_reader.load_scan can read
+        # (the old glob of <vid>.*.jsonl also took another atlas's scan for a band named after it)
         best = None
-        for f in glob.glob(os.path.join(ROOT, "work", "combo", f"{vid}.*.jsonl")):
-            b = os.path.basename(f).split(".")[-2]
-            reads = [json.loads(l) for l in open(f, encoding="utf-8")]
+        for b in ("C", "L", "R"):
+            reads = combo_reader.load_scan(vid, b)
+            if reads is None:
+                continue
             k = sum(1 for t, v, cf in reads if v is not None and cf >= 0.8 and v <= mc)
             if best is None or k > best[0]:
                 best = (k, b)
+        if best is None:
+            print(f"{name[:40]:40} no usable counter scan"); continue
         band = best[1]
         anchors, info = assemble(vid, band, pg, mc)
         if anchors is None:
             print(f"{name[:40]:40} too few reads"); continue
-        atomicio.write_json(os.path.join(ROOT, "work", "combo", f"{vid}.{band}.anchors.json"), anchors)
+        atomicio.write_json(combo_reader.anchors_path(vid, band), anchors)
         # slack profile against the file's taps, using the end-anchored offset
         key = smap[name]["key"]
         rows = list(csv.DictReader(open(os.path.join(CS_DIR, key + ".csv"), encoding="utf-8")))

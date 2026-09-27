@@ -10,6 +10,7 @@ import json
 import os
 import sys
 import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
+import combo_reader  # noqa: E402  (load_band/load_scan: the scan by scan_path, a broken one read as missing)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -18,8 +19,8 @@ def main():
     w0, w1 = float(sys.argv[3]), float(sys.argv[4])
     off = int(sys.argv[5]) if len(sys.argv) > 5 else 0
     floor = float(sys.argv[6]) if len(sys.argv) > 6 else 0.82
-    reads = [json.loads(l) for l in open(os.path.join(ROOT, "work", "combo", f"{vid}.{band}.jsonl"), encoding="utf-8")]
-    anchors = [tuple(x) for x in json.load(open(os.path.join(ROOT, "work", "combo", f"{vid}.{band}.anchors.json")))]
+    reads, _ = combo_reader.load_band(vid, band, fallback=())
+    anchors = [tuple(x) for x in combo_reader.load_anchors(vid, band)]
     lo_b = max((a[2] for a in anchors if a[1] <= w0), default=0)
     hi_b = min((a[2] for a in anchors if a[0] >= w1), default=10 ** 9)
     win = [(t, v + off) for t, v, c in reads

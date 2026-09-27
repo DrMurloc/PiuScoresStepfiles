@@ -14,6 +14,9 @@ import json
 import os
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import combo_reader  # noqa: E402  (load_band/load_scan: the scan by scan_path, a broken one read as missing)
+
 CS = r"C:\Users\jonec\repos\piu-annotate\artifacts\chartstructs\p2-082626"
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -59,17 +62,13 @@ def main():
     band = sys.argv[4] if len(sys.argv) > 4 else "C"
     forced = float(sys.argv[5]) if len(sys.argv) > 5 else None
     taps, heads, spans = load_schedule(key)
-    anchors = [tuple(x) for x in json.load(open(os.path.join(ROOT, "work", "combo", f"{vid}.{band}.anchors.json")))]
+    anchors = [tuple(x) for x in combo_reader.load_anchors(vid, band)]
     print(f"schedule: {len(taps)} taps, {len(spans)} holds; anchors: {len(anchors)}")
 
     # the offset cannot push the chart's last event past the video's end (the result
     # screen needs a moment too) — an unconstrained grid can find false minima there
-    reads_path = os.path.join(ROOT, "work", "combo", f"{vid}.{band}.jsonl")
-    last_t = 0.0
-    with open(reads_path, encoding="utf-8") as f:
-        for line in f:
-            pass
-        last_t = json.loads(line)[0]
+    rows, _ = combo_reader.load_band(vid, band, fallback=())
+    last_t = float(rows[-1][0]) if rows else 0.0
     last_event = max(taps[-1] if taps else 0, max((s[1] for s in spans), default=0))
     hi = min(45.0, last_t - last_event - 1.0)
     if hi <= 2.0:
