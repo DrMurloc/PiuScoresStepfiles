@@ -44,7 +44,9 @@
 # whose extraction cleared the bar, nearest the count first; --near N (default 10) keeps those
 # within N of the count, which is where a plateau can be checked against the file's own count.
 # A chart whose extraction candidate applied edits is priced and authored on that candidate, so
-# one commit carries both. Reports: work/tick-loop-report[.i].json (resumable); candidates:
+# one commit carries both. A chart on sources/owner-revisit.json is never priced or committed (verdict
+# SKIP with the reason logged), and one whose video is on sources/footage-corrupt.json is
+# FOOTAGE_CORRUPT, not a PARK. Reports: work/tick-loop-report[.i].json (resumable); candidates:
 # work/tick-loop/<key>.ssc. The counter scan (work/combo/<vid>.<band>.jsonl, combo_reader) is
 # made on demand unless --no-scan, at about 1.3x real time per video, and one that is broken - 0
 # bytes, a last line a killed scan cut short, a file its completion sidecar does not describe - is
@@ -67,6 +69,7 @@ import author_ticks     # noqa: E402  (patch: the TICKCOUNTS writer)
 import combo_reader     # noqa: E402  (scan_path: where a band's counter scan lives)
 import corpus_map       # noqa: E402
 import gitcommit        # noqa: E402
+import guards           # noqa: E402  (the owner-revisit skip, the corrupt-footage list)
 import edit_notes       # noqa: E402
 import extract_repair as E  # noqa: E402   (puts piu-annotate on the path, refuses an old converter)
 import note_extract     # noqa: E402
@@ -619,6 +622,9 @@ def survey_chart(job, scan_ok=True):
         return {**rec, "verdict": "EXACT", "reason": "already exact at %d" % expected}
     if not blk["regions"]:
         return {**rec, "reason": "the file has no holds, so there is nothing for the counter to price"}
+    corrupt = guards.footage_corrupt_reason(job["vid"])
+    if corrupt:
+        return {**rec, "verdict": "FOOTAGE_CORRUPT", "reason": corrupt}
 
     # the play
     cert = corpus_map.certification()[job["vid"]]
@@ -786,6 +792,15 @@ def survey():
     os.makedirs(OUT, exist_ok=True)
     t0 = time.time()
     for i, job in enumerate(jobs, 1):
+        skip = guards.owner_revisit_skip(job["chart"], job["key"])
+        if skip:
+            rec = dict(chart=job["chart"], key=job["key"], ssc_rel=job["ssc_rel"], vid=job["vid"], side=job["side"],
+                       expected=job["expected"], dist=job["dist"], verdict="SKIP", reason=skip)
+            print("[%d/%d] SKIP  %-46s %s" % (i, len(jobs), job["chart"][:46], skip[:100]), flush=True)
+            if prior.get(job["chart"]) != rec:
+                prior[job["chart"]] = rec
+                atomicio.write_json(path, list(prior.values()), encoding="utf-8", ensure_ascii=False, indent=1)
+            continue
         if job["chart"] in prior:
             continue
         t1 = time.time()
@@ -861,6 +876,9 @@ def commit():
         for r in ships:
             ssc = os.path.join(ROOT, "simfiles", *r["ssc_rel"].split("/"))
             cand = os.path.join(ROOT, *r["candidate"].split("/"))
+            skip = guards.owner_revisit_skip(r["chart"], r.get("key"))
+            if skip:
+                print("  %s: %s - not committed" % (r["chart"], skip)); continue
             if not os.path.exists(cand):
                 print("  %s: candidate missing, skipped" % r["chart"]); continue
             if not E.same_outside(open(ssc, encoding="utf-8", newline="").read(), open(cand, encoding="utf-8", newline="").read(), E.block_tag(r["key"])):

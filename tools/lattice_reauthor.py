@@ -17,7 +17,8 @@
 #     then survey again under the right arithmetic.
 #
 # Nothing ships unless the converter derives the certified count, and on a re-authored block
-# every region lands on its recorded count.
+# every region lands on its recorded count. A chart on sources/owner-revisit.json is never
+# re-authored or reverted (apply logs the reason and moves on).
 #
 #   python -X utf8 tools/lattice_reauthor.py survey              every certified chart our commits changed
 #   python -X utf8 tools/lattice_reauthor.py apply [--only "<chart>"] [--dry-run]
@@ -33,6 +34,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import atomicio             # noqa: E402
 import edit_notes           # noqa: E402
 import gitcommit            # noqa: E402
+import guards               # noqa: E402   (the owner-revisit skip)
 import extract_repair as E  # noqa: E402   (puts piu-annotate on the path, and refuses an old converter)
 import tick_repair as T     # noqa: E402
 import author_ticks         # noqa: E402   (patch: the TICKCOUNTS writer)
@@ -509,6 +511,12 @@ def apply():
 
 def _apply(todo, dry, tally, log):
     for r in todo:
+        skip = guards.owner_revisit_skip(r["chart"], r.get("key"))
+        if skip:
+            tally["skipped: owner revisit"] += 1
+            log.append(dict(chart=r["chart"], action="skip", result="skipped", why=skip))
+            print("  %-44s SKIP: %s" % (r["chart"][:44], skip), flush=True)
+            continue
         src = os.path.join(ROOT, *r["rel"].split("/"))
         text = open(src, encoding="utf-8", newline="").read()
         seed_sec = block_section(git("show", "%s:%s" % (SEED, r["rel"])), r["tag"])

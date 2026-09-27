@@ -29,7 +29,9 @@
 #   4. EXACT       tick_verify re-runs the real converter: taps + ticks == the catalog count.
 #
 # The gate is deliberately biased to park. A parked chart costs nothing; a shipped chart with
-# an invented interior looks right forever.
+# an invented interior looks right forever. A chart on sources/owner-revisit.json is skipped with its
+# reason (never surveyed or authored), and one whose video is on sources/footage-corrupt.json is
+# FOOTAGE_CORRUPT rather than parked.
 import json
 import os
 import re
@@ -40,8 +42,10 @@ from collections import Counter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import atomicio    # noqa: E402
+import combo_reader  # noqa: E402  (scan_path: where a band's counter scan lives under today's atlas)
 import corpus_map  # noqa: E402
 import gitcommit   # noqa: E402
+import guards      # noqa: E402  (the owner-revisit skip, the corrupt-footage list)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PY = r"C:\Users\jonec\repos\piu-annotate\.venv\Scripts\python.exe"
@@ -142,8 +146,9 @@ def band_for(cert, side, name):
 def ensure_combo(vid, band):
     """The counter scan every pricing tool reads. Expensive, so it is cached on disk; one that is
     there but broken (0 bytes, a line a killed scan cut short) is scanned again, and the scanner
-    only ever puts a finished scan under the real name."""
-    path = os.path.join(ROOT, "work", "combo", f"{vid}.{band}.jsonl")
+    only ever puts a finished scan under the real name. The name is combo_reader.scan_path's, the
+    one `--scan` writes: after an atlas glyph is added that is a keyed name, not the plain one."""
+    path = combo_reader.scan_path(vid, band)
     if atomicio.jsonl_ok(path):
         return True
     tool("combo_reader", "--scan", vid, f"side={band}", timeout=3600)
@@ -194,6 +199,9 @@ def survey_chart(name, entry, cert):
 
     if tv["match"]:
         return {**r, "verdict": "SKIP", "reason": "already exact"}
+    corrupt = guards.footage_corrupt_reason(r["vid"], r["band"])
+    if corrupt:
+        return {**r, "verdict": "FOOTAGE_CORRUPT", "reason": corrupt}
     if tv["taps"] > r["target"]:
         return {**r, "verdict": "PARK", "reason": f"more tap rows ({tv['taps']}) than the game judges"}
 
@@ -335,6 +343,10 @@ def main():
     smap = corpus_map.chart_map()
     out, t0 = [], time.time()
     for i, (name, entry, cert) in enumerate(jobs, 1):
+        skip = guards.owner_revisit_skip(name, (smap.get(name) or {}).get("key"))
+        if skip:
+            print(f"[{i}/{len(jobs)}] SKIP  {name[:48]:<48} {skip[:70]}", flush=True)
+            continue
         t1 = time.time()
         if authoring:
             rec = prior.get(name)

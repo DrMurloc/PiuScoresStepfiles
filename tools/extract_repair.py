@@ -43,6 +43,9 @@
 #               draw - half of a dense chart's holds are under two frames long.
 #   missing     NOT applied. A note the extractor did not find is far more often the
 #               extractor's miss than the file's phantom.
+# A chart on sources/owner-revisit.json is never surveyed or committed (verdict SKIP, the reason
+# logged: tools/guards.py owner_revisit_skip), and a chart whose certified video is on
+# sources/footage-corrupt.json gets FOOTAGE_CORRUPT rather than a PARK: no reader rescues it.
 # A chart whose file notes the extraction recalls below RECALL_BAR is parked unread: an
 # extraction that cannot see the file's own notes cannot be trusted about what the file lacks.
 #
@@ -69,6 +72,7 @@ sys.path.insert(0, r"C:\Users\jonec\repos\piu-annotate")
 import atomicio        # noqa: E402
 import corpus_map      # noqa: E402
 import gitcommit       # noqa: E402
+import guards          # noqa: E402  (the owner-revisit skip, the corrupt-footage list)
 import edit_notes      # noqa: E402
 import note_extract    # noqa: E402
 import quantize as Q   # noqa: E402
@@ -500,6 +504,11 @@ def survey_chart(entry, ssc_override=None, expected_override=None):
     if "--exact-first" in sys.argv and blk["implied"] == expected:
         # a re-grade, not a census of the reader: an exact file needs no footage read
         return {**rec, "verdict": "EXACT", "reason": "already exact at %d (not read: --exact-first)" % expected}
+    corrupt = guards.footage_corrupt_reason(entry["vid"])
+    if corrupt:
+        if blk["implied"] == expected:
+            return {**rec, "verdict": "EXACT", "reason": "already exact at %d (not read: %s)" % (expected, corrupt)}
+        return {**rec, "verdict": "FOOTAGE_CORRUPT", "reason": corrupt}
     try:
         notes, meta = note_extract.extract(name, quiet=True)
     except Exception as ex:
@@ -583,6 +592,16 @@ def survey():
     os.makedirs(OUT, exist_ok=True)
     t0 = time.time()
     for i, entry in enumerate(jobs, 1):
+        skip = None if ssc_override else guards.owner_revisit_skip(entry["chart"], entry["key"])
+        if skip:
+            # never surveyed, and a PARK an earlier run left for it is replaced by the reason it is not
+            rec = dict(chart=entry["chart"], key=entry["key"], ssc_rel=entry["ssc_rel"], vid=entry["vid"], side=entry["side"],
+                       shape=entry["shape"], expected=entry["expected"], verdict="SKIP", reason=skip)
+            print("[%d/%d] SKIP  %-46s %s" % (i, len(jobs), entry["chart"][:46], skip[:90]), flush=True)
+            if prior.get(entry["chart"]) != rec:
+                prior[entry["chart"]] = rec
+                atomicio.write_json(path, list(prior.values()), encoding="utf-8", ensure_ascii=False, indent=1)
+            continue
         if entry["chart"] in prior:
             continue
         t1 = time.time()
@@ -683,6 +702,9 @@ def commit():
         for r in ships:
             ssc = os.path.join(ROOT, "simfiles", *r["ssc_rel"].split("/"))
             cand = os.path.join(ROOT, r["candidate"])
+            skip = guards.owner_revisit_skip(r["chart"], r.get("key"))
+            if skip:
+                print("  %s: %s - not committed" % (r["chart"], skip)); continue
             if not os.path.exists(cand):
                 print("  %s: candidate missing, skipped" % r["chart"]); continue
             if not same_outside(open(ssc, encoding="utf-8", newline="").read(), open(cand, encoding="utf-8", newline="").read(), block_tag(r["key"])):
