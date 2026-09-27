@@ -444,7 +444,14 @@ def extract(name, quiet=False):
     six extra passes the blob detector cost are gone; what is left to choose is how strong a
     correlation to believe, and that is re-cut from the one pass at no further cost.
     """
-    cert = corpus_map.certification()
+    return _read(*footage_of(name), quiet)
+
+def footage_of(name, cert=None):
+    """(vid, band, ncols, side, dur): the footage a read of this certified chart is - its certified
+    video, the pad's band and side, and how much of it to read. `cert` is a certification ledger as
+    corpus_map.certification() returns it (that, when None); tools/bench.py passes the committed
+    ledgers so a frozen benchmark does not move with the live one."""
+    cert = corpus_map.certification() if cert is None else cert
     ncols = 10 if name.split()[-1][0] == "D" else 5
     vid, e = next((v, e) for v, e in cert.items() if name in (e.get("charts") or {}))
     # An UNCERTIFIED video has not been shown to be this chart, and worse, nothing says WHICH
@@ -459,7 +466,7 @@ def extract(name, quiet=False):
     side = e["charts"][name].get("side") or "1p"
     other = e.get("2p" if side == "1p" else "1p") or {}
     band = "C" if not other.get("judged") else ("L" if side == "1p" else "R")
-    return _read(vid, band, ncols, side, float(e.get("t") or 150), quiet)
+    return vid, band, ncols, side, float(e.get("t") or 150)
 
 def _pass_code():
     """The stamp of everything that decides what a sprite pass holds: the decode loop, the matcher,
@@ -503,7 +510,11 @@ def pass_path(params):
                                           y0=r0, y1=r1, xs=legacy_lanes(p["xs"]), th=th0, tw=tw0, field="",
                                           code=PASS_CODE_LEGACY[p["refine"]]))
 
-def _read(vid, band, ncols, side, dur, quiet):
+def _pass_for(vid, band, ncols, side, dur):
+    """Which sprite pass a read of this footage is: the receptor templates, how sharp they say the
+    footage is, the correlation floors that sharpness scales to, and the pass's parameters and cache
+    file. Nothing here reads a frame when the templates and the field fit are cached - which is what
+    lets tools/bench.py replay a pass exactly as a read would, from the cache alone."""
     anc, th, tw = anchor_set(vid, band, ncols, side)
     if not any(A is not None for A in anc):
         raise RuntimeError("no receptor sprites for %s band %s" % (vid, band))
@@ -512,8 +523,6 @@ def _read(vid, band, ncols, side, dur, quiet):
     sharp = float(np.mean([A.std() for A in anc if A is not None]))
     scale = min(1.0, sharp / REFERENCE)
     floors = [round(f * scale, 3) for f in FLOORS]
-    if REFINE:
-        anc, kept = harvest(vid, band, ncols, 0.5, min(60.0, dur), side)
     cap = cv2.VideoCapture(os.path.join(ROOT, "videos", vid + ".mp4"))
     fy0, fy1, fxs = R.field(cap, vid, band, ncols, side)
     frame_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -522,7 +531,12 @@ def _read(vid, band, ncols, side, dur, quiet):
         raise IOError("videos/%s.mp4 does not open (no frame height): nothing to extract" % vid)
     params = _pass_params(vid, band, side, ncols, dur, scale, floors[0], fy0, fy1, fxs, th, tw,
                           R.field_key(vid, band, ncols, side), frame_h)
-    ck = pass_path(params)
+    return anc, sharp, floors, params, pass_path(params)
+
+def _read(vid, band, ncols, side, dur, quiet):
+    anc, sharp, floors, params, ck = _pass_for(vid, band, ncols, side, dur)
+    if REFINE:
+        anc, kept = harvest(vid, band, ncols, 0.5, min(60.0, dur), side)
     got = atomicio.load_pickle(ck) if CACHE else None
     if got is not None and not (isinstance(got, tuple) and len(got) == 6):
         print("[note_extract] %s: not a sprite pass - read again" % ck, file=sys.stderr)
@@ -542,7 +556,16 @@ def _read(vid, band, ncols, side, dur, quiet):
     cap.release()
     if same:
         R.save_scan(vid, band, ncols, 0.5, dur, scan)
+    return post_decode(ts, scored, fps, y0, y1, scan, floors, ncols, vid=vid, band=band, side=side,
+                       sharp=sharp, quiet=quiet)
 
+def post_decode(ts, scored, fps, y0, y1, scan, floors, ncols, vid=None, band=None, side=None, sharp=None,
+                quiet=True):
+    """Everything after the decode, over one sprite pass: which correlation floor to believe, the
+    notes at it, and which of them are holds. The ONE copy of this step - _read calls it on the pass
+    it just decoded or loaded, and tools/bench.py calls it on a cached pass to grade a change to it
+    without decoding anything. `floors` are FLOORS scaled to the footage (_pass_for); vid, band,
+    side and sharp only label the output."""
     # Which correlation to believe is settled by a SECOND, unrelated sensor: the receptor
     # flashes, judged events read at the top of the screen by completely different means. A
     # floor is good when the two agree in both directions. Neither sensor sees the stepfile.
