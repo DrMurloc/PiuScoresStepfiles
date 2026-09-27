@@ -188,6 +188,87 @@ The counter scan (`work/combo/<vid>.<band>.jsonl`, `combo_reader`) is made on de
 1.3× real time a video unless `--no-scan`. `commit` mirrors the extraction loop's: candidate in,
 `tick_verify` in place, the outside-the-block guard, one commit per chart naming every reading.
 
+## The corpus grade (the gate every loop commits through)
+
+**`corpus_grade.py grade [--rev <commit>] [--oracle-rev <commit>] [--out <path>|-]`**
+**`corpus_grade.py gate --base <rev> [--head <rev>] [--oracle-pass] [--declared N] [--json <path>]`**
+**`corpus_grade.py freeze [--repin]`** / **`conflicts [--write]`** / **`selfcheck`**
+(all take `--workers N` (default 6), `--no-cache`, `--cache-dir <dir>`, `--unpinned`; run with
+`-X utf8 -B`, or it refuses)
+Grades every certified chart — the population the repair loops draw, `corpus_map.charts()` over
+the committed ledgers — through the converter, taps plus hold ticks against the certified count,
+and ratchets the result. `--rev` reads a commit's `.ssc` files as git blobs and never the
+working tree; without it the working tree is graded. The oracle is the working tree's unless
+`--oracle-rev` names a commit. The JSON is deterministic (sorted, no timings; timings go to
+stderr), so two grades of one tree are byte-identical: 1,479 charts in about 37 s cold on 6
+workers, about 10 s when every block is in the conversion cache (`work/corpus-grade-cache/`,
+keyed by the converter pin, the conversion code's own source, the file's content with CRLF read
+as LF, and the block tag; a 0-byte or torn entry is a miss and is rebuilt; writes are tmp +
+`os.replace`). Workers run at BelowNormal priority.
+
+Two tiers. **PROTECTED**: exact when the import commit `a23cee5`'s blocks are graded under the
+current oracle (the corpus as upstream published it; the tool checks that `simfiles/` first
+appears in that commit), or promoted by a `sources/protected-promotions.jsonl` row whose
+`block_sha` is the chart's current block — `{"chart", "key", "block_sha", "audit": "FLAT",
+"covered": true, "audit_version", "run"}`, written by `trace_audit` when the interior passed a
+covered audit, read here. **PROVISIONAL**: every other exact chart. A `sources/demotions.jsonl`
+row takes the import protection away (a promotion of a block no demotion names gives it back).
+Flags ride on each row: `oracle_conflict`, `owner_revisit`, `quarantine`, `demoted`.
+
+The **oracle** is every file that decides who is certified and at what count — the census and
+corpus certification ledgers, `ssc-map.json` and `ssc-map-tail.json`, `census-final.json`, the
+sweep, the Phoenix 1 catalog counts, `video-map.json` — plus the three policy files the gate
+enforces (`oracle-conflict.json`, `owner-revisit.json`, `quarantine.json`).
+`sources/oracle-manifest.json` holds each one's sha256 (CRLF read as LF, so a CRLF checkout and
+an LF blob agree) and the **converter pin**: the sha256 over every `piu_annotate` module the
+conversion actually loads (`__init__`, `utils`, `formats/__init__`, `formats/notelines`,
+`formats/sscfile`, `formats/ssc_to_chartstruct` — taken from `sys.modules`, not a hand list; a
+worker that loads a module outside it after converting stops the grade), which catches a
+converter that drifts while keeping the lattice flag. `grade` and `gate` refuse when the working
+tree's oracle or the installed converter differs from the manifest. `freeze` rewrites the
+manifest in an oracle commit, never together with stepfile edits, and moves the converter pin
+only with `--repin`, as a commit of its own. Only committed ledgers are oracle:
+`work/certification-tail.json` is the live file `result_reader` appends to, and `grade` says on
+stderr when it holds videos the committed ledger does not.
+
+The **gate** grades `--base` and `--head` (default: the working tree), each under its own tree's
+oracle, prints every transition — LOST, GAINED, EDITED-EXACT (a block or its file header
+changed and it stayed exact), EDITED-OFF, EXPECTED-CHANGED, ENTERED/LEFT the population — and
+exits 1 when: a chart leaves exact without a `sources/demotions.jsonl` row naming the chart and
+its `block_sha` before the change, with a `reason` and `evidence` (a quarantined chart's row
+also needs `owner`, where he said yes); a PROTECTED chart leaves exact at all, or its block or
+file header changes while it stays exact (unless a promotion row names the new block) —
+protection is judged at the base, so demoting a PROTECTED chart is a commit of its own before
+the change that breaks it; the oracle hash or the converter pin differs between base and head
+(unless `--oracle-pass`, for commits that change only the oracle — and then any `simfiles/`
+change fails); an owner-revisit chart's block or file header no longer hashes to what
+`owner-revisit.json` records; a chart in the ORACLE_CONFLICT set becomes exact (halt for review
+instead of taking the credit); `demotions.jsonl` or `protected-promotions.jsonl` lost or rewrote
+a line (both are append-only); `--declared N` is given and the net change in exact charts is not
+N. It exits 2 when it cannot judge (drift at the head, a revision that does not resolve). It
+writes nothing but `--json`, and never reads a grade file to decide anything — both sides are
+re-graded from blobs.
+
+`conflicts` builds `sources/oracle-conflict.json` from the data: a video that certifies two or
+more charts on one side (a result screen shows one total per side); a certified count that is
+not the chart's Phoenix 1 catalog count (`p1-note-counts`, matched by song, type and level)
+while the file already converts to that catalog count; a block whose converter inputs
+(STEPSTYPE, NOTES, BPMS, STOPS, DELAYS, WARPS, FAKES, TICKCOUNTS, header inherited) are
+identical to another block's in its file — HIDDEN / INFOBAR twins the grade cannot tell apart.
+`selfcheck` confirms `guards` splits every file into the blocks the converter sees, with the
+same tags.
+
+**`guards.py`** (library)
+The shared definitions the loops and the gate import. `block_sha(ssc_path, block_id)` is the
+contract between them: sha256 of one `#NOTEDATA` block — from the line that starts with
+`#NOTEDATA:` up to the next such line or EOF, decoded as UTF-8 (`errors="replace"`), CRLF and CR
+made LF, trailing whitespace at the end of the block stripped (`str.rstrip()`, so the newline
+and blank lines before the next block go too). `block_id` is an index or the converter's tag
+(`"S18_ARCADE"`, the first block carrying it, header tags inherited). `header_sha` hashes the
+text before the first block, which every block inherits. `is_owner_revisit(chart_or_key)` is the
+skip for `sources/owner-revisit.json`'s charts: a loop that gets True does not survey, re-fix or
+flag the chart. `tag_of(key)` is `extract_repair.block_tag`'s rule.
+
 ## Reading footage
 
 **`combo_reader.py --scan <vid> side=<L|R|C> [atlas=tools/atlas-combo-p2]`**
@@ -580,7 +661,11 @@ than the catalog, which is an older revision needing newer footage (see EVIDENCE
 `sources/certification-2026-08-30.json`, both immutable) with whatever a batch beyond the
 census has generated under `work/`. Every analysis tool reads through it, so a chart outside
 the 121 looks up exactly like one inside it. `catalog_sweep` and `rebuild_repairs` deliberately
-do NOT use it - they need the census key set to stay the census key set.
+do NOT use it - they need the census key set to stay the census key set. `charts()` is the
+certified population (the same rows as `extract_repair.charts()`), and the merges are also
+pure functions over loaded data (`merge_chart_map`, `merge_certification`, `certified_charts`)
+so `corpus_grade` can build the population from a commit's copies of the files;
+`certification(sources_only=True)` leaves out the live `work/certification-tail.json`.
 
 **`tail_worklist.py <tail.json> [--shape ...] [--min-pct N] [--max-pct N] [--limit N] [--out-tag T]`**
 Turns rows of the catalog sweep into the two inputs a batch needs: `work/ssc-map-tail.json`
