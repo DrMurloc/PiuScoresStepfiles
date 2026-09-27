@@ -561,39 +561,62 @@ promotable is listed in the ledger's `promotions_not_reconfirmed`, never removed
 shrinks through `sources/demotions.jsonl`). `crops` writes counter frames of unsettled and OFF
 stretches, with control frames, under opaque names for a blind review, the key in a separate file.
 
-First run, 2026-09-27 (`sources/trace-audit-2026-09-27.json`, audit_version `047724d3…`, the tree
-at `8c9b5de`). **Calibration:** the 260 untouched exact charts with a scan come out 0 OFF, 22 FLAT
-and 238 UNCOVERED; 85 are full-combo plays, and the rest are mostly plays with GOODs, which never
-audit FLAT. 69 carry an unsettled stretch, among them the three 35 ms flags, whose frames
-`crops` wrote to `work/rails-audit-scratch/blind-35ms/` for a blind review (not decided here).
-Passacaglia S4's show why one such flag can happen: its video carries two players and only 1P
-was certified, so the scan reads the whole width and can land on either counter. **Detection
-power** (569 planted pairs on 82 full-combo controls; none at level 24+, where no control has a
-full combo): no pair more than 8 judged rows apart ever audits FLAT. Such pairs are caught as
-OFF 23-85% of the time, more often the further apart they are, and are UNCOVERED otherwise. 34%
-of pairs within 4 rows and 9% at 5-8 rows audit FLAT: that window is the audit's resolution, and
-inside it only the total is seen. At `k_rows` 16 the misses reach 32 rows apart and at 32 they
-reach 64, which is why the default is 8; on today's corpus it promotes the same three charts as
-16. **The 112 edit-derived exact charts:**
-- **3 FLAT, promoted:** A nightmare S6, Get Your Groove On D10 and She Likes Pizza D11. Each is a
-  single finale or single-region edit with the counter at 0 within 1-4 rows either side.
+First run, 2026-09-27 (`sources/trace-audit-2026-09-27.json`, audit_version `723351a1…`, the
+simfiles tree at `8c9b5de`). **A correction first:** the run's first version (audit_version
+`047724d3…`, never integrated) promoted three charts and described each as having the counter at
+0 within 1-4 rows either side. For A nightmare S6 and She Likes Pizza D11 that was wrong. Each is
+a finale edit whose only read after it was the counter resting at maxcombo after the last judged
+event (84.87 s, F = 200; 85.84 s, F = 300). On an exact chart that read equals the certified
+total by construction. Both finales had been priced by closure, so the audit was re-using the
+arithmetic that priced them. The tool now drops that rest, and the ledger and promotions were
+replaced before anything integrated them.
+
+**Calibration:** the 260 untouched exact charts with a scan come out 0 OFF, 17 FLAT and 243
+UNCOVERED, with 0 errors. 85 are full-combo plays; most of the rest are plays with GOODs, which
+never audit FLAT. 20 are covered end to end. The 5 that had been FLAT and are now UNCOVERED
+(Arirang S13, Bluish Rose D14, Reality S9, Sugar Plum D11, Teddy Bear D15) were covered at their
+last rows only by the rest. 69 carry an unsettled stretch, among them the three 35 ms flags; the
+first version's `crops` wrote their frames to `work/rails-audit-scratch/blind-35ms/` for a blind
+review (not decided here). Passacaglia S4 shows how such a flag can arise: its video carries two
+players and only 1P was certified, so the scan reads the whole width and can land on either
+counter.
+
+**Detection power** (569 planted pairs on 82 full-combo controls, 0 errors; none at level 24+,
+where no control has a full combo): no pair more than 8 judged rows apart ever audits FLAT. Such
+pairs are caught as OFF 23-85% of the time, more often the further apart they are, and are
+UNCOVERED otherwise. 34% of pairs within 4 rows and 9% at 5-8 rows audit FLAT. That window is the
+audit's resolution, and inside it only the total is seen. The same holds for a tap error in the
+rows between a read and a priced hold region, which the region's pricing absorbs. At `k_rows` 16
+the misses reach 1 of 74 pairs 17-32 rows apart; at 32 they reach 5 of those and 16 of 52 at
+9-16 rows. That is why the default is 8. On today's corpus, 16 promotes the same one chart.
+
+**The 112 edit-derived exact charts:**
+- **1 FLAT, promoted:** Get Your Groove On D10. Its one edit, labelled counter-derived, turns a
+  tap into a hold carrying two ticks (57.3-57.8 s). It is read at level 0 by strong reads at
+  56.43 s and 58.84 s. Each is one judged row from the edit, outside its 0.6 s priced bracket, and
+  far from the chart's end (F = 106 of 200).
 - **9 OFF.** Two are the known Houseplan S17 and Wedding Crashers S10. The other seven are
   census-phase counter-loop repairs (K.O.A : Alice in Wonderworld SC D18, Pop The Track SC D16,
   Wedding Crashers SC S4, XX OPENING SC S6, Come to Me S17, Dr. M S9, 2006. LOVE SONG D14). In
   them, small mid-chart tick cuts each step the counter's level by exactly their own size, and a
-  closure-priced finale absorbs the total. Their frames are in `blind-off/`.
-- **100 UNCOVERED:**
+  closure-priced finale absorbs the total. 15 OFF edits carry `distant`, meaning the disagreeing
+  read is more than 8 rows away with nothing read between. They fall in five charts (Pop The Track
+  SC D16 up to 118 rows, K.O.A SC D18 up to 70, Come to Me S17 up to 42, 2006. LOVE SONG D14 15,
+  Houseplan S17 11). Their frames are in `blind-off/`.
+- **102 UNCOVERED:**
   - 58 plays with GOODs;
   - 13 plays with breaks, whose reads are not near enough or whose runs outnumber their breaks;
-  - 10 full combos with no strong read within 8 rows;
+  - 12 full combos with no strong read within 8 rows on a side. A nightmare S6 and She Likes
+    Pizza D11 are among them now, their finales having no read after them;
   - 3 full combos with an unsettled stretch nearby;
-  - 15 with no counter scan;
+  - 15 with no counter scan (among them Asterios -ReEntry- S4, the one chart whose timing changed);
   - 1 whose clock could not be measured (Tales of Pumpnia D21, 6 notes fitted).
 
-Destination SC D21 is on the owner's revisit list and is recorded, not acted on.
-Measuring the 84 clocks no census carried decoded the footage of the 72 with no cached sprite
-pass once (about 35 minutes on 5 workers; cached per note layout and code hash after that). A
-rerun then takes about 15 s. The controls take 35 s and the power table 4 minutes.
+Destination SC D21 is on the owner's revisit list and is recorded, not acted on. Measuring the 84
+clocks no census carried decoded the footage of the 72 with no cached sprite pass once, on the
+first version (about 35 minutes on 5 workers). They are cached per note layout and code hash
+after that. A corpus rerun takes about 10 s. The controls take 49 s, or 104 s when the population
+is re-graded, and the power table takes 3.5 minutes.
 
 **`verify_release.py <release> [--old <release>]`**
 Checks a packaged release actually carries the repairs: the `.ssc` through the converter, the
