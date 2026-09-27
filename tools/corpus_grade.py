@@ -858,10 +858,8 @@ def ship_verdict(res, h, t):
     if rec.get("verdict") == "FLAT" and whole != "OFF" and all(e.get("verdict") == "FLAT" and e.get("covered") for e in edits):
         return True, "FLAT, %d edit(s), every one covered" % len(edits)
     bad = [e for e in edits if not (e.get("verdict") == "FLAT" and e.get("covered"))]
-    first = bad[0] if bad else {}
-    where = (" (%s-%ss)" % (first.get("lo"), first.get("hi"))) if first.get("lo") is not None else ""
-    return False, "%s - %d of %d edit(s) not FLAT and covered%s: %s" % (
-        rec.get("verdict"), len(bad), len(edits), where, str(first.get("reason") or rec.get("reason"))[:200])
+    return False, "%s - %s (%d of %d edit(s) not FLAT and covered)" % (
+        rec.get("verdict"), str(rec.get("reason"))[:240], len(bad), len(edits))
 
 
 def cmd_audit_ships(args):
