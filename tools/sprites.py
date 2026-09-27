@@ -29,11 +29,18 @@
 # Correlation is normalised cross-correlation of the GREY patch, so it reads structure and not
 # colour, and a chart that recolours its notes matches the same template.
 import os
+import sys
 
 import cv2
 import numpy as np
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import atomicio as A                                            # noqa: E402
+from cachekey import code_stamp, keyed, legacy_lanes, legacy_rows, legacy_sprite_box  # noqa: E402
+
 PAD = 6            # slack around each harvested sample, so it can be re-centred onto the anchor
+# The code stamp (tools/cachekey.py) of the template cut that built the caches already on disk.
+ANCHORS_CODE_LEGACY = "649e1dd5d2df7ffd"
 MIN_SAMPLES = 12   # fewer than this and the median is still mostly background
 MIN_ANCHOR = 0.45  # a refined template must still look like the receptor it came from
 
@@ -83,7 +90,7 @@ def crop(gray, cy, cx, th, tw, pad=PAD):
         return None
     return gray[y0:y0 + th + 2 * pad, x0:x0 + tw + 2 * pad].astype(np.float32)
 
-def anchors(path, vid, band, y0, y1, xs, th, tw, n=96, pct=50, hp=0.0, rest=0.0):
+def anchors(path, vid, band, y0, y1, xs, th, tw, n=96, pct=50, hp=0.0, rest=0.0, field_key=""):
     """The five panel shapes, read off the receptors. Cached - it costs a pass of seeks.
 
     A plain median over time, and the two pads AVERAGED, because everything cleverer was
@@ -111,15 +118,45 @@ def anchors(path, vid, band, y0, y1, xs, th, tw, n=96, pct=50, hp=0.0, rest=0.0)
     The diagnosis is right and none of the cures is. What would work is a template that is not
     one picture: learned from notes rather than receptors, with the flare modelled rather than
     averaged away.
+
+    `field_key` names the receptor field fit the lanes came from: "" for the plain .inset fit
+    (receptors.field_key), which is what every existing template was cut from.
     """
-    # the lanes are part of the key: a template cut at the wrong x is a different template, and a
-    # key without them hands the old picture back after the geometry under it has been corrected
-    ck = os.path.join("work", "receptor",
-                      vid + "." + band + "." + str(len(xs)) + ".p%d.h%.2f.r%.2f" % (pct, hp, rest)
-                      + ".x%d-%d" % (xs[0], xs[-1]) + ".sprites.npz")
-    if os.path.exists(ck):
-        z = np.load(ck)
+    cap = cv2.VideoCapture(path)                  # the frame height only: nothing is decoded
+    frame_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    cap.release()
+    ck = anchors_path(vid, band, y0, y1, xs, th, tw, n, pct, hp, rest, field_key, frame_h)
+    z = A.load_npz(ck)
+    if z is not None:
         return [z["p%d" % k] if ("p%d" % k) in z else None for k in range(5)]
+    out = _anchor_templates(path, y0, y1, xs, th, tw, n, pct, hp, rest)
+    os.makedirs(os.path.dirname(ck), exist_ok=True)
+    A.write_npz(ck, **{"p%d" % k: T for k, T in enumerate(out) if T is not None})
+    A.write_meta(ck, **_anchor_params(vid, band, y0, y1, xs, th, tw, n, pct, hp, rest, field_key, frame_h))
+    return out
+
+def _anchor_params(vid, band, y0, y1, xs, th, tw, n, pct, hp, rest, field_key, frame_h):
+    return dict(cache="anchors", vid=vid, band=band, ncols=len(xs), xs=[int(x) for x in xs], y0=int(y0), y1=int(y1),
+                frame_h=int(frame_h), th=int(th), tw=int(tw), n=n, pct=pct, hp=hp, rest=rest, field=field_key,
+                code=code_stamp(_anchor_templates, crop, highpass))
+
+def anchors_path(vid, band, y0, y1, xs, th, tw, n=96, pct=50, hp=0.0, rest=0.0, field_key="", frame_h=720):
+    """Where anchors() keeps these templates. The old name carries the lanes' ends and the
+    percentile, highpass and rest settings - a template cut at the wrong x is a different template,
+    and a key without the lanes handed the old picture back after the geometry under it had been
+    corrected. It never carried the sprite box, the band's rows, the lanes between the ends, the
+    frame count, the field fit or the code; those are keyed now, and today's values of them (the
+    box and rows as the fits derive them, evenly spread lanes) keep the old name."""
+    legacy = os.path.join("work", "receptor",
+                          vid + "." + band + "." + str(len(xs)) + ".p%d.h%.2f.r%.2f" % (pct, hp, rest)
+                          + ".x%d-%d" % (xs[0], xs[-1]) + ".sprites.npz")
+    params = _anchor_params(vid, band, y0, y1, xs, th, tw, n, pct, hp, rest, field_key, frame_h)
+    tw0, th0 = legacy_sprite_box(float(np.median(np.diff(xs))))
+    r0, r1 = legacy_rows(frame_h)
+    return keyed(legacy, ".sprites.npz", params, dict(params, th=th0, tw=tw0, y0=r0, y1=r1, xs=legacy_lanes(xs),
+                                                      n=96, field="", code=ANCHORS_CODE_LEGACY))
+
+def _anchor_templates(path, y0, y1, xs, th, tw, n, pct, hp, rest):
     cap = cv2.VideoCapture(path)
     dur = cap.get(cv2.CAP_PROP_FRAME_COUNT) / (cap.get(cv2.CAP_PROP_FPS) or 60)
     fr = []
@@ -167,8 +204,6 @@ def anchors(path, vid, band, y0, y1, xs, th, tw, n=96, pct=50, hp=0.0, rest=0.0)
                 got.append(c)
         T = np.mean(got, axis=0).astype(np.float32) if got else None
         out.append(None if T is None else highpass(T, hp * th))
-    os.makedirs(os.path.dirname(ck), exist_ok=True)
-    np.savez(ck, **{"p%d" % k: T for k, T in enumerate(out) if T is not None})
     return out
 
 def build(samples, anchor, th, tw, rounds=3, pad=PAD, keep=0.45):

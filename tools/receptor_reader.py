@@ -6,7 +6,6 @@
 # Prints the receptor geometry it found, the onsets per column, and - with a key - how they
 # line up against the file's tap rows at the given offset (video = chart + offset).
 import bisect
-import json
 import csv
 import os
 import sys
@@ -14,44 +13,26 @@ import sys
 import cv2
 import numpy as np
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import receptors as R  # noqa: E402
+
 CS_DIR = r"C:\Users\jonec\repos\piu-annotate\artifacts\chartstructs\p2-082626"
 
 def geometry(cap, vid, n=64):
-    """Receptor row + 10 column centres, fitted ONCE per video over its whole length and cached.
+    """Receptor row + column centres, fitted ONCE per video over its whole length and cached.
     The receptors are the only thing in the band that never moves, so the per-pixel temporal
-    median of the band keeps them and washes out notes and BGA. Ten evenly spaced teeth are
-    fitted to the median's column profile; a tooth only scores when it sits on a local maximum,
-    which is what stops a BGA-heavy stretch from selling a 53px comb on bright edges."""
+    median of the band keeps them and washes out notes and BGA. Each receptor carries several
+    bright ridges, so any comb fit can lock onto a harmonic; what is unambiguous is the field's
+    EXTENT - the outermost strong peaks of the profile are the outer borders of the first and last
+    receptor, and ncols equal receptors fill the span between them.
+
+    This prototype used to carry its own copy of that fit, writing the same cache file as
+    receptors.geometry with the same lanes; it reads and writes through the library now, so the
+    cache has one writer (atomic, and refitted when unreadable)."""
     band = os.environ.get("RR_BAND", "C")
-    cache = os.path.join("work", "receptor", f"{vid}.{band}.geometry.json")
-    if os.path.exists(cache):
-        g = json.load(open(cache)); return g["y0"], g["y1"], g["xs"], None
-    dur = cap.get(cv2.CAP_PROP_FRAME_COUNT) / cap.get(cv2.CAP_PROP_FPS)
-    frames = []
-    for k in range(n):
-        cap.set(cv2.CAP_PROP_POS_MSEC, (dur * (k + 0.5) / n) * 1000)
-        ok, fr = cap.read()
-        if ok: frames.append(fr)
-    h, w = frames[0].shape[:2]
-    y0, y1 = int(h * 0.07), int(h * 0.21)
-    med = np.median(np.stack([cv2.cvtColor(f, cv2.COLOR_BGR2GRAY)[y0:y1, :] for f in frames]), axis=0)
-    # Each receptor carries several bright ridges, so any comb fit can lock onto a harmonic.
-    # What is unambiguous is the field's EXTENT: the outermost strong peaks of the profile are
-    # the outer borders of the first and last receptor, and ncols equal receptors fill the
-    # span between them, so the pitch is that span over ncols.
     ncols = int(os.environ.get("RR_COLS", "5" if band in "LR" else "10"))
-    prof = cv2.GaussianBlur(med.astype(np.float32), (0, 0), 3).mean(axis=0)
-    prof = cv2.GaussianBlur(prof.reshape(1, -1), (0, 0), 3).ravel()
-    prof = prof - np.percentile(prof, 30)
-    lo_x, hi_x = (0, w // 2) if band == "L" else (w // 2, w) if band == "R" else (0, w)
-    peaks = [x for x in range(max(8, lo_x), min(w - 8, hi_x)) if prof[x] == prof[x - 8:x + 9].max() and prof[x] > 0.6 * prof[lo_x:hi_x].max()]
-    lo, hi = min(peaks), max(peaks)
-    p = (hi - lo) / ncols
-    xs = [int(round(lo + (k + 0.5) * p)) for k in range(ncols)]
-    p = int(round(p)); onmax = len(peaks)
-    os.makedirs(os.path.dirname(cache), exist_ok=True)
-    json.dump(dict(y0=y0, y1=y1, xs=xs, pitch=p, teeth_on_maxima=onmax), open(cache, "w"))
-    return y0, y1, xs, med
+    y0, y1, xs = R.geometry(cap, vid, band, ncols, n)
+    return y0, y1, xs, None
 
 def main():
     vid, t0, t1 = sys.argv[1], float(sys.argv[2]), float(sys.argv[3])

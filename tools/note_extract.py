@@ -27,16 +27,17 @@
 import bisect
 import json
 import os
-import pickle
 import sys
 
 import cv2
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import atomicio        # noqa: E402
 import corpus_map      # noqa: E402
 import receptors as R  # noqa: E402
 import sprites            # noqa: E402
+from cachekey import code_stamp, keyed, legacy_lanes, legacy_rows, legacy_sprite_box  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TOP, BOTTOM = 20, 430     # the band under the receptors that is watched, in px below the band
@@ -181,7 +182,7 @@ def anchor_set(vid, band, ncols, side="1p"):
     cap.release()
     tw, th = sprites.size_for(float(np.median(np.diff(xs))))
     return sprites.anchors(path, vid + "." + side, band, y0, y1, xs, th, tw,
-                           pct=ANCHOR, hp=HIPASS, rest=REST), th, tw
+                           pct=ANCHOR, hp=HIPASS, rest=REST, field_key=R.field_key(vid, band, ncols, side)), th, tw
 
 def harvest(vid, band, ncols, t0, t1, side="1p"):
     """The five sprites: the receptors, sharpened by the notes a receptor pass was surest of.
@@ -460,6 +461,48 @@ def extract(name, quiet=False):
     band = "C" if not other.get("judged") else ("L" if side == "1p" else "R")
     return _read(vid, band, ncols, side, float(e.get("t") or 150), quiet)
 
+def _pass_code():
+    """The stamp of everything that decides what a sprite pass holds: the decode loop, the matcher,
+    the template cut, and with REFINE the harvest that sharpens the templates."""
+    fns = [sprite_frames, sprites.peaks, sprites.colourfulness, sprites.highpass, sprites.size_for, sprites.crop,
+           sprites._anchor_templates]
+    if REFINE:
+        fns += [harvest, sprites.build]
+    return code_stamp(*fns)
+
+# The code stamps (tools/cachekey.py) of the pass that built the 1,413 passes on disk, without
+# and with REFINE: while the code still stamps these, a pass keeps its plain name.
+PASS_CODE_LEGACY = {False: "07ad33cd18424a1f", True: "4a282a4304ba5a4f"}
+
+def _pass_params(vid, band, side, ncols, dur, scale, floor, y0, y1, xs, th, tw, field_key, frame_h):
+    """Everything a sprite pass depends on. The old name held the video, band, side, columns,
+    scale, sep, anchor percentile, highpass, rest, contrast scale, duration and the lanes' ends;
+    it did not hold the detection floor the pass was cut at (FLOORS[0] times the contrast scale),
+    the band's rows, the lanes between the ends, the strip watched under the band, the sprite box,
+    the field fit or the code."""
+    return dict(cache="spritepass", vid=vid, band=band, side=side, ncols=ncols, dur=dur, t0=0.0,
+                scale_px=SCALE, sep=SEP, anchor_pct=ANCHOR, anchor_n=96, hipass=HIPASS, rest=REST,
+                contrast=scale, reference=REFERENCE, floor0=FLOORS[0], detect_floor=floor,
+                top=TOP, bottom=BOTTOM, y0=int(y0), y1=int(y1), frame_h=int(frame_h), xs=[int(x) for x in xs],
+                th=int(th), tw=int(tw),
+                field=field_key, refine=bool(REFINE), code=_pass_code())
+
+def pass_path(params):
+    """The sprite pass's cache file: its old name while every parameter the old name left out has
+    today's value, else that name keyed by the full parameter set (tools/cachekey.py)."""
+    p = params
+    legacy = os.path.join(ROOT, "work", "spritepass",
+                          "%s.%s.%s.%d.%.2f.%.2f.%d.h%.2f.r%.2f.s%.2f.%.1f.x%d-%d%s.pkl" % (
+                              p["vid"], p["band"], p["side"], p["ncols"], p["scale_px"], p["sep"], p["anchor_pct"],
+                              p["hipass"], p["rest"], p["contrast"], p["dur"], p["xs"][0], p["xs"][-1],
+                              ".ref" if p["refine"] else ""))
+    tw0, th0 = legacy_sprite_box(float(np.median(np.diff(p["xs"]))))
+    r0, r1 = legacy_rows(p["frame_h"])
+    return keyed(legacy, ".pkl", p, dict(p, t0=0.0, anchor_n=96, reference=70.0, floor0=0.36,
+                                          detect_floor=round(0.36 * p["contrast"], 3), top=20, bottom=430,
+                                          y0=r0, y1=r1, xs=legacy_lanes(p["xs"]), th=th0, tw=tw0, field="",
+                                          code=PASS_CODE_LEGACY[p["refine"]]))
+
 def _read(vid, band, ncols, side, dur, quiet):
     anc, th, tw = anchor_set(vid, band, ncols, side)
     if not any(A is not None for A in anc):
@@ -471,21 +514,25 @@ def _read(vid, band, ncols, side, dur, quiet):
     floors = [round(f * scale, 3) for f in FLOORS]
     if REFINE:
         anc, kept = harvest(vid, band, ncols, 0.5, min(60.0, dur), side)
-    # the lanes are in the key for the reason they are in the template cache's: a pass read through
-    # the wrong lanes is a different pass, and a key without them hands it back after a refit
     cap = cv2.VideoCapture(os.path.join(ROOT, "videos", vid + ".mp4"))
-    fxs = R.field(cap, vid, band, ncols, side)[2]
+    fy0, fy1, fxs = R.field(cap, vid, band, ncols, side)
+    frame_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     cap.release()
-    ck = os.path.join(ROOT, "work", "spritepass",
-                      "%s.%s.%s.%d.%.2f.%.2f.%d.h%.2f.r%.2f.s%.2f.%.1f.x%d-%d%s.pkl" % (vid, band, side, ncols, SCALE, SEP,
-                                          ANCHOR, HIPASS, REST, scale, dur, fxs[0], fxs[-1], ".ref" if REFINE else ""))
-    if CACHE and os.path.exists(ck):
-        ts, scored, fps, y0, y1, scan = pickle.load(open(ck, "rb"))
+    params = _pass_params(vid, band, side, ncols, dur, scale, floors[0], fy0, fy1, fxs, th, tw,
+                          R.field_key(vid, band, ncols, side), frame_h)
+    ck = pass_path(params)
+    got = atomicio.load_pickle(ck) if CACHE else None
+    if got is not None and not (isinstance(got, tuple) and len(got) == 6):
+        print("[note_extract] %s: not a sprite pass - read again" % ck, file=sys.stderr)
+        got = None
+    if got is not None:
+        ts, scored, fps, y0, y1, scan = got
     else:
         ts, scored, fps, y0, y1, scan = sprite_frames(vid, band, ncols, dur, anc, floors[0], side=side)
         if CACHE:
             os.makedirs(os.path.dirname(ck), exist_ok=True)
-            pickle.dump((ts, scored, fps, y0, y1, scan), open(ck, "wb"))
+            atomicio.write_pickle(ck, (ts, scored, fps, y0, y1, scan))
+            atomicio.write_meta(ck, **params)
     # only shared with the other tools when this video's field agrees with what geometry() would
     # have said - on a two-player video it does not, and their thresholds are tuned to its boxes
     cap = cv2.VideoCapture(os.path.join(ROOT, "videos", vid + ".mp4"))
@@ -553,7 +600,7 @@ def _read(vid, band, ncols, side, dur, quiet):
 def main():
     notes, meta = extract(sys.argv[1], quiet="--quiet" in sys.argv)
     if "--dump" in sys.argv:
-        json.dump(notes, open(sys.argv[sys.argv.index("--dump") + 1], "w"), indent=0)
+        atomicio.write_json(sys.argv[sys.argv.index("--dump") + 1], notes, indent=0)
 
 if __name__ == "__main__":
     main()

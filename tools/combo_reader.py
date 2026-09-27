@@ -12,12 +12,17 @@
 # Region: the combo digits sit in a fixed band below the judgment text — X depends on
 # where the chart renders (C = doubles/full-width center, L/R = singles by side).
 import glob
+import hashlib
 import json
 import os
 import sys
 
 import cv2
 import numpy as np
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import atomicio as A                      # noqa: E402
+from cachekey import code_stamp, keyed    # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ATLAS = os.path.join(ROOT, "tools", "atlas-combo")
@@ -197,30 +202,98 @@ def bootstrap(vid, pairs, atlas=ATLAS):
             cv2.imwrite(os.path.join(atlas, f"d{ch}_{counts[ch]}.png"), norm_glyph(mask, b))
     print("atlas now:", sorted({os.path.basename(p)[1] for p in glob.glob(os.path.join(atlas, 'd*.png'))}))
 
+def _frames(cap, side, t0, t1, atlas, labels, state):
+    """The scan itself: every frame from t0 on, as [video time, value, confidence], until t1 or
+    until the decoder stops (state["stopped"] says which)."""
+    t = t0
+    state["stopped"] = "range end"
+    while t < t1:
+        ok, frame = cap.read()
+        if not ok:
+            state["stopped"] = "decoder stopped"
+            return
+        t = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
+        val, conf = read_frame(frame, side, atlas, labels)
+        yield [round(t, 4), val, round(conf, 3)]
+
+_atlas_digests = {}
+
+def atlas_digest(atlas_dir=ATLAS):
+    """16 hex digits over the glyphs a scan with this atlas reads by: its digits, and its COMBO
+    labels or, lacking its own, the original atlas's (load_atlas)."""
+    key = os.path.normcase(os.path.abspath(atlas_dir))
+    if key not in _atlas_digests:
+        _atlas_digests[key] = _atlas_digest(atlas_dir)
+    return _atlas_digests[key]
+
+def _atlas_digest(atlas_dir):
+    digits = sorted(glob.glob(os.path.join(atlas_dir, "d*.png")))
+    labels = sorted(glob.glob(os.path.join(atlas_dir, "label_*.png")) or glob.glob(os.path.join(ATLAS, "label_*.png")))
+    h = hashlib.sha256()
+    for p in digits + labels:
+        h.update(os.path.basename(p).encode("utf-8") + b"\0")
+        with open(p, "rb") as f:
+            h.update(f.read())
+        h.update(b"\0")
+    return h.hexdigest()[:16]
+
+def _scan_params(vid, side, atlas_dir, t0, t1):
+    return dict(cache="combo scan", tool="combo_reader", vid=vid, side=side, atlas=os.path.basename(os.path.abspath(atlas_dir)),
+                atlas_sha=atlas_digest(atlas_dir), t0=float(t0), t1=float(t1), glyph_h=GLYPH_H, digit_w=DIGIT_W,
+                label_band=list(LABEL_BAND), half={k: list(v) for k, v in HALF.items()},
+                code=code_stamp(_frames, read_frame, find_label, digit_boxes, norm_glyph, classify, load_atlas))
+
+# What the scans already in work/combo were read with - the atlases as they stood and the reading
+# code's stamp (tools/cachekey.py) - so that while nothing has moved, a scan keeps its plain name.
+# A glyph added to an atlas, or a change to how a frame is read, gives new scans a keyed name of
+# their own instead of passing an old reading off as a new one.
+SCAN_CODE_LEGACY = "803798f1465b18f4"
+ATLAS_LEGACY = {"atlas-combo": "41482c62ee98d35f", "atlas-combo-p2": "3f36e8c6179ab1f4"}
+
+def scan_path(vid, side, atlas_dir=ATLAS, t0=0.0, t1=1e9):
+    """Where the scan of this video band with this atlas lives. Another font's atlas is a
+    different file, never a replacement: work/combo/<vid>.<side>.<atlas>.jsonl."""
+    tag = "" if os.path.abspath(atlas_dir) == os.path.abspath(ATLAS) else "." + os.path.basename(atlas_dir)
+    legacy = os.path.join(ROOT, "work", "combo", f"{vid}.{side}{tag}.jsonl")
+    p = _scan_params(vid, side, atlas_dir, t0, t1)
+    return keyed(legacy, ".jsonl", p, dict(p, atlas_sha=ATLAS_LEGACY.get(p["atlas"]), t0=0.0, t1=1e9, glyph_h=32, digit_w=51,
+                                             label_band=[310, 400], half={"L": [0, 640], "R": [640, 1280], "C": [0, 1280]},
+                                             code=SCAN_CODE_LEGACY))
+
+def load_scan(vid, side, atlas_dir=ATLAS):
+    """The rows of this band's scan, or None when there is none or it is broken (0 bytes, a line
+    a killed writer cut short, or a file its completion sidecar does not describe) - in which case
+    a fresh --scan replaces it."""
+    return A.read_jsonl(scan_path(vid, side, atlas_dir))
+
 def scan(vid, side, t0, t1, atlas_dir=ATLAS):
+    """Read every frame into the band's scan file. It is written as <file>.partial and renamed into
+    place only when the scan completes, beside a <file>.done.json saying how many lines it has, its
+    sha256, the atlas and code it was read with and whether it ran to the end of the range or the
+    video stopped decoding - so a scan killed part-way is never mistaken for a short video."""
+    out_path = scan_path(vid, side, atlas_dir, t0, t1)
+    params = _scan_params(vid, side, atlas_dir, t0, t1)
     atlas, labels = load_atlas(atlas_dir)
     cap = cv2.VideoCapture(video_path(vid))
     fps = cap.get(cv2.CAP_PROP_FPS)
     dur = cap.get(cv2.CAP_PROP_FRAME_COUNT) / fps
     t1 = min(t1, dur)
     cap.set(cv2.CAP_PROP_POS_MSEC, t0 * 1000)
-    os.makedirs(os.path.join(ROOT, "work", "combo"), exist_ok=True)
-    # a read with another font's atlas is a different file, not a replacement for this one
-    tag = "" if os.path.abspath(atlas_dir) == os.path.abspath(ATLAS) else "." + os.path.basename(atlas_dir)
-    out_path = os.path.join(ROOT, "work", "combo", f"{vid}.{side}{tag}.jsonl")
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
     n_read = n_none = 0
     unk = 0
-    with open(out_path, "w", encoding="utf-8") as out:
-        t = t0
-        while t < t1:
-            ok, frame = cap.read()
-            if not ok:
-                break
-            t = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
-            val, conf = read_frame(frame, side, atlas, labels)
-            out.write(json.dumps([round(t, 4), val, round(conf, 3)]) + "\n")
-            n_read += val is not None
-            n_none += val is None
+    state, last = {}, None
+    with A.StreamWriter(out_path, encoding="utf-8", **params) as out:
+        for row in _frames(cap, side, t0, t1, atlas, labels, state):
+            out.write(json.dumps(row) + "\n")
+            n_read += row[1] is not None
+            n_none += row[1] is None
+            last = row[0]
+        stopped = state.get("stopped")
+        if stopped == "decoder stopped" and last is not None and last >= dur - 0.5:
+            stopped = "end of video"          # the decoder running out at the end is the video ending
+        out.meta.update(video_seconds=round(dur, 4), fps=fps, frames=n_read + n_none, read=n_read,
+                        first_t=t0, last_t=last, stopped=stopped)
     print(f"{out_path}: {n_read} read, {n_none} none, {unk} unknown glyph dumps")
 
 if __name__ == "__main__":

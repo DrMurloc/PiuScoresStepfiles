@@ -54,7 +54,7 @@ def _calibrate_at(vid, side, t):
     # a cell must not reach into its neighbour: width from the MEDIAN box (a fused box inflates max), clamped under the gap
     g = dict(x0=int(round(xs[0] - cx - 2)), gap=gap, w=int(min(sorted(ws)[1] + 4, gap - 2)), y0=int(round(min(ys) - ly - 2)), h=int(max(hs) + 4))
     os.makedirs(atlas_dir(vid), exist_ok=True)
-    json.dump(g, open(os.path.join(atlas_dir(vid), "geometry.json"), "w"))
+    cr.A.write_json(os.path.join(atlas_dir(vid), "geometry.json"), g)
     print(f"geometry for {vid}: {g}")
 
 def cells(frame, cx, ly, g=DEFAULT_GEOM):
@@ -102,7 +102,10 @@ def scan(vid, side):
     cap = cv2.VideoCapture(cr.video_path(vid)); fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
     out = os.path.join(ROOT, "work", "combo", f"{vid}.{side}.jsonl")
     n = read = 0
-    with open(out, "w", encoding="utf-8") as fh:
+    # the same file combo_reader's scan would be, on purpose: it replaces a scan the shared atlas
+    # could not read. Written through .partial and sealed with a .done.json that names this tool.
+    with cr.A.StreamWriter(out, encoding="utf-8", cache="combo scan", tool="cell_reader", vid=vid, side=side,
+                           atlas="atlas-cell/" + vid) as fh:
         while True:
             ok, fr = cap.read()
             if not ok: break
