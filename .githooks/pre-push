@@ -1,0 +1,22 @@
+#!/bin/sh
+# Refuses every push while work/.main.lock exists: someone is merging loop branches into main,
+# and a push now could publish a half-integrated main. The lock is taken and released with
+#   python tools/supervise.py mainlock take --note "<who is merging what>"
+#   python tools/supervise.py mainlock release
+# Nothing else here blocks a push: loops running on their own branches (slots, the commit lock,
+# work/runs/) are not consulted. Enabled per clone with
+#   git config core.hooksPath .githooks
+# work/ is gitignored and, in a loop worktree, a junction to the main checkout's work/, so every
+# worktree sees the same lock.
+top=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+lock="$top/work/.main.lock"
+if [ -e "$lock" ]; then
+    echo "pre-push: REFUSED. $lock exists: a merge into main is in progress." >&2
+    echo "pre-push: the lock says:" >&2
+    sed 's/^/    /' "$lock" >&2
+    echo "" >&2
+    echo "pre-push: push after it is released (python tools/supervise.py mainlock release)." >&2
+    echo "pre-push: if its holder is gone, check with the owner before releasing it yourself." >&2
+    exit 1
+fi
+exit 0

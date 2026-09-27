@@ -29,7 +29,8 @@ Start with [CLAUDE.md](CLAUDE.md) — the working rules — then:
 | `sources/` | Evidence and worklists: the corpus manifest, the 121-chart repair census (`stepfile-video-census-*.csv`, `ssc-map.json`), footage worklist (`video-map.json`), the per-chart certification ledgers, and the corpus grade's rails — the frozen oracle (`oracle-manifest.json`), the conflict set, the quarantine and owner-revisit lists, the demotion ledger and the latest grade (`corpus-grade.json`; see docs/TOOLS.md, "The corpus grade"). |
 | `tools/` | Operator scripts: footage downloader, result-screen certifier, extraction tooling. Run with the `../piu-annotate/.venv` Python. |
 | `videos/` | Downloaded source footage. **Gitignored** — footage is never committed. |
-| `work/` | Extraction scratch (frames, intermediate JSON). Gitignored. |
+| `work/` | Extraction scratch (frames, intermediate JSON). Gitignored. Also the loops' shared state — slot pool, commit lock, `STOP`, run ledgers under `work/runs/` (see "Running loops unattended" in [docs/TOOLS.md](docs/TOOLS.md)). |
+| `.githooks/` | `pre-push`: refuses pushes while `work/.main.lock` is held (a merge into main in progress). Enable per clone with `git config core.hooksPath .githooks`. |
 
 ## The repair loop
 

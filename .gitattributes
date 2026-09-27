@@ -1,0 +1,2 @@
+# Hooks run under sh; core.autocrlf would give them CRLF endings sh cannot read.
+.githooks/* text eol=lf
