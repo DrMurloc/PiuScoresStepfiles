@@ -11,6 +11,7 @@ import csv
 import json
 import os
 import sys
+import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
 
 import numpy as np
 from scipy.optimize import lsq_linear
@@ -88,7 +89,7 @@ def main():
     for (h0, h1, b0, b1), v in zip(spans, ints):
         targets.append(dict(b0=b0, b1=b1, t0=h0, t1=h1, target=int(v)))
     max(targets, key=lambda t: t["target"])["tuner"] = True
-    json.dump(targets, open(out_path, "w"), indent=0)
+    atomicio.write_json(out_path, targets, indent=0)
     print(f"{H} holds, total {int(ints.sum())} (target {total}) -> {out_path}")
     for t in targets:
         print(f"  beat {t['b0']:7.2f}..{t['b1']:<7.2f} events {t['target']}{'  TUNER' if t.get('tuner') else ''}")

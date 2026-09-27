@@ -267,6 +267,12 @@ strong evidence for its total and none at all for its columns.
 Both caches keyed on a video now carry the lanes (the receptor templates and the sprite pass), so
 a corrected fit can never be handed the picture read through the old one.
 
+Since 2026-09-27 they carry everything else too (`tools/cachekey.py`, TOOLS.md): the detection
+floor the pass was cut at, the strip watched, the sprite box, the band's rows, every lane rather
+than the two ends, which field fit the lanes came from, and a stamp of the code that computed it.
+Today's values of all of those keep the old names - every existing pass and template still hits,
+with nothing decoded - and a change to any of them gives the result a file of its own.
+
 **The peaks are not the edges, either.** Even a symmetric span was packed too tight. The two
 outermost profile peaks are the bright outer ridges of the first and last receptor, and those sit
 inside the lane boundary, so spreading the lanes evenly between them squeezes every fit - a little,

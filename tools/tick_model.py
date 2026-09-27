@@ -22,6 +22,7 @@ import os
 import sys
 from collections import Counter
 from fractions import Fraction
+import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import extract_repair as E   # noqa: E402
@@ -180,7 +181,7 @@ def census():
         except Exception as ex:
             C.LATTICE_OPTIONS.update(keep)
             out.append(dict(chart=c["chart"], error=str(ex)[:100]))
-    json.dump(out, open(os.path.join(ROOT, "work", "tick-model-census.%d.json" % i), "w"), indent=1)
+    atomicio.write_json(os.path.join(ROOT, "work", "tick-model-census.%d.json" % i), out, indent=1)
     summarize(out)
 
 

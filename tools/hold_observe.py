@@ -12,6 +12,7 @@ import csv
 import json
 import os
 import sys
+import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
 
 CS = r"C:\Users\jonec\repos\piu-annotate\artifacts\chartstructs\p2-082626"
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -126,11 +127,11 @@ def main():
     pinned_sum = sum(e for *_, e in observed)
     rem = total_ticks - pinned_sum
     print(f"pinned sum {pinned_sum}; remainder for {len(unpinned)} unpinned hold(s): {rem}")
-    json.dump(dict(offset=a, judged=judged, taps=len(taps),
+    atomicio.write_json(os.path.join(ROOT, "work", "combo", vid + ".holds.json"), dict(offset=a, judged=judged, taps=len(taps),
                    pinned=[dict(t0=t0, t1=t1, b0=b0, b1=b1, events=e) for t0, t1, b0, b1, e in observed],
                    unpinned=[dict(t0=t0, t1=t1, b0=b0, b1=b1) for t0, t1, b0, b1 in unpinned],
                    remainder=rem),
-              open(os.path.join(ROOT, "work", "combo", vid + ".holds.json"), "w"), indent=1)
+              indent=1)
 
 if __name__ == "__main__":
     main()

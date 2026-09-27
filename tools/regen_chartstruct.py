@@ -10,6 +10,7 @@ import csv
 import os
 import shutil
 import sys
+import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
 
 sys.path.insert(0, r"C:\Users\jonec\repos\piu-annotate")
 from piu_annotate.formats.sscfile import StepchartSSC                             # noqa: E402
@@ -29,7 +30,7 @@ def main():
         if not os.path.exists(out + ".pre-edit"):
             shutil.copy(out, out + ".pre-edit")
     cols = old_cols or list(df.columns)
-    with open(out, "w", encoding="utf-8", newline="") as f:
+    with atomicio.atomic_open(out, "w", encoding="utf-8", newline="") as f:
         w = csv.writer(f); w.writerow(cols)
         for i, row in df.iterrows():
             rec = []

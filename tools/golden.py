@@ -18,6 +18,7 @@
 import json
 import os
 import sys
+import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import batch_repair as B   # noqa: E402
@@ -91,7 +92,7 @@ def main():
         else:
             print(f'  ok    {c["chart"]:<44} {got["verdict"]:<5} {got.get("cause") or got.get("route") or ""}')
     if record:
-        json.dump(doc, open(GOLDEN, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+        atomicio.write_json(GOLDEN, doc, encoding="utf-8", ensure_ascii=False, indent=1)
         print(f"\nrecorded {len(charts)} charts -> {os.path.relpath(GOLDEN, ROOT)}")
         return 0
     print(f"\n{len(charts) - bad} of {len(charts)} charts still analyse the same way")

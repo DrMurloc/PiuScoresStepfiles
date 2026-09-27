@@ -13,6 +13,7 @@ import glob
 import json
 import os
 import sys
+import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CS_DIR = r"C:\Users\jonec\repos\piu-annotate\artifacts\chartstructs\p2-082626"
@@ -110,7 +111,7 @@ def main():
         anchors, info = assemble(vid, band, pg, mc)
         if anchors is None:
             print(f"{name[:40]:40} too few reads"); continue
-        json.dump(anchors, open(os.path.join(ROOT, "work", "combo", f"{vid}.{band}.anchors.json"), "w"))
+        atomicio.write_json(os.path.join(ROOT, "work", "combo", f"{vid}.{band}.anchors.json"), anchors)
         # slack profile against the file's taps, using the end-anchored offset
         key = smap[name]["key"]
         rows = list(csv.DictReader(open(os.path.join(CS_DIR, key + ".csv"), encoding="utf-8")))

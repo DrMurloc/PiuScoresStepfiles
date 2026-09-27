@@ -13,6 +13,7 @@ import os
 import re
 import subprocess
 import sys
+import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import corpus_map  # noqa: E402
@@ -92,7 +93,7 @@ def main():
     for t in targets:
         t.pop("pinned", None)
     tpath = os.path.join(ROOT, "work", f"{key}-finale-targets.json")
-    json.dump(targets, open(tpath, "w"))
+    atomicio.write_json(tpath, targets)
     print(f"{chart}: taps {taps}, judged {judged}, owed {owed} over {len(regs)} hold region(s): "
           + "  ".join(f"b{t['b0']:.3f}-{t['b1']:.3f}:{t['target']}" for t in targets))
     out = run(["tools/author_ticks.py", ssc, block, tpath, str(judged)])

@@ -10,6 +10,7 @@ import json
 import os
 import subprocess
 import sys
+import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from curve_tools import build_anchors  # noqa: E402
@@ -80,7 +81,7 @@ def main():
         capped += [(t, min(v, pk)) for t, v in r]
     anchors = build_anchors(sorted(capped), off, pg)
     out = os.path.join(ROOT, "work", "combo", f"{vid}.{band}.anchors.json")
-    json.dump(anchors, open(out, "w"))
+    atomicio.write_json(out, anchors)
     print(f"  {len(anchors)} anchors -> {out}")
     al = subprocess.run([PY, "tools/align_schedule.py", vid, key, str(judged), band, str(a)], cwd=ROOT, capture_output=True, text=True).stdout
     print("  " + " | ".join(l.strip() for l in al.splitlines() if "violation" in l or "total obs" in l))

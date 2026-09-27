@@ -14,6 +14,7 @@ import os
 import re
 import sys
 from collections import Counter
+import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EMBED = "https://www.youtube.com/embed/"
@@ -110,7 +111,7 @@ def main():
         "-- this script expected to replace - look at it rather than forcing it.",
         "",
     ]
-    with open(sql_path, "w", encoding="utf-8-sig") as fh:
+    with atomicio.atomic_open(sql_path, "w", encoding="utf-8-sig") as fh:
         fh.write("\n".join(lines))
     print(f"{len(rows)} video updates + {len(partners)} side corrections -> {sql_path}")
 
@@ -148,11 +149,11 @@ def main():
                                   "- the file is an older revision and the video is old-era too",
                               footage_judged=c["footage"], file_implied=c["file"], catalog=c["catalog"],
                               newest_footage=best.get("best_era") or "none matched"))
-    json.dump(dict(generated=doc["generated"], source="tools/video_refresh_sql.py",
+    atomicio.write_json(needs_path, dict(generated=doc["generated"], source="tools/video_refresh_sql.py",
                    note="charts nobody has posted current-mix footage for. Everything else that "
                         "needed newer footage is in the SQL script alongside this file.",
                    counts=dict(total=len(needs), by_reason=dict(Counter(n["why"][:44] for n in needs))),
-                   charts=needs), open(needs_path, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+                   charts=needs), encoding="utf-8", ensure_ascii=False, indent=1)
     print(f"{len(needs)} charts need a recording -> {needs_path}")
 
 if __name__ == "__main__":

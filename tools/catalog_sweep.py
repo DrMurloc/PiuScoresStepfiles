@@ -17,6 +17,7 @@ import re
 import sys
 import time
 from collections import Counter, defaultdict
+import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
 
 sys.path.insert(0, r"C:\Users\jonec\repos\piu-annotate")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -164,10 +165,10 @@ def main():
                                              for r in beyond)),
                   tail=len(tail), by_shape=dict(Counter(r["shape"] for r in tail)), with_video=sum(1 for r in tail if r["video"]),
                   by_pack=dict(Counter(r["pack"] for r in tail).most_common()))
-    json.dump(dict(generated=time.strftime("%Y-%m-%d"), source="tools/catalog_sweep.py",
+    atomicio.write_json(out_path, dict(generated=time.strftime("%Y-%m-%d"), source="tools/catalog_sweep.py",
                    rule="beyond the census; every chart that disagrees" if pct_floor <= 0 else f"beyond the census; |implied - catalog| > {pct_floor}%",
                    counts=counts, charts=tail),
-              open(out_path, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
+              encoding="utf-8", indent=1, ensure_ascii=False)
     print(json.dumps(counts, indent=1))
 
 if __name__ == "__main__":

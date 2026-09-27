@@ -6,6 +6,7 @@
 import json
 import os
 import sys
+import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -24,7 +25,7 @@ def main():
             targets.append(dict(b0=u["b0"], b1=u["b1"], t0=u["t0"], t1=u["t1"], target=max(0, a)))
     targets.sort(key=lambda t: t["b0"])
     max(targets, key=lambda t: t["target"])["tuner"] = True
-    json.dump(targets, open(out, "w"), indent=0)
+    atomicio.write_json(out, targets, indent=0)
     print(f"{len(targets)} targets -> {out}; remainder {rem} over {len(un)} unpinned; "
           f"tuner {max(t['target'] for t in targets)}")
 

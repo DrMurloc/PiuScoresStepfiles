@@ -38,6 +38,7 @@
 #   python -X utf8 tools/tick_repair.py survey [--shard i/n] [--only "<chart>"] [--limit N]
 #                                             [--near N] [--redo] [--redo-verdict V,V] [--no-scan]
 #   python -X utf8 tools/tick_repair.py commit [--dry-run] [--only "<chart>"]
+#   --out <dir> (either verb): reports, candidates and scratch files under <dir> instead of work/
 #
 # The worklist is the extraction loop's census (sources/extract-loop-2026-09-22.json): its parks
 # whose extraction cleared the bar, nearest the count first; --near N (default 10) keeps those
@@ -45,7 +46,10 @@
 # A chart whose extraction candidate applied edits is priced and authored on that candidate, so
 # one commit carries both. Reports: work/tick-loop-report[.i].json (resumable); candidates:
 # work/tick-loop/<key>.ssc. The counter scan (work/combo/<vid>.<band>.jsonl, combo_reader) is
-# made on demand unless --no-scan, at about 1.3x real time per video.
+# made on demand unless --no-scan, at about 1.3x real time per video, and one that is broken - 0
+# bytes, a last line a killed scan cut short, a file its completion sidecar does not describe - is
+# made again as if it were missing. Reports and candidates are written atomically
+# (tools/atomicio.py) and every commit is checked (tools/gitcommit.py), as in extract_repair.
 import bisect
 import json
 import os
@@ -58,8 +62,11 @@ from collections import Counter
 from fractions import Fraction
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import atomicio         # noqa: E402
 import author_ticks     # noqa: E402  (patch: the TICKCOUNTS writer)
+import combo_reader     # noqa: E402  (scan_path: where a band's counter scan lives)
 import corpus_map       # noqa: E402
+import gitcommit        # noqa: E402
 import edit_notes       # noqa: E402
 import extract_repair as E  # noqa: E402   (puts piu-annotate on the path, refuses an old converter)
 import note_extract     # noqa: E402
@@ -67,7 +74,8 @@ from piu_annotate.formats import ssc_to_chartstruct as _C  # noqa: E402
 
 ROOT = E.ROOT
 PY = E.PY
-OUT = os.path.join(ROOT, "work", "tick-loop")
+OUT_ROOT = E.OUT_ROOT   # work/, or the directory --out names
+OUT = os.path.join(OUT_ROOT, "tick-loop")
 CENSUS = os.path.join(ROOT, "sources", "extract-loop-2026-09-22.json")
 TRAILER = E.TRAILER
 SPAN = 0.60     # s: how far before/after a region its plateau may be sought (the file's events between are subtracted)
@@ -130,16 +138,19 @@ def worklist():
 # ---------------------------------------------------------------- the counter
 
 def reads_for(vid, band, mc, scan_ok):
-    """The counter reads for a video's band: (video time, value), confident, in range, sorted."""
-    path = os.path.join(ROOT, "work", "combo", "%s.%s.jsonl" % (vid, band))
-    if not os.path.exists(path) and scan_ok:
+    """The counter reads for a video's band: (video time, value), confident, in range, sorted.
+    A scan that is missing or broken is made (again) when scan_ok; its writer only ever puts a
+    finished scan under the real name."""
+    path = combo_reader.scan_path(vid, band)
+    rows = atomicio.read_jsonl(path)
+    if rows is None and scan_ok:
         subprocess.run([PY, "-X", "utf8", os.path.join(ROOT, "tools", "combo_reader.py"), "--scan", vid, "side=" + band],
                        cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=3600)
-    if not os.path.exists(path):
+        rows = atomicio.read_jsonl(path)
+    if rows is None:
         return None
     reads = []
-    for line in open(path, encoding="utf-8"):
-        t, v, c = json.loads(line)
+    for t, v, c in rows:
         if v is not None and c >= CONF and 4 <= v <= mc:
             reads.append((float(t), int(v)))
     return sorted(reads)
@@ -431,12 +442,29 @@ def regions_of(blk):
     return regs
 
 
+def scratch_file(key, text):
+    """The text in a scratch .ssc of this process's own - two surveys of one chart must not read
+    each other's half-written candidate - for the converter to read. The caller removes it."""
+    os.makedirs(OUT, exist_ok=True)
+    tmp = os.path.join(OUT, "tmp-%s.%d.ssc" % (key, os.getpid()))
+    atomicio.write_text(tmp, text, encoding="utf-8", newline="")
+    return tmp
+
+
+def drop(path):
+    try:
+        os.remove(path)
+    except OSError:
+        pass
+
+
 def convert(text, key, tag):
     """The candidate text through the converter, as load_block sees it."""
-    os.makedirs(OUT, exist_ok=True)
-    tmp = os.path.join(OUT, "tmp-%s.ssc" % key)
-    open(tmp, "w", encoding="utf-8", newline="").write(text)
-    blk = E.load_block(tmp, tag)
+    tmp = scratch_file(key, text)
+    try:
+        blk = E.load_block(tmp, tag)
+    finally:
+        drop(tmp)
     if not blk or blk.get("error"):
         return None
     return blk
@@ -479,10 +507,11 @@ def rate_cluster(text, key, tag, cl, target):
     failing that, two rates split on a sixteenth-beat grid between the pair whose counts bracket
     the target. Counted with the converter's own post-loop step (lattice_reauthor.Counts)."""
     import lattice_reauthor as L
-    os.makedirs(OUT, exist_ok=True)
-    tmp = os.path.join(OUT, "tmp-%s.ssc" % key)
-    open(tmp, "w", encoding="utf-8", newline="").write(text)
-    cnt = L.Counts(tmp, tag)
+    tmp = scratch_file(key, text)
+    try:
+        cnt = L.Counts(tmp, tag)
+    finally:
+        drop(tmp)
     b0, b1 = exact(cl["b0"]), exact(cl["b1"])
     idx = [k for k, (a, b) in enumerate(cnt.bounds) if a >= b0 - 1e-6 and b <= b1 + 1e-6]
     if not idx:
@@ -717,7 +746,7 @@ def survey_chart(job, scan_ok=True):
         return {**rec, "reason": "authored to every price, yet the converter derives %d against %d" % (after["implied"], expected)}
     os.makedirs(OUT, exist_ok=True)
     cand = os.path.join(OUT, key + ".ssc")
-    open(cand, "w", encoding="utf-8", newline="").write(text)
+    atomicio.write_text(cand, text, encoding="utf-8", newline="")
     rec["candidate"] = os.path.relpath(cand, ROOT).replace(os.sep, "/")
     return {**rec, "verdict": "SHIP", "reason": "%s -> taps %d + ticks %d = %d, exact (%d of %d regions read)" % (
         summary(edits), after["taps"], after["ticks"], after["implied"], rec["priced_regions"], len(regions))}
@@ -736,7 +765,7 @@ def summary(edits):
 # ---------------------------------------------------------------- survey and commit
 
 def report_path(shard):
-    return os.path.join(ROOT, "work", "tick-loop-report%s.json" % (("." + shard.split("/")[0]) if shard else ""))
+    return os.path.join(OUT_ROOT, "tick-loop-report%s.json" % (("." + shard.split("/")[0]) if shard else ""))
 
 
 def survey():
@@ -768,7 +797,7 @@ def survey():
         rec["seconds"] = round(time.time() - t1, 1)
         prior[job["chart"]] = rec
         print("[%d/%d] %-5s %-46s %s (%ss)" % (i, len(jobs), rec["verdict"], job["chart"][:46], rec.get("reason", "")[:100], rec["seconds"]), flush=True)
-        json.dump(list(prior.values()), open(path, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+        atomicio.write_json(path, list(prior.values()), encoding="utf-8", ensure_ascii=False, indent=1)
     print("\n%d charts in %.0fs; verdicts %s" % (len(jobs), time.time() - t0, dict(Counter(r["verdict"] for r in prior.values()))))
 
 
@@ -819,41 +848,47 @@ def message(rec):
 def commit():
     only, dry = arg("--only"), "--dry-run" in sys.argv
     census = {r["chart"]: r for r in json.load(open(census_path(), encoding="utf-8"))["charts"]}
-    files = sorted(f for f in os.listdir(os.path.join(ROOT, "work")) if f.startswith("tick-loop-report") and f.endswith(".json"))
+    files = sorted(f for f in os.listdir(OUT_ROOT) if f.startswith("tick-loop-report") and f.endswith(".json"))
     recs = []
     for f in files:
-        recs += json.load(open(os.path.join(ROOT, "work", f), encoding="utf-8"))
+        recs += json.load(open(os.path.join(OUT_ROOT, f), encoding="utf-8"))
     ships = [r for r in recs if r.get("verdict") == "SHIP" and not r.get("commit") and (not only or r["chart"] == only)]
     print("%d SHIP verdict(s) to commit" % len(ships))
     if E.git("status", "--short", "--", "simfiles").strip():
         sys.exit("simfiles/ has uncommitted changes - refusing")
-    for r in ships:
-        ssc = os.path.join(ROOT, "simfiles", *r["ssc_rel"].split("/"))
-        cand = os.path.join(ROOT, *r["candidate"].split("/"))
-        if not os.path.exists(cand):
-            print("  %s: candidate missing, skipped" % r["chart"]); continue
-        if not E.same_outside(open(ssc, encoding="utf-8", newline="").read(), open(cand, encoding="utf-8", newline="").read(), E.block_tag(r["key"])):
-            print("  %s: the file changed outside this block since the candidate was written (another chart of the same "
-                  "song was repaired) - re-run the survey for it and commit again" % r["chart"]); continue
-        shutil.copyfile(cand, ssc)
-        out = subprocess.run([PY, "-X", "utf8", os.path.join(ROOT, "tools", "tick_verify.py"), "--file", ssc, "--block", E.block_tag(r["key"]), str(r["expected"])],
-                             cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace").stdout
-        if "MATCH" not in out:
-            E.git("checkout", "HEAD", "--", ssc)
-            print("  %s: tick_verify did not agree in place (%s) - reverted" % (r["chart"], out.strip().splitlines()[0] if out.strip() else "no output")); continue
-        if dry:
-            E.git("checkout", "HEAD", "--", ssc)
-            print("  would commit %s: %s" % (r["chart"], r["reason"])); continue
-        E.git("add", "--", ssc)
-        subprocess.run(["git", "commit", "-q", "-F", "-"], cwd=ROOT, input=message({**r, "census": census[r["chart"]]}), text=True, encoding="utf-8")
-        r["commit"] = E.git("rev-parse", "--short", "HEAD").strip()
-        print("  %s %s: %s" % (r["commit"], r["chart"], r["reason"]))
-    if not dry:
-        done = {r["chart"]: r for r in ships if r.get("commit")}
-        for f in files:
-            p = os.path.join(ROOT, "work", f)
-            rows = json.load(open(p, encoding="utf-8"))
-            json.dump([done.get(x["chart"], x) for x in rows], open(p, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    failed = None
+    try:
+        for r in ships:
+            ssc = os.path.join(ROOT, "simfiles", *r["ssc_rel"].split("/"))
+            cand = os.path.join(ROOT, *r["candidate"].split("/"))
+            if not os.path.exists(cand):
+                print("  %s: candidate missing, skipped" % r["chart"]); continue
+            if not E.same_outside(open(ssc, encoding="utf-8", newline="").read(), open(cand, encoding="utf-8", newline="").read(), E.block_tag(r["key"])):
+                print("  %s: the file changed outside this block since the candidate was written (another chart of the same "
+                      "song was repaired) - re-run the survey for it and commit again" % r["chart"]); continue
+            shutil.copyfile(cand, ssc)
+            out = subprocess.run([PY, "-X", "utf8", os.path.join(ROOT, "tools", "tick_verify.py"), "--file", ssc, "--block", E.block_tag(r["key"]), str(r["expected"])],
+                                 cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace").stdout
+            if "MATCH" not in out:
+                E.git("checkout", "HEAD", "--", ssc)
+                print("  %s: tick_verify did not agree in place (%s) - reverted" % (r["chart"], out.strip().splitlines()[0] if out.strip() else "no output")); continue
+            if dry:
+                E.git("checkout", "HEAD", "--", ssc)
+                print("  would commit %s: %s" % (r["chart"], r["reason"])); continue
+            r["commit"] = gitcommit.commit_exactly(ROOT, [ssc], message({**r, "census": census[r["chart"]]}))
+            print("  %s %s: %s" % (r["commit"], r["chart"], r["reason"]))
+    except gitcommit.CommitError as ex:
+        failed = ex
+    finally:
+        if not dry:
+            done = {r["chart"]: r for r in ships if r.get("commit")}
+            for f in files:
+                p = os.path.join(OUT_ROOT, f)
+                rows = json.load(open(p, encoding="utf-8"))
+                atomicio.write_json(p, [done.get(x["chart"], x) for x in rows], encoding="utf-8", ensure_ascii=False, indent=1)
+    if failed:
+        sys.exit("COMMIT PASS STOPPED: %s\nsimfiles/ may hold the uncommitted candidate - look at `git status` "
+                 "before anything else runs" % failed)
 
 
 if __name__ == "__main__":

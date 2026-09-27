@@ -5,25 +5,50 @@
 # window survey CLI and extract_holds.py the per-chart driver.
 import bisect
 import csv
-import json
 import os
+import sys
 
 import cv2
 import numpy as np
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import atomicio as A                                      # noqa: E402
+from cachekey import code_stamp, keyed, suffixed          # noqa: E402
+
 CS_DIR = r"C:\Users\jonec\repos\piu-annotate\artifacts\chartstructs\p2-082626"
+# The code stamps (tools/cachekey.py) of the fits that built the caches already on disk: while
+# the fit code still stamps this, its caches keep their plain names.
+GEOMETRY_CODE_LEGACY = "bdff825d611c5d9d"
+FIELD_CODE_LEGACY = "627dede7f324b0d4"
 
 def geometry(cap, vid, band="C", ncols=None, n=64):
     """Receptor band + column centres, fitted once per video and cached. The receptors are the
     only static thing in the band, so the temporal median keeps them and washes out notes and
     BGA. Centres come from the field's EXTENT - the outermost strong profile peaks are the outer
     borders of the first and last receptor and ncols equal receptors fill the span - because
-    every comb fit tried locked onto a harmonic of the receptors' inner ridges."""
+    every comb fit tried locked onto a harmonic of the receptors' inner ridges.
+
+    The cache is <vid>.<band>.geometry.json. That name never said how many columns it holds, so
+    it holds whichever count asked first; a different count gets its own keyed file rather than
+    the other one's lanes (tools/cachekey.py), and so does another frame count or fit code. A
+    0-byte or unreadable cache is refitted in place."""
     ncols = ncols or (5 if band in "LR" else 10)
-    cache = os.path.join("work", "receptor", f"{vid}.{band}.geometry.json")
-    if os.path.exists(cache):
-        g = json.load(open(cache))
+    legacy = os.path.join("work", "receptor", f"{vid}.{band}.geometry.json")
+    params = dict(cache="geometry", vid=vid, band=band, ncols=ncols, n=n, code=code_stamp(_fit_geometry))
+    path = keyed(legacy, ".geometry.json", params, dict(params, n=64, code=GEOMETRY_CODE_LEGACY))
+    g = A.load_json(path, required=("y0", "y1", "xs"))
+    if g is not None and len(g["xs"]) != ncols and path == legacy:
+        path = suffixed(legacy, ".geometry.json", params)
+        g = A.load_json(path, required=("y0", "y1", "xs"))
+    if g is not None and len(g["xs"]) == ncols:
         return g["y0"], g["y1"], g["xs"]
+    g = _fit_geometry(cap, band, ncols, n)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    A.write_json(path, g)
+    A.write_meta(path, **params)
+    return g["y0"], g["y1"], g["xs"]
+
+def _fit_geometry(cap, band, ncols, n):
     dur = cap.get(cv2.CAP_PROP_FRAME_COUNT) / cap.get(cv2.CAP_PROP_FPS)
     frames = []
     for k in range(n):
@@ -44,9 +69,7 @@ def geometry(cap, vid, band="C", ncols=None, n=64):
     lo, hi = min(peaks), max(peaks)
     p = (hi - lo) / ncols
     xs = [int(round(lo + (k + 0.5) * p)) for k in range(ncols)]
-    os.makedirs(os.path.dirname(cache), exist_ok=True)
-    json.dump(dict(y0=y0, y1=y1, xs=xs, pitch=round(p, 1), band=band), open(cache, "w"))
-    return y0, y1, xs
+    return dict(y0=y0, y1=y1, xs=xs, pitch=round(p, 1), band=band)
 
 def _mirror_axis(med, c0, half, w):
     """The column a receptor band is mirror-symmetric about, to half a pixel, looked for near c0.
@@ -86,12 +109,36 @@ def field(cap, vid, band, ncols, side="1p", n=64):
     geometry() is deliberately left alone - the repair pipeline's caches and its published
     numbers were all produced under it.
     """
-    # ".inset": borders checked for symmetry, lanes spread from the field's edges rather than its
-    # peaks. Older caches (plain, ".sym") are kept, not reused - they are what a fit is compared to.
-    ck = os.path.join("work", "receptor", f"{vid}.{band}.{ncols}.{side}.inset.field.json")
-    if os.path.exists(ck):
-        g = json.load(open(ck))
+    ck = field_path(vid, band, ncols, side, n)
+    g = A.load_json(ck, required=("y0", "y1", "xs"))
+    if g is not None and len(g["xs"]) == ncols:
         return g["y0"], g["y1"], g["xs"]
+    g = _fit_field(cap, vid, band, ncols, side, n)
+    os.makedirs(os.path.dirname(ck), exist_ok=True)
+    A.write_json(ck, g)
+    A.write_meta(ck, **_field_params(vid, band, ncols, side, n))
+    return g["y0"], g["y1"], g["xs"]
+
+def _field_params(vid, band, ncols, side, n):
+    return dict(cache="field", vid=vid, band=band, ncols=ncols, side=side, n=n, inset=INSET,
+                code=code_stamp(_fit_field, _mirror_axis))
+
+def field_path(vid, band, ncols, side="1p", n=64):
+    """Where field() keeps this fit. ".inset": borders checked for symmetry, lanes spread from the
+    field's edges rather than its peaks. Older caches (plain, ".sym") are kept, not reused - they
+    are what a fit is compared to. A fit under another frame count, inset or fit code gets a keyed
+    name of its own (tools/cachekey.py); today's keeps the plain .inset name."""
+    legacy = os.path.join("work", "receptor", f"{vid}.{band}.{ncols}.{side}.inset.field.json")
+    params = _field_params(vid, band, ncols, side, n)
+    return keyed(legacy, ".field.json", params, dict(params, n=64, inset=0.093, code=FIELD_CODE_LEGACY))
+
+def field_key(vid, band, ncols, side="1p", n=64):
+    """Which fit field() hands back, for the caches built on its lanes to carry in their own keys:
+    "" for today's plain .inset fit, the keyed file's name for any other."""
+    p = field_path(vid, band, ncols, side, n)
+    return "" if p.endswith(".inset.field.json") else os.path.basename(p)
+
+def _fit_field(cap, vid, band, ncols, side, n):
     dur = cap.get(cv2.CAP_PROP_FRAME_COUNT) / cap.get(cv2.CAP_PROP_FPS)
     frames = []
     for k in range(n):
@@ -159,10 +206,8 @@ def field(cap, vid, band, ncols, side="1p", n=64):
                          "%d-lane field" % (vid, band, p, 100 * p / w, w, ncols))
     # lane k's centre is half a lane past the field's edge, which is INSET lanes outside the peak
     xs = [int(round(lo + (k + 0.5 - INSET) * p)) for k in range(ncols)]
-    os.makedirs(os.path.dirname(ck), exist_ok=True)
-    json.dump(dict(y0=y0, y1=y1, xs=xs, pitch=round(p, 1), band=band, side=side,
-                   fields=len(groups), axis=c, symmetry=round(sym, 3)), open(ck, "w"))
-    return y0, y1, xs
+    return dict(y0=y0, y1=y1, xs=xs, pitch=round(p, 1), band=band, side=side,
+                fields=len(groups), axis=c, symmetry=round(sym, 3))
 
 def scan(vid, t0, t1, band="C", ncols=None):
     """Per frame: the white level in each receptor box (flash) and the fraction of saturated
@@ -170,10 +215,16 @@ def scan(vid, t0, t1, band="C", ncols=None):
 
     Cached per (video, band, columns, span): decoding the whole video is the expensive step and
     a chart is scanned by flash_grid, rail_ticks and extract_holds in turn over the same span.
-    Delete work/receptor/*.scan.npz to force a re-read."""
-    ck = os.path.join("work", "receptor", f"{vid}.{band}.{ncols}.{t0:.1f}-{t1:.1f}.scan.npz")
-    if os.path.exists(ck):
-        z = np.load(ck)
+    Move work/receptor/*.scan.npz aside to force a re-read; a 0-byte or unloadable one is
+    re-read and replaced.
+
+    This cache has two producers by design - this loop, and note_extract's sprite pass handing
+    over the same flash and lane series (save_scan) - so its name is the key and nothing else:
+    whichever produced it, its consumers read the same thing. The producer and its parameters go
+    in the file's .meta.json sidecar."""
+    ck = scan_path(vid, band, ncols, t0, t1)
+    z = A.load_npz(ck, required=("ts", "flash", "lane", "xs", "fps", "y0", "y1"))
+    if z is not None:
         return dict(ts=z["ts"], flash=z["flash"], lane=z["lane"], xs=list(z["xs"]),
                     fps=float(z["fps"]), y0=int(z["y0"]), y1=int(z["y1"]))
     cap = cv2.VideoCapture(os.path.join("videos", vid + ".mp4"))
@@ -201,32 +252,40 @@ def scan(vid, t0, t1, band="C", ncols=None):
         lane.append([float(bar[:, x - 20:x + 20].mean()) for x in xs])
         t += 1.0 / fps
     out = dict(ts=np.array(ts), flash=np.array(flash), lane=np.array(lane), xs=xs, fps=fps, y0=y0, y1=y1)
-    os.makedirs(os.path.dirname(ck), exist_ok=True)
-    _atomic_savez(ck, out)
+    _save(ck, out, producer="receptors.scan", vid=vid, band=band, ncols=ncols, t0=t0, t1=t1)
     return out
 
-def _atomic_savez(ck, out):
-    """Write the cache under a private name and rename it into place.
+def _save(ck, out, **meta):
+    """Write the cache under a private name and rename it into place (atomicio).
 
     A video can serve several charts, so two workers can decide to build the same scan at the
     same moment. Writing straight to the shared path leaves a half-written .npz that every later
     reader trips over; a rename is atomic, so the loser's work is simply discarded.
     """
-    tmp = "%s.%d.tmp.npz" % (ck, os.getpid())
-    np.savez_compressed(tmp, **out)
-    os.replace(tmp, ck)
+    os.makedirs(os.path.dirname(ck), exist_ok=True)
+    A.write_npz(ck, compressed=True, **out)
+    A.write_meta(ck, cache="receptor scan", **meta)
 
 def scan_path(vid, band, ncols, t0, t1):
     return os.path.join("work", "receptor", f"{vid}.{band}.{ncols}.{t0:.1f}-{t1:.1f}.scan.npz")
 
-def save_scan(vid, band, ncols, t0, t1, out):
+def save_scan(vid, band, ncols, t0, t1, out, producer="note_extract.sprite_frames"):
     """Write a scan another reader produced into the shared cache, so the tools that only need
-    flashes and rails do not decode the video again."""
+    flashes and rails do not decode the video again. One that is there and loads is left alone."""
     ck = scan_path(vid, band, ncols, t0, t1)
-    if os.path.exists(ck):
+    if _intact(ck):
         return
-    os.makedirs(os.path.dirname(ck), exist_ok=True)
-    _atomic_savez(ck, out)
+    _save(ck, out, producer=producer, vid=vid, band=band, ncols=ncols, t0=t0, t1=t1)
+
+def _intact(ck):
+    """Cheaply, whether an .npz is whole: a zip writes its directory last, so a truncated one has
+    none. Reads the directory only, not the arrays."""
+    import zipfile
+    try:
+        with zipfile.ZipFile(ck) as z:
+            return {"ts.npy", "flash.npy", "lane.npy"} <= set(z.namelist())
+    except (OSError, zipfile.BadZipFile):
+        return False
 
 def onsets(sc, thresh=40.0):
     """Prominent peaks of each column's white level over its rolling floor: one per judgement,

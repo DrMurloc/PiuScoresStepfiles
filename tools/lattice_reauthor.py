@@ -30,7 +30,9 @@ import textwrap
 from collections import Counter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import atomicio             # noqa: E402
 import edit_notes           # noqa: E402
+import gitcommit            # noqa: E402
 import extract_repair as E  # noqa: E402   (puts piu-annotate on the path, and refuses an old converter)
 import tick_repair as T     # noqa: E402
 import author_ticks         # noqa: E402   (patch: the TICKCOUNTS writer)
@@ -82,7 +84,7 @@ def with_block(text, tag, section):
 def grade(text, tag, key, hold_ticks=None):
     os.makedirs(TMP, exist_ok=True)
     p = os.path.join(TMP, "grade-%s.ssc" % key)
-    open(p, "w", encoding="utf-8", newline="").write(text)
+    atomicio.write_text(p, text, encoding="utf-8", newline="")
     return E.load_block(p, tag, hold_ticks)
 
 
@@ -152,7 +154,7 @@ def survey():
             name[:44], r["now"]["legacy"], r["now"]["lattice"], r["expected"], r["seed"]["legacy"], r["seed"]["lattice"],
             "Y" if r["notes_changed"] else "-", "Y" if r["ticks_changed"] else "-", ("other " + ",".join(r["other_tags"]) + " ") if r["other_tags"] else "",
             len(r["commits"])), flush=True)
-    json.dump(rows, open(REPORT, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    atomicio.write_json(REPORT, rows, encoding="utf-8", ensure_ascii=False, indent=1)
     exact_now = [r for r in rows if r["now"]["lattice"] == r["expected"]]
     broken = [r for r in rows if r["now"]["legacy"] == r["expected"] != r["now"]["lattice"]]
     print("\n%d certified charts our commits changed | exact under the lattice %d | exact under legacy only %d" % (len(rows), len(exact_now), len(broken)))
@@ -372,7 +374,7 @@ def reauthor(r, dry):
     text = open(src, encoding="utf-8", newline="").read()
     os.makedirs(TMP, exist_ok=True)
     work = os.path.join(TMP, r["key"] + ".ssc")
-    open(work, "w", encoding="utf-8", newline="").write(text)
+    atomicio.write_text(work, text, encoding="utf-8", newline="")
     cnt = Counts(work, r["tag"])
     recorded = cnt.legacy
     if sum(recorded) + E.load_block(work, r["tag"])["taps"] != r["expected"]:
@@ -398,7 +400,7 @@ def reauthor(r, dry):
     new_text, ok = author_ticks.patch(norm(text), r["tag"], tc)
     if "\r\n" in text:
         new_text = new_text.replace("\n", "\r\n")
-    open(work, "w", encoding="utf-8", newline="").write(new_text)
+    atomicio.write_text(work, new_text, encoding="utf-8", newline="")
     before_l = E.load_block(src, r["tag"])
     after = E.load_block(work, r["tag"])
     got = [tk for _, _, tk in after["regions"]]
@@ -498,6 +500,14 @@ def apply():
     if git("status", "--short", "--", "simfiles").strip() and not dry:
         sys.exit("simfiles/ has uncommitted changes - refusing")
     tally, log = Counter(), []
+    try:
+        _apply(todo, dry, tally, log)
+    finally:
+        atomicio.write_json(os.path.join(ROOT, "work", "lattice-reauthor-apply.json"), log, encoding="utf-8", ensure_ascii=False, indent=1)
+    print("\n%s" % dict(tally))
+
+
+def _apply(todo, dry, tally, log):
     for r in todo:
         src = os.path.join(ROOT, *r["rel"].split("/"))
         text = open(src, encoding="utf-8", newline="").read()
@@ -532,15 +542,14 @@ def apply():
         tv = subprocess.run([E.PY, "-X", "utf8", os.path.join(ROOT, "tools", "tick_verify.py"), "--file", src, "--block", r["tag"], str(r["expected"])],
                             cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace").stdout
         if action == "reauthor" and "MATCH" not in tv:
-            git("checkout", "HEAD", "--", r["rel"])
+            gitcommit.git(ROOT, "checkout", "HEAD", "--", r["rel"])
             print("  %-44s tick_verify disagreed in place (%s) - restored" % (r["chart"][:44], tv.strip().splitlines()[0] if tv.strip() else "")); continue
-        git("add", "--", r["rel"])
-        subprocess.run(["git", "commit", "-q", "-F", "-"], cwd=ROOT, input=msg, text=True, encoding="utf-8")
-        sha = git("rev-parse", "--short", "HEAD").strip()
+        try:
+            sha = gitcommit.commit_exactly(ROOT, [r["rel"]], msg)
+        except gitcommit.CommitError as ex:
+            sys.exit("COMMIT PASS STOPPED at %s: %s\nlook at `git status` before anything else runs" % (r["chart"], ex))
         log[-1]["commit"] = sha
         print("  %s %-44s %s (%s)" % (sha, r["chart"][:44], action, (tv.strip().splitlines() or [""])[0]), flush=True)
-    json.dump(log, open(os.path.join(ROOT, "work", "lattice-reauthor-apply.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-    print("\n%s" % dict(tally))
 
 
 if __name__ == "__main__":

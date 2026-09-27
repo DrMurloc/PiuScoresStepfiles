@@ -19,6 +19,7 @@
 import os
 import sys
 from fractions import Fraction
+import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import corpus_map      # noqa: E402
@@ -133,7 +134,7 @@ def main():
             else sys.argv[sys.argv.index("--out") + 1] if "--out" in sys.argv
             else os.path.join(ROOT, "work", "authored", os.path.basename(ssc)))
     os.makedirs(os.path.dirname(dest), exist_ok=True)
-    open(dest, "w", encoding="utf-8").write(out)
+    atomicio.write_text(dest, out, encoding="utf-8")
     heads = sum(1 for n in notes if n.get("beat_end") is not None)
     print("  %d measures, %d taps + %d holds, written on 1/%d of a beat%s" %
           (len(measures), len(notes) - heads, heads, g,

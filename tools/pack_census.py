@@ -31,6 +31,7 @@ import re
 import sys
 from collections import Counter
 from fractions import Fraction
+import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "tools"))
@@ -80,15 +81,15 @@ def fetch():
                 f, rf, z = rp.open_pack(part, password)
                 data = z.read(i)
             os.makedirs(os.path.dirname(out), exist_ok=True)
-            open(out, "wb").write(data)
+            atomicio.write_bytes(out, data)
             index[key] = dict(pack=f["filename"], label=label, entry=i.filename, size=i.file_size,
                               date=datetime.datetime(*i.date_time).isoformat(sep=" "),
                               sha1=hashlib.sha1(data).hexdigest(), ours=ours[os.path.basename(i.filename).lower()][0])
             done += 1
             if done % 25 == 0:
-                json.dump(index, open(INDEX, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
+                atomicio.write_json(INDEX, index, encoding="utf-8", indent=1, ensure_ascii=False)
                 print(f"   {label}: {n}/{len(wanted)} ({rf.fetched:,} bytes so far)", flush=True)
-        json.dump(index, open(INDEX, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
+        atomicio.write_json(INDEX, index, encoding="utf-8", indent=1, ensure_ascii=False)
         print(f"{f['filename']}: {len(wanted)} of ours, {done} fetched now, {rf.fetched:,} bytes over the network", flush=True)
     print(f"index: {len(index)} entries")
 
@@ -342,7 +343,7 @@ def compare(out_path):
                packs={lab: sorted({e["pack"] for e in index.values() if e["label"] == lab}) for lab, _ in PACKS},
                counts=counts, charts=rows, packs_disagree=disagree, errors=[dict(what=a, error=b) for a, b in errors])
     out_path = out_path or os.path.join(ROOT, "sources", f"resistance-diff-{datetime.date.today().isoformat()}.json")
-    json.dump(out, open(out_path, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
+    atomicio.write_json(out_path, out, encoding="utf-8", indent=1, ensure_ascii=False)
     print(json.dumps(counts, indent=1))
     print(f"\nwrote {out_path}")
     for r in rows[:40]:

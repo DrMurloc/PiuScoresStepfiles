@@ -39,7 +39,9 @@ import time
 from collections import Counter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import atomicio    # noqa: E402
 import corpus_map  # noqa: E402
+import gitcommit   # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PY = r"C:\Users\jonec\repos\piu-annotate\.venv\Scripts\python.exe"
@@ -138,12 +140,14 @@ def band_for(cert, side, name):
     return "C" if not other.get("judged") else ("L" if side == "1p" else "R")
 
 def ensure_combo(vid, band):
-    """The counter scan every pricing tool reads. Expensive, so it is cached on disk."""
+    """The counter scan every pricing tool reads. Expensive, so it is cached on disk; one that is
+    there but broken (0 bytes, a line a killed scan cut short) is scanned again, and the scanner
+    only ever puts a finished scan under the real name."""
     path = os.path.join(ROOT, "work", "combo", f"{vid}.{band}.jsonl")
-    if os.path.exists(path):
+    if atomicio.jsonl_ok(path):
         return True
     tool("combo_reader", "--scan", vid, f"side={band}", timeout=3600)
-    return os.path.exists(path)
+    return atomicio.jsonl_ok(path)
 
 def certify(vmap_path):
     """Certify every downloaded video in the batch. Ledger-cached; re-runs only what failed."""
@@ -277,18 +281,18 @@ def author_chart(rec, smap, commit):
     elif rec["route"] == "pins":
         pp = os.path.join(ROOT, "work", "rails", f"{rec['vid']}-{name.replace(' ', '_').replace('/', '_')}-pins.json")
         os.makedirs(os.path.dirname(pp), exist_ok=True)
-        json.dump(rec["pins"], open(pp, "w", encoding="utf-8"))
+        atomicio.write_json(pp, rec["pins"], encoding="utf-8")
         tool("finale_ticks", name, "--pins-json", os.path.relpath(pp, ROOT), timeout=3600)
     else:
         rails = [dict(col=x["col"], head=x["head"], tail=x["tail"], ticks=x["ticks"]) for x in rec["rail_list"]]
         rp = os.path.join(ROOT, "work", "rails", f"{rec['vid']}-{name.replace(' ', '_').replace('/', '_')}.json")
         os.makedirs(os.path.dirname(rp), exist_ok=True)
-        json.dump(rails, open(rp, "w", encoding="utf-8"))
+        atomicio.write_json(rp, rails, encoding="utf-8")
         tool("apply_rails", name, rec["offset"], os.path.relpath(rp, ROOT), timeout=3600)
     out = tool("tick_verify", name, rec["target"])
     tv = parse_tick_verify(out)
     if not tv or not tv["match"]:
-        git("checkout", "HEAD", "--", ssc)
+        gitcommit.git(ROOT, "checkout", "HEAD", "--", ssc)
         return {**rec, "verdict": "PARK", "authored": False,
                 "reason": f"authored but the converter did not agree ({tv['implied'] if tv else '?'} "
                           f"vs {rec['target']}) - reverted"}
@@ -296,9 +300,9 @@ def author_chart(rec, smap, commit):
     if commit:
         title = (f"{name}: {rec['reason']} "
                  f"(taps {tv['taps']} + ticks {tv['ticks']} = implied {tv['implied']})")
-        git("add", ssc)
-        git("commit", "-q", "-m", title + TRAILER)
-        rec["commit"] = git("rev-parse", "--short", "HEAD").strip()
+        # checked: git's return code, HEAD advanced by one commit, that commit touching this file
+        # alone - a CommitError stops the batch rather than recording some other HEAD as this one
+        rec["commit"] = gitcommit.commit_exactly(ROOT, [ssc], title + TRAILER)
     return rec
 
 def main():
@@ -344,8 +348,8 @@ def main():
         print(f"[{i}/{len(jobs)}] {rec['verdict']:<5} {name[:48]:<48} {rec.get('reason', '')[:70]} "
               f"({rec['seconds']}s)", flush=True)
         merged = {**prior, **{x["chart"]: x for x in out}} if authoring else {x["chart"]: x for x in out}
-        json.dump(list(merged.values()), open(report_path, "w", encoding="utf-8"),
-                  ensure_ascii=False, indent=1)
+        atomicio.write_json(report_path, list(merged.values()), encoding="utf-8",
+                            ensure_ascii=False, indent=1)
     print(f"\n{len(out)} charts in {time.time() - t0:.0f}s")
     print("verdicts:", dict(Counter(r["verdict"] for r in out)))
     print("park reasons:", dict(Counter(r["reason"].split(" (")[0].split(" - ")[0]

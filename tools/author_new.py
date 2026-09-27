@@ -34,6 +34,7 @@ import math
 import os
 import re
 import sys
+import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
 
 import numpy as np
 
@@ -259,7 +260,7 @@ def main():
                                         re.sub(r"[^A-Za-z0-9]+", "_", title).strip("_") + ".ssc")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     source = "https://youtu.be/%s" % vid
-    with open(out, "w", encoding="utf-8", newline="\n") as f:
+    with atomicio.atomic_open(out, "w", encoding="utf-8", newline="\n") as f:
         f.write(header(title, opt("--artist", ""), bpm, a, ticks, source) + "\n")
         f.write(block(ncols, desc, level, bpm, a, ticks, measures))
     print("  %d measures, %d taps + %d holds -> %s" % (len(measures), len(kept) - heads, heads, out))
