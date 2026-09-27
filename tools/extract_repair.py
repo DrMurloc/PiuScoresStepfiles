@@ -7,10 +7,15 @@
 #          [--shapes under-ticked,hold-less,single-region,over-ticked] [--cache] [--redo] [--redo-verdict FAIL,PARK]
 #          [--ssc <alt .ssc> --expected N]      (a proof: run against another file, ship nothing)
 #   python -X utf8 tools/extract_repair.py commit [--dry-run] [--only "<chart>"]
+#   --out <dir> (either verb): reports and candidates under <dir> instead of work/, so a proof or
+#          a comparison run never writes over the reports and candidates of a real one
 #
 # survey never touches simfiles/: every candidate is written under work/extract-loop/ and
 # converted there. commit is a separate, serial pass over the SHIP verdicts of every shard's
-# report, so shards can run side by side without contending for git.
+# report, so shards can run side by side without contending for git. Reports and candidates are
+# written atomically (tools/atomicio.py), and every commit is checked (tools/gitcommit.py): git's
+# return code, HEAD advanced by one commit, and that commit touching the chart's file and nothing
+# else - otherwise the pass stops there.
 #
 # THE DIFF. The extraction is aligned to the file's own notes (anchor, then a straight line
 # for the video's clock) and matched note for note in seconds, one to one per column within
@@ -61,7 +66,9 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, r"C:\Users\jonec\repos\piu-annotate")
+import atomicio        # noqa: E402
 import corpus_map      # noqa: E402
+import gitcommit       # noqa: E402
 import edit_notes      # noqa: E402
 import note_extract    # noqa: E402
 import quantize as Q   # noqa: E402
@@ -79,7 +86,6 @@ C_MERGE = _C.merge_holdticks
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PY = r"C:\Users\jonec\repos\piu-annotate\.venv\Scripts\python.exe"
-OUT = os.path.join(ROOT, "work", "extract-loop")
 TOL = 0.045          # s: an extracted note and a file note this close are the same note
 TAIL_TOL = 0.060     # s: a release this far from the file's is a different release (--tail-tol overrides)
 SNAP_TOL = 0.020     # s: an added note snaps to the coarsest lattice line this close
@@ -105,6 +111,9 @@ def arg(name, default=None):
 
 TAIL_TOL = float(arg("--tail-tol", TAIL_TOL))
 PRECISION_BAR = float(arg("--precision-bar", PRECISION_BAR))
+# where reports and candidates go: work/ unless --out names another directory
+OUT_ROOT = os.path.abspath(arg("--out")) if arg("--out") else os.path.join(ROOT, "work")
+OUT = os.path.join(OUT_ROOT, "extract-loop")
 
 
 def block_tag(key):
@@ -519,7 +528,7 @@ def survey_chart(entry, ssc_override=None, expected_override=None):
     new_text, done, skipped, cleared = apply(text, tag, edits, pad, blk["width"])
     os.makedirs(OUT, exist_ok=True)
     cand = os.path.join(OUT, ("proof-" if ssc_override else "") + key + ".ssc")
-    open(cand, "w", encoding="utf-8", newline="").write(new_text)
+    atomicio.write_text(cand, new_text, encoding="utf-8", newline="")
     after = load_block(cand, tag)
     rec.update(candidate=os.path.relpath(cand, ROOT), applied=len(done), skipped=skipped, cleared=cleared,
                after=dict(taps=after["taps"], ticks=after["ticks"], implied=after["implied"]) if after and not after.get("error") else dict(error=(after or {}).get("error", "no block")))
@@ -547,7 +556,7 @@ def summary(edits):
 # ---------------------------------------------------------------- survey and commit
 
 def report_path(shard):
-    return os.path.join(ROOT, "work", "extract-loop-report%s.json" % (("." + shard.split("/")[0]) if shard else ""))
+    return os.path.join(OUT_ROOT, "extract-loop-report%s.json" % (("." + shard.split("/")[0]) if shard else ""))
 
 
 def survey():
@@ -585,15 +594,17 @@ def survey():
         prior[entry["chart"]] = rec
         print("[%d/%d] %-5s %-46s %s (%ss)" % (i, len(jobs), rec["verdict"], entry["chart"][:46], rec.get("reason", "")[:90], rec["seconds"]), flush=True)
         if not ssc_override:
-            json.dump(list(prior.values()), open(path, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+            atomicio.write_json(path, list(prior.values()), encoding="utf-8", ensure_ascii=False, indent=1)
     if ssc_override:
         for r in prior.values():
-            json.dump(r, open(os.path.join(OUT, "proof-" + r["key"] + ".json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+            atomicio.write_json(os.path.join(OUT, "proof-" + r["key"] + ".json"), r, encoding="utf-8", ensure_ascii=False, indent=1)
     print("\n%d charts in %.0fs; verdicts %s" % (len(jobs), time.time() - t0, dict(Counter(r["verdict"] for r in prior.values()))))
 
 
 def git(*args):
-    return subprocess.run(["git"] + list(args), cwd=ROOT, capture_output=True, text=True, encoding="utf-8").stdout
+    """git's stdout; the pass stops (gitcommit.CommitError) if git exits non-zero - a status that
+    failed reads as a clean tree, and a checkout that failed leaves a candidate in simfiles/."""
+    return gitcommit.git(ROOT, *args)
 
 
 def applied(rec):
@@ -660,45 +671,50 @@ def same_outside(text_a, text_b, tag):
 def commit():
     only, dry, note = arg("--only"), "--dry-run" in sys.argv, arg("--note")
     recs = []
-    for f in sorted(os.listdir(os.path.join(ROOT, "work"))):
+    for f in sorted(os.listdir(OUT_ROOT)):
         if f.startswith("extract-loop-report") and f.endswith(".json"):
-            recs += json.load(open(os.path.join(ROOT, "work", f), encoding="utf-8"))
+            recs += json.load(open(os.path.join(OUT_ROOT, f), encoding="utf-8"))
     ships = [r for r in recs if r.get("verdict") == "SHIP" and not r.get("commit") and (not only or r["chart"] == only)]
     print("%d SHIP verdict(s) to commit" % len(ships))
     if git("status", "--short", "--", "simfiles").strip():
         sys.exit("simfiles/ has uncommitted changes - refusing")
-    for r in ships:
-        ssc = os.path.join(ROOT, "simfiles", *r["ssc_rel"].split("/"))
-        cand = os.path.join(ROOT, r["candidate"])
-        if not os.path.exists(cand):
-            print("  %s: candidate missing, skipped" % r["chart"]); continue
-        if not same_outside(open(ssc, encoding="utf-8", newline="").read(), open(cand, encoding="utf-8", newline="").read(), block_tag(r["key"])):
-            print("  %s: the file changed outside this block since the candidate was written (another chart of the same "
-                  "song was repaired) - re-run the survey for it and commit again" % r["chart"]); continue
-        shutil.copyfile(cand, ssc)
-        out = subprocess.run([PY, "-X", "utf8", os.path.join(ROOT, "tools", "tick_verify.py"), "--file", ssc, "--block", block_tag(r["key"]), str(r["expected"])],
-                             cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace").stdout
-        if "MATCH" not in out:
-            git("checkout", "HEAD", "--", ssc)
-            print("  %s: tick_verify did not agree in place (%s) - reverted" % (r["chart"], out.strip().splitlines()[0] if out.strip() else "no output")); continue
-        if dry:
-            git("checkout", "HEAD", "--", ssc)
-            print("  would commit %s: %s" % (r["chart"], r["reason"])); continue
-        git("add", "--", ssc)
-        subprocess.run(["git", "commit", "-q", "-F", "-"], cwd=ROOT, input=message(r, note), text=True, encoding="utf-8")
-        sha = git("rev-parse", "--short", "HEAD").strip()
-        r["commit"] = sha
-        print("  %s %s: %s" % (sha, r["chart"], r["reason"]))
-    if not dry:
-        # write the commits back so a re-run does not commit them twice
-        by_file = {}
-        for f in sorted(os.listdir(os.path.join(ROOT, "work"))):
-            if f.startswith("extract-loop-report") and f.endswith(".json"):
-                p = os.path.join(ROOT, "work", f)
-                rows = json.load(open(p, encoding="utf-8"))
-                done = {r["chart"]: r for r in ships if r.get("commit")}
-                rows = [done.get(x["chart"], x) for x in rows]
-                json.dump(rows, open(p, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    failed = None
+    try:
+        for r in ships:
+            ssc = os.path.join(ROOT, "simfiles", *r["ssc_rel"].split("/"))
+            cand = os.path.join(ROOT, r["candidate"])
+            if not os.path.exists(cand):
+                print("  %s: candidate missing, skipped" % r["chart"]); continue
+            if not same_outside(open(ssc, encoding="utf-8", newline="").read(), open(cand, encoding="utf-8", newline="").read(), block_tag(r["key"])):
+                print("  %s: the file changed outside this block since the candidate was written (another chart of the same "
+                      "song was repaired) - re-run the survey for it and commit again" % r["chart"]); continue
+            shutil.copyfile(cand, ssc)
+            out = subprocess.run([PY, "-X", "utf8", os.path.join(ROOT, "tools", "tick_verify.py"), "--file", ssc, "--block", block_tag(r["key"]), str(r["expected"])],
+                                 cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace").stdout
+            if "MATCH" not in out:
+                git("checkout", "HEAD", "--", ssc)
+                print("  %s: tick_verify did not agree in place (%s) - reverted" % (r["chart"], out.strip().splitlines()[0] if out.strip() else "no output")); continue
+            if dry:
+                git("checkout", "HEAD", "--", ssc)
+                print("  would commit %s: %s" % (r["chart"], r["reason"])); continue
+            r["commit"] = gitcommit.commit_exactly(ROOT, [ssc], message(r, note))
+            print("  %s %s: %s" % (r["commit"], r["chart"], r["reason"]))
+    except gitcommit.CommitError as ex:
+        failed = ex
+    finally:
+        if not dry:
+            # write the commits back so a re-run does not commit them twice - also when the pass
+            # stopped part-way, for the ones that did land
+            done = {r["chart"]: r for r in ships if r.get("commit")}
+            for f in sorted(os.listdir(OUT_ROOT)):
+                if f.startswith("extract-loop-report") and f.endswith(".json"):
+                    p = os.path.join(OUT_ROOT, f)
+                    rows = json.load(open(p, encoding="utf-8"))
+                    rows = [done.get(x["chart"], x) for x in rows]
+                    atomicio.write_json(p, rows, encoding="utf-8", ensure_ascii=False, indent=1)
+    if failed:
+        sys.exit("COMMIT PASS STOPPED: %s\nsimfiles/ may hold the uncommitted candidate - look at `git status` "
+                 "before anything else runs" % failed)
 
 
 if __name__ == "__main__":
