@@ -120,16 +120,17 @@
 # calibration and the detection-power table when `controls` / `power` have been run - their
 # outputs live under work/rails-audit-scratch/) and sources/protected-promotions.jsonl: one row per
 # chart whose every edit is FLAT and covered, whose whole trace has no OFF, and which is neither in
-# the quarantine list (sources/quarantine.json, the corpus grade's record; QUARANTINE_FALLBACK only
-# while that file is absent or unreadable) nor on the owner's revisit list (sources/owner-revisit.json:
-# recorded, not acted on). A promotion is bound to the block's content hash (block_sha, the contract in
-# tools/guards.py; header_sha rides along for the song header the block inherits) and to this
+# the quarantine list (sources/quarantine.json, the corpus grade's record: read every run, and a run
+# refuses - exit 2, nothing written - when it is missing or does not read) nor on the owner's revisit
+# list (sources/owner-revisit.json: recorded, not acted on). A promotion is bound to the block's content
+# hash (block_sha: tools/guards.py's, imported, so the audit and the corpus grade cannot hash a block two
+# ways; header_sha rides along for the song header the block inherits) and to this
 # tool's audit_version: sha256 over PARAMS and every source a verdict depends on - this file, every
 # tools/ module it imports directly or through another (read from the source text, so the set does
 # not depend on who imported what first; tools/supervise.py, which only decides WHEN a decode runs,
 # is left out), and the converter's modules (the six piu_annotate files the corpus grade pins).
-# So audit_version moves whenever any module in that closure changes - tools/guards.py once it lands
-# (imported when present), and every edit to extract_repair, tick_repair, note_extract and the rest -
+# So audit_version moves whenever any module in that closure changes - tools/guards.py, and every edit
+# to extract_repair, tick_repair, note_extract, combo_reader and the rest -
 # and a row's version is reproducible only by the tool as it stood when that row was written. The
 # promotions file is append-only and keyed by (chart, block_sha, audit_version): a rerun of a changed
 # tool that vouches for the same block again appends that block's row under its own version (the
@@ -154,7 +155,9 @@ from collections import Counter
 from fractions import Fraction
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import combo_reader         # noqa: E402  (load_scan: the counter scan, a broken one read as missing)
 import corpus_map           # noqa: E402
+import guards as G          # noqa: E402  (block_sha, the corrupt-footage list)
 import extract_repair as E  # noqa: E402  (piu-annotate on the path; refuses a converter without the lattice)
 import tick_repair as T     # noqa: E402  (the counter reads, chain/runs, the clock, the display lag)
 from piu_annotate.formats.sscfile import StepchartSSC        # noqa: E402
@@ -163,9 +166,9 @@ from piu_annotate.formats import ssc_to_chartstruct as _C    # noqa: E402
 ROOT = E.ROOT
 SCRATCH = os.path.join(ROOT, "work", "rails-audit-scratch")
 IMPORT_REV = "a23cee5"
-# the charts never promoted whatever their audit says. sources/quarantine.json is the recorded list
-# (the corpus grade's); this tuple is only its fallback while that file is absent or unreadable
-QUARANTINE_FALLBACK = ("Houseplan S17", "Wedding Crashers S10", "Imagination S12")
+# the charts never promoted whatever their audit says are sources/quarantine.json's (the corpus grade's
+# record). There is no fallback list here: a missing or broken file stops the run rather than letting
+# it audit against a stale copy
 # the three 35 ms flags on unedited charts the 2026-09-26 research left unresolved: `crops`
 # writes their frames for a blind review whatever this tool's own verdict on them is
 BLIND_REVIEW = ("Overblow D19", "Timing S15", "Passacaglia S4")
@@ -250,51 +253,18 @@ DECODE = "--no-decode" not in sys.argv   # measure a missing clock even when tha
 
 # ---------------------------------------------------------------- the block hash (shared contract)
 
-try:
-    import guards as _G    # tools/guards.py, the one definition every loop imports, once it lands
-    split_blocks, block_tags = _G.split_blocks, _G.block_tags
-except ImportError:
-    def _normalize(data):
-        if isinstance(data, bytes):
-            data = data.decode("utf-8", errors="replace")
-        return data.replace("\r\n", "\n").replace("\r", "\n")
-
-    def split_blocks(data):
-        """(header, [block, ...]): each block from its '#NOTEDATA:' line up to the next or EOF, newlines
-        as LF, str.rstrip()'d - tools/guards.py's definition, which this must match byte for byte."""
-        lines = _normalize(data).split("\n")
-        starts = [i for i, line in enumerate(lines) if line.startswith("#NOTEDATA:")]
-        if not starts:
-            return "\n".join(lines).rstrip(), []
-        ends = starts[1:] + [len(lines)]
-        return "\n".join(lines[:starts[0]]).rstrip(), ["\n".join(lines[a:b]).rstrip() for a, b in zip(starts, ends)]
-
-    def _kv(text):
-        out = {}
-        for kv in text.split(";"):
-            if ":" in kv:
-                k, *v = kv.strip().split(":")
-                if k.startswith("#"):
-                    out[k[1:]] = ":".join(v)
-        return out
-
-    def block_tags(data):
-        header, blocks = split_blocks(data)
-        head = _kv(header)
-        out = []
-        for b in blocks:
-            d = dict(head)
-            d.update(_kv(b))
-            out.append("%s_%s" % (d.get("DESCRIPTION", ""), d.get("SONGTYPE", "")))
-        return out
+# tools/guards.py is the one definition: the corpus grade, its gate and this audit hash a block the
+# same way because they call the same function, not because two copies agree
+split_blocks, block_tags = G.split_blocks, G.block_tags
 
 
 def block_sha(data, tag):
-    """sha256 of the chart's block (the first block carrying the converter tag), or None."""
-    tags = block_tags(data)
-    if tag not in tags:
+    """sha256 of the chart's block (the first block carrying the converter tag), or None when no
+    block carries it: guards.block_sha, on the file's contents rather than its path."""
+    try:
+        return G.block_sha_text(data, tag)
+    except LookupError:
         return None
-    return hashlib.sha256(split_blocks(data)[1][tags.index(tag)].encode("utf-8")).hexdigest()
 
 
 # ---------------------------------------------------------------- git
@@ -739,8 +709,10 @@ def measure_clock(c, blk, decode=True):
             notes, err, refused = _extract_in_overlay(c, ov, decode=False)
             if refused:
                 if not decode:
+                    # not yet a refusal: the fresh re-seed (attempt 1) may still be served by the shared
+                    # caches alone, where a stale overlay file wanted a frame the shared pass does not
                     err += " (--no-decode)"
-                    break
+                    continue
                 # a decode takes a machine-wide slot, acquired before the write guard goes on (the
                 # slot pool writes its own files)
                 with _decode_slot("trace_audit clock %s" % c["vid"]):
@@ -985,21 +957,16 @@ def trace(ev, raw, a, b, play, brackets, P):
 
 
 def load_reads(vid, band, mc, P):
-    """The counter scan's reads (work/combo/<vid>.<band>.jsonl, combo_reader): (video time, value),
-    confident, in the counter's range (it draws nothing below 4; nothing above maxcombo is real),
-    sorted - tick_repair.reads_for without its on-demand scan. None when there is no scan."""
-    path = os.path.join(ROOT, "work", "combo", "%s.%s.jsonl" % (vid, band))
-    if not os.path.exists(path) or os.path.getsize(path) == 0:
+    """The counter scan's reads (combo_reader.load_scan: the scan under the name today's atlas and
+    reading code key it by - work/combo/<vid>.<band>.jsonl while neither has moved): (video time,
+    value), confident, in the counter's range (it draws nothing below 4; nothing above maxcombo is
+    real), sorted - tick_repair.reads_for without its on-demand scan. None when there is no scan, and
+    when the scan is broken (0 bytes, a line a killed scan cut short, a file its completion sidecar
+    does not describe)."""
+    rows = combo_reader.load_scan(vid, band)
+    if rows is None:
         return None
-    out = []
-    for line in open(path, encoding="utf-8"):
-        try:
-            t, v, c = json.loads(line)
-        except ValueError:
-            continue
-        if v is not None and c >= P["conf"] and 4 <= v <= mc:
-            out.append((float(t), int(v)))
-    return sorted(out)
+    return sorted((float(t), int(v)) for t, v, c in rows if v is not None and c >= P["conf"] and 4 <= v <= mc)
 
 
 def rows_between(rowt, x, y):
@@ -1345,6 +1312,9 @@ def audit_chart(c, new_path=None, base_path=None, whole=False, clock=None, P=PAR
     if not play:
         return _unaudited(rec, edits, "no maxcombo on the result screen", t_start)
     rec["play"] = play
+    corrupt = G.footage_corrupt_reason(c["vid"], play["band"])
+    if corrupt:
+        return _unaudited(rec, edits, corrupt, t_start)
     raw = load_reads(c["vid"], play["band"], play["maxcombo"], P)
     if not raw:
         return _unaudited(rec, edits, "no counter scan for %s band %s" % (c["vid"], play["band"]), t_start)
@@ -1885,13 +1855,13 @@ def power(workers, per_chart, seed):
 
 def corpus(workers, date, out_dir=None):
     t0 = time.time()
+    quarantined, quarantine_from = quarantine()      # before any work: a broken list stops the run here
     pop = populations(workers)
     head = git("rev-parse", "HEAD").decode().strip()
     gained = sorted(r["chart"] for r in pop if r["exact_head"] and not r["exact_base"])
     rows = pool_map(_edit_job, gained, workers)
     promotions = []
     revisit = owner_revisit()
-    quarantined, quarantine_from = quarantine()
     for r in rows:
         edits = r.get("edits") or []
         ok = bool(edits) and all(e["verdict"] == "FLAT" and e.get("covered") for e in edits) and (r.get("whole") or {}).get("verdict") != "OFF"
@@ -1997,21 +1967,32 @@ def append_promotions(path, promotions, promotable):
     return new, unconfirmed
 
 
+class QuarantineUnreadable(RuntimeError):
+    pass
+
+
 def quarantine():
-    """(chart names, where the list came from): sources/quarantine.json's charts when that file is
-    there and reads, else QUARANTINE_FALLBACK. By name, whatever block the chart carries now: a
-    quarantined chart leaves the list only when the file says so."""
+    """(chart names, where the list came from): sources/quarantine.json's charts, by name, whatever
+    block the chart carries now - a quarantined chart leaves the list only when the file says so.
+    Raises QuarantineUnreadable, naming the problem, when the file is missing, does not parse, or
+    has an entry without a chart name: the list decides what may be promoted, so it is never guessed."""
     p = os.path.join(ROOT, "sources", "quarantine.json")
+    if not os.path.exists(p):
+        raise QuarantineUnreadable("sources/quarantine.json is missing: the quarantine is the corpus grade's record, "
+                                   "and the audit promotes nothing without it")
     try:
-        d = json.load(open(p, encoding="utf-8"))
-        items = d.get("charts") if isinstance(d, dict) else d
-        if isinstance(items, list):
-            names = tuple(sorted({x.get("chart") if isinstance(x, dict) else x for x in items}, key=str))
-            if all(isinstance(n, str) and n for n in names):
-                return names, "sources/quarantine.json"
-    except (OSError, ValueError, TypeError, AttributeError):
-        pass
-    return QUARANTINE_FALLBACK, "the fallback in tools/trace_audit.py (sources/quarantine.json absent or unreadable)"
+        with open(p, encoding="utf-8") as f:
+            d = json.load(f)
+    except (OSError, ValueError) as ex:
+        raise QuarantineUnreadable(("sources/quarantine.json does not read (%s: %s)" % (type(ex).__name__, ex))[:200])
+    items = d.get("charts") if isinstance(d, dict) else d
+    if not isinstance(items, list):
+        raise QuarantineUnreadable("sources/quarantine.json has no 'charts' list")
+    names = [x.get("chart") if isinstance(x, dict) else x for x in items]
+    bad = [str(i) for i, n in enumerate(names) if not (isinstance(n, str) and n)]
+    if bad:
+        raise QuarantineUnreadable("sources/quarantine.json: entries %s have no chart name" % ", ".join(bad))
+    return tuple(sorted(set(names))), "sources/quarantine.json"
 
 
 def owner_revisit():
@@ -2204,15 +2185,23 @@ def drills():
         cap.release()
     check("frames_off restores cv2.VideoCapture", cv2.VideoCapture is real, True)
 
-    # 4. the quarantine list: sources/quarantine.json when it reads, the fallback otherwise
+    # 4. the quarantine list: sources/quarantine.json, and a loud refusal when it is not there or
+    # does not read - never a fallback list (a per-process root: two drill runs cannot race)
     global ROOT
-    d = os.path.join(SCRATCH, "drills", "root")
+    d = os.path.join(SCRATCH, "drills", "root-%d" % os.getpid())
     shutil.rmtree(d, ignore_errors=True)
     os.makedirs(os.path.join(d, "sources"))
     saved = ROOT
+
+    def refused(what):
+        try:
+            quarantine()
+            return "read"
+        except QuarantineUnreadable:
+            return "refused"
     try:
         ROOT = d
-        check("quarantine: no file, the fallback", quarantine()[0], QUARANTINE_FALLBACK)
+        check("quarantine: no file refuses", refused("missing"), "refused")
         with open(os.path.join(d, "sources", "quarantine.json"), "w", encoding="utf-8") as f:
             json.dump(dict(charts=[dict(chart="Houseplan S17", block_sha="0" * 64), dict(chart="Some Chart S1")]), f)
         check("quarantine: the file's charts", quarantine(), (("Houseplan S17", "Some Chart S1"), "sources/quarantine.json"))
@@ -2221,9 +2210,19 @@ def drills():
         check("quarantine: an empty list in the file is an empty quarantine", quarantine()[0], ())
         with open(os.path.join(d, "sources", "quarantine.json"), "w", encoding="utf-8") as f:
             f.write("{not json")
-        check("quarantine: an unreadable file, the fallback", quarantine()[0], QUARANTINE_FALLBACK)
+        check("quarantine: an unreadable file refuses", refused("unreadable"), "refused")
+        with open(os.path.join(d, "sources", "quarantine.json"), "w", encoding="utf-8") as f:
+            json.dump(dict(charts=[dict(chart="Houseplan S17"), dict(block_sha="0" * 64)]), f)
+        check("quarantine: an entry without a chart name refuses", refused("malformed"), "refused")
     finally:
         ROOT = saved
+
+    # the block hash is guards.block_sha: the same bytes whether read LF or CRLF, first block of a tag
+    doc = "#TITLE:x;\n#NOTEDATA:;\n#DESCRIPTION:S1;\n#SONGTYPE:ARCADE;\n#NOTES:\n0000\n;\n\n#NOTEDATA:;\n#DESCRIPTION:S1;\n#SONGTYPE:ARCADE;\n#NOTES:\n1000\n;\n"
+    check("block_sha is guards.block_sha_text", block_sha(doc, "S1_ARCADE"), G.block_sha_text(doc, "S1_ARCADE"))
+    check("block_sha ignores CRLF", block_sha(doc.replace("\n", "\r\n").encode("utf-8"), "S1_ARCADE"), block_sha(doc, "S1_ARCADE"))
+    check("block_sha of a duplicated tag is the first block's", block_sha(doc, "S1_ARCADE"), G.sha(G.split_blocks(doc)[1][0]))
+    check("block_sha of a tag no block carries is None", block_sha(doc, "S2_ARCADE"), None)
 
     # 5. the promotions file: append-only, one row per (chart, block_sha, audit_version)
     pj = os.path.join(d, "promotions.jsonl")
@@ -2281,6 +2280,9 @@ def main():
     sweep_overlays()
     try:
         _main(op, workers)
+    except QuarantineUnreadable as ex:
+        print("trace_audit: %s - refusing (nothing written)" % ex, file=sys.stderr)
+        raise SystemExit(2)
     finally:
         sweep_overlays()
 
