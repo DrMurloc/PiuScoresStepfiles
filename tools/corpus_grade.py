@@ -916,9 +916,9 @@ def build_conflicts(oracle, rows, tree):
             continue
         c = hits[0]
         if r["expected"] != c["p1_notes"] and r["implied"] == c["p1_notes"]:
-            p2 = " (the certified count is not its Phoenix 2 count either)"
-            if c.get("p2_notes") and c["p2_notes"] == r["expected"]:
-                p2 = " (the certified count is its Phoenix 2 count)"
+            p2 = ""                                       # the catalog export carries no P2 counts today
+            if c.get("p2_notes"):
+                p2 = " (the certified count %s its Phoenix 2 count)" % ("is" if c["p2_notes"] == r["expected"] else "is not")
             add(name, "catalog", "certified %d on %s, but the Phoenix 1 catalog lists %d and the file already converts to %d%s"
                 % (r["expected"], r["vid"], c["p1_notes"], c["p1_notes"], p2))
 
