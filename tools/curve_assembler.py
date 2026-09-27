@@ -13,6 +13,7 @@
 import json
 import os
 import sys
+import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RATE = 25.0
@@ -96,5 +97,5 @@ if __name__ == "__main__":
         print(f"  {r[0][0]:7.2f}s -> {r[-1][1]:7.2f}s  combo {r[0][2]}..{r[-1][2]}  anchors {len(r)}")
     print(f"runs {len(runs)}, sum of run-final {tot}", sys.argv[2:] and f"(target P+G {sys.argv[2]})" or "")
     out = os.path.join(ROOT, "work", "combo", f"{vid}.{band}.anchors.json")
-    json.dump([[round(a[0], 3), round(a[1], 3), a[2]] for a in chain], open(out, "w"))
+    atomicio.write_json(out, [[round(a[0], 3), round(a[1], 3), a[2]] for a in chain])
     print("anchors ->", out)

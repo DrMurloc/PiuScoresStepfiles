@@ -17,6 +17,7 @@ import os
 import re
 import subprocess
 import sys
+import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
 
 sys.path.insert(0, r"C:\Users\jonec\repos\piu-annotate")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -73,7 +74,7 @@ def main():
         else:
             unfixed.append((name, taps + ticks, judged))
     out.sort(key=lambda r: r["chart"])
-    json.dump(out, open(os.path.join(ROOT, "sources", "repairs.json"), "w", encoding="utf-8"), indent=1)
+    atomicio.write_json(os.path.join(ROOT, "sources", "repairs.json"), out, encoding="utf-8", indent=1)
     print(f"repairs.json: {len(out)} charts verified exact ({sum(1 for r in out if r['upstream_exact'])} of them "
           f"with the upstream block untouched); {len(unfixed)} census charts still wrong")
     for name, implied, judged in sorted(unfixed):

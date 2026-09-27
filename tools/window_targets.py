@@ -14,6 +14,7 @@ import csv
 import json
 import os
 import sys
+import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CS_DIR = r"C:\Users\jonec\repos\piu-annotate\artifacts\chartstructs\p2-082626"
@@ -98,7 +99,7 @@ def main():
     big = max(unp, key=lambda t: t["target"])
     big["target"] += total_ticks - sum(t["target"] for t in targets); big["tuner"] = True
     for t in targets: t.pop("pinned", None)
-    json.dump(targets, open(out, "w"), indent=0)
+    atomicio.write_json(out, targets, indent=0)
     rates = sorted((((t["target"] / max(t["t1"] - t["t0"], 1e-6)), t) for t in targets), key=lambda x: x[0])
     print(f"{len(targets)} windows over {len(clusters)} clusters -> {out}; total {sum(t['target'] for t in targets)} "
           f"(expected {total_ticks}); closure spread {delta:+d}; tuner {big['t0']:.1f}-{big['t1']:.1f}:{big['target']}")

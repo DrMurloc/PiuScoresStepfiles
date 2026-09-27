@@ -17,6 +17,7 @@ import glob
 import json
 import os
 import sys
+import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
 
 import cv2
 import numpy as np
@@ -244,7 +245,7 @@ def main():
             ch_led[ch["chart"]] = dict(expected=ch["judged"], side=side,
                                        verdict="CERTIFIED" if side else "OPEN")
     os.makedirs(os.path.dirname(ledger_path), exist_ok=True)
-    json.dump(ledger, open(ledger_path, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    atomicio.write_json(ledger_path, ledger, encoding="utf-8", ensure_ascii=False, indent=1)
     print(f"\ncertified {n_cert} charts; open {n_open}")
 
 if __name__ == "__main__":

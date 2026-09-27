@@ -25,6 +25,7 @@ import os
 import re
 import sys
 from collections import Counter, defaultdict
+import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -154,7 +155,7 @@ def main():
                            upgrades_by_era=dict(Counter(f'{r["banked_era"]} -> {r["best_era"]}'
                                                         for r in rows if r["action"] == "upgrade"))),
                charts=rows)
-    json.dump(doc, open(out_path, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    atomicio.write_json(out_path, doc, encoding="utf-8", ensure_ascii=False, indent=1)
     print(json.dumps(doc["counts"], indent=1))
 
 if __name__ == "__main__":

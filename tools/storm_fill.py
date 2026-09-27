@@ -9,6 +9,7 @@
 import json
 import os
 import sys
+import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -56,7 +57,7 @@ def main():
         if tuple(p) not in seen:
             seen.add(tuple(p)); out.append(p)
     path = os.path.join(ROOT, "work", "combo", f"{vid}.{band}.stormpins.json")
-    json.dump(out, open(path, "w"))
+    atomicio.write_json(path, out)
     print(f"{len(out)} synthetic pins -> {path}")
     print("  span:", out[0], "...", out[-1])
 

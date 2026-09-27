@@ -13,6 +13,7 @@ import csv
 import json
 import os
 import sys
+import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CS_DIR = r"C:\Users\jonec\repos\piu-annotate\artifacts\chartstructs\p2-082626"
@@ -94,7 +95,7 @@ def main():
     for t in targets: del t["raw"]
     big["tuner"] = True
     targets.sort(key=lambda t: t["b0"])
-    json.dump(targets, open(out, "w"), indent=0)
+    atomicio.write_json(out, targets, indent=0)
     print(f"{len(targets)} window targets -> {out}; total {sum(t['target'] for t in targets)}"
           f" (expected {total_ticks}); drift absorbed {drift}; tuner {big['target']}")
 

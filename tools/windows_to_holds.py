@@ -12,6 +12,7 @@ import csv
 import json
 import os
 import sys
+import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
 
 CS_DIR = r"C:\Users\jonec\repos\piu-annotate\artifacts\chartstructs\p2-082626"
 
@@ -56,7 +57,7 @@ def main():
     for o in out: o.pop("raw")
     cands = [out[i] for i in sorted(tuner_regs)] or out
     big = max(cands, key=lambda o: o["target"]); big["tuner"] = True
-    json.dump(out, open(out_path, "w"), indent=0)
+    atomicio.write_json(out_path, out, indent=0)
     print(f"{len(out)} regions from {len(holds)} holds -> {out_path}; total {sum(o['target'] for o in out)} "
           f"(windows {sum(w['target'] for w in wins)}); tuner {big['t0']:.1f}-{big['t1']:.1f}:{big['target']}")
 

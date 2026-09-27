@@ -14,6 +14,7 @@ import json
 import os
 import sys
 from collections import Counter
+import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -64,8 +65,8 @@ def main():
     os.makedirs(os.path.join(ROOT, "work"), exist_ok=True)
     mp = os.path.join(ROOT, "work", "ssc-map-tail.json")
     vp = os.path.join(ROOT, "work", f"{tag}-video-map.json")
-    json.dump(smap, open(mp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-    json.dump(sorted(vmap.values(), key=lambda e: e["vid"]), open(vp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    atomicio.write_json(mp, smap, encoding="utf-8", ensure_ascii=False, indent=1)
+    atomicio.write_json(vp, sorted(vmap.values(), key=lambda e: e["vid"]), encoding="utf-8", ensure_ascii=False, indent=1)
     n_batch = sum(len(e["charts"]) for e in vmap.values())
     print(f"map: {len(smap)} charts -> {os.path.relpath(mp, ROOT)}")
     print(f"batch: {n_batch} charts over {len(vmap)} videos -> {os.path.relpath(vp, ROOT)}")
