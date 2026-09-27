@@ -474,6 +474,103 @@ converted file against the counter.
 The acceptance gate. Runs piu-annotate's converter over the block in our tree and reports
 `taps + ticks = implied`. A repair is not real until this matches.
 
+**`trace_audit.py chart "<chart>" [--file <ssc>] [--base <ssc> | --base-rev <rev> | --whole] [--offset S --clock PCT] [--json]`**
+**`trace_audit.py controls | power [--per-chart N] [--seed S] | corpus [--date D] [--out-dir DIR] | crops ["<chart>" ...] [--out DIR] | version`** (`--workers N`, at most 6; `--no-decode`)
+`tick_verify` checks a file's total; this checks its INTERIOR, so a file that hits the total
+through compensating errors cannot pass. On a play the counter counted all the way (a full
+combo), a read of the combo counter minus the file's own running count F(t) at the same instant
+is the file's cumulative error there: 0 through a right file, and a step that stays wherever a
+wrong one gained or lost an event. F(t) is every judged event the lattice converter derives, in
+chart time (tap rows, heads that are not tap rows, and each tick-lattice point a hold is held
+across outside warps and fakes), enumerated point for point and refused unless it adds up to the
+converter's `taps + ticks`. The clock is the tick loop's (the file's own notes matched on screen,
+`note_extract` then `extract_repair.align`): taken from the extraction and tick loops' census
+records when the file's timing matches the file it was measured on, and otherwise measured here
+in a per-video overlay under `work/rails-audit-scratch/` that copies the shared `work/receptor`
+and `work/spritepass` caches in and never writes them (an audit hook refuses any write, rename
+or delete outside the scratch dir while it runs; a 0-byte cache is left behind and rebuilt in the
+overlay). The display lag is `tick_repair.measure_lag`'s.
+
+Only QUIET reads count - at least 80 ms from every judged event and outside every hold region,
+because a player's GREAT lands up to about 80 ms off its note and a 30 fps frame adds 33 ms - and
+the reader's known misreads are dropped first, each only where the read is exactly that misread
+of the value the counter should show: a 9 read as 5 or as 8 in any digits (the Phoenix 1 atlas
+reads ASDF D10's 139 as 135 and Iolite Sky D21's 9xx as 5xx for ten seconds; until bucket 3
+fixes the atlas, a units-5 read exactly 4 below F is unreliable, not evidence), dropped leading
+digits, a truncation shadow and a rail's leading 1. A real file error moves every read by the
+same amount, so the few dropped for matching a misread never hide one. A play with no BAD or MISS
+is one run (nothing resets the counter); a play with breaks is cut into runs. Each run is fitted
+with a piecewise-constant level, and a level held by 8 agreeing reads over half a second is
+strong - the only evidence there is. A level that departs from 0 (or, with breaks, from the level
+before it) must also hold at 150 ms from every event, because early or late hits seen through a
+lag a few tens of ms off move only the reads nearest the notes; a stretch that disagrees only at
+the tick loop's 35 ms margin, or only at 80 ms, is UNSETTLED - it cannot vouch for anything and is
+never called OFF (Overblow D19, Timing S15 and Passacaglia S4, the research pass's three 35 ms
+flags on unedited charts, come out this way; Magical Vacation S16's +1 held at 80 ms and not at
+150).
+
+An EDIT is a stretch where the block's judged events differ from the import commit's
+(`a23cee5`; `--base`/`--base-rev` for another), matched by exact beat. It is FLAT when a strong
+read within `k_rows` (8) judged rows on each side and every strong read in that neighbourhood
+agree with the file; OFF when a strong read there, or the nearest one on either side with nothing
+read between, disagrees; UNCOVERED otherwise - never FLAT without reads, and no structural anchor
+(the counter's blank start, its rest at maxcombo) stands in for one. An edit that changes hold
+ticks under a `#TICKCOUNTS` the base did not have was priced by the counter or by closure, so the
+reads within 0.6 s of its hold regions (the tick loop's brackets) are taken out and the edit is
+labelled counter-derived. A play with GOODs never audits FLAT (a GOOD could hide the event an edit
+lost); with breaks, the two sides must share a run, and a move within a run is OFF only where
+nothing but the file explains it. A timing change audits the chart whole. `--whole` (and
+`controls`) report the worst disagreement anywhere and whether every row is within `k_rows` of a
+strong read. Every parameter is in one dict; `audit_version` is sha256 of the source (LF) and it.
+
+`controls` audits every untouched exact chart with a scan (block and song header byte-identical
+to `a23cee5`'s) whole; `power` plants compensating pairs in scratch copies of the full-combo
+controls - one lattice point removed by `#TICKCOUNTS` alone (rate 0 over ±1/2r) in one hold
+region and one added (rate 2r over half a step) in another, the total unchanged and the event
+diff exactly +1/-1 - and audits each as counter-derived, as independent, and at `k_rows` 16 and
+32; `corpus` audits the edit-derived exact set (exact at HEAD, not at `a23cee5`) and writes
+`sources/trace-audit-<date>.json` (every edit's verdict and reason, the calibration, the power
+table) and `sources/protected-promotions.jsonl` - a row, bound to the block's `block_sha`
+(`tools/guards.py`'s contract) and the audit_version, for each chart whose every edit is FLAT and
+covered and whose whole trace has no OFF, never for the quarantined Houseplan S17, Wedding
+Crashers S10 and Imagination S12, and never for an owner-revisit chart (its verdict is recorded,
+not acted on). `crops` writes counter frames of unsettled and OFF stretches, with control frames,
+under opaque names for a blind review, the key in a separate file.
+
+First run, 2026-09-27 (`sources/trace-audit-2026-09-27.json`, audit_version `047724d3…`, the tree
+at `8c9b5de`). **Calibration:** the 260 untouched exact charts with a scan come out 0 OFF, 22 FLAT
+and 238 UNCOVERED; 85 are full-combo plays, and the rest are mostly plays with GOODs, which never
+audit FLAT. 69 carry an unsettled stretch, among them the three 35 ms flags, whose frames
+`crops` wrote to `work/rails-audit-scratch/blind-35ms/` for a blind review (not decided here).
+Passacaglia S4's show why one such flag can happen: its video carries two players and only 1P
+was certified, so the scan reads the whole width and can land on either counter. **Detection
+power** (569 planted pairs on 82 full-combo controls; none at level 24+, where no control has a
+full combo): no pair more than 8 judged rows apart ever audits FLAT. Such pairs are caught as
+OFF 23-85% of the time, more often the further apart they are, and are UNCOVERED otherwise. 34%
+of pairs within 4 rows and 9% at 5-8 rows audit FLAT: that window is the audit's resolution, and
+inside it only the total is seen. At `k_rows` 16 the misses reach 32 rows apart and at 32 they
+reach 64, which is why the default is 8; on today's corpus it promotes the same three charts as
+16. **The 112 edit-derived exact charts:**
+- **3 FLAT, promoted:** A nightmare S6, Get Your Groove On D10 and She Likes Pizza D11. Each is a
+  single finale or single-region edit with the counter at 0 within 1-4 rows either side.
+- **9 OFF.** Two are the known Houseplan S17 and Wedding Crashers S10. The other seven are
+  census-phase counter-loop repairs (K.O.A : Alice in Wonderworld SC D18, Pop The Track SC D16,
+  Wedding Crashers SC S4, XX OPENING SC S6, Come to Me S17, Dr. M S9, 2006. LOVE SONG D14). In
+  them, small mid-chart tick cuts each step the counter's level by exactly their own size, and a
+  closure-priced finale absorbs the total. Their frames are in `blind-off/`.
+- **100 UNCOVERED:**
+  - 58 plays with GOODs;
+  - 13 plays with breaks, whose reads are not near enough or whose runs outnumber their breaks;
+  - 10 full combos with no strong read within 8 rows;
+  - 3 full combos with an unsettled stretch nearby;
+  - 15 with no counter scan;
+  - 1 whose clock could not be measured (Tales of Pumpnia D21, 6 notes fitted).
+
+Destination SC D21 is on the owner's revisit list and is recorded, not acted on.
+Measuring the 84 clocks no census carried decoded the footage of the 72 with no cached sprite
+pass once (about 35 minutes on 5 workers; cached per note layout and code hash after that). A
+rerun then takes about 15 s. The controls take 35 s and the power table 4 minutes.
+
 **`verify_release.py <release> [--old <release>]`**
 Checks a packaged release actually carries the repairs: the `.ssc` through the converter, the
 `Hold ticks` in the release's chart JSON, and the judged count must all agree.
