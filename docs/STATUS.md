@@ -610,6 +610,75 @@ AiNqD7lZjiM (Beat of The War S21, 66 decode errors and a stop at 15 s). The owne
 now enforced in every worklist that can ship: Slam D24, which sat in the extraction loop's
 worklist as a PARK, is skipped with its reason.
 
+## Lane geometry, first checkpoint (2026-09-27)
+
+Bucket 4 of the loop plan, on the local branch `loops/lanes-1`: fit the lanes right on every cached
+video, because every reader looks through them and a misfit field is the largest measured
+extractor bug class. Nothing here changes a stepfile, the extractor or `receptors.field()`; the
+snapshot is exactly as far behind as it was at `f27b6ef`. Tools: `laneband.py`, `lanefit.py`
+(TOOLS.md).
+
+**The median-band cache.** `receptors.field()` fits a video's lanes from one picture, the median
+of 64 seeked frames; `laneband.py` stores that picture per video (`work/lanes/medband/`, about
+170 KB each, lossless, under its own key - the `.inset` caches other loops read are untouched), so a
+rule is arithmetic over it. Two supervised runs build it: `lanes-1-medband-h264` (1,838 videos,
+2 at a time) and `lanes-1-medband-av1` (181, 2 at a time), plus `lanes-1-medband-sample` (the band
+sample below, finished). On a shared machine at 100% CPU a picture costs 15-20 s on h264 and a median
+357 s on AV1 (58 s alone; one AV1 video, HQPXvKtFDtA, ran past its hour and waits for a sweep); at
+this checkpoint 921 of 2,019 videos are cached. The preflight re-fits eight known videos from a
+fresh decode through `_fit_field` itself and through the cached-picture arithmetic: 8 of 8 give
+the cached `.inset` bytes, and the pictures the supervised run cached equal the fresh decodes.
+
+**Frozen before any rule ran** (`sources/lanes/`, each with its own sha256). The **partitions**:
+held out are the 101 PHOENIX 2 official-pack charts whose file converts to the map's count and
+the 36 certified misfits; 27 of those are named in the docs, tools, loop proposal or a research
+note and go to `seen` (tune-only); validate 56 charts (45 scorable), sealed 54 (44 scorable),
+grouped by song family and video. The **BEFORE census**: 2,161 fits (certified charts, both fields
+of every official singles upload - the pad is never taken from the map's stored side - and every
+cached `.inset` fit), 1,351 with a fit on disk, each stamped `field.inset@627dede7f324b0d4`, with
+a template from metadata (channel group, band, columns). The **pitch bands**, from a band sample
+chosen before any band was computed, out of the sample fits that pass their independent invariant:
+NEVSISTER doubles 75.00-76.10 (centre 75.50), NEVSISTER singles 74.90-76.30 (75.80), official
+doubles 74.53-75.90 (75.30), official singles 73.90-75.50 (74.60). Only 30 of 175 official doubles
+fits and 126 of 253 official singles fields pass - the official uploads' fits are mostly misfits,
+at 66.9-67.4 for doubles and 57.1-58.0 for singles fields, so the pitch histogram's own median
+(67.3 for official doubles) would have set the band on the misfit.
+
+**The invariants.** Twin agreement for doubles (lane k against lane k+5, the same receptor): 0.92
+at the lowest over 261 in-band doubles fits, 0.28-0.61 on the out-of-band ones. For singles the
+pad twin - one field of a split screen against the other - does not work: both fields of an
+official singles upload misfit the same way and agree at 0.97-0.999. So a singles fit is graded by
+NCC against a receptor library built from twin-passing doubles fits of its channel group
+(`receptor-library-2026-09-27.npz`): 0.85 at the lowest over 467 in-band singles fits, 0.32-0.74 on
+the out-of-band ones.
+
+**Rule 1** (`r1-oob-sym-respan`, registered with its stamp `ed51b24b80575c80` and the validation
+effect it must show, before it ran): a fit out of its template's band whose picture is
+mirror-symmetric re-searches its span - peaks standing symmetric about the mirror axis whose pitch
+lands in the band, or, when no pair does, one peak mirrored about the axis (on split screens one
+outer ridge often fails to stand as a peak of its own) - and a re-fit is kept only when its
+invariant reaches 0.80 and beats the old fit's by 0.10. Over the finished part of the cache (904
+videos when it ran): 1,083 fits recomputed; the 482 that have a cached `.inset` fit came back byte for byte; **728 in band,
+all returned byte-identical; 351 re-fitted and accepted, 0 rejected by the invariant; 4 to the
+exceptions ledger.** The 197 doubles re-fits went from twin 0.28-0.61 to 0.89-0.98 (from pitches
+51-72 to 75.2-75.6; 184 found a symmetric pair at the first floor, 12 needed the mirrored peak);
+the 154 singles re-fits from NCC 0.32-0.74 to 0.81-0.99 (from 56-69 to 74.2-75.8; 53 by the mirrored
+peak). Of the 36 certified misfits, all cached: 35 re-fitted and accepted, 1 an exception. The four
+exceptions, none re-fitted and the band never widened for them: two asymmetric pictures (Bad
+Apple!! feat. Nomico - FULL SONG - D22 at 49.4, sealed; an official singles field at 51.3), one fit
+that raised at a 28 px pitch and whose picture is asymmetric, and one NEVSISTER singles fit at 73.1
+(NCC 0.67) with no peak that reaches its band. Nothing was rescued from a raise.
+
+**What this is not yet.** Twin and NCC say the lanes now sit on receptors; they do not say the
+extraction got better. That is the held-out gate: per-chart F1 against the count-exact files
+through the old and the new lanes on the validation half (sign test, pre-registered effect), then
+the sealed half once - which needs sprite passes through the re-fitted lanes, and waits for the
+cache to finish. Nothing is promoted into `receptors.field()` before it passes. The held-out rows
+were run through the rule for this report (their verdict counts only, no extraction and no F1),
+and that is logged as one look per half in `sources/lanes/heldout-looks.jsonl`. Which pad is which
+on the official split screens is not decided here and will not be taken from the map's stored
+sides: it needs a 2x2 column+time F1 matrix from extractions of both fields.
+
 ## Beyond the census (sized 2026-09-06, listed in full 2026-09-08)
 
 The census was the *blatantly* wrong 121 — its cut was narrow on purpose: taps above the
