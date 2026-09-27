@@ -234,9 +234,10 @@ class Oracle:
         missing = [p for p in ORACLE_DATA if raw[p] is None]
         if missing:
             refuse("%s has no %s" % (tree.label, ", ".join(missing)))
+        self.census_cert = corpus_map.ledger_entries(_json(raw["sources/certification-2026-08-30.json"], {}))
         cert = corpus_map.merge_certification([
             corpus_map.ledger_entries(_json(raw["sources/certification-corpus-2026-09-10.json"], {})),
-            corpus_map.ledger_entries(_json(raw["sources/certification-2026-08-30.json"], {}))])
+            self.census_cert])
         self.cert = cert
         self.smap = corpus_map.merge_chart_map(_json(raw["sources/ssc-map-tail.json"], []),
                                                _json(raw["sources/ssc-map.json"], []))
@@ -869,7 +870,9 @@ def converter_inputs(data):
 
 def build_conflicts(oracle, rows, tree):
     """The charts whose certification the grade cannot trust, from the data alone:
-       same_side - a video certifies two or more charts on ONE side (one result screen per side);
+       same_side - a video certifies two or more charts on ONE side (one result screen per side).
+                   Where the census ledger (eye-verified) certifies one of them on that side, the
+                   census chart is the video's and only the others are listed;
        catalog   - the certified count is not the chart's Phoenix 1 catalog count while the file
                    already converts to that catalog count (the video likely shows another chart);
        twin      - the chart's block has a twin in its file with identical converter inputs."""
@@ -884,11 +887,18 @@ def build_conflicts(oracle, rows, tree):
         for n, c in sorted((oracle.cert[vid].get("charts") or {}).items()):
             if c.get("verdict") == "CERTIFIED":
                 by.setdefault(c.get("side") or "1p", []).append(n)
+        census = {n for n, c in ((oracle.census_cert.get(vid) or {}).get("charts") or {}).items()
+                  if c.get("verdict") == "CERTIFIED"}
         for side, names in sorted(by.items()):
             if len(names) > 1:
-                videos.append(dict(vid=vid, side=side, charts=names))
+                verified = sorted(set(names) & census)
+                videos.append(dict(vid=vid, side=side, charts=names, census_verified=verified))
                 for n in names:
-                    add(n, "same_side", "video %s certifies %s on %s" % (vid, " + ".join(names), side))
+                    if n in verified:
+                        continue
+                    add(n, "same_side", "video %s certifies %s on %s%s" % (
+                        vid, " + ".join(names), side,
+                        "; the census (eye-verified) says the screen is %s's" % " + ".join(verified) if verified else ""))
 
     cat = {}
     for c in oracle.catalog:
