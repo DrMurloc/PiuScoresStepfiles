@@ -58,7 +58,10 @@
 #   its running jobs killed and left unfinished — never as "finished".
 # - Every child runs in its own Windows job object (kill-on-close) as well as under taskkill /T:
 #   the piu-annotate venv's python.exe is a launcher that starts the real interpreter as a
-#   child, and a tool may start ffmpeg or a pool of its own. The job object reaps what
+#   child, and a tool may start ffmpeg or a pool of its own. The child is created suspended and
+#   resumed only once it is in the job, so the real interpreter can never start outside it (a
+#   supervisor descheduled between the two under load would otherwise lose it every time). The
+#   job object reaps what
 #   taskkill's parent-PID walk misses (an orphan whose parent already exited), and a child that
 #   exits leaving a grandchild running has the grandchild killed and counted in the ledger.
 # - Children run BELOW_NORMAL with CREATE_NO_WINDOW (a detached supervisor has no console, so a
@@ -161,6 +164,7 @@ BELOW_NORMAL = 0x00004000
 CREATE_NO_WINDOW = 0x08000000
 CREATE_NEW_PROCESS_GROUP = 0x00000200
 CREATE_BREAKAWAY_FROM_JOB = 0x01000000
+CREATE_SUSPENDED = 0x00000004
 QUIET = CREATE_NO_WINDOW if IS_WIN else 0
 
 
@@ -503,6 +507,12 @@ class ProcJob:
         if self.h:
             _CloseHandle(self.h)
             self.h = None
+
+
+def resume_created(proc):
+    """Start a child created with CREATE_SUSPENDED (every thread of it, through the process handle
+    Popen keeps; Popen closes the thread handle). Returns the NTSTATUS: 0 when it runs."""
+    return _NtResumeProcess(W.HANDLE(int(proc._handle)))
 
 
 def kill_tree(proc, pjob=None):
@@ -1215,8 +1225,11 @@ class Supervisor:
         self.attempts[jid] = attempt
         start = time.time()
         try:
+            # created suspended, and resumed only once it is in its job object: the venv's python.exe
+            # is a launcher, and started at once it could start the real interpreter before the
+            # assignment, outside the job (unfreezable, unreaped, uncounted)
             proc = subprocess.Popen(cmd, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=logf, stderr=subprocess.STDOUT,
-                                    creationflags=(BELOW_NORMAL | CREATE_NO_WINDOW) if IS_WIN else 0)
+                                    creationflags=(BELOW_NORMAL | CREATE_NO_WINDOW | CREATE_SUSPENDED) if IS_WIN else 0)
         except OSError as e:
             with contextlib.suppress(OSError):
                 logf.write(f"launch failed: {e}\n".encode("utf-8"))
@@ -1237,8 +1250,16 @@ class Supervisor:
         self.dequeue(job)
         self.running.append(r)
         if IS_WIN:
-            r.pjob = ProcJob()
-            r.assigned = r.pjob.assign(proc)
+            status = None
+            try:
+                r.pjob = ProcJob()
+                r.assigned = r.pjob.assign(proc)
+            finally:
+                status = resume_created(proc)          # whatever happened above, never leave it suspended
+            if status != 0:
+                self.event_safe("launch-unresumed", job=jid, pid=proc.pid, ntstatus=f"0x{status & 0xFFFFFFFF:08X}")
+                self.kill(r, "launch-error")
+                return
         if slot:
             try:
                 slot.set_child(proc.pid)
