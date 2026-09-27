@@ -81,6 +81,39 @@ elif mode == "orphan":
     mark("start", gc=grandchild(0x00000200)); mark("end")      # exits at once; its grandchild keeps running
 elif mode == "locked":
     mark("enter"); time.sleep(float(sys.argv[3])); mark("exit")
+elif mode == "lockrun":               # meet K at a barrier, wait for a go file ('-': none), then hold the commit lock
+    k, cap, go, lock_timeout, hold, sup = int(sys.argv[3]), float(sys.argv[4]), sys.argv[5], sys.argv[6], sys.argv[7], sys.argv[8]
+    mark("start")
+    end = time.time() + cap
+    while started() < k and time.time() < end:
+        time.sleep(0.05)
+    while go != "-" and not os.path.exists(go) and time.time() < end:
+        time.sleep(0.05)
+    t0 = time.time()
+    r = subprocess.run([sys.executable, "-X", "utf8", "-B", sup, "lock-exec", "--timeout", lock_timeout, "--",
+                        sys.executable, "-X", "utf8", "-B", __file__, "locked", out, hold])
+    mark("end", rc=r.returncode, waited=time.time() - t0)
+    print("VERDICT:", "LOCKED" if r.returncode == 0 else "LOCK_REFUSED", flush=True)
+    sys.exit(r.returncode)
+elif mode == "mutexspin":             # take and drop a rails mutex (40 ms held, 10 ms free) until a stop file exists
+    tools, mutex, stop, cap = sys.argv[3], sys.argv[4], sys.argv[5], float(sys.argv[6])
+    sys.path.insert(0, tools)
+    import supervise as S
+    mark("start")
+    end, n = time.time() + cap, 0
+    while not os.path.exists(stop) and time.time() < end:
+        with S.FileMutex(mutex):
+            time.sleep(0.04)
+        n += 1
+        time.sleep(0.01)
+    mark("end", holds=n)
+elif mode == "until":                 # start, then wait for a file (or a cap)
+    stop, cap = sys.argv[3], float(sys.argv[4])
+    mark("start")
+    end = time.time() + cap
+    while not os.path.exists(stop) and time.time() < end:
+        time.sleep(0.05)
+    mark("end")
 '''
 
 # Runs supervise.py with Supervisor.step replaced by one that raises a plain bug (not an OSError)
@@ -96,6 +129,31 @@ def step(self):
     return real(self)
 S.Supervisor.step = step
 sys.exit(S.main(sys.argv[2:]))
+'''
+
+# Runs supervise.py with the job-object assignment delayed 0.5 s after each launch (a supervisor
+# descheduled under load), and records every process each job's job object ever held.
+LATE_ASSIGN = r'''
+import json, os, sys, time
+sys.path.insert(0, sys.argv[1])
+import supervise as S
+record, seen = sys.argv[2], {}
+real_assign = S.ProcJob.assign
+def assign(self, proc):
+    time.sleep(0.5)
+    return real_assign(self, proc)
+S.ProcJob.assign = assign
+real_step = S.Supervisor.step
+def step(self):
+    for r in self.running:
+        if r.pjob:
+            seen.setdefault(r.job["id"], set()).update(r.pjob.pids())
+    with open(record + ".tmp", "w") as fh:
+        json.dump({k: sorted(v) for k, v in seen.items()}, fh)
+    os.replace(record + ".tmp", record)
+    return real_step(self)
+S.Supervisor.step = step
+sys.exit(S.main(sys.argv[3:]))
 '''
 
 # Runs loopcommit.py with a post-commit check that always finds a problem.
@@ -373,6 +431,178 @@ def d_preempt_stop(d):
     d.expect(wait_for(lambda: all(dead(pid) for pid in pids), 20), "a job outlived the STOP")
     os.remove(cfg)
     return f"max 1 froze 2 of 3; STOP killed both frozen at once, the running one after its grace ({time.time() - t_stop:.1f}s)"
+
+
+def set_max(d, value):
+    """Lower (or with None restore) the pool's limit, as `slots --max` does and a game starting does."""
+    cfg = os.path.join(d.state, ".slots", "config.json")
+    os.makedirs(os.path.dirname(cfg), exist_ok=True)
+    if value is None:
+        if os.path.exists(cfg):
+            S._retry(lambda: os.remove(cfg))           # a supervisor reading it holds it open for a moment
+    else:
+        S.write_json(cfg, {"max": value})
+
+
+def running_row(d, run, job):
+    return next((r for r in d.heartbeat(run).get("running", []) if r["job"] == job), None)
+
+
+def d_freeze_lock_holder(d):
+    """A job holding the commit lock when the limit drops is not frozen until it lets go (the pool
+    runs one past its limit meanwhile), so the oldest job still gets the lock and commits: a frozen
+    holder would refuse every loop's commits and reverts for as long as the game runs."""
+    go = os.path.join(d.dir, "go")
+    hold = 12
+    specs = [d.toyjob("p0", "lockrun", 3, BARRIER_WAIT_S, go, 45, 0.3, SUP),          # oldest: commits later
+             d.toyjob("p1", "hold", 3, BARRIER_WAIT_S, 15),                           # frozen
+             d.toyjob("p2", "lockrun", 3, BARRIER_WAIT_S, "-", 30, hold, SUP)]        # newest: holds the lock
+    p = d.sup_bg("run", "lockfreeze", "--jobs", d.jobs("j", specs), "--parallel", "3")
+    entered = wait_for(lambda: [m for m in d.marks("enter") if m["job"] == "p2"], BARRIER_WAIT_S)
+    d.expect(entered, "p2 never took the commit lock")
+    set_max(d, 1)
+
+    def settled():
+        p1, p2 = running_row(d, "lockfreeze", "p1"), running_row(d, "lockfreeze", "p2")
+        return p1 and p2 and p1.get("suspended") and p2.get("lock_pinned") and not p2.get("suspended")
+    pinned = wait_for(settled, 20)
+    status = d.sup("status", "lockfreeze").stdout
+    open(go, "w").close()
+    rc = p.wait(240)
+    set_max(d, None)
+    rows = {x["job"]: x for x in d.ledger("lockfreeze")}
+    marks = {(m["job"], m["kind"]): m for m in d.marks()}
+    held_for = (marks.get(("p2", "exit"), {}).get("t", 0) - marks.get(("p2", "enter"), {}).get("t", 0))
+    ev = d.events("lockfreeze")
+    deferred = [e for e in ev if e["event"] == "freeze-deferred" and e.get("job") == "p2"]
+    d.expect(pinned, f"with the limit at 1, p1 was not frozen while p2 (holding the lock) kept running: "
+                     f"{d.heartbeat('lockfreeze').get('running')}")
+    d.expect("holds the commit lock" in status, f"status does not say why p2 runs past the limit:\n{status}")
+    d.expect(rc == 0 and len(rows) == 3, f"exit {rc}, rows {sorted(rows)}")
+    d.expect(rows.get("p0", {}).get("verdict") == "LOCKED" and rows.get("p2", {}).get("verdict") == "LOCKED",
+             f"verdicts {[(j, x.get('verdict')) for j, x in rows.items()]}: a job lost its commit to a frozen lock holder")
+    d.expect(0 < held_for < hold + 4, f"p2 held the lock {held_for:.1f}s for a {hold}s hold: it was frozen holding it")
+    d.expect(deferred and "commit lock" in deferred[0].get("reason", ""), f"no freeze-deferred event for p2: {[e['event'] for e in ev]}")
+    d.expect(rows.get("p1", {}).get("suspended_s", 0) > 0 and rows.get("p0", {}).get("suspended_s") == 0,
+             f"frozen time {[(j, x.get('suspended_s')) for j, x in rows.items()]}")
+    return (f"limit 1: p1 frozen, p2 left running while it held the lock ({held_for:.1f}s for a {hold}s hold), "
+            f"p0 then took it in {marks.get(('p0', 'end'), {}).get('waited', 0):.1f}s: LOCKED")
+
+
+def d_freeze_mutex(d):
+    """A job is never frozen inside a rails mutex: the supervisor holds them all while it freezes.
+    The newest job takes and drops the commit lock's mutex (held 80% of the time); it is frozen and
+    thawed ten times, and after each freeze the mutex must be free at once."""
+    stop = os.path.join(d.dir, "stop")
+    mutex = os.path.join(d.state, ".commit.lock.mutex")
+    specs = [d.toyjob("old", "until", stop, BARRIER_WAIT_S + 120),
+             d.toyjob("spin", "mutexspin", TOOLS, mutex, stop, BARRIER_WAIT_S + 120)]
+    p = d.sup_bg("run", "mutexfreeze", "--jobs", d.jobs("j", specs), "--parallel", "2")
+    d.expect(wait_for(lambda: len(d.marks("start")) == 2, BARRIER_WAIT_S), "the two jobs never both started")
+    time.sleep(1.0)
+    results = []
+    for _ in range(10):
+        set_max(d, 1)
+        frozen = wait_for(lambda: (running_row(d, "mutexfreeze", "spin") or {}).get("suspended"), 15)
+        if not frozen:
+            results.append("not frozen")
+            break
+        t0 = time.time()
+        try:
+            with S.FileMutex(mutex, timeout=3):
+                results.append(round(time.time() - t0, 2))
+        except TimeoutError:
+            results.append("HELD")
+        set_max(d, None)
+        wait_for(lambda: not (running_row(d, "mutexfreeze", "spin") or {}).get("suspended"), 15)
+        time.sleep(0.3)
+    open(stop, "w").close()
+    rc = p.wait(120)
+    holds = [m.get("holds", 0) for m in d.marks("end") if m["job"] == "spin"]
+    d.expect(len(results) == 10 and all(isinstance(x, float) for x in results),
+             f"after a freeze the mutex was not free at once: {results} (HELD = the frozen job was inside it)")
+    d.expect(rc == 0 and holds and holds[0] > 50, f"exit {rc}; the spinning job took the mutex {holds} times")
+    return f"10 freezes of a job holding the mutex 80% of the time; free after each in {results} s"
+
+
+def d_frozen_lock_wait(d):
+    """A job frozen while it waits for the commit lock is not refused the moment it thaws: a lock
+    wait counts only the time its process was awake (frozen 16 s, then 2 s more, under a 10 s --timeout)."""
+    go, release = os.path.join(d.dir, "go"), os.path.join(d.dir, "release")
+    lock = os.path.join(d.state, ".commit.lock")
+    p = d.sup_bg("run", "lockwait", "--jobs", d.jobs("j", [d.toyjob("w", "lockrun", 1, BARRIER_WAIT_S, go, 10, 0.2, SUP)]))
+    d.expect(wait_for(lambda: d.marks("start"), BARRIER_WAIT_S), "the job never started")
+    holder = subprocess.Popen(PY + [SUP, "lock-exec", "--run", "holder", "--", *PY, "-c",
+                                    f"import os,time; [time.sleep(0.05) for _ in iter(lambda: os.path.exists({release!r}), True)]"],
+                              env=d.env, creationflags=FLAGS, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    d.expect(wait_for(lambda: (S.read_json(lock) or {}).get("child"), 60), "the outside holder never took the lock")
+    open(go, "w").close()
+    log = os.path.join(d.run_dir("lockwait"), "logs", S.log_name("w"))
+    waiting = wait_for(lambda: os.path.exists(log) and "waiting for the commit lock" in open(log, encoding="utf-8", errors="replace").read(),
+                       BARRIER_WAIT_S)
+    d.expect(waiting, "the job never started waiting for the lock")
+    set_max(d, 0)
+    frozen = wait_for(lambda: (running_row(d, "lockwait", "w") or {}).get("suspended"), 15)
+    d.expect(frozen, "the waiting job was not frozen")
+    time.sleep(16)
+    set_max(d, None)
+    thawed = wait_for(lambda: not (running_row(d, "lockwait", "w") or {}).get("suspended"), 15)
+    time.sleep(2)
+    open(release, "w").close()
+    rc = p.wait(120)
+    holder.wait(60)
+    rows = d.ledger("lockwait")
+    end = [m for m in d.marks("end") if m["job"] == "w"]
+    d.expect(thawed, "the job was not thawed")
+    d.expect(rc == 0 and rows and rows[0]["verdict"] == "LOCKED",
+             f"exit {rc}, verdict {rows[0]['verdict'] if rows else None}: the thawed job was refused the lock "
+             "for time it spent frozen")
+    waited = end[0].get("waited", 0) if end else 0
+    d.expect(waited > 17, f"the job waited only {waited:.1f}s of wall time: the drill did not freeze it past its timeout")
+    return f"frozen past its 10 s lock timeout, waited {waited:.1f}s of wall time, then took the lock: LOCKED"
+
+
+def d_late_assign(d):
+    """Children start suspended and run only once they are in their job object: with the assignment
+    delayed 0.5 s (a supervisor descheduled under load), the real interpreter the venv launcher
+    starts is still inside the job."""
+    late = d.script("late.py", LATE_ASSIGN)
+    record = os.path.join(d.dir, "jobpids.json")
+    path = d.jobs("j", [d.toyjob(f"a{i}", "sleep", 2.5) for i in range(4)])
+    r = d.sup(record, "run", "late", "--jobs", path, "--parallel", "4", wrapper=late)
+    seen = json.load(open(record)) if os.path.exists(record) else {}
+    starts = {m["job"]: m["pid"] for m in d.marks("start")}
+    rows = d.ledger("late")
+    outside = sorted(j for j, pid in starts.items() if pid not in seen.get(j, []))
+    d.expect(r.returncode == 0 and len(rows) == 4 and all(x["verdict"] == "OK" and x["job_object"] for x in rows),
+             f"exit {r.returncode}; rows {[(x['job'], x['verdict'], x['job_object']) for x in rows]}: {r.stdout[-300:]}")
+    d.expect(len(starts) == 4 and not outside, f"the real interpreter ran outside its job object in {outside} "
+                                              f"(interpreters {starts}, job objects held {seen})")
+    return f"4 launches with a 0.5 s late assignment: every interpreter inside its job ({sum(map(len, seen.values()))} processes seen)"
+
+
+def d_jobs_bom(d):
+    """A jobs file PowerShell wrote (a byte-order mark, CRLF lines) runs, as does a BOM'd .json list
+    and a BOM'd slots config."""
+    bom = "﻿"
+    jl = os.path.join(d.dir, "bom.jsonl")
+    with open(jl, "w", encoding="utf-8", newline="") as fh:
+        fh.write(bom + "".join(json.dumps(d.toyjob(f"b{i}", "sleep", 0.1)) + "\r\n" for i in range(2)))
+    js = os.path.join(d.dir, "bom.json")
+    with open(js, "w", encoding="utf-8", newline="") as fh:
+        fh.write(bom + json.dumps([d.toyjob("c0", "sleep", 0.1)]) + "\r\n")
+    r1 = d.sup("run", "bomjsonl", "--jobs", jl)
+    r2 = d.sup("run", "bomjson", "--jobs", js)
+    cfg = os.path.join(d.state, ".slots", "config.json")
+    os.makedirs(os.path.dirname(cfg), exist_ok=True)
+    with open(cfg, "w", encoding="utf-8", newline="") as fh:
+        fh.write(bom + '{"max": 1}\r\n')
+    slots = d.sup("slots")
+    os.remove(cfg)
+    d.expect(r1.returncode == 0 and len(d.ledger("bomjsonl")) == 2, f"BOM jsonl: exit {r1.returncode} {r1.stderr[-300:]}")
+    d.expect(r2.returncode == 0 and len(d.ledger("bomjson")) == 1, f"BOM json: exit {r2.returncode} {r2.stderr[-300:]}")
+    d.expect(slots.stdout.startswith("0/1 "), f"a BOM'd slots config was not honored: {slots.stdout[:200]}")
+    return "BOM + CRLF jsonl, BOM .json list and BOM slots config all read"
 
 
 def d_stop_run(d):
@@ -785,8 +1015,24 @@ def d_loopcommit(d):
     trailer = git(repo, "log", "-1", "--format=%(trailers:key=Loop-Run,valueonly)")
     d.expect(trailer == "R1", f"trailer {trailer!r}")
     d.expect("Co-Authored-By: Claude Opus 5.5" in git(repo, "log", "-1", "--format=%B"), "no Co-Authored-By trailer")
+    # a body file PowerShell wrote (BOM, CRLF), and the same body piped to stdin with a BOM
+    body = os.path.join(d.dir, "body.txt")
+    with open(body, "w", encoding="utf-8", newline="") as fh:
+        fh.write("﻿#TICKCOUNTS first line\r\nsecond line\r\n")
+    write(repo, "a.txt", "a v4\n")
+    r = lc("commit", "--repo", repo, "--run", "R1", "-m", "bom body", "--body-file", body, "--", "a.txt")
+    msg = git(repo, "log", "-1", "--format=%B")
+    d.expect(r.returncode == 0 and "﻿" not in msg and "\n#TICKCOUNTS first line" in msg,
+             f"a BOM'd body file: exit {r.returncode}, message {msg[:120]!r}: {r.stderr[-200:]}")
+    write(repo, "a.txt", "a v5\n")
+    piped = subprocess.run(PY + [LC, "commit", "--repo", repo, "--run", "R1", "-m", "bom stdin", "--body-file", "-", "--", "a.txt"],
+                           env=d.env, input="﻿piped body\n".encode("utf-8"), capture_output=True, creationflags=FLAGS)
+    msg = git(repo, "log", "-1", "--format=%B")
+    d.expect(piped.returncode == 0 and "﻿" not in msg and "\npiped body" in msg,
+             f"a BOM on stdin: exit {piped.returncode}, message {msg[:120]!r}")
     return ("refused (exit 2): undeclared staged, unchanged, ignored, outside, other drive, spoofed trailer, main, "
-            "lock timeout, changed converter; failed check undone (exit 3); committed exactly a file, a folder and a delete")
+            "lock timeout, changed converter; failed check undone (exit 3); committed exactly a file, a folder and a "
+            "delete; a BOM'd body file or stdin leaves no BOM in the message")
 
 
 def d_revert_run(d):
@@ -970,6 +1216,8 @@ def d_worktree(d):
 
 DRILLS = [("slot_limit", d_slot_limit), ("slot_two_supervisors", d_slot_two_supervisors),
           ("slot_gaming", d_slot_gaming), ("gaming_preempt", d_gaming_preempt), ("preempt_stop", d_preempt_stop),
+          ("freeze_lock_holder", d_freeze_lock_holder), ("freeze_mutex", d_freeze_mutex),
+          ("frozen_lock_wait", d_frozen_lock_wait), ("late_assign", d_late_assign), ("jobs_bom", d_jobs_bom),
           ("stop_run", d_stop_run), ("stop_grace_kill", d_stop_grace_kill), ("timeout", d_timeout),
           ("resume", d_resume), ("crash", d_crash), ("commit_lock", d_commit_lock), ("stale_lock", d_stale_lock),
           ("disk_pause", d_disk_pause), ("pin_drift", d_pin_drift), ("detach", d_detach),
