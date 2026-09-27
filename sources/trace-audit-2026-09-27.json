@@ -1,12 +1,12 @@
 {
- "generated": "2026-09-27 11:21",
+ "generated": "2026-09-27 14:34",
  "tool": "tools/trace_audit.py",
- "audit_version": "d2cdb26222103bc174e88271f7b58f40979e93f5f271b0c06fce8804487d7266",
+ "audit_version": "3794914c10f294227b941ca68ee843b5c49513bd11331a5d89b38900542e6936",
  "audit_sources": {
-  "tools/atomicio.py": "c4385fa0bbdce4470e759919d09dfcfbd13ebfc8fef46746dc212f6a2776254f",
+  "tools/atomicio.py": "e03367e03e0c5a5ca9f4d27a0c1a8ee86cc67592255cd599f565605c3129c9d7",
   "tools/author_ticks.py": "af1214f18077c48b1c34052ee68390580a90bdffa0468d2c586cb2de59ef23ec",
   "tools/cachekey.py": "1bef2d776aec6b047a18d65c3ef237eb5bd41b1fa1caceef5d3bd2ce451b7695",
-  "tools/combo_reader.py": "f8302c5b08f800d5f34c79c1781a6bbc90aff899cec4bbade9e2d7a79d0683d9",
+  "tools/combo_reader.py": "d6a6078e594a022fb0b920fb189388f407d0be61e892ac3601b28e212f8de0fc",
   "tools/corpus_map.py": "a6cfdc350a7c7d18abce1f5f74528e831f993703764543cdba048f96cf8fc59c",
   "tools/edit_notes.py": "d35a96f6847572a0bd107ec7def4bfaa4267dd1d80fdf57d134f124817729854",
   "tools/extract_repair.py": "aa37d482ca96ae6dc278a43e14ca20779236b54120c19b8d1606a11308e942fe",
@@ -16,10 +16,11 @@
   "tools/note_extract.py": "5a4f61631decb0e42946f1bb2fa5a90410bf9e8f4f8234c737d498f23b51cba3",
   "tools/quantize.py": "2e38058caf2581cce17672c1424ae9bfddc8797b11dd131df1cef19b96788e65",
   "tools/receptors.py": "33216fc9167901f44b89d13582a7cc47af1edf2e41f3e1078ef39f706cc7b27a",
+  "tools/shadowcheck.py": "1bf2442eb0169bea90a9d29b9f8a9f1d8030ee1414e21820e1e449e7462f4534",
   "tools/sprites.py": "acdbb6a21001d2cc0afde66fad9d204f0b47faccb5cb0603f79244ed6bf00102",
   "tools/tick_model.py": "9b3293cec16e0219ec90b1ea03e661fb1eeed16a12f6b1b8c8e2d80b7d4350bb",
   "tools/tick_repair.py": "1f3c5140ec896d235ebb4d36dae19db0fe8de054a0101e579b97a4ca6a07bef2",
-  "tools/trace_audit.py": "e5f5e793c8cd80e670153198de97cc65d07cf1f0cecb6e4639873c2a7ae47989",
+  "tools/trace_audit.py": "8f3ef79c4e6e5c4b5a381020ad5183c27efba033d570ec7fc52f30db8985fe17",
   "piu_annotate/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "piu_annotate/utils.py": "88fa36b9e274aa61388684307a566d8ff79c8b342b742c08063ccffd21991453",
   "piu_annotate/formats/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -68,7 +69,7 @@
    ]
   ]
  },
- "head": "02ce4ff0370bd2effdbf6c0b34340dfc99c648eb",
+ "head": "8a22d6ec13ade66ba310fe6c0d1efef581b06c40",
  "import_rev": "a23cee5",
  "converter": {
   "module": "piu_annotate/formats/ssc_to_chartstruct.py",
@@ -111,7 +112,7 @@
   "independent UNCOVERED": 6,
   "None UNCOVERED": 86
  },
- "seconds": 8.5,
+ "seconds": 7.9,
  "charts": [
   {
    "chart": "2006. LOVE SONG D14",
@@ -161,7 +162,7 @@
      93.028
     ]
    ],
-   "seconds": 0.43,
+   "seconds": 0.42,
    "whole": {
     "strong": 2,
     "evidence": 984,
@@ -264,7 +265,7 @@
      92.475
     ]
    ],
-   "seconds": 0.18,
+   "seconds": 0.17,
    "whole": {
     "strong": 8,
     "evidence": 732,
@@ -354,7 +355,7 @@
      84.85
     ]
    ],
-   "seconds": 0.37,
+   "seconds": 0.36,
    "whole": {
     "strong": 1,
     "evidence": 1925,
@@ -538,7 +539,7 @@
      71.452
     ]
    ],
-   "seconds": 0.38,
+   "seconds": 0.37,
    "whole": {
     "strong": 8,
     "evidence": 557,
@@ -646,7 +647,7 @@
      90.269
     ]
    ],
-   "seconds": 0.29,
+   "seconds": 0.28,
    "whole": {
     "strong": 3,
     "evidence": 912,
@@ -1247,7 +1248,7 @@
      66.501
     ]
    ],
-   "seconds": 0.25,
+   "seconds": 0.29,
    "whole": {
     "strong": 11,
     "evidence": 1074,
@@ -1384,7 +1385,7 @@
     "miss": 0
    },
    "timing_change": 104.5946,
-   "seconds": 0.07,
+   "seconds": 0.06,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for UJjQiElua9w band C"
@@ -1484,7 +1485,7 @@
      122.828
     ]
    ],
-   "seconds": 0.7,
+   "seconds": 0.75,
    "whole": {
     "strong": 1,
     "evidence": 63,
@@ -1930,7 +1931,7 @@
      298.794
     ]
    ],
-   "seconds": 0.86,
+   "seconds": 1.17,
    "whole": {
     "strong": 10,
     "evidence": 398,
@@ -2504,7 +2505,7 @@
      91.401
     ]
    ],
-   "seconds": 0.22,
+   "seconds": 0.21,
    "whole": {
     "strong": 11,
     "evidence": 458,
@@ -2596,7 +2597,7 @@
      84.694
     ]
    ],
-   "seconds": 0.17,
+   "seconds": 0.19,
    "whole": {
     "strong": 8,
     "evidence": 724,
@@ -2688,7 +2689,7 @@
      83.452
     ]
    ],
-   "seconds": 0.17,
+   "seconds": 0.23,
    "whole": {
     "strong": 6,
     "evidence": 526,
@@ -2789,7 +2790,7 @@
      98.007
     ]
    ],
-   "seconds": 0.18,
+   "seconds": 0.19,
    "whole": {
     "strong": 8,
     "evidence": 1100,
@@ -2896,7 +2897,7 @@
      95.878
     ]
    ],
-   "seconds": 0.23,
+   "seconds": 0.25,
    "whole": {
     "strong": 7,
     "evidence": 525,
@@ -3068,7 +3069,7 @@
      80.252
     ]
    ],
-   "seconds": 0.17,
+   "seconds": 0.2,
    "whole": {
     "strong": 13,
     "evidence": 811,
@@ -3162,7 +3163,7 @@
      102.191
     ]
    ],
-   "seconds": 0.17,
+   "seconds": 0.2,
    "whole": {
     "strong": 5,
     "evidence": 265,
@@ -3256,7 +3257,7 @@
      49.523
     ]
    ],
-   "seconds": 0.14,
+   "seconds": 0.18,
    "whole": {
     "strong": 3,
     "evidence": 140,
@@ -3399,7 +3400,7 @@
      49.523
     ]
    ],
-   "seconds": 0.15,
+   "seconds": 0.18,
    "whole": {
     "strong": 2,
     "evidence": 42,
@@ -3557,7 +3558,7 @@
      49.523
     ]
    ],
-   "seconds": 0.16,
+   "seconds": 0.21,
    "whole": {
     "strong": 2,
     "evidence": 178,
@@ -3755,7 +3756,7 @@
      4.017
     ]
    ],
-   "seconds": 0.3,
+   "seconds": 0.33,
    "whole": {
     "strong": 10,
     "evidence": 847,
@@ -3858,7 +3859,7 @@
      40.142
     ]
    ],
-   "seconds": 0.31,
+   "seconds": 0.33,
    "whole": {
     "strong": 9,
     "evidence": 1140,
@@ -4048,7 +4049,7 @@
      120.0
     ]
    ],
-   "seconds": 0.37,
+   "seconds": 0.43,
    "whole": {
     "strong": 1,
     "evidence": 27,
@@ -4456,7 +4457,7 @@
     "bad": 1,
     "miss": 4
    },
-   "seconds": 0.18,
+   "seconds": 0.21,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for 26lAell5CFk band C"
@@ -4647,7 +4648,7 @@
      84.398
     ]
    ],
-   "seconds": 0.15,
+   "seconds": 0.17,
    "whole": {
     "strong": 1,
     "evidence": 1659,
@@ -5078,7 +5079,7 @@
      102.683
     ]
    ],
-   "seconds": 0.22,
+   "seconds": 0.25,
    "whole": {
     "strong": 7,
     "evidence": 823,
@@ -5189,7 +5190,7 @@
      66.131
     ]
    ],
-   "seconds": 0.2,
+   "seconds": 0.21,
    "whole": {
     "strong": 1,
     "evidence": 45,
@@ -5478,7 +5479,7 @@
      140.6
     ]
    ],
-   "seconds": 0.7,
+   "seconds": 0.76,
    "whole": {
     "strong": 0,
     "evidence": 0,
@@ -5956,7 +5957,7 @@
      53.0
     ]
    ],
-   "seconds": 0.17,
+   "seconds": 0.18,
    "whole": {
     "strong": 3,
     "evidence": 81,
@@ -6372,7 +6373,7 @@
      53.4
     ]
    ],
-   "seconds": 0.17,
+   "seconds": 0.24,
    "whole": {
     "strong": 0,
     "evidence": 0,
@@ -6481,7 +6482,7 @@
      97.531
     ]
    ],
-   "seconds": 0.18,
+   "seconds": 0.21,
    "whole": {
     "strong": 9,
     "evidence": 1029,
@@ -6800,7 +6801,7 @@
      97.557
     ]
    ],
-   "seconds": 0.18,
+   "seconds": 0.24,
    "whole": {
     "strong": 2,
     "evidence": 778,
@@ -6975,7 +6976,7 @@
      110.35
     ]
    ],
-   "seconds": 0.34,
+   "seconds": 0.36,
    "whole": {
     "strong": 2,
     "evidence": 763,
@@ -7171,7 +7172,7 @@
      107.6
     ]
    ],
-   "seconds": 0.4,
+   "seconds": 0.39,
    "whole": {
     "strong": 8,
     "evidence": 546,
@@ -7432,7 +7433,7 @@
     "bad": 1,
     "miss": 2
    },
-   "seconds": 0.08,
+   "seconds": 0.09,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for QAPaDpe5AVM band C"
@@ -7793,7 +7794,7 @@
      22.389
     ]
    ],
-   "seconds": 0.31,
+   "seconds": 0.36,
    "whole": {
     "strong": 7,
     "evidence": 350,
@@ -7894,7 +7895,7 @@
      60.37
     ]
    ],
-   "seconds": 0.2,
+   "seconds": 0.19,
    "whole": {
     "strong": 3,
     "evidence": 249,
@@ -7957,7 +7958,7 @@
     "bad": 1,
     "miss": 0
    },
-   "seconds": 0.09,
+   "seconds": 0.1,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for Ys-1MMRxwL0 band C"
@@ -8093,7 +8094,7 @@
      57.075
     ]
    ],
-   "seconds": 0.2,
+   "seconds": 0.21,
    "whole": {
     "strong": 3,
     "evidence": 139,
@@ -8221,7 +8222,7 @@
     "bad": 1,
     "miss": 1
    },
-   "seconds": 0.1,
+   "seconds": 0.13,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for D5zLc3PhQtE band C"
@@ -8300,7 +8301,7 @@
      96.692
     ]
    ],
-   "seconds": 0.29,
+   "seconds": 0.3,
    "whole": {
     "strong": 2,
     "evidence": 893,
@@ -8403,7 +8404,7 @@
      97.663
     ]
    ],
-   "seconds": 0.24,
+   "seconds": 0.29,
    "whole": {
     "strong": 9,
     "evidence": 826,
@@ -8532,7 +8533,7 @@
      96.552
     ]
    ],
-   "seconds": 0.27,
+   "seconds": 0.2,
    "whole": {
     "strong": 10,
     "evidence": 599,
@@ -8660,7 +8661,7 @@
      99.25
     ]
    ],
-   "seconds": 0.57,
+   "seconds": 0.56,
    "whole": {
     "strong": 1,
     "evidence": 12,
@@ -9043,7 +9044,7 @@
      98.6
     ]
    ],
-   "seconds": 0.63,
+   "seconds": 0.49,
    "whole": {
     "strong": 1,
     "evidence": 8,
@@ -9385,7 +9386,7 @@
     "bad": 1,
     "miss": 2
    },
-   "seconds": 0.18,
+   "seconds": 0.17,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for iOyrIsbNATA band C"
@@ -9543,7 +9544,7 @@
     "rest_dropped": 21
    },
    "brackets": [],
-   "seconds": 0.44,
+   "seconds": 0.39,
    "whole": {
     "strong": 5,
     "evidence": 353,
@@ -9670,7 +9671,7 @@
      92.339
     ]
    ],
-   "seconds": 0.27,
+   "seconds": 0.24,
    "whole": {
     "strong": 1,
     "evidence": 1045,
@@ -9764,7 +9765,7 @@
      58.569
     ]
    ],
-   "seconds": 0.2,
+   "seconds": 0.18,
    "whole": {
     "strong": 1,
     "evidence": 2004,
@@ -9833,7 +9834,7 @@
     "bad": 0,
     "miss": 2
    },
-   "seconds": 0.17,
+   "seconds": 0.19,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for nhAI_6qN6gs band C"
@@ -9898,7 +9899,7 @@
      97.379
     ]
    ],
-   "seconds": 0.32,
+   "seconds": 0.3,
    "whole": {
     "strong": 16,
     "evidence": 664,
@@ -9987,7 +9988,7 @@
     "bad": 0,
     "miss": 0
    },
-   "seconds": 0.15,
+   "seconds": 0.13,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for AMUXSFsvko4 band C"
@@ -10049,7 +10050,7 @@
     "rest_dropped": 0
    },
    "brackets": [],
-   "seconds": 0.38,
+   "seconds": 0.39,
    "whole": {
     "strong": 3,
     "evidence": 309,
@@ -10186,7 +10187,7 @@
      50.152
     ]
    ],
-   "seconds": 0.21,
+   "seconds": 0.17,
    "whole": {
     "strong": 0,
     "evidence": 0,
@@ -10307,7 +10308,7 @@
      50.152
     ]
    ],
-   "seconds": 0.27,
+   "seconds": 0.31,
    "whole": {
     "strong": 0,
     "evidence": 0,
@@ -10412,7 +10413,7 @@
     "rest_dropped": 24
    },
    "brackets": [],
-   "seconds": 0.3,
+   "seconds": 0.34,
    "whole": {
     "strong": 8,
     "evidence": 739,
@@ -10573,7 +10574,7 @@
      124.933
     ]
    ],
-   "seconds": 0.3,
+   "seconds": 0.28,
    "whole": {
     "strong": 0,
     "evidence": 0,
@@ -10691,7 +10692,7 @@
      54.061
     ]
    ],
-   "seconds": 0.24,
+   "seconds": 0.28,
    "whole": {
     "strong": 4,
     "evidence": 248,
@@ -11083,7 +11084,7 @@
      54.159
     ]
    ],
-   "seconds": 0.24,
+   "seconds": 0.25,
    "whole": {
     "strong": 1,
     "evidence": 9,
@@ -11484,7 +11485,7 @@
     "bad": 6,
     "miss": 10
    },
-   "seconds": 0.13,
+   "seconds": 0.14,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for uv28TOVcMiA band C"
@@ -11578,7 +11579,7 @@
     "bad": 0,
     "miss": 1
    },
-   "seconds": 0.13,
+   "seconds": 0.14,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for LCMJoe7QjKM band C"
@@ -11680,7 +11681,7 @@
      55.457
     ]
    ],
-   "seconds": 0.16,
+   "seconds": 0.13,
    "whole": {
     "strong": 1,
     "evidence": 306,
@@ -11792,7 +11793,7 @@
      46.35
     ]
    ],
-   "seconds": 0.26,
+   "seconds": 0.25,
    "whole": {
     "strong": 2,
     "evidence": 860,
@@ -12036,7 +12037,7 @@
      100.029
     ]
    ],
-   "seconds": 0.27,
+   "seconds": 0.35,
    "whole": {
     "strong": 1,
     "evidence": 575,
@@ -12163,7 +12164,7 @@
      57.637
     ]
    ],
-   "seconds": 0.24,
+   "seconds": 0.22,
    "whole": {
     "strong": 1,
     "evidence": 11,
@@ -12435,7 +12436,7 @@
      109.998
     ]
    ],
-   "seconds": 0.28,
+   "seconds": 0.39,
    "whole": {
     "strong": 1,
     "evidence": 330,
@@ -12524,7 +12525,7 @@
     "rest_dropped": 6
    },
    "brackets": [],
-   "seconds": 0.19,
+   "seconds": 0.21,
    "whole": {
     "strong": 5,
     "evidence": 1012,
@@ -12645,7 +12646,7 @@
      37.933
     ]
    ],
-   "seconds": 0.19,
+   "seconds": 0.22,
    "whole": {
     "strong": 1,
     "evidence": 8,
@@ -12891,7 +12892,7 @@
      70.889
     ]
    ],
-   "seconds": 0.33,
+   "seconds": 0.3,
    "whole": {
     "strong": 5,
     "evidence": 236,
@@ -13100,7 +13101,7 @@
      98.863
     ]
    ],
-   "seconds": 0.26,
+   "seconds": 0.32,
    "whole": {
     "strong": 2,
     "evidence": 1063,
@@ -13208,7 +13209,7 @@
      98.227
     ]
    ],
-   "seconds": 0.29,
+   "seconds": 0.31,
    "whole": {
     "strong": 2,
     "evidence": 1117,
@@ -13356,7 +13357,7 @@
      99.29
     ]
    ],
-   "seconds": 0.28,
+   "seconds": 0.31,
    "whole": {
     "strong": 13,
     "evidence": 916,
@@ -13467,7 +13468,7 @@
     "bad": 0,
     "miss": 1
    },
-   "seconds": 0.18,
+   "seconds": 0.17,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for yy6EH4q9-QI band R"
@@ -13597,7 +13598,7 @@
     "bad": 0,
     "miss": 0
    },
-   "seconds": 0.17,
+   "seconds": 0.14,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for XX3igOboGV8 band L"
@@ -13686,7 +13687,7 @@
      59.194
     ]
    ],
-   "seconds": 0.24,
+   "seconds": 0.23,
    "whole": {
     "strong": 2,
     "evidence": 304,
@@ -13999,7 +14000,7 @@
      45.6
     ]
    ],
-   "seconds": 0.21,
+   "seconds": 0.17,
    "whole": {
     "strong": 0,
     "evidence": 0,
@@ -14262,7 +14263,7 @@
      45.6
     ]
    ],
-   "seconds": 0.16,
+   "seconds": 0.19,
    "whole": {
     "strong": 1,
     "evidence": 53,
@@ -14405,7 +14406,7 @@
      45.6
     ]
    ],
-   "seconds": 0.24,
+   "seconds": 0.27,
    "whole": {
     "strong": 0,
     "evidence": 0,
@@ -14535,7 +14536,7 @@
      96.468
     ]
    ],
-   "seconds": 0.23,
+   "seconds": 0.22,
    "whole": {
     "strong": 12,
     "evidence": 800,
@@ -15076,7 +15077,7 @@
     "rest_dropped": 20
    },
    "brackets": [],
-   "seconds": 0.33,
+   "seconds": 0.35,
    "whole": {
     "strong": 8,
     "evidence": 487,
@@ -15174,7 +15175,7 @@
     "rest_dropped": 27
    },
    "brackets": [],
-   "seconds": 0.24,
+   "seconds": 0.25,
    "whole": {
     "strong": 1,
     "evidence": 1664,
@@ -15298,7 +15299,7 @@
      85.24
     ]
    ],
-   "seconds": 0.21,
+   "seconds": 0.27,
    "whole": {
     "strong": 1,
     "evidence": 1182,
@@ -15390,7 +15391,7 @@
      87.071
     ]
    ],
-   "seconds": 0.22,
+   "seconds": 0.23,
    "whole": {
     "strong": 1,
     "evidence": 893,
@@ -15482,7 +15483,7 @@
      96.055
     ]
    ],
-   "seconds": 0.27,
+   "seconds": 0.32,
    "whole": {
     "strong": 9,
     "evidence": 621,
@@ -15583,7 +15584,7 @@
      95.6
     ]
    ],
-   "seconds": 0.23,
+   "seconds": 0.26,
    "whole": {
     "strong": 17,
     "evidence": 732,
@@ -15682,7 +15683,7 @@
      95.6
     ]
    ],
-   "seconds": 0.32,
+   "seconds": 0.3,
    "whole": {
     "strong": 10,
     "evidence": 325,
@@ -15794,7 +15795,7 @@
     "rest_dropped": 0
    },
    "brackets": [],
-   "seconds": 0.19,
+   "seconds": 0.21,
    "whole": {
     "strong": 1,
     "evidence": 1940,
@@ -15857,7 +15858,7 @@
     "bad": 6,
     "miss": 16
    },
-   "seconds": 0.25,
+   "seconds": 0.22,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for FEXpbeWpYrI band C"
@@ -15937,7 +15938,7 @@
      47.255
     ]
    ],
-   "seconds": 0.18,
+   "seconds": 0.2,
    "whole": {
     "strong": 1,
     "evidence": 33,
@@ -16052,7 +16053,7 @@
     "bad": 0,
     "miss": 0
    },
-   "seconds": 0.11,
+   "seconds": 0.09,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for Ip9-ro43B1M band C"
@@ -16132,7 +16133,7 @@
      57.6
     ]
    ],
-   "seconds": 0.2,
+   "seconds": 0.15,
    "whole": {
     "strong": 7,
     "evidence": 434,
@@ -16305,7 +16306,7 @@
      115.5
     ]
    ],
-   "seconds": 0.83,
+   "seconds": 1.01,
    "whole": {
     "strong": 2,
     "evidence": 37,
@@ -16580,7 +16581,7 @@
     "bad": 0,
     "miss": 3
    },
-   "seconds": 0.94,
+   "seconds": 1.07,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no video clock: no extraction or tick-loop alignment; measuring one failed (the measured clock fitted only 6 notes)"
@@ -16725,7 +16726,7 @@
      115.5
     ]
    ],
-   "seconds": 0.9,
+   "seconds": 0.84,
    "whole": {
     "strong": 3,
     "evidence": 124,
@@ -17109,7 +17110,7 @@
      115.65
     ]
    ],
-   "seconds": 0.98,
+   "seconds": 1.16,
    "whole": {
     "strong": 0,
     "evidence": 0,
@@ -17423,7 +17424,7 @@
      56.457
     ]
    ],
-   "seconds": 0.19,
+   "seconds": 0.18,
    "whole": {
     "strong": 3,
     "evidence": 303,
@@ -17598,7 +17599,7 @@
      90.7
     ]
    ],
-   "seconds": 0.24,
+   "seconds": 0.31,
    "whole": {
     "strong": 5,
     "evidence": 1385,
@@ -17716,7 +17717,7 @@
      96.001
     ]
    ],
-   "seconds": 0.23,
+   "seconds": 0.26,
    "whole": {
     "strong": 11,
     "evidence": 659,
@@ -17812,7 +17813,7 @@
      97.081
     ]
    ],
-   "seconds": 0.32,
+   "seconds": 0.38,
    "whole": {
     "strong": 8,
     "evidence": 152,
@@ -17974,7 +17975,7 @@
      3.397
     ]
    ],
-   "seconds": 0.19,
+   "seconds": 0.27,
    "whole": {
     "strong": 1,
     "evidence": 2083,
@@ -18086,7 +18087,7 @@
      56.6
     ]
    ],
-   "seconds": 0.17,
+   "seconds": 0.23,
    "whole": {
     "strong": 4,
     "evidence": 562,
@@ -18360,7 +18361,7 @@
     "rest_dropped": 30
    },
    "brackets": [],
-   "seconds": 0.3,
+   "seconds": 0.32,
    "whole": {
     "strong": 3,
     "evidence": 595,
@@ -18570,7 +18571,7 @@
      89.743
     ]
    ],
-   "seconds": 0.26,
+   "seconds": 0.33,
    "whole": {
     "strong": 9,
     "evidence": 323,
@@ -18684,7 +18685,7 @@
      89.529
     ]
    ],
-   "seconds": 0.26,
+   "seconds": 0.29,
    "whole": {
     "strong": 1,
     "evidence": 579,
@@ -18776,7 +18777,7 @@
      80.689
     ]
    ],
-   "seconds": 0.29,
+   "seconds": 0.26,
    "whole": {
     "strong": 9,
     "evidence": 334,
@@ -18877,7 +18878,7 @@
      82.029
     ]
    ],
-   "seconds": 0.26,
+   "seconds": 0.28,
    "whole": {
     "strong": 4,
     "evidence": 314,
@@ -18993,7 +18994,7 @@
      79.975
     ]
    ],
-   "seconds": 0.34,
+   "seconds": 0.27,
    "whole": {
     "strong": 7,
     "evidence": 339,
@@ -19091,7 +19092,7 @@
     "bad": 0,
     "miss": 1
    },
-   "seconds": 0.32,
+   "seconds": 0.35,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for 1juO2049sp8 band C"
@@ -19171,7 +19172,7 @@
     "bad": 0,
     "miss": 0
    },
-   "seconds": 0.14,
+   "seconds": 0.11,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for v58t4Vqw4ZE band R"
@@ -19240,7 +19241,7 @@
      44.143
     ]
    ],
-   "seconds": 0.19,
+   "seconds": 0.13,
    "whole": {
     "strong": 3,
     "evidence": 566,
@@ -19423,7 +19424,7 @@
      100.863
     ]
    ],
-   "seconds": 0.47,
+   "seconds": 0.39,
    "whole": {
     "strong": 3,
     "evidence": 125,
@@ -19927,7 +19928,7 @@
      4.93
     ]
    ],
-   "seconds": 0.38,
+   "seconds": 0.29,
    "whole": {
     "strong": 1,
     "evidence": 136,
@@ -19978,7 +19979,7 @@
   },
   "clean_plays": 85,
   "covered": 20,
-  "seconds": 358.0,
+  "seconds": 79.4,
   "off": [],
   "unsettled": [
    {
@@ -23100,7 +23101,7 @@
   "plants": 1070,
   "refused": 0,
   "errors": 0,
-  "seconds": 535.2,
+  "seconds": 272.3,
   "table": [
    {
     "rows": "0-4",
