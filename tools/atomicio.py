@@ -18,7 +18,8 @@
 # cache written through them is byte-identical to one written before.
 #
 # A long stream (a counter scan, one line per frame for minutes) cannot be buffered whole, so
-# StreamWriter writes <name>.partial and renames it into place only when the stream completes,
+# StreamWriter writes <name>.<pid>.partial (one per process, so two writers of one stream never
+# share a file) and renames it into place only when the stream completes,
 # then writes <name>.done.json: its line count, size and sha256, plus whatever the producer
 # records about how it was made. A file with that sidecar is complete and checkable; a legacy
 # file without one is trusted unless it is structurally broken.
@@ -175,7 +176,7 @@ def write_meta(path, **meta):
 # ---------------------------------------------------------------- streams
 
 class StreamWriter:
-    """A long line-oriented file (a counter scan) written as <path>.partial and renamed into place
+    """A long line-oriented file (a counter scan) written as <path>.<pid>.partial and renamed into place
     only on completion, with <path>.done.json recording its line count, size and sha256.
 
         with StreamWriter(path, encoding="utf-8") as out:
@@ -184,7 +185,7 @@ class StreamWriter:
             out.meta.update(stopped="end of video")
 
     Leaving the block by an exception removes the partial and leaves any existing file as it was;
-    a process killed outright leaves <path>.partial behind and never touches <path>."""
+    a process killed outright leaves <path>.<pid>.partial behind and never touches <path>."""
 
     def __init__(self, path, encoding=None, newline=None, **meta):
         self.path = path

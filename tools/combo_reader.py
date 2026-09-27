@@ -298,10 +298,11 @@ def load_anchors(vid, band):
     return a
 
 def scan(vid, side, t0, t1, atlas_dir=ATLAS):
-    """Read every frame into the band's scan file. It is written as <file>.partial and renamed into
-    place only when the scan completes, beside a <file>.done.json saying how many lines it has, its
-    sha256, the atlas and code it was read with and whether it ran to the end of the range or the
-    video stopped decoding - so a scan killed part-way is never mistaken for a short video."""
+    """Read every frame into the band's scan file. It is written as <file>.<pid>.partial (atomicio
+    StreamWriter: one per process) and renamed into place only when the scan completes, beside a
+    <file>.done.json saying how many lines it has, its sha256, the atlas and code it was read with
+    and whether it ran to the end of the range or the video stopped decoding - so a scan killed
+    part-way is never mistaken for a short video."""
     out_path = scan_path(vid, side, atlas_dir, t0, t1)
     params = _scan_params(vid, side, atlas_dir, t0, t1)
     atlas, labels = load_atlas(atlas_dir)
