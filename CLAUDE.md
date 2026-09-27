@@ -81,6 +81,9 @@ and commits" and "The corpus grade"):
   `tools/` module the gate imports, trace_audit's closure among them, and the atlases) differs
   from main's, a pass that changes a stepfile is refused and the run halts until the owner merges
   that code into main; a pass that changes no stepfile is tools-only and passes without a gate.
+  And no rails tool runs at all while anything under `tools/` is named like a real module
+  (`tools/tempfile.py`, `tools/tqdm.py`: Python would load it in the library's place inside the
+  gate) - `tools/shadowcheck.py` refuses it, exit 2, committed or not.
   The gate requires: PROTECTED does not shrink except through a
   `sources/demotions.jsonl` row; the net gain equals the declared ships; owner-revisit blocks,
   the oracle and the converter pin stay put; and **every new ship's trace audit is FLAT with

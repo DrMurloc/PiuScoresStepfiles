@@ -93,6 +93,12 @@
 # same lines), it stops there and says so; the reverts before it stay committed. A revert commit
 # that fails its post-commit check is undone with `git reset --soft` like any other (exit 3, the
 # reversal left staged for inspection).
+import os  # noqa: E401  os and sys are loaded before tools/ is on sys.path;
+import sys  # the shadow guard needs nothing else before it runs (tools/shadowcheck.py)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import shadowcheck  # noqa: E402
+shadowcheck.guard("loopcommit", exit_code=2)
+
 import argparse
 import ast
 import contextlib

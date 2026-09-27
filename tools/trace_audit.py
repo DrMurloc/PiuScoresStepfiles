@@ -144,6 +144,12 @@
 # by a tool that can reproduce it); rows it no longer vouches for are listed, never removed.
 # A chart whose audit raised is an ERROR, never a verdict: controls, power and corpus count errors
 # on their own line, and exit 2 with nothing written to sources/ when there is any.
+import os  # noqa: E401  os and sys are loaded before tools/ is on sys.path;
+import sys  # the shadow guard needs nothing else before it runs (tools/shadowcheck.py)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import shadowcheck  # noqa: E402
+shadowcheck.guard("trace_audit", exit_code=2)
+
 import bisect
 import contextlib
 import glob

@@ -290,6 +290,17 @@ touched by `base..HEAD` or changed in the working tree (the ship audit reads
   `pass.json` and `passes.jsonl`), any other count fails as the gate's DECLARED would (halt,
   revert). Such code judges nothing on the branch until main has it; `pass begin` prints a note
   while the branch's gate code differs from main's.
+
+**Nothing under `tools/` may be named like a real module** (`tools/shadowcheck.py`). The gate's
+code list above only names modules the rails import *directly*; a `tools/<name>.py` named after
+a library they import transitively (`tempfile`, `logging`, `tqdm`, loguru's `win32_setctime`)
+would be loaded in the library's place inside the gate, where it could rewrite a FAIL into a
+PASS. So `corpus_grade`, `trace_audit`, `loopcommit` and `supervise` each call
+`shadowcheck.guard()` before any other import: it takes `tools/` off `sys.path`, lists every
+top-level importable entry under `tools/` (`NAME.py`, `.pyc`, `.pyd`, a `NAME/` package), asks
+a clean interpreter (`python -I`) which of those names it can import without `tools/`, and
+refuses (exit 2, naming them) if any - committed or untracked alike. There is no allowlist: a
+collision under `tools/` is never legitimate. `tools/selftest.py` drills it.
 Which loops this binds: bucket #2 (`corpus_map`), #5 and #11 (`note_extract`, `sprites`), #4
 (`receptors`), #3 (the atlases, `combo_reader`) and #10 (`tick_repair`, which the trace audit
 imports for its counter reads) can commit their tools in tools-only passes, but a stepfile pass

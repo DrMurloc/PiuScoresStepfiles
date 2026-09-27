@@ -79,6 +79,12 @@
 # the trace audit's own scratch (work/rails-audit-scratch/: clocks, blobs, overlays), and it never
 # reads a grade file to decide anything. With the default head (HEAD) it says when the working
 # tree differs from HEAD under simfiles/ or sources/: those edits are not what it judged.
+import os  # noqa: E401  os and sys are loaded before tools/ is on sys.path;
+import sys  # the shadow guard needs nothing else before it runs (tools/shadowcheck.py)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import shadowcheck  # noqa: E402
+shadowcheck.guard("corpus_grade", exit_code=2)
+
 import argparse
 import hashlib
 import inspect

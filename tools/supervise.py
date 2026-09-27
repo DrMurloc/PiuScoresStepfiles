@@ -125,6 +125,12 @@
 # PSF_RAILS_STATE relocates all of the shared state above (for the self-test only);
 # PSF_GAME_EXES overrides the game list and PSF_GAME_POLL_S how often it is checked (15 s);
 # PSF_CONVERTER_REPO points at another converter clone.
+import os  # noqa: E401  os and sys are loaded before tools/ is on sys.path;
+import sys  # the shadow guard needs nothing else before it runs (tools/shadowcheck.py)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import shadowcheck  # noqa: E402
+shadowcheck.guard("supervise", exit_code=2)
+
 import argparse
 import contextlib
 import ctypes

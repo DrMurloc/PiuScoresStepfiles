@@ -1520,12 +1520,13 @@ def d_worktree(d):
     main = new_repo(os.path.join(d.dir, "main"), branch="main")
     os.makedirs(os.path.join(main, "tools"))
     shutil.copy(SUP, os.path.join(main, "tools", "supervise.py"))
+    shutil.copy(os.path.join(TOOLS, "shadowcheck.py"), os.path.join(main, "tools", "shadowcheck.py"))  # supervise imports it first
     write(main, ".gitignore", "work/\nvideos/\n")
     write(main, "work/sentinel.txt", "keep\n")
     write(main, "work/deep/a.txt", "keep\n")
     write(main, "videos/v.mp4", "not a video\n")
-    git(main, "add", "--", "tools/supervise.py", ".gitignore")
-    git(main, "commit", "-q", "-m", "seed", "--", "tools/supervise.py", ".gitignore")
+    git(main, "add", "--", "tools/supervise.py", "tools/shadowcheck.py", ".gitignore")
+    git(main, "commit", "-q", "-m", "seed", "--", "tools/supervise.py", "tools/shadowcheck.py", ".gitignore")
     own = os.path.join(main, "tools", "supervise.py")
     wt = os.path.join(d.dir, "psf-wt", "t1")
 

@@ -308,6 +308,27 @@ def _():
         eq(r.returncode, 7, "the open was refused")
         eq(open(target).read(), "{}", "and the file was not truncated")
 
+@case("a tools/ module named after a real module is refused by the rails (committed or not)")
+def _():
+    import subprocess
+    tools = os.path.dirname(os.path.abspath(__file__))
+    import shadowcheck
+    eq(shadowcheck.shadows(tools), [], "the real tools/ shadows nothing")
+    with _scratch() as d:
+        eq(shadowcheck.shadows(d), [], "an empty folder shadows nothing")
+        open(os.path.join(d, "fine_helper.py"), "w").write("")
+        eq(shadowcheck.shadows(d), [], "a unique name is fine")
+        open(os.path.join(d, "tempfile.py"), "w").write("raise SystemExit('shadow ran')")
+        os.makedirs(os.path.join(d, "numbers"))
+        open(os.path.join(d, "numbers", "__init__.py"), "w").write("")
+        open(os.path.join(d, "tqdm.py"), "w").write("")
+        eq(sorted(n for n, _ in shadowcheck.shadows(d)), ["numbers", "tempfile", "tqdm"], "stdlib, package and site-packages shadows")
+        code = ("import sys; sys.path.insert(0, %r); import shadowcheck; "
+                "shadowcheck.guard('drill', exit_code=9, tools_dir=%r); sys.exit(0)") % (tools, d)
+        r = subprocess.run([sys.executable, "-B", "-c", code], capture_output=True, text=True)
+        eq(r.returncode, 9, "guard() exits with the caller's code")
+        eq("tools/tempfile" in r.stdout and "shadow ran" not in r.stdout + r.stderr, True, "names the shadow, never runs it")
+
 def main():
     failed = []
     for name, fn in CASES:
