@@ -7,13 +7,17 @@
 # their videos do. The loaders now treat a broken file as missing and rebuild it; this finds the
 # ones already on disk, and the ones a loader cannot tell are wrong.
 #
-#   python -X utf8 -B tools/fsck.py [--json <report.json>] [--quarantine] [--only spritepass,receptor,combo,reports]
+#   python -X utf8 -B tools/fsck.py [--json <report.json>] [--quarantine [--path <file under work/> ...]]
+#                                   [--only spritepass,receptor,combo,reports]
 #
 # Report-only by default, and it cannot be anything else: the process refuses every file write
 # (atomicio.forbid_writes) except the --json report. --quarantine MOVES what is broken into
-# work/quarantine/<run>/, keeping each file's path under work/ and writing a manifest.json that
-# says why each one went; nothing is ever deleted, and a quarantined cache is simply missing, so
-# the next reader rebuilds it.
+# work/quarantine/<run>/, keeping each file's path under work/; its manifest.json is written
+# BEFORE the first move (every file it is about to move, and why) and again after each one, so a
+# move that fails part-way still leaves a record of what went where. Nothing is ever deleted, and
+# a quarantined cache is simply missing, so the next reader rebuilds it. --quarantine refuses to
+# run while any loop is live (a supervisor heartbeat whose process is alive, a held commit lock or
+# a held decode slot): a live writer's temp file is not litter.
 #
 # What counts as broken, and moves under --quarantine:
 #   0 bytes; does not load (JSON, pickle, npz, or a jsonl line that does not parse); lacks what
@@ -24,7 +28,10 @@
 # What is only reported:
 #   stale key formats (names no current reader asks for - harmless, and the superseded receptor
 #   fits are kept on purpose, to compare a fit against); a scan that is short because the video
-#   itself stops decoding there (rescanning gives the same file); a scan that starts late.
+#   itself stops decoding there (rescanning gives the same file), or because it was asked to stop
+#   there (to=, its sidecar says "range end"); a scan of a video on sources/footage-corrupt.json;
+#   a scan that starts late; a temp file or partial stream whose writer is still alive or that is
+#   younger than IN_USE_S (a writer may be about to rename it).
 import glob
 import json
 import os
@@ -37,6 +44,7 @@ from collections import defaultdict
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import atomicio as A   # noqa: E402
 import cachekey        # noqa: E402
+import guards          # noqa: E402  (the corrupt-footage list)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WORK = os.path.join(ROOT, "work")
@@ -55,6 +63,9 @@ GEOM_NAME = re.compile(r"^%s\.[LRC]%s\.geometry\.json$" % (VID, KEY))
 SCAN_NPZ_NAME = re.compile(r"^%s\.[LRC]\.(?:\d+|None)\.\d+\.\d-\d+\.\d\.scan\.npz$" % VID)
 COMBO_NAME = re.compile(r"^(%s)\.([LRC])(\.[A-Za-z0-9_-]+)?%s\.jsonl$" % (VID, KEY))
 TEMP_NAME = re.compile(r"^\..+\.\d+\.\d+\.\d+\.tmp$|\.\d+\.tmp\.npz$")
+WRITER_PID = re.compile(r"^\..+\.(\d+)\.\d+\.\d+\.tmp$|\.(\d+)\.tmp\.npz$|\.(\d+)\.partial$")
+PARTIAL = re.compile(r"(?:\.\d+)?\.partial$")     # <name>.<pid>.partial, or a legacy <name>.partial
+IN_USE_S = 600         # s: a temp file or partial younger than this may still be renamed by its writer
 NON_PARAM = {"written", "complete", "lines", "bytes", "sha256", "finished", "video_seconds", "fps", "frames",
              "read", "first_t", "last_t", "stopped"}
 
@@ -77,14 +88,37 @@ def sidecar_digest_ok(path):
     return cachekey.digest({k: v for k, v in meta.items() if k not in NON_PARAM}) == m.group(1)
 
 
+def pid_alive(pid):
+    import supervise as S                          # the one liveness check the rails use
+    return S.proc_alive(pid)
+
+
+def in_use(path, name):
+    """Why a temp file or partial stream may still belong to a live writer, or None."""
+    m = WRITER_PID.search(name)
+    pid = int(next(g for g in m.groups() if g)) if m else None
+    if pid and pid_alive(pid):
+        return "its writer, pid %d, is still running" % pid
+    try:
+        age = time.time() - os.path.getmtime(path)
+    except OSError:
+        return "it vanished while being checked"
+    if age < IN_USE_S:
+        return "written %.0f s ago (under %d s: a writer may still rename it)" % (age, IN_USE_S)
+    return None
+
+
 def common(f, area, path, name):
     """Checks every cache file gets: temp files, orphaned sidecars. True when it is a data file."""
-    if TEMP_NAME.search(name):
-        f.add(area, path, "orphan temp file", "left by a writer killed between writing and renaming")
-        return False
-    if name.endswith(".partial"):
-        target = path[:-len(".partial")]
-        f.add(area, path, "orphan partial stream", "a scan killed part-way%s" % ("" if not os.path.exists(target) else "; the finished file beside it is older"))
+    if TEMP_NAME.search(name) or PARTIAL.search(name):
+        busy = in_use(path, name)
+        if busy:
+            f.add(area, path, "temp file in use", busy)
+        elif TEMP_NAME.search(name):
+            f.add(area, path, "orphan temp file", "left by a writer killed between writing and renaming")
+        else:
+            target = PARTIAL.sub("", path)
+            f.add(area, path, "orphan partial stream", "a scan killed part-way%s" % ("" if not os.path.exists(target) else "; the finished file beside it is older"))
         return False
     for side in (".meta.json", ".done.json"):
         if name.endswith(side):
@@ -230,12 +264,19 @@ def check_combo(f):
         vid = m.group(1)
         side = A.load_json(A.done_path(path), quiet=True) or {}
         first, last = float(rows[0][0]), float(rows[-1][0])
+        corrupt = guards.footage_corrupt_reason(vid, m.group(2))
+        if corrupt:
+            f.add("combo", path, "corrupt footage", corrupt); continue
         dur, fps = video_span(vid)
         if dur is None:
             f.add("combo", path, "no video", "videos/%s.mp4 is not cached, so its length is unknown" % vid); continue
         if first > LATE and not side.get("t0"):
             f.add("combo", path, "starts late", "first frame %.1fs (a scan cut with from=?)" % first)
         if last < dur - SHORT:
+            t1 = side.get("t1")
+            if side.get("stopped") == "range end" and isinstance(t1, (int, float)) and t1 < dur - SHORT:
+                f.add("combo", path, "range scan", "scanned to %.1fs of %.1fs by request (to=; its sidecar: range end)" % (t1, dur))
+                continue
             if side.get("stopped") == "decoder stopped":
                 f.add("combo", path, "short footage", "the scan's own record: the video stopped decoding at %.1fs of %.1fs" % (last, dur))
                 continue
@@ -279,30 +320,71 @@ def check_reports(f):
 AREAS = dict(spritepass=check_spritepass, receptor=check_receptor, combo=check_combo, reports=check_reports)
 
 
-def quarantine(f, run):
-    """Move every broken file (and its sidecars) into work/quarantine/<run>/, keeping its path."""
+def live_loops():
+    """What says a loop is running right now (tools/supervise.py's state under work/): a supervisor
+    whose heartbeat names a live process in an active state, a commit lock whose holder is alive, a
+    decode slot still held. Empty when nothing is."""
+    import supervise as S
+    why = []
+    if os.path.isdir(S.RUNS):
+        for run in sorted(os.listdir(S.RUNS)):
+            hb = S.read_json(os.path.join(S.RUNS, run, "heartbeat.json")) or {}
+            if hb.get("state") in S.ACTIVE_STATES and S.proc_alive(hb.get("pid"), hb.get("created")):
+                why.append("run %s is %s (supervisor pid %s)" % (run, hb.get("state"), hb.get("pid")))
+    cl = S.read_json(S.COMMIT_LOCK)
+    if cl and S.holder_alive(cl):
+        why.append("the commit lock is held by pid %s (run %s)" % (cl.get("pid"), cl.get("run")))
+    slots = S.live_slots()
+    if slots:
+        why.append("%d decode slot(s) held" % len(slots))
+    return why
+
+
+def quarantine(f, run, only=None):
+    """Move every broken file (and its sidecars) into work/quarantine/<run>/, keeping its path. The
+    manifest is written before the first move and after every one, so a failure part-way leaves a
+    record of what moved and what did not. `only`: paths under work/ to limit the moves to."""
     qroot = os.path.join(WORK, "quarantine", run)
-    moved = []
+    plan = []
     for r in f.rows:
-        if r["kind"] not in MOVE:
+        if r["kind"] not in MOVE or (only is not None and r["path"] not in only):
             continue
         src = os.path.join(WORK, *r["path"].split("/"))
         for p in (src, src + ".meta.json", A.done_path(src)):
-            if not os.path.exists(p):
-                continue
-            dst = os.path.join(qroot, os.path.relpath(p, WORK))
+            if os.path.exists(p):
+                plan.append(dict(r, file=os.path.relpath(p, WORK).replace(os.sep, "/")))
+    if not plan:
+        return [], []
+    manifest = os.path.join(qroot, "manifest.json")
+    rec = dict(run=run, started=time.strftime("%Y-%m-%dT%H:%M:%S"), planned=plan, moved=[], failed=[])
+    os.makedirs(qroot, exist_ok=True)
+    A.write_json(manifest, rec, encoding="utf-8", indent=1, ensure_ascii=False)    # the record comes first
+    for item in plan:
+        p = os.path.join(WORK, *item["file"].split("/"))
+        dst = os.path.join(qroot, *item["file"].split("/"))
+        try:
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             os.replace(p, dst)
-            moved.append(dict(r, moved=os.path.relpath(p, WORK).replace(os.sep, "/")))
-    if moved:
-        A.write_json(os.path.join(qroot, "manifest.json"), dict(run=run, moved=moved), encoding="utf-8", indent=1, ensure_ascii=False)
-    return moved
+            rec["moved"].append(item)
+        except OSError as ex:
+            rec["failed"].append(dict(item, error="%s: %s" % (type(ex).__name__, ex)))
+        A.write_json(manifest, rec, encoding="utf-8", indent=1, ensure_ascii=False)
+    rec["finished"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+    A.write_json(manifest, rec, encoding="utf-8", indent=1, ensure_ascii=False)
+    return rec["moved"], rec["failed"]
 
 
 def main():
     only = (sys.argv[sys.argv.index("--only") + 1].split(",") if "--only" in sys.argv else list(AREAS))
     out = sys.argv[sys.argv.index("--json") + 1] if "--json" in sys.argv else None
     move = "--quarantine" in sys.argv
+    paths = {sys.argv[i + 1].replace("\\", "/").removeprefix("work/") for i, a in enumerate(sys.argv) if a == "--path"} or None
+    if move:
+        live = live_loops()
+        if live:
+            print("fsck --quarantine refused: a loop is live (%s). Moving a live writer's files is not "
+                  "housekeeping; run it when every loop has stopped." % "; ".join(live), file=sys.stderr)
+            return 2
     if not move:
         A.forbid_writes(allow=[out] if out else [])
     t0 = time.time()
@@ -330,8 +412,12 @@ def main():
                      encoding="utf-8", indent=1, ensure_ascii=False)
     if move:
         run = "fsck-" + time.strftime("%Y%m%d-%H%M%S")
-        moved = quarantine(f, run)
-        print("quarantined %d file(s) into work/quarantine/%s/" % (len(moved), run) if moved else "nothing to quarantine")
+        moved, failed = quarantine(f, run, paths)
+        print("quarantined %d file(s) into work/quarantine/%s/ (manifest.json there)" % (len(moved), run) if moved else "nothing to quarantine")
+        for x in failed:
+            print("  NOT MOVED %s: %s" % (x["file"], x["error"]))
+        if failed:
+            return 1
     return 1 if bad and not move else 0
 
 

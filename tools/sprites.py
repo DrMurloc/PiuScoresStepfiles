@@ -125,6 +125,10 @@ def anchors(path, vid, band, y0, y1, xs, th, tw, n=96, pct=50, hp=0.0, rest=0.0,
     cap = cv2.VideoCapture(path)                  # the frame height only: nothing is decoded
     frame_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     cap.release()
+    if frame_h <= 0:
+        # a video that does not open (sources/footage-corrupt.json: no moov atom) has no templates to
+        # cut; carrying on would key an empty template file under frame height 0 and write it
+        raise IOError("%s does not open (no frame height): no receptor templates can be cut from it" % path)
     ck = anchors_path(vid, band, y0, y1, xs, th, tw, n, pct, hp, rest, field_key, frame_h)
     z = A.load_npz(ck)
     if z is not None:

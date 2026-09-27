@@ -518,6 +518,8 @@ def _read(vid, band, ncols, side, dur, quiet):
     fy0, fy1, fxs = R.field(cap, vid, band, ncols, side)
     frame_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     cap.release()
+    if frame_h <= 0:
+        raise IOError("videos/%s.mp4 does not open (no frame height): nothing to extract" % vid)
     params = _pass_params(vid, band, side, ncols, dur, scale, floors[0], fy0, fy1, fxs, th, tw,
                           R.field_key(vid, band, ncols, side), frame_h)
     ck = pass_path(params)

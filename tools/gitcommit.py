@@ -9,7 +9,10 @@
 # commit_exactly() commits with a pathspec (`git commit -- <paths>` takes those paths' content and
 # nothing else from the index), then checks that git returned 0, that HEAD moved by exactly one
 # commit on top of the HEAD it started from, and that the new commit touches exactly the declared
-# paths. Anything else raises CommitError, and the caller stops its pass.
+# paths. Anything else raises CommitError, and the caller stops its pass - except NothingToCommit:
+# the declared paths already match HEAD (the candidate landed another way), which a caller skips.
+# Pathspecs are literal (GIT_LITERAL_PATHSPECS): a song folder named with [..] or * is a name,
+# never a glob that could match a sibling.
 import os
 import subprocess
 
@@ -18,10 +21,18 @@ class CommitError(RuntimeError):
     pass
 
 
+class NothingToCommit(CommitError):
+    pass
+
+
+def _env():
+    return dict(os.environ, GIT_LITERAL_PATHSPECS="1")
+
+
 def git(root, *args, input=None):
     """git's stdout; CommitError when it exits non-zero."""
     p = subprocess.run(["git"] + list(args), cwd=root, capture_output=True, text=True, encoding="utf-8",
-                       errors="replace", input=input)
+                       errors="replace", input=input, env=_env())
     if p.returncode:
         raise CommitError("`git %s` exited %d: %s" % (" ".join(args[:4]), p.returncode, (p.stderr or p.stdout).strip()[:400]))
     return p.stdout
@@ -39,6 +50,12 @@ def commit_exactly(root, paths, message):
     declared = sorted({rel(root, p) for p in paths})
     before = git(root, "rev-parse", "HEAD").strip()
     git(root, "add", "--", *declared)
+    same = subprocess.run(["git", "diff", "--cached", "--quiet", "HEAD", "--", *declared], cwd=root,
+                          capture_output=True, env=_env())
+    if same.returncode == 0:
+        raise NothingToCommit("%s already match HEAD %s: nothing to commit" % (", ".join(declared), before[:10]))
+    if same.returncode != 1:
+        raise CommitError("`git diff --cached --quiet HEAD` exited %d: %s" % (same.returncode, same.stderr.decode("utf-8", "replace")[:300]))
     git(root, "commit", "-q", "-F", "-", "--", *declared, input=message)
     after = git(root, "rev-parse", "HEAD").strip()
     if after == before:

@@ -719,7 +719,10 @@ def commit():
             if dry:
                 git("checkout", "HEAD", "--", ssc)
                 print("  would commit %s: %s" % (r["chart"], r["reason"])); continue
-            r["commit"] = gitcommit.commit_exactly(ROOT, [ssc], message(r, note))
+            try:
+                r["commit"] = gitcommit.commit_exactly(ROOT, [ssc], message(r, note))
+            except gitcommit.NothingToCommit as ex:
+                print("  %s: %s - skipped (it landed another way)" % (r["chart"], ex)); continue
             print("  %s %s: %s" % (r["commit"], r["chart"], r["reason"]))
     except gitcommit.CommitError as ex:
         failed = ex

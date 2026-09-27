@@ -182,7 +182,10 @@ def _():
                 raise KeyError("killed")
         except KeyError:
             pass
-        eq((os.path.exists(p), os.path.exists(p + ".partial")), (False, False), "an interrupted stream leaves nothing")
+        eq((os.path.exists(p), [f for f in os.listdir(d) if f.endswith(".partial")]), (False, []), "an interrupted stream leaves nothing")
+        w = A.StreamWriter(p, encoding="utf-8")
+        eq(os.path.basename(w.partial), "v.C.jsonl.%d.partial" % os.getpid(), "the partial is named for its process")
+        w.abort()
         with A.StreamWriter(p, encoding="utf-8", tool="selftest") as out:
             out.write("[0.0, 5, 0.9]\n[0.1, 6, 0.9]\n")
         side = A.load_json(A.done_path(p))

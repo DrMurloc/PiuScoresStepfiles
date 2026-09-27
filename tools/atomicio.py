@@ -24,7 +24,10 @@
 # file without one is trusted unless it is structurally broken.
 #
 # Loaders (load_json, load_pickle, load_npz, read_jsonl) return None for a missing file AND for
-# a 0-byte, truncated or unloadable one, saying so on stderr, so the caller rebuilds it.
+# a 0-byte, truncated or unloadable one, saying so on stderr, so the caller rebuilds it. A read
+# Windows refuses with PermissionError - the few milliseconds in which another process is renaming
+# the file into place, or was killed doing so - is retried for a few seconds and then raised: it is
+# never taken for a missing file, which would send the caller off to rebuild a cache that is fine.
 #
 #   python -X utf8 -B tools/atomicio.py drill <scratch dir> [--rounds N] [--modes naive,atomic,pickle,stream]
 #       the crash drill: writers killed mid-write, the target checked after every kill
@@ -41,13 +44,32 @@ import time
 RETRIES = 60          # os.replace attempts while a reader holds the target (Windows)
 BACKOFF = 0.02        # s, doubled per attempt up to BACKOFF_MAX: about 25 s in all
 BACKOFF_MAX = 0.5
+READ_RETRIES = 40     # a read Windows refuses (PermissionError) is tried this often: about 7 s in all
 _seq = itertools.count()
 _retries = [0]        # replaces that needed more than one attempt (the drill reports it)
+_read_retries = [0]   # reads that needed more than one attempt
 
 
 def _tmp_for(path):
     d, b = os.path.split(os.path.abspath(path))
     return os.path.join(d, ".%s.%d.%d.%d.tmp" % (b, os.getpid(), threading.get_ident() % 100000, next(_seq)))
+
+
+def _read_retry(fn):
+    """fn(), again while Windows refuses the open with PermissionError (a writer renaming the file
+    into place at that instant, or killed while doing so); past READ_RETRIES the error is raised."""
+    delay = 0.01
+    for attempt in range(READ_RETRIES):
+        try:
+            v = fn()
+            if attempt:
+                _read_retries[0] += 1
+            return v
+        except PermissionError:
+            if attempt == READ_RETRIES - 1:
+                raise
+            time.sleep(delay)
+            delay = min(delay * 2, 0.2)
 
 
 def replace(src, dst):
@@ -166,7 +188,8 @@ class StreamWriter:
 
     def __init__(self, path, encoding=None, newline=None, **meta):
         self.path = path
-        self.partial = path + ".partial"
+        # per process: two scans of one band must not write into one partial (fsck knows the pattern)
+        self.partial = "%s.%d.partial" % (path, os.getpid())
         self.meta = dict(meta)
         self.lines = 0
         self._f = open(self.partial, "w", encoding=encoding, newline=newline)
@@ -214,13 +237,15 @@ def done_path(path):
 
 def file_digest(path):
     """(bytes, sha256 hex, newline count) of a file."""
-    h, n, lines = hashlib.sha256(), 0, 0
-    with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(1 << 20), b""):
-            h.update(chunk)
-            n += len(chunk)
-            lines += chunk.count(b"\n")
-    return n, h.hexdigest(), lines
+    def read():
+        h, n, lines = hashlib.sha256(), 0, 0
+        with open(path, "rb") as f:
+            for chunk in iter(lambda: f.read(1 << 20), b""):
+                h.update(chunk)
+                n += len(chunk)
+                lines += chunk.count(b"\n")
+        return n, h.hexdigest(), lines
+    return _read_retry(read)
 
 
 # ---------------------------------------------------------------- loading
@@ -245,9 +270,13 @@ def load_json(path, required=(), quiet=False, **open_kwargs):
         return None
     if n == 0:
         return _broken(path, "0 bytes", quiet)
-    try:
+    def read():
         with open(path, **({"encoding": "utf-8"} | open_kwargs)) as f:
-            obj = json.load(f)
+            return json.load(f)
+    try:
+        obj = _read_retry(read)
+    except FileNotFoundError:
+        return None                               # replaced by a rename between the size and the open
     except (ValueError, UnicodeDecodeError) as ex:
         return _broken(path, "unreadable JSON (%s)" % f"{ex}"[:80], quiet)
     missing = [k for k in required if not isinstance(obj, dict) or k not in obj]
@@ -262,9 +291,13 @@ def load_pickle(path, quiet=False):
         return None
     if n == 0:
         return _broken(path, "0 bytes", quiet)
-    try:
+    def read():
         with open(path, "rb") as f:
             return pickle.load(f)
+    try:
+        return _read_retry(read)
+    except FileNotFoundError:
+        return None
     except (EOFError, pickle.UnpicklingError, ValueError, TypeError, AttributeError, IndexError, MemoryError) as ex:
         return _broken(path, "unloadable pickle (%s: %s)" % (type(ex).__name__, f"{ex}"[:60]), quiet)
 
@@ -280,11 +313,15 @@ def load_npz(path, required=(), quiet=False):
         return None
     if n == 0:
         return _broken(path, "0 bytes", quiet)
-    try:
+    def read():
         with np.load(path, allow_pickle=False) as z:
-            out = {k: z[k] for k in z.files}
+            return {k: z[k] for k in z.files}
+    try:
+        out = _read_retry(read)
     except PermissionError:
-        raise
+        raise                                     # still refused after the retries: not a broken cache
+    except FileNotFoundError:
+        return None
     except (zipfile.BadZipFile, zlib.error, ValueError, OSError, EOFError, KeyError) as ex:
         return _broken(path, "unloadable npz (%s: %s)" % (type(ex).__name__, f"{ex}"[:60]), quiet)
     missing = [k for k in required if k not in out]
@@ -323,15 +360,17 @@ def read_jsonl(path, quiet=False, **open_kwargs):
         return None
     if st == "broken":
         return _broken(path, why, quiet)
+    def read():
+        with open(path, **({"encoding": "utf-8"} | open_kwargs)) as f:
+            return f.readlines()
     rows = []
-    with open(path, **({"encoding": "utf-8"} | open_kwargs)) as f:
-        for k, line in enumerate(f, 1):
-            if not line.strip():
-                continue
-            try:
-                rows.append(json.loads(line))
-            except ValueError:
-                return _broken(path, "line %d does not parse (a writer killed mid-line?)" % k, quiet)
+    for k, line in enumerate(_read_retry(read), 1):
+        if not line.strip():
+            continue
+        try:
+            rows.append(json.loads(line))
+        except ValueError:
+            return _broken(path, "line %d does not parse (a writer killed mid-line?)" % k, quiet)
     return rows
 
 
@@ -467,7 +506,8 @@ def drill(scratch, rounds=40, modes=MODES):
             tally[verdict] += 1
             if verdict == "PARTIAL":
                 why.append(v)
-        leftovers = [f for f in os.listdir(scratch) if f.startswith(".drill-%s." % mode) or f == os.path.basename(path) + ".partial"]
+        leftovers = [f for f in os.listdir(scratch) if f.startswith(".drill-%s." % mode)
+                     or (f.startswith(os.path.basename(path) + ".") and f.endswith(".partial"))]
         results[mode] = dict(tally, leftover_temp_files=len(leftovers))
         print("%-7s %2d kills: old %2d, new %2d, absent %2d, PARTIAL %2d; temp/partial files the kills left: %d%s" % (
             mode, rounds, tally["old"], tally["new"], tally["absent"], tally["PARTIAL"], len(leftovers),
@@ -476,21 +516,21 @@ def drill(scratch, rounds=40, modes=MODES):
     # until the reader lets go, which is what the retry is for
     path = os.path.join(scratch, "drill-contended.json")
     write_json(path, _drill_payload(0, 200_000), indent=1)
-    stop, seen = threading.Event(), {"reads": 0, "bad": 0}
+    stop, seen = threading.Event(), {"reads": 0, "bad": 0, "errors": 0}
 
     def reader():
+        # through the loader, as every tool reads: a refused open is retried inside it, so an OSError
+        # that still escapes, or a None, is a failure - never quietly skipped
         while not stop.is_set():
             try:
-                with open(path, encoding="utf-8") as f:
-                    obj = json.load(f)
-                    time.sleep(0.002)
+                obj = load_json(path, quiet=True)
                 seen["reads"] += 1
-                if obj != _drill_payload(obj["version"], 200_000):
+                if obj is None or obj != _drill_payload(obj["version"], 200_000):
                     seen["bad"] += 1
-            except (ValueError, KeyError):
-                seen["bad"] += 1
             except OSError:
-                pass
+                seen["errors"] += 1
+            except (ValueError, KeyError, TypeError):
+                seen["bad"] += 1
     th = threading.Thread(target=reader)
     th.start()
     before = _retries[0]
@@ -498,10 +538,12 @@ def drill(scratch, rounds=40, modes=MODES):
         write_json(path, _drill_payload(v, 200_000), indent=1)
     stop.set()
     th.join()
-    results["contended"] = dict(writes=100, retried=_retries[0] - before, reads=seen["reads"], bad_reads=seen["bad"])
-    print("contended: 100 atomic writes under a busy reader, %d needed a retried rename, %d reads, %d bad" % (
-        _retries[0] - before, seen["reads"], seen["bad"]), flush=True)
+    results["contended"] = dict(writes=100, retried=_retries[0] - before, reads=seen["reads"], bad_reads=seen["bad"],
+                                read_errors=seen["errors"], retried_reads=_read_retries[0])
+    print("contended: 100 atomic writes under a busy reader, %d needed a retried rename, %d reads (%d needed a retried "
+          "open), %d bad, %d errors" % (_retries[0] - before, seen["reads"], _read_retries[0], seen["bad"], seen["errors"]), flush=True)
     ok = all(results[m]["PARTIAL"] == 0 for m in modes if m != "naive") and results["contended"]["bad_reads"] == 0 \
+        and results["contended"]["read_errors"] == 0 \
         and ("naive" not in modes or results["naive"]["PARTIAL"] > 0)
     print("DRILL %s" % ("PASS - the naive writer left partial files and the atomic ones never did" if ok else "FAIL"))
     return 0 if ok else 1
