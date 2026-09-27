@@ -980,20 +980,42 @@ seeds with known answers (exact, own-block charts whose name level, catalog leve
 agree; SAME and DIFFERENT title pairs of proven songs). The key, with the seeds, stays outside.
 One decode per video, inside one machine-wide slot.
 
+**`identity.py reads --keys work/blind-keys/<name>/<B>.json --answers <answers.json> --report R --out <reads.json> [--predictions P]`**
+Applies one blind batch; it looks at no image. Each reader is scored against the packet's seeds
+first: a seed answered wrong, or a file opened outside the packet (anything but its
+`question.json` and its own images), voids that reader for that packet. An item counts as read only
+when two valid readers give the same answer (a ball's number compared as a number, so `09` is `9`);
+anything else is unsure and settles nothing. What the reads settle: a re-key waiting on a ball goes
+through when the ball shows the chart's own catalog level (its chartId's type at its Phoenix 1 or 2
+level - the play is the chart the chartId names, and the notes already said which block that is), a
+crossed pair only when both halves do; on a side certifying two names with no cached pass, the ball
+picks the name whose level it shows, and the others are withdrawn when that name's chartId is at
+the same level - a round-hundred total, a census row, or a ball no name carries goes to the owner
+instead, with the reads attached; a census withdrawal the ball agrees with carries the read, and one
+it contradicts goes to the owner. Song-level reads settle nothing: a title that differs from a
+reference video of the named song, or a ball no named chart shows (for an OPEN chart, none of the
+video's sides), is an owner item plus an ORACLE_CONFLICT proposal with catalog hints (charts at the
+read level carrying the side's total, and within `--near` notes of it); agreement is listed as a
+confirmation. The predictions registered before the reads are scored in the output.
+
 **`identity.py overlay --report R --out sources/identity-overlay-<date>.json [--extra rows.json]`** /
 **`identity.py grade-delta --overlay <file> --out <report.json>`** /
-**`identity.py owner-list --report R --out work/owner-list/identity.json [--conflicts-out sources/oracle-conflict-<date>.json] [--extra-items F] [--staged "what::detail"]`**
+**`identity.py owner-list --report R --out work/owner-list/identity.json [--conflicts-out sources/oracle-conflict-<date>.json] [--extra-items F] [--reads <reads.json>] [--staged "what::detail"]`**
 `overlay` writes the rows the rule settled: `rekey` (chart, ssc_rel, from_key, to_key, and the
-evidence: F1 table, margins, count, catalog row, ChartVideo side) and `withdraw` (vid, side, chart:
-this side does not show this chart). `grade-delta` grades the corpus with and without an overlay
+evidence: F1 table, margins, count, catalog row, ChartVideo side, the ball read where one decided)
+and `withdraw` (vid, side, chart: this side does not show this chart). `--extra` adds the rows a
+`reads` output settled; one replaces the report's row for the same kind, chart, video and side (a
+census withdrawal a ball confirmed carries the read) rather than doubling it. `grade-delta` grades the corpus with and without an overlay
 under the pinned converter and the working tree's oracle - `corpus_grade`'s own Oracle, grader and
 conflict builder, the overlay applied to a copy the way the staged `corpus_grade` change applies it -
 and reports it as ORACLE GROWTH, never as repairs (no block changes). `owner-list` writes the rows
 the rule may not settle, one line of reason each (and exact charts whose notes match another block
-by the margin, which the count vetoed), and with `--conflicts-out` the proposed ORACLE_CONFLICT
-additions: not-exact charts whose notes match another block by the margin, or two blocks alike - a
-loop making one exact by editing its mapped block would be re-ticking the wrong block. That file is
-not read by the gate; the owner folds it into `sources/oracle-conflict.json`.
+by the margin, which the count vetoed; `--reads` adds a batch's owner items), and with
+`--conflicts-out` the proposed ORACLE_CONFLICT additions: not-exact charts whose notes match another
+block by the margin, or two blocks alike - a loop making one exact by editing its mapped block would
+be re-ticking the wrong block - and the song-level findings of `--reads` (OPEN charts included, so no
+loop certifies one from that video). Charts a batch settled are left out. That file is not read by
+the gate; the owner folds it into `sources/oracle-conflict.json`.
 
 **How an overlay lands.** `corpus_map` applies `IDENTITY_OVERLAYS` LAST, over the merged map and
 ledgers (`overlay_chart_map`, `overlay_certification`; a `rekey` row applies only while the chart
@@ -1004,13 +1026,15 @@ is a change to the rails' own code, the owner's: the staged patch (`work/owner-l
 listed in `work/owner-list/identity.json`) adds `ORACLE_IDENTITY` (corpus_map's list) and the same
 rule - an overlay is inert until the tree's manifest lists it, oracle after (hashed, checked, owner-only
 in `loopcommit`) - and `freeze --accept-identity`, which lists every overlay present: the owner's
-acceptance, a commit of its own whose gate shows what the overlay moved. Drilled in a scratch clone
-with the first batch's rows: the branch with the overlay committed inert gates 749 -> 749 on today's
-rails and on the patched ones; a review commit removing the two ORACLE_CONFLICT charts the overlay
-resolves passes as an oracle pass (the gate halts a conflict chart that becomes exact over the union
-of the base and head sets, so that review lands first); the acceptance commit (`freeze
---accept-identity`, `conflicts --write`, `freeze`) passes `--oracle-pass --declared 3` with three
-GAINED and three LEFT, 749 -> 752; an accepted overlay edited afterwards is refused.
+acceptance, a commit of its own whose gate shows what the overlay moved. Drilled in a throwaway
+clone of main with the final 2026-09-27 overlay (`work/identity-1-scratch/drill.sh`): the branch with
+the overlay committed inert gates 749 -> 749 on today's rails and on the patched ones; a review
+commit removing the two ORACLE_CONFLICT charts the overlay resolves passes as an oracle pass (the gate
+halts a conflict chart that becomes exact over the union of the base and head sets, so that review
+lands first); the acceptance commit (`freeze --accept-identity`, `conflicts --write`, `freeze`)
+passes `--oracle-pass --declared 4` with four GAINED, two EDITED-OFF (re-keyed onto their right
+blocks, still not exact) and eleven LEFT, 749 -> 753; an accepted overlay edited afterwards is
+refused.
 
 ## Reading footage
 

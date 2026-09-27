@@ -17,6 +17,7 @@
 #   python -X utf8 -B tools/identity.py fingerprint <pass> [<pass> ...] [--out-dir D] [--force]
 #   python -X utf8 -B tools/identity.py jobs <jobs.jsonl> [--shards N] [--only-missing]
 #   python -X utf8 -B tools/identity.py decide [--out <report.json>] [--seed N]
+#   python -X utf8 -B tools/identity.py reads --keys K --answers A --report R --out O [--predictions P]
 #
 # fingerprint writes one JSON per pass to work/identity/fp/ (atomic; keyed by the pass file, the
 # song file's content and this module's code stamp, so a changed file or rule is re-scored). It
@@ -1061,6 +1062,293 @@ def cmd_packets(args):
         print("  %s %s %d items" % (pid, p["kind"], len(p["items"])))
 
 
+# ---------------------------------------------------------------- the readers' answers, applied
+
+def _ball(s):
+    """A ball answer -> (WORD, level), or None: 'SINGLE/09' -> ('SINGLE', 9)."""
+    m = re.match(r"^([A-Z][A-Z -]*?)\s*/\s*0*(\d+)$", norm_answer(s))
+    return (m.group(1).strip(), int(m.group(2))) if m else None
+
+
+def _canon(kind, s):
+    if kind == "ball":
+        b = _ball(s)
+        return "%s/%d" % b if b else norm_answer(s)
+    return norm_answer(s)
+
+
+def _name_ball(name):
+    """What the ball of a chart name shows: 'Pump me Amadeus D19' -> 'DOUBLE/19'."""
+    t = name.split()[-1]
+    word = {"S": "SINGLE", "D": "DOUBLE"}.get(t[0])
+    lv = re.sub(r"\D", "", t)
+    return "%s/%d" % (word, int(lv)) if word and lv else None
+
+
+def _cat_balls(cat):
+    """The balls a catalog chart can show on Phoenix footage: its type at its Phoenix 1 or 2 level."""
+    if not cat:
+        return set()
+    return {"%s/%d" % (cat["type"].upper(), lv) for lv in (cat.get("p1_level"), cat.get("p2_level")) if lv is not None}
+
+
+def cmd_reads(args):
+    """Apply one blind batch: score every reader against the seeded items (a missed seed, or a file
+    opened outside the packet, voids that reader's packet), keep an item's read only where two valid
+    readers agree, and turn the reads into what they settle - re-keys waiting on a ball, same-side
+    doubles, confirmations of census withdrawals - and into owner items for anything a read
+    contradicts. Nothing here looks at an image: the reads are the readers'."""
+    key = json.load(open(args.keys, encoding="utf-8"))
+    answers = json.load(open(args.answers, encoding="utf-8"))
+    rep = json.load(open(args.report, encoding="utf-8"))
+    preds = json.load(open(args.predictions, encoding="utf-8")).get("predictions", []) if args.predictions else []
+    smap = corpus_map.chart_map(overlays=[])
+    cert = corpus_map.certification(overlays=[])
+    pop = corpus_map.charts(overlays=[])
+    catalog = corpus_map._load(os.path.join(ROOT, "sources", "p1-note-counts-2026-07-04.json"), {}).get("charts", [])
+    by_id = {c["chartId"].lower(): c for c in catalog if c.get("chartId")}
+    census_names = {r["chart"] for r in corpus_map._load(corpus_map.CENSUS_MAP, [])}
+
+    def cat_of(name):
+        return by_id.get(((smap.get(name) or {}).get("chartId") or "").lower())
+
+    def cat_brief(c):
+        return c and dict(chartId=c["chartId"], type=c["type"], p1_level=c["p1_level"], p2_level=c.get("p2_level"),
+                          p1_notes=c.get("p1_notes"))
+
+    # ---- readers
+    by_packet = defaultdict(list)
+    for r in answers.get("answers", []):
+        by_packet[r["packet"]].append(r)
+    readers, reads = [], {}
+    for pid, p in sorted(key["packets"].items()):
+        kind = p["kind"]
+        allowed = {"question.json"} | {img for it in p["items"] for img in it["images"]}
+        seeds = [it for it in p["items"] if it["role"] == "seed"]
+        valid = []
+        for r in by_packet.get(pid, []):
+            res = r.get("result") or {}
+            got = {a["item"]: a for a in res.get("answers", [])}
+            outside = [f for f in res.get("files_opened") or []
+                       if os.path.basename(os.path.dirname(f)) != pid or os.path.basename(f) not in allowed]
+            missed = [it["item"] for it in seeds
+                      if _canon(kind, (got.get(it["item"]) or {}).get("answer")) != _canon(kind, it["answer"])]
+            ok = not outside and not missed
+            readers.append(dict(packet=pid, reader=r["reader"], valid=ok, seeds=len(seeds), missed_seeds=missed,
+                                outside=outside))
+            if ok:
+                valid.append(got)
+        for it in p["items"]:
+            if it["role"] != "item":
+                continue
+            vals = [(_canon(kind, g[it["item"]]["answer"]), g[it["item"]].get("confidence")) for g in valid if it["item"] in g]
+            agreed = len(vals) >= 2 and len({v for v, _ in vals}) == 1 and vals[0][0] not in ("UNSURE", "NONE", "")
+            reads[it["item"]] = dict(it, packet=pid, kind=kind, answers=[v for v, _ in vals],
+                                     read=vals[0][0] if agreed else None,
+                                     confidence=(("sure" if all(c == "sure" for _, c in vals) else "likely") if agreed
+                                                 else "unsure"), readers=len(vals))
+
+    def ball_ev(rd):
+        return dict(read=rd["read"], confidence=rd["confidence"], readers=rd["readers"], packet=rd["packet"],
+                    item=rd["item"])
+
+    rows, owner, conflicts, confirmed, rejected = [], [], [], [], []
+
+    # ---- re-keys waiting on a ball: the ball must show the chart's own catalog level (the play IS
+    # the chart its chartId names; the notes then say which block that is); a crossed pair moves
+    # together or not at all
+    pend = {r["chart"]: r for r in rep.get("pending_ball", []) if r["kind"] == "rekey"}
+    agree = {}
+    for rd in reads.values():
+        if rd["kind"] == "ball" and rd.get("purpose") == "pending re-key" and rd["chart"] in pend:
+            cat = (pend[rd["chart"]]["evidence"] or {}).get("catalog")
+            agree[rd["chart"]] = (rd, rd["read"] is not None and rd["read"] in _cat_balls(cat), cat)
+    for n, r in sorted(pend.items()):
+        partner = r.get("crosses") or r.get("waits_on")
+        mine = agree.get(n)
+        theirs = agree.get(partner) if partner else None
+        if mine is None:
+            continue
+        rd, ok, cat = mine
+        why = None
+        if not ok:
+            why = "the ball reads %s (%s), which is not the chart's catalog %s" % (
+                rd["read"] or "unsure", rd["confidence"], "/".join(sorted(_cat_balls(cat))) or "row")
+        elif partner and not (theirs and theirs[1]):
+            why = "its crossed partner %s is not settled by its ball" % partner
+        if why:
+            rejected.append(dict(chart=n, kind="rekey", to_tag=r["to_tag"], reason=why))
+            continue
+        ev = dict(r["evidence"], ball=dict(ball_ev(rd), agrees_with="the chartId's catalog level (%s)" % "/".join(
+            sorted(_cat_balls(cat)))))
+        rows.append(dict({k: v for k, v in r.items() if k != "waits_on"}, evidence=ev))
+
+    # ---- one side, two names
+    pend_w = defaultdict(list)
+    for r in rep.get("pending_ball", []):
+        if r["kind"] == "withdraw":
+            pend_w[(r["vid"], r["side"])].append(r)
+    census_w = defaultdict(list)
+    for r in rep.get("withdraw", []):
+        census_w[(r["vid"], r["side"])].append(r)
+    for rd in sorted(reads.values(), key=lambda x: (x.get("vid", ""), x.get("side", ""))):
+        if rd["kind"] != "ball" or not str(rd.get("purpose", "")).startswith("same-side double"):
+            continue
+        vs = (rd["vid"], rd["side"])
+        names = (pend_w.get(vs) or census_w.get(vs) or [{}])[0].get("names") or rd.get("charts") or []
+        total = (cert.get(rd["vid"], {}).get(rd["side"]) or {}).get("judged")
+        if rd["read"] is None:
+            owner.append(dict(chart=" + ".join(names), vid=rd["vid"], side=rd["side"], proposed=None,
+                              reason="one side certifies %s; the blind ball read is unsure (%s)" % (
+                                  " + ".join(names), ", ".join(rd["answers"]) or "no valid reader"),
+                              evidence=dict(ball=ball_ev(rd))))
+            continue
+        picks = [n for n in names if _name_ball(n) == rd["read"]]
+        w = picks[0] if len(picks) == 1 else None
+        cat_ok = bool(w) and rd["read"] in _cat_balls(cat_of(w))
+        losers = [n for n in names if n != w]
+        if vs in census_w:
+            verified = sorted({v for r in census_w[vs] for v in r["evidence"].get("census_verified", [])})
+            if w and [w] == verified:
+                for r in census_w[vs]:
+                    rows.append(dict(r, evidence=dict(r["evidence"], ball=ball_ev(rd))))
+                confirmed.append(dict(vid=rd["vid"], side=rd["side"], what="the ball (%s) agrees with the census: %s" % (
+                    rd["read"], w)))
+            else:
+                owner.append(dict(chart=" + ".join(names), vid=rd["vid"], side=rd["side"], proposed=None,
+                                  reason="the blind ball read %s contradicts the census ledger (eye-verified), which "
+                                         "certifies %s on this side" % (rd["read"], " + ".join(verified)),
+                                  evidence=dict(ball=ball_ev(rd))))
+            continue
+        reasons = []
+        if not w:
+            reasons.append("the ball reads %s, which %s" % (rd["read"], "no name on this side carries" if not picks
+                                                             else "more than one name carries"))
+        elif not cat_ok:
+            reasons.append("the ball reads %s but %s's chartId is catalog %s" % (
+                rd["read"], w, "/".join(sorted(_cat_balls(cat_of(w)))) or "unknown"))
+        if total and int(total) % 100 == 0:
+            reasons.append("round-hundred total %s" % total)
+        for n in names:
+            if n in census_names:
+                reasons.append("%s has a census map row (eye-verified)" % n)
+        ev = dict(ball=ball_ev(rd), winner=w, winner_catalog=cat_brief(cat_of(w)) if w else None,
+                  why="a blind read of the result screen's level ball (two readers agree, seeded) shows %s: %s's name "
+                      "level and its chartId's catalog level" % (rd["read"], w))
+        if reasons:
+            owner.append(dict(chart=" + ".join(names), vid=rd["vid"], side=rd["side"],
+                              reason="one side certifies %s, total %s; the ball reads %s (two readers, %s) - %s" % (
+                                  " + ".join(names), total, rd["read"], rd["confidence"], "; ".join(reasons)),
+                              proposed=dict(kind="withdraw", charts=losers) if w else None, evidence=ev))
+            continue
+        for n in losers:
+            src = next((r for r in pend_w.get(vs, []) if r["chart"] == n), None)
+            rows.append(dict(kind="withdraw", vid=rd["vid"], side=rd["side"], names=names, chart=n,
+                             expected=total, from_key=(src or {}).get("from_key") or (smap.get(n) or {}).get("key"),
+                             to_tag=None, evidence=ev))
+
+    # ---- song-level mismaps: a DIFFERENT title, or a ball no named chart shows, goes to the owner
+    # with an ORACLE_CONFLICT proposal - never an overlay row (the fix is to human data)
+    song_level = defaultdict(lambda: dict(balls=[], titles=[]))
+    for rd in reads.values():
+        if not str(rd.get("purpose", "")).startswith("song-level"):
+            continue
+        song_level[rd["vid"]]["balls" if rd["kind"] == "ball" else "titles"].append(rd)
+    near = args.near
+    for vid, g in sorted(song_level.items()):
+        e = cert.get(vid) or {}
+        named = sorted(e.get("charts") or {})
+        side_ball = {rd["side"]: rd for rd in g["balls"]}
+        hints = []
+        for s, rd in sorted(side_ball.items()):
+            judged = (e.get(s) or {}).get("judged")
+            if not rd["read"] or not judged:
+                continue
+            exact = [x for x in catalog if rd["read"] in _cat_balls(x) and x.get("p1_notes") == judged]
+            close = [x for x in catalog if rd["read"] in _cat_balls(x) and x.get("p1_notes") is not None
+                     and 0 < abs(x["p1_notes"] - judged) <= near]
+            hints.append("%s shows %s at %s judged: catalog %s%s" % (
+                s, rd["read"], judged,
+                ", ".join("%s %s%d %d" % (x["song"], x["type"][0], x["p1_level"], x["p1_notes"]) for x in exact)
+                or "none at that count",
+                ("; within %d: %s" % (near, ", ".join("%s %s%d %d" % (x["song"], x["type"][0], x["p1_level"],
+                                                                    x["p1_notes"]) for x in close))) if close else ""))
+        for n in named:
+            c = e["charts"][n]
+            certified = c.get("verdict") == "CERTIFIED"
+            want = _name_ball(n)
+            probs, good = [], []
+            sides = [c.get("side")] if certified else sorted(side_ball)
+            shown = {s: side_ball[s]["read"] for s in sides if s in side_ball and side_ball[s]["read"]}
+            if shown:
+                if want in shown.values():
+                    good.append("the %s ball reads %s" % ("/".join(s for s, v in shown.items() if v == want), want))
+                else:
+                    probs.append("the ball reads %s where the name says %s" % (
+                        ", ".join("%s %s" % (s, v) for s, v in sorted(shown.items())), want))
+            for rd in g["titles"]:
+                if rd.get("named") != n:
+                    continue
+                if rd["read"] == "DIFFERENT":
+                    probs.append("the title differs from a reference video of the named song (%s, %s; two readers, %s)" % (
+                        rd.get("ref_chart"), rd.get("ref_vid"), rd["confidence"]))
+                elif rd["read"] == "SAME":
+                    good.append("the title matches a reference video of the named song (%s, %s)" % (
+                        rd.get("ref_chart"), rd.get("ref_vid")))
+            if probs:
+                owner.append(dict(chart=n, vid=vid, side=c.get("side"), proposed=None,
+                                  reason="%s on %s (%s): %s" % ("certified" if certified else "OPEN", vid,
+                                                                c.get("side") or "no side", "; ".join(probs)),
+                                  evidence=dict(hints=hints, confirmations=good, catalog=cat_brief(cat_of(n)),
+                                                reads=[ball_ev(x) for x in g["balls"] + g["titles"]])))
+                conflicts.append(dict(chart=n, in_population=n in pop, reasons=[dict(
+                    kind="identity", status="song-level", detail="%s: %s" % (vid, "; ".join(probs)))]))
+            elif good:
+                st = (rep["assessments"].get(n) or {}).get("status")
+                confirmed.append(dict(vid=vid, side=c.get("side"), chart=n, status=st, what="; ".join(good) + (
+                    " - the notes match no block (best F1 %.3f), so the extraction or the file is what differs, not "
+                    "the name" % (rep["assessments"][n].get("best_f1") or 0) if certified and st == "unmatched" else "")))
+
+    # ---- the predictions registered before any read
+    checked = []
+    for p in preds:
+        if "predicted_ball" in p:
+            rd = next((x for x in reads.values() if x["kind"] == "ball" and x.get("vid") == p["vid"]
+                       and x.get("side") == p["side"]), None)
+            got = rd and rd["read"]
+            checked.append(dict(vid=p["vid"], side=p["side"], predicted=p["predicted_ball"], read=got,
+                                hit=got == _canon("ball", p["predicted_ball"])))
+        elif "predicted_title" in p:
+            rds = [x for x in reads.values() if x["kind"] == "title" and x.get("vid") == p["vid"]]
+            got = sorted({x["read"] or "UNSURE" for x in rds}) or ["not read"]
+            checked.append(dict(vid=p["vid"], predicted=p["predicted_title"], read="/".join(got),
+                                hit=None if not rds else got == ["DIFFERENT"]))
+
+    out = dict(tool="identity reads", batch=key.get("batch"), keys=os.path.abspath(args.keys),
+               answers=os.path.abspath(args.answers), report=os.path.abspath(args.report),
+               readers=readers, reads=sorted(reads.values(), key=lambda x: (x["packet"], x["item"])),
+               rows=rows, owner_items=owner, conflict_additions=conflicts, confirmed=confirmed, rejected=rejected,
+               predictions=checked)
+    atomicio.write_json(args.out, out, indent=1, sort_keys=True, ensure_ascii=False)
+    nv = sum(1 for r in readers if r["valid"])
+    print("readers: %d of %d valid (%s)" % (nv, len(readers), ", ".join(
+        "%s r%d missed %s outside %d" % (r["packet"], r["reader"], r["missed_seeds"], len(r["outside"]))
+        for r in readers if not r["valid"]) or "every seed answered right, nothing opened outside a packet"))
+    print("items: %d read by two agreeing readers, %d unsure" % (
+        sum(1 for r in reads.values() if r["read"]), sum(1 for r in reads.values() if not r["read"])))
+    for r in rows:
+        print("  SETTLED %-8s %-34s %s" % (r["kind"], r["chart"], r.get("to_tag") or "(%s %s)" % (r["vid"], r["side"])))
+    for r in rejected:
+        print("  REJECTED %-34s %s" % (r["chart"], r["reason"]))
+    for o in owner:
+        print("  OWNER %-40s %s" % (o["chart"][:40], o["reason"][:150]))
+    for c in confirmed:
+        print("  CONFIRMED %s %s %s" % (c["vid"], c.get("side"), c["what"][:150]))
+    print("predictions: %d of %d hit (%s)" % (
+        sum(1 for c in checked if c["hit"]), sum(1 for c in checked if c["hit"] is not None),
+        ", ".join("%s %s" % (c["vid"], c["read"]) for c in checked if c["hit"] is False) or "no miss"))
+    print("wrote " + args.out)
+
 # ---------------------------------------------------------------- the overlay, and what it is worth
 
 OVERLAY_PURPOSE = (
@@ -1107,7 +1395,11 @@ def cmd_overlay(args):
     rep = json.load(open(args.report, encoding="utf-8"))
     rows = [_slim(r) for r in rep.get("rekey", [])] + [_slim(r) for r in rep.get("withdraw", [])]
     for extra in args.extra or []:
-        rows += [_slim(r) for r in json.load(open(extra, encoding="utf-8")).get("rows", [])]
+        # rows settled since the report (identity.py reads): one replaces the report's row for the
+        # same chart, video, side and kind - a census withdrawal a ball read confirmed carries the read
+        new = [_slim(r) for r in json.load(open(extra, encoding="utf-8")).get("rows", [])]
+        ids = {(r["kind"], r["chart"], r.get("vid"), r.get("side")) for r in new}
+        rows = [r for r in rows if (r["kind"], r["chart"], r.get("vid"), r.get("side")) not in ids] + new
     rows.sort(key=lambda r: (r["kind"], r["chart"], r.get("vid", "")))
     doc = dict(purpose=OVERLAY_PURPOSE, date=args.date, tool="tools/identity.py", code=rep.get("code"),
                rule=dict(best_f1=BEST_F1, margin=MARGIN,
@@ -1251,6 +1543,9 @@ def cmd_owner_list(args):
                               proposed=None, evidence=dict(table=a.get("table"), pass_name=a.get("pass_name"))))
     for extra in args.extra_items or []:
         items += json.load(open(extra, encoding="utf-8")).get("items", [])
+    reads = [json.load(open(x, encoding="utf-8")) for x in (args.reads or [])]
+    for rd in reads:
+        items += [dict(o, source="blind batch %s" % rd.get("batch")) for o in rd.get("owner_items", [])]
     doc = dict(bucket="#2 chart identity (loops/identity-1)", date=args.date, report=os.path.abspath(args.report),
                items=items, staged=[dict(what=s.split("::", 1)[0], detail=s.split("::", 1)[1]) for s in (args.staged or [])])
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
@@ -1264,6 +1559,7 @@ def cmd_owner_list(args):
         conflict = {c["chart"] for c in corpus_map._load(os.path.join(ROOT, "sources", "oracle-conflict.json"), {}).get("charts", [])}
         grade = {r["chart"]: r for r in corpus_map._load(os.path.join(ROOT, "sources", "corpus-grade.json"), {}).get("charts", [])}
         settled = {r["chart"] for r in rep.get("rekey", [])} | {r["chart"] for r in rep.get("withdraw", [])}
+        settled |= {r["chart"] for rd in reads for r in rd.get("rows", [])}
         charts = []
         for n, a in sorted(rep["assessments"].items()):
             if n in conflict or n in settled or grade.get(n, {}).get("exact"):
@@ -1274,6 +1570,11 @@ def cmd_owner_list(args):
                     "%.3f" % a["mapped_f1"] if a.get("mapped_f1") is not None else "-", a.get("runner_f1") or 0))
                 charts.append(dict(chart=n, in_population=True, reasons=[dict(kind="identity", detail=detail,
                                                                              status=a["status"])]))
+        # song-level: a blind read contradicts the name (a title that differs from the named song's, or a
+        # ball no named chart shows) - OPEN charts included, so no loop certifies one from that video
+        have = {c["chart"] for c in charts}
+        charts += [c for rd in reads for c in rd.get("conflict_additions", []) if c["chart"] not in conflict
+                   and c["chart"] not in have]
         prop = dict(purpose="PROPOSED additions to sources/oracle-conflict.json (loop bucket #2, tools/identity.py): certified "
                             "charts, not exact, whose pad's notes match another block of their file far better than their "
                             "mapped block, or two blocks alike. Not read by the gate: the owner folds them into "
@@ -1281,7 +1582,10 @@ def cmd_owner_list(args):
                             "exact by editing its mapped block halts for review instead of taking the credit.",
                     rule=dict(identity="not exact; the pad's extraction matches another block at F1 >= %.1f by >= %.1f over the "
                                        "mapped block (candidate), or its best two blocks lie within %.1f (ambiguous), or two "
-                                       "cached passes of the pad disagree on the best block" % (BEST_F1, MARGIN, MARGIN)),
+                                       "cached passes of the pad disagree on the best block" % (BEST_F1, MARGIN, MARGIN),
+                              song_level="a blind read (two readers agree, seeded) contradicts the name: the result "
+                                         "screen's title differs from a reference video of the named song, or its "
+                                         "level ball shows no named chart; OPEN charts included"),
                     date=args.date, report=os.path.abspath(args.report), charts=charts)
         atomicio.write_json(args.conflicts_out, prop, indent=1, sort_keys=True, ensure_ascii=False)
         print("wrote %s: %d proposed ORACLE_CONFLICT additions" % (args.conflicts_out, len(charts)))
@@ -1363,6 +1667,15 @@ def main():
     ol.add_argument("--staged", action="append", help="'<what>::<detail>' of something staged for the owner")
     ol.add_argument("--conflicts-out", help="write the proposed ORACLE_CONFLICT additions here")
     ol.add_argument("--extra-items", action="append", help="a JSON {items: [...]} of further owner items")
+    ol.add_argument("--reads", action="append", help="an identity.py reads output: its owner items, song-level "
+                                                     "conflict proposals and settled rows")
+    rd = sub.add_parser("reads")
+    rd.add_argument("--keys", required=True, help="the batch's key (seeds and what each item stands for)")
+    rd.add_argument("--answers", required=True, help="the readers' answers: {answers: [{packet, reader, result}]}")
+    rd.add_argument("--report", required=True, help="the decide report the batch was built from")
+    rd.add_argument("--predictions", help="the predictions registered before any read, to score")
+    rd.add_argument("--out", required=True)
+    rd.add_argument("--near", type=int, default=5, help="catalog hints: also list charts this many notes off the total")
     j = sub.add_parser("jobs")
     j.add_argument("jobs")
     j.add_argument("--list-dir", required=True)
@@ -1371,7 +1684,7 @@ def main():
     args = ap.parse_args()
     {"fingerprint": cmd_fingerprint, "jobs": cmd_jobs, "decide": cmd_decide, "packets": cmd_packets,
      "overlay": cmd_overlay, "grade-delta": cmd_grade_delta, "selfcheck": cmd_selfcheck,
-     "owner-list": cmd_owner_list}[args.cmd](args)
+     "owner-list": cmd_owner_list, "reads": cmd_reads}[args.cmd](args)
 
 
 if __name__ == "__main__":
