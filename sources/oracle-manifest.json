@@ -1,0 +1,35 @@
+{
+ "converter": {
+  "environment": {
+   "converter_head": "e01246d538a6586a7ef08a90f54476c295e10173",
+   "numpy": "2.5.2",
+   "pandas": "2.2.3",
+   "python": "3.12.14"
+  },
+  "files": {
+   "piu_annotate/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "piu_annotate/formats/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "piu_annotate/formats/notelines.py": "45a84200bd83d5ab82f48d456f063311de54c2b2808df52ca178f598b980621d",
+   "piu_annotate/formats/ssc_to_chartstruct.py": "a6f2d54a9cf125c05ad1d35087157ad955d71f0a8e094e13a1f70d47e5f88aa5",
+   "piu_annotate/formats/sscfile.py": "a83136a356ec2217d4a460980ac022dad8374eca103e426c2497322bc863bcd1",
+   "piu_annotate/utils.py": "88fa36b9e274aa61388684307a566d8ff79c8b342b742c08063ccffd21991453"
+  },
+  "hold_tick_model": "lattice",
+  "pin": "e82d48350c5013005ad5fabc25716a9c971717b86cca936905282ec1a534f3af"
+ },
+ "oracle": {
+  "sources/census-final.json": "222703fa1b2794b47ddbc32ab3ed25b31571cae2ded7e76f8896d596beb2db7b",
+  "sources/certification-2026-08-30.json": "1bfc0bd5e2ab4e022f02243c80e6e05ffa34265b3f328ca780222db6ce996817",
+  "sources/certification-corpus-2026-09-10.json": "5ad2c9844b13e64a85700eabbab80ad2284c98f79c57fd480c6a1876776124bc",
+  "sources/oracle-conflict.json": "6b4fa8347a01d1979dfe370a1ac38d5b5ed7a8529e0b5698b11a41bf8be8119e",
+  "sources/owner-revisit.json": "2f075c60f3f508d91afe7fb7d01edafde05a2e558db010b7216545217e43b541",
+  "sources/p1-note-counts-2026-07-04.json": "331e5e7ede73d3e4b7d783a6d8186ce42c91b3f429cbbece351a8066093227bc",
+  "sources/quarantine.json": "640c031ec71ad433363a9ce1899c68b311f15a20bd9503ae93666d9a4624dcba",
+  "sources/ssc-map-tail.json": "2ef619a66cc221023dbc1e891b15e6219a675849999f1d559407151f4999170a",
+  "sources/ssc-map.json": "b3735810f775b7872e303f2e9064432477a1425fe461ecb26cf23f2bf1af92cc",
+  "sources/tail-2026-09-08.json": "f62d548b10bc984f66850ba2dceed9f673392008651a516203e7c241646d53e7",
+  "sources/video-map.json": "ca53f1059830f8125d47767cb729fdc564106751c9215ce78fb64f08cea07164"
+ },
+ "oracle_hash": "054afdd6fbe93ce7b1ddc160e6434147cc6dfe166aa50116215458abda4bc687",
+ "purpose": "The frozen oracle: the sha256 (CRLF read as LF) of every file the corpus grade reads to decide who is certified and at what count, the policy files its gate enforces, and the converter pin. tools/corpus_grade.py grade and gate refuse to run when the working tree or the installed converter differs from this. Rewrite it with `corpus_grade.py freeze` in an oracle commit (never together with stepfile edits); `--repin` moves the converter pin, as a commit of its own."
+}
