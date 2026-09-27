@@ -203,7 +203,7 @@ still read from the working tree unless `--oracle-rev` names a commit too.** Wit
 working tree's blocks are graded. The JSON is deterministic (sorted, no timings; timings go to
 stderr), so two grades of one tree are byte-identical: 1,490 charts, plus the import commit's
 blocks for the tiers, in about 40–60 s cold on 6 workers (depending on what else the shared box
-is running) and about 7 s when every block is in the conversion cache (`work/corpus-grade-cache/`,
+is running) and about 4–7 s when every block is in the conversion cache (`work/corpus-grade-cache/`,
 keyed by the converter pin, the conversion code's own source, the file's content with CRLF read
 as LF, and the block tag; a 0-byte or torn entry is a miss and is rebuilt; writes are tmp +
 `os.replace`). Workers run at BelowNormal priority.
@@ -302,6 +302,21 @@ wrong certified 871 (ORACLE_CONFLICT); a gain declared as 0 and as 1; an oracle 
 stepfile edit; a line removed from `demotions.jsonl`; a converter copy that drifts but keeps the
 lattice flag (`PIU_ANNOTATE_ROOT`, refused). A 0-byte and a torn cache entry are rebuilt and the
 grade stays byte-identical.
+
+The first review found a hole. `--oracle-pass` looked only at charts certified on both sides, so
+an oracle commit could certify a chart, edit that chart's block, and take the credit. It was
+fixed and drilled the same day, with 18 more cases in a fresh scratch clone, and the 24 cases
+above were run again (all as intended). The oracle-pass cases: an untouched CRLF checkout
+passes. The reviewer's case fails whether committed or in the working tree: one note flipped in
+the uncertified Switronic SHORT CUT S17 block, and a ledger row certifying it at the new count.
+So do an uncertified block edited, a file added and an uncertified file removed. A policy-file
+change on its own passes with `--oracle-pass` and fails without it. The tier cases: a
+demotion-only commit prints UNPROTECTED with its reason, and a promotion row prints PROMOTED with
+its run. The conversion cases used a hooked copy of the converter, pinned in the clone. With no
+fault set it grades exactly as the real converter does. A MemoryError or OSError that reaches
+the grade is refused, and nothing is cached. A worker that kills itself is refused after
+`--stall-timeout`. A failure the converter returns as `(None, message)` keeps its message, and
+is converted again rather than cached. A swallowed MemoryError that does not repeat is refused.
 
 **`guards.py`** (library)
 The shared definitions the loops and the gate import. `block_sha(ssc_path, block_id)` is the
