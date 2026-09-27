@@ -1445,12 +1445,20 @@ def d_pass(d):
     r = p("gate", "RO", "--declared", "0")
     d.expect(r.returncode == 2 and "only the owner" in r.stderr and not calls() and os.path.exists(stop("RO")),
              f"an owner-only path in the pass: exit {r.returncode}, gate called {len(calls())}x: {r.stderr[-300:]}")
+    # ... or changed in the working tree only, where the gate's audit would read it
+    d.expect(p("begin", "RD").returncode == 0, "RD begin failed")
+    d.expect(commit("RD", "RD: a harmless file", **{"d.txt": "d rd\n"}).returncode == 0, "RD commit failed")
+    write(repo, "sources/footage-corrupt.json", '{"videos": []}\n')
+    r = p("gate", "RD", "--declared", "0")
+    d.expect(r.returncode == 2 and "in the working tree sources/footage-corrupt.json" in r.stderr and not calls(),
+             f"an owner-only file changed in the working tree: exit {r.returncode}, gate called {len(calls())}x: {r.stderr[-300:]}")
+    os.remove(os.path.join(repo, "sources", "footage-corrupt.json"))
     return ("no-pass gate refused; begin idempotent until a commit, then refused; 75 and a report-less exit 1 kept the "
             "pass open and re-gated its base; FAIL halted and reverted 2 of the run's commits (the owner's kept), "
             "then refused its commits and a new pass; a refusing gate halted with nothing reverted; commits before "
             "begin and after a closed pass refused, and no pass begins over an ungated one; a tools-only pass passed "
-            "ungated, a stepfile pass over it refused until main had the code, then gated; a planted tools/json.py and "
-            "an owner-only path refused; the gate ran without the loop's PYTHONPATH and with an empty pycache prefix")
+            "ungated, a stepfile pass over it refused until main had the code, then gated; a planted tools/json.py, "
+            "an owner-only path committed or changed in the working tree refused; the gate ran without the loop's PYTHONPATH and with an empty pycache prefix")
 
 
 def d_hook(d):

@@ -602,6 +602,14 @@ def gate_env(top):
     return env, pyc
 
 
+def owner_paths_dirty(top):
+    """Owner-only paths where the working tree or the index differs from HEAD (modified, staged,
+    deleted or untracked): the gate reads some of them from the working tree."""
+    out = must(g(top, "--no-optional-locks", "status", "--porcelain=v1", "-z", "--no-renames", "--untracked-files=all",
+                 "--", *owner_only(), binary=True), "git status (owner-only paths)")
+    return sorted({rec[3:].decode("utf-8", "replace") for rec in out.split(b"\0") if len(rec) > 3})
+
+
 def cmd_pass_begin(args):
     run = check_run(args.run)
     top = toplevel(args.repo)
@@ -720,10 +728,15 @@ def cmd_pass_gate(args):
         # before anything runs: what the pass changed, and whether the gate that would judge it is main's
         changed = names(top, "diff", "--name-only", "--no-renames", base, tip)
         owners = [p for p in changed if covered(p, owner_only())]
-        if owners:
-            why = (f"the pass changes paths only the owner changes ({', '.join(owners[:8])}{' ...' if len(owners) > 8 else ''}): "
+        # the gate and its audit read some of them from the working tree (footage-corrupt.json among them)
+        dirty = owner_paths_dirty(top)
+        if owners or dirty:
+            what = ", ".join(owners[:8]) + (" ..." if len(owners) > 8 else "")
+            what += ("; " if owners and dirty else "") + (f"in the working tree {', '.join(dirty[:8])}" if dirty else "")
+            why = (f"the pass changes paths only the owner changes ({what}): "
                    "the rails' own code, the oracle, the ratchet's ledgers (a demotion is the owner's call) and "
-                   "footage-corrupt.json are never a loop's to commit")
+                   "footage-corrupt.json are never a loop's to commit or to change under a gate")
+            owners = owners + [p for p in dirty if p not in owners]
             cur.setdefault("gates", []).append(dict(attempt, exit=2, verdict=None, refused=why, owner_only=owners[:50]))
             return halt_open(rdir, pfile, cur, base, why)
         fork, moved, local = gate_code_drift(top, tip)
