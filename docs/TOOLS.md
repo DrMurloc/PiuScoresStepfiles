@@ -235,15 +235,19 @@ stderr when it holds videos the committed ledger does not.
 
 The **gate** grades `--base` and `--head` (default: the working tree), each under its own tree's
 oracle, prints every transition — LOST, GAINED, EDITED-EXACT (a block or its file header
-changed and it stayed exact), EDITED-OFF, EXPECTED-CHANGED, ENTERED/LEFT the population — and
+changed and it stayed exact), EDITED-OFF, EXPECTED-CHANGED, UNPROTECTED and PROMOTED (the
+PROTECTED tier changed and nothing else did: a demotion or promotion row, named with its reason
+or run, or the import grade under a new oracle), ENTERED/LEFT the population — and
 exits 1 when: a chart leaves exact without a `sources/demotions.jsonl` row naming the chart and
 its `block_sha` before the change, with a `reason` and `evidence` (a quarantined chart's row
 also needs `owner`, where he said yes); a PROTECTED chart leaves exact at all, or its block or
 file header changes while it stays exact (unless a promotion row names the new block) —
 protection is judged at the base, so demoting a PROTECTED chart is a commit of its own before
 the change that breaks it; the oracle hash or the converter pin differs between base and head
-(unless `--oracle-pass`, for commits that change only the oracle — and then any `simfiles/`
-change fails); an owner-revisit chart's block or file header no longer hashes to what
+(unless `--oracle-pass`, for commits that change only the oracle — and then any file under
+`simfiles/` that differs between base and head fails, certified or not, in the population or
+not, each named with the certified charts it holds; two commits compare blob ids, and the working
+tree is compared by content with CRLF read as LF); an owner-revisit chart's block or file header no longer hashes to what
 `owner-revisit.json` records; a chart in the ORACLE_CONFLICT set becomes exact (halt for review
 instead of taking the credit); `demotions.jsonl` or `protected-promotions.jsonl` lost or rewrote
 a line (both are append-only); `--declared N` is given and the net change in exact charts is not

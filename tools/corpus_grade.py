@@ -35,7 +35,8 @@
 # sources/ by an oracle commit.
 #
 # THE GATE grades --base and --head (default: the working tree), each under its own tree's
-# oracle, prints every transition, and exits 1 when
+# oracle, prints every transition (a chart's exactness, block, header, count, population or
+# PROTECTED tier changing), and exits 1 when
 #   - a chart leaves exact without a sources/demotions.jsonl row naming it and its block_sha
 #     before the change (with a reason and evidence; a quarantined chart's row also needs the
 #     owner's yes in an "owner" field);
@@ -43,7 +44,8 @@
 #     exact (unless a promotion row names the new block). Protection is judged at the base, so
 #     demoting a PROTECTED chart is a commit of its own, before the change that breaks it;
 #   - the oracle hash or the converter pin differs between base and head (unless --oracle-pass,
-#     for commits that change only the oracle - and then any simfiles/ change fails);
+#     for commits that change only the oracle - and then any file under simfiles/ that differs
+#     between base and head fails, certified or not);
 #   - an owner-revisit chart's block or header no longer hashes to what owner-revisit.json records;
 #   - a chart in the ORACLE_CONFLICT set becomes exact (halt for review, take no credit);
 #   - demotions.jsonl or protected-promotions.jsonl lost or rewrote a line (both are append-only);
@@ -654,6 +656,44 @@ def cmd_grade(args):
 
 # ---------------------------------------------------------------- the gate
 
+def git_blob_id(data):
+    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+
+
+def _newlines(data):
+    return data.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+
+def simfiles_listing(tree):
+    """{path: blob id or None} of every file under simfiles/: a commit's blobs, or the working
+    tree's tracked and untracked (not ignored) files that exist on disk (None: read the bytes)."""
+    if tree.rev is not None:
+        return {p: s for p, s in tree._index().items() if p.startswith("simfiles/")}
+    rc, out, err = git("ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", "simfiles", text=False)
+    if rc != 0:
+        refuse("git ls-files simfiles failed: %s" % err.strip())
+    paths = {p.decode("utf-8") for p in out.split(b"\0") if p}
+    return {p: None for p in sorted(paths) if os.path.isfile(os.path.join(ROOT, *p.split("/")))}
+
+
+def simfiles_changes(base, head):
+    """[(path, "added"|"removed"|"changed")] for every file under simfiles/ that differs between
+    two trees, newline style aside. Two commits compare blob ids. Against the working tree a
+    file is unchanged when its bytes, or its bytes with CRLF read as LF, are the commit's blob;
+    otherwise both sides are read and compared with CRLF and CR read as LF."""
+    lb, lh = simfiles_listing(base), simfiles_listing(head)
+    out = [(p, "removed") for p in sorted(set(lb) - set(lh))] + [(p, "added") for p in sorted(set(lh) - set(lb))]
+    both = sorted(set(lb) & set(lh))
+    if base.rev is not None and head.rev is not None:
+        return sorted(out + [(p, "changed") for p in both if lb[p] != lh[p]])
+    commit, work, ids = (base, head, lb) if head.rev is None else (head, base, lh)
+    local = work.read_many(both)
+    doubt = [p for p in both if ids[p] not in (git_blob_id(local[p]), git_blob_id(lf(local[p])))]
+    blobs = commit.read_many(doubt)
+    out += [(p, "changed") for p in doubt if _newlines(blobs[p]) != _newlines(local[p])]
+    return sorted(out)
+
+
 def append_only(before, after):
     """True when `after` (bytes or None) keeps every line of `before` in order at its start."""
     b = [l for l in lf(before or b"").decode("utf-8").split("\n") if l.strip()]
@@ -692,6 +732,19 @@ def cmd_gate(args):
         if tree.legacy:
             notes.append("%s read %s" % (tree.label[:12], "; ".join(sorted(set(tree.legacy)))))
 
+    # an oracle pass carries no stepfile edits: any file under simfiles/ that differs, certified
+    # or not, in the population on both sides or on one, fails it
+    stepfiles = simfiles_changes(base, head) if args.oracle_pass else []
+    if stepfiles:
+        charts_in = {}
+        for r in list(rb.values()) + list(rh.values()):
+            charts_in.setdefault("simfiles/" + r["ssc_rel"], set()).add(r["chart"])
+        for p, how in stepfiles[:20]:
+            fails.append("ORACLE PASS EDITS A STEPFILE: %s %s%s" % (
+                p, how, "; certified here: " + ", ".join(sorted(charts_in[p])) if p in charts_in else ""))
+        if len(stepfiles) > 20:
+            fails.append("ORACLE PASS EDITS A STEPFILE: and %d more file(s) under simfiles/" % (len(stepfiles) - 20))
+
     # append-only ledgers
     for path in (DEMOTIONS, PROMOTIONS):
         if not append_only(base.read(path), head.read(path)):
@@ -712,8 +765,7 @@ def cmd_gate(args):
         b, h = rb.get(name), rh.get(name)
         bx, hx = bool(b and b["exact"]), bool(h and h["exact"])
         edited = bool(b and h and (b.get("block_sha"), b.get("header_sha")) != (h.get("block_sha"), h.get("header_sha")))
-        if args.oracle_pass and edited:
-            fails.append("ORACLE PASS EDITS A STEPFILE: %s (%s)" % (name, (h or b)["ssc_rel"]))
+        prot_b, prot_h = bool(b and b["tier"] == "PROTECTED"), bool(h and h["tier"] == "PROTECTED")
         t = None
         if bx and not hx:
             t = "LOST" if h else "LEFT-EXACT"
@@ -727,16 +779,17 @@ def cmd_gate(args):
             t = "EXPECTED-CHANGED"
         elif b is None or h is None:
             t = "ENTERED" if b is None else "LEFT"
+        elif prot_b != prot_h:                             # a tier change with nothing else: a ledger row
+            t = "UNPROTECTED" if prot_b else "PROMOTED"
         if not t:
             continue
         row = dict(chart=name, transition=t, tier_base=b and b["tier"], tier_head=h and h["tier"],
                    before=b and dict(implied=b.get("implied"), expected=b["expected"], block_sha=b.get("block_sha"), error=b.get("error")),
                    after=h and dict(implied=h.get("implied"), expected=h["expected"], block_sha=h.get("block_sha"), error=h.get("error")),
                    verdict="ok")
-        protected_base = bool(b and b["tier"] == "PROTECTED")
         if t in ("LOST", "LEFT-EXACT"):
             dem = dem_rows.get((name, b.get("block_sha")))
-            if protected_base:
+            if prot_b:
                 row["verdict"] = "FAIL: a PROTECTED chart left exact (demote it in a commit of its own first)"
             elif dem is None:
                 row["verdict"] = "FAIL: left exact with no demotions.jsonl row for block %s" % str(b.get("block_sha"))[:12]
@@ -744,7 +797,7 @@ def cmd_gate(args):
                 row["verdict"] = "FAIL: a quarantined chart's demotion needs the owner's yes (\"owner\" field)"
             else:
                 row["verdict"] = "ok: demoted (%s)" % str(dem.get("reason"))[:60]
-        elif t == "EDITED-EXACT" and protected_base:
+        elif t == "EDITED-EXACT" and prot_b:
             if (name, h.get("block_sha")) in promo_head and h.get("header_sha") == b.get("header_sha"):
                 row["verdict"] = "ok: PROTECTED block re-audited (promotion row)"
             else:
@@ -752,6 +805,24 @@ def cmd_gate(args):
                     "block" if b.get("block_sha") != h.get("block_sha") else "file header")
         elif t in ("GAINED", "ENTERED-EXACT") and name in conflict:
             row["verdict"] = "FAIL: ORACLE_CONFLICT chart became exact - halt for review, no credit"
+        elif t == "UNPROTECTED":
+            new = [r for r in oh.demotions if valid_demotion(r) and r["chart"] == name and r not in ob.demotions]
+            dem = dem_rows.get((name, b.get("block_sha"))) or (new[0] if new else None)
+            if dem is not None and name in quarantine and not str(dem.get("owner", "")).strip():
+                row["verdict"] = "FAIL: a quarantined chart's demotion needs the owner's yes (\"owner\" field)"
+            elif dem is not None:
+                row["verdict"] = "ok: demoted (%s)" % str(dem.get("reason"))[:60]
+            elif oracle_changed:
+                row["verdict"] = "ok: not exact at %s under the new oracle" % IMPORT_COMMIT
+            else:
+                row["verdict"] = "FAIL: a PROTECTED chart lost its protection with no demotions.jsonl row"
+        elif t == "PROMOTED":
+            if h.get("protected_by") == "promotion":
+                run = next((r.get("run") for r in oh.promotions if valid_promotion(r) and r["chart"] == name
+                            and r["block_sha"] == h.get("block_sha")), None)
+                row["verdict"] = "ok: promotion row (%s)" % str(run)[:60]
+            else:
+                row["verdict"] = "ok: exact at %s under the new oracle" % IMPORT_COMMIT
         if row["verdict"].startswith("FAIL"):
             fails.append("%s %s: %s" % (t, name, row["verdict"][6:]))
         trans.append(row)
@@ -782,7 +853,8 @@ def cmd_gate(args):
         fails.append("DECLARED: net change in exact charts is %+d, declared %+d" % (net, args.declared))
 
     # report
-    order = ["LOST", "LEFT-EXACT", "GAINED", "ENTERED-EXACT", "EDITED-EXACT", "EDITED-OFF", "EXPECTED-CHANGED", "ENTERED", "LEFT"]
+    order = ["LOST", "LEFT-EXACT", "GAINED", "ENTERED-EXACT", "EDITED-EXACT", "EDITED-OFF", "EXPECTED-CHANGED",
+             "UNPROTECTED", "PROMOTED", "ENTERED", "LEFT"]
     print("gate %s -> %s  (import %s, oracle %s -> %s, pin %s)" % (base.label[:12], head.label[:12], g.import_tree.rev[:12],
                                                                  ob.hash[:12], oh.hash[:12], pin["pin"][:12]))
     print("  exact %d -> %d (net %+d), PROTECTED %d -> %d" % (
@@ -808,6 +880,7 @@ def cmd_gate(args):
         rep = dict(tool="corpus_grade gate", base=base.label, head=head.label, import_commit=g.import_tree.rev,
                    oracle_base=ob.hash, oracle_head=oh.hash, converter_pin=pin["pin"], oracle_pass=bool(args.oracle_pass),
                    declared=args.declared, exact_base=exact_b, exact_head=exact_h, net=net, transitions=trans,
+                   stepfiles_changed=[dict(path=p, change=how) for p, how in stepfiles],
                    failures=fails, notes=notes, verdict=verdict)
         write_atomic(args.json, dump(rep))
     log("gate took %.1fs (%d converted, %d from cache)" % (time.time() - t0, g.conv.stats["converted"], g.conv.stats["cached"]))
