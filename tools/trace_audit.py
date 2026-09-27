@@ -90,6 +90,11 @@
 # ticks that no longer exists; with no base block at all, every hold region that carries a tick.
 # Each such priced region is then judged like an edit (reads on both sides within k_rows, outside
 # its bracket), and the chart is FLAT only when every one of them is.
+# THE LIMIT OF THAT LABEL: only a change to the tick schedule marks an edit counter-derived. An edit
+# priced by the counter through hold LENGTHS - a release moved until the count closed - under an
+# unchanged #TICKCOUNTS is labelled independent, and the reads that priced it are NOT bracketed, so
+# they vouch for it. A loop that prices by hold length has to bracket those regions itself (pass its
+# own brackets, or audit those charts whole) before this audit's FLAT means anything for them.
 #
 # TIMING-SENSITIVE STRETCHES. The same trace fitted at the strict margin `quiet_strict` (35 ms, the
 # tick loop's JIT) shows levels of +1/-1 on unedited, exact charts - a player hitting early or late
@@ -114,13 +119,21 @@
 # calibration and the detection-power table when `controls` / `power` have been run - their
 # outputs live under work/rails-audit-scratch/) and sources/protected-promotions.jsonl: one row per
 # chart whose every edit is FLAT and covered, whose whole trace has no OFF, and which is neither in
-# the quarantine list nor on the owner's revisit list (sources/owner-revisit.json: recorded, not
-# acted on). A promotion is bound to the block's content hash (block_sha, the contract in
+# the quarantine list (sources/quarantine.json, the corpus grade's record; QUARANTINE_FALLBACK only
+# while that file is absent or unreadable) nor on the owner's revisit list (sources/owner-revisit.json:
+# recorded, not acted on). A promotion is bound to the block's content hash (block_sha, the contract in
 # tools/guards.py; header_sha rides along for the song header the block inherits) and to this
 # tool's audit_version: sha256 over PARAMS and every source a verdict depends on - this file, every
 # tools/ module it imports directly or through another (read from the source text, so the set does
 # not depend on who imported what first; tools/supervise.py, which only decides WHEN a decode runs,
 # is left out), and the converter's modules (the six piu_annotate files the corpus grade pins).
+# So audit_version moves whenever any module in that closure changes - tools/guards.py once it lands
+# (imported when present), and every edit to extract_repair, tick_repair, note_extract and the rest -
+# and a row's version is reproducible only by the tool as it stood when that row was written. The
+# promotions file is append-only and keyed by (chart, block_sha, audit_version): a rerun of a changed
+# tool that vouches for the same block again appends that block's row under its own version (the
+# corpus grade reads a chart's promoted blocks as a set, so this is the same protection, restated
+# by a tool that can reproduce it); rows it no longer vouches for are listed, never removed.
 # A chart whose audit raised is an ERROR, never a verdict: controls, power and corpus count errors
 # on their own line, and exit 2 with nothing written to sources/ when there is any.
 import bisect
@@ -149,7 +162,9 @@ from piu_annotate.formats import ssc_to_chartstruct as _C    # noqa: E402
 ROOT = E.ROOT
 SCRATCH = os.path.join(ROOT, "work", "rails-audit-scratch")
 IMPORT_REV = "a23cee5"
-QUARANTINE = ("Houseplan S17", "Wedding Crashers S10", "Imagination S12")
+# the charts never promoted whatever their audit says. sources/quarantine.json is the recorded list
+# (the corpus grade's); this tuple is only its fallback while that file is absent or unreadable
+QUARANTINE_FALLBACK = ("Houseplan S17", "Wedding Crashers S10", "Imagination S12")
 # the three 35 ms flags on unedited charts the 2026-09-26 research left unresolved: `crops`
 # writes their frames for a blind review whatever this tool's own verdict on them is
 BLIND_REVIEW = ("Overblow D19", "Timing S15", "Passacaglia S4")
@@ -1812,10 +1827,11 @@ def corpus(workers, date, out_dir=None):
     rows = pool_map(_edit_job, gained, workers)
     promotions = []
     revisit = owner_revisit()
+    quarantined, quarantine_from = quarantine()
     for r in rows:
         edits = r.get("edits") or []
         ok = bool(edits) and all(e["verdict"] == "FLAT" and e.get("covered") for e in edits) and (r.get("whole") or {}).get("verdict") != "OFF"
-        if r["chart"] in QUARANTINE:
+        if r["chart"] in quarantined:
             r["quarantined"] = True
         if r["chart"] in revisit:
             # the owner has accepted this chart as it stands: its verdict is recorded, nothing is acted on
@@ -1834,7 +1850,7 @@ def corpus(workers, date, out_dir=None):
         block_sha="sha256 of the chart's #NOTEDATA block: from its '#NOTEDATA:' line to the next or EOF, UTF-8 (errors=replace), "
                   "CRLF/CR as LF, str.rstrip()'d (tools/guards.py); header_sha the same over the text before the first #NOTEDATA line",
         population="certified charts exact at HEAD and not at %s: the edit-derived exact set" % IMPORT_REV,
-        quarantine=list(QUARANTINE), owner_revisit=sorted(revisit & set(gained)),
+        quarantine=list(quarantined), quarantine_from=quarantine_from, owner_revisit=sorted(revisit & set(gained)),
         counts=dict(charts=len(rows), **{k: cnt[k] for k in ("FLAT", "OFF", "UNCOVERED", "ERROR")}, edits=dict(ecnt),
                     edits_off_distant=distant, promoted=len(promotions)),
         by_basis={"%s %s" % k: v for k, v in sorted(basis.items(), key=str)},
@@ -1883,8 +1899,11 @@ def corpus(workers, date, out_dir=None):
 def append_promotions(path, promotions, promotable):
     """sources/protected-promotions.jsonl is append-only (tools/corpus_grade.py fails a pass that
     loses or rewrites a line): the lines already there are kept byte for byte, and a row is appended
-    for each promotion whose (chart, block_sha) is not in the file yet. -> (appended rows, rows in the
-    file this run did not find promotable at their block_sha)."""
+    for each promotion whose (chart, block_sha, audit_version) is not in the file yet - so a run of
+    a changed tool that vouches for a block again adds that block's row under its own version (the
+    corpus grade reads a chart's promoted blocks as a set, so a second row for one block is the same
+    protection, now reproducible by the tool that wrote it). -> (appended rows, (chart, block_sha)
+    pairs in the file this run did not find promotable)."""
     lines, have = [], set()
     if os.path.exists(path):
         with open(path, encoding="utf-8", newline="") as f:
@@ -1892,14 +1911,14 @@ def append_promotions(path, promotions, promotable):
         for ln in lines:
             try:
                 r = json.loads(ln)
-                have.add((r.get("chart"), r.get("block_sha")))
-            except ValueError:
+                have.add((r.get("chart"), r.get("block_sha"), r.get("audit_version")))
+            except (ValueError, AttributeError):
                 continue
     unconfirmed = []
-    for (chart, sha) in sorted(have, key=str):
+    for (chart, sha) in sorted({(ch, sha) for ch, sha, _ in have}, key=str):
         if (chart, sha) not in promotable:
             unconfirmed.append(dict(chart=chart, block_sha=sha, why="the chart is not promotable at that block in this run (another block now, or its audit is no longer FLAT and covered)"))
-    new = [p for p in sorted(promotions, key=lambda p: p["chart"]) if (p["chart"], p["block_sha"]) not in have]
+    new = [p for p in sorted(promotions, key=lambda p: p["chart"]) if (p["chart"], p["block_sha"], p["audit_version"]) not in have]
     if new or not os.path.exists(path):
         if lines and not lines[-1].endswith("\n"):
             lines[-1] += "\n"
@@ -1911,6 +1930,23 @@ def append_promotions(path, promotions, promotable):
                 f.write(json.dumps(p, ensure_ascii=False, separators=(", ", ": ")) + "\n")
         os.replace(tmp, path)
     return new, unconfirmed
+
+
+def quarantine():
+    """(chart names, where the list came from): sources/quarantine.json's charts when that file is
+    there and reads, else QUARANTINE_FALLBACK. By name, whatever block the chart carries now: a
+    quarantined chart leaves the list only when the file says so."""
+    p = os.path.join(ROOT, "sources", "quarantine.json")
+    try:
+        d = json.load(open(p, encoding="utf-8"))
+        items = d.get("charts") if isinstance(d, dict) else d
+        if isinstance(items, list):
+            names = tuple(sorted({x.get("chart") if isinstance(x, dict) else x for x in items}, key=str))
+            if all(isinstance(n, str) and n for n in names):
+                return names, "sources/quarantine.json"
+    except (OSError, ValueError, TypeError, AttributeError):
+        pass
+    return QUARANTINE_FALLBACK, "the fallback in tools/trace_audit.py (sources/quarantine.json absent or unreadable)"
 
 
 def owner_revisit():
