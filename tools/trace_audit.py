@@ -15,10 +15,14 @@
 #   python -X utf8 -B tools/trace_audit.py controls [--workers N]
 #   python -X utf8 -B tools/trace_audit.py power    [--workers N] [--per-chart N] [--seed S]
 #   python -X utf8 -B tools/trace_audit.py corpus   [--workers N] [--date YYYY-MM-DD] [--out-dir DIR]
+#                                                  (default DIR: work/rails-audit-scratch/corpus-<date>;
+#                                                   `--out-dir sources` writes the committed ledgers)
 #   python -X utf8 -B tools/trace_audit.py crops    ["<chart>" ...] [--out <dir under work/rails-audit-scratch>]
 #   python -X utf8 -B tools/trace_audit.py version  [--sources]
 #   python -X utf8 -B tools/trace_audit.py drills   (the verdict rules on synthetic reads: no footage, a second)
-# (--workers is capped at 6; --no-decode never reads a frame of footage to measure a missing clock)
+# (--workers is capped at 6; --no-decode never reads a frame of footage to measure a missing clock;
+#  -h/--help prints this; an op or option not listed here, or a missing value, refuses with exit 2
+#  before anything runs)
 #
 # WHAT IS READ. F(t) is the file's judged events in chart time, enumerated from piu-annotate's own
 # lattice converter (the tap rows, each hold head that is not a tap row, and every tick-lattice
@@ -115,8 +119,10 @@
 # the edges need real reads too), UNCOVERED otherwise. A block that derives the same judged events
 # as its base has no edits and is judged the same way.
 #
-# THE LEDGERS. `corpus` audits every edit-derived exact chart (exact at HEAD, not at a23cee5) and
-# writes sources/trace-audit-<date>.json (every edit's verdict and reason, plus the controls'
+# THE LEDGERS. `corpus` audits every edit-derived exact chart (exact at HEAD, not at a23cee5) and,
+# run with `--out-dir sources` (and only then: by default it writes the same two files under the
+# scratch dir, the promotions appended to a copy of the committed file), writes
+# sources/trace-audit-<date>.json (every edit's verdict and reason, plus the controls'
 # calibration and the detection-power table when `controls` / `power` have been run - their
 # outputs live under work/rails-audit-scratch/) and sources/protected-promotions.jsonl: one row per
 # chart whose every edit is FLAT and covered, whose whole trace has no OFF, and which is neither in
@@ -1912,8 +1918,20 @@ def corpus(workers, date, out_dir=None):
         _write_json(fail, ledger)
         print("corpus: ledger written to %s only" % fail, file=sys.stderr)
         fail_on_errors("corpus", rows)
-    out_dir = out_dir or os.path.join(ROOT, "sources")
+    # the committed ledgers are written only when asked for by name (--out-dir sources); anything else,
+    # the default included, is a scratch run: its promotions go to a copy of the committed file, so
+    # "appended" still says what a run into sources/ would add
+    sources = os.path.join(ROOT, "sources")
+    out_dir = os.path.abspath(out_dir) if out_dir else os.path.join(SCRATCH, "corpus-%s" % date)
+    to_sources = os.path.normcase(out_dir) == os.path.normcase(os.path.abspath(sources))
+    os.makedirs(out_dir, exist_ok=True)
     pj = os.path.join(out_dir, "protected-promotions.jsonl")
+    committed = os.path.join(sources, "protected-promotions.jsonl")
+    if not to_sources and not os.path.exists(pj) and os.path.exists(committed):
+        import shutil
+        tmp = pj + ".%d.tmp" % os.getpid()
+        shutil.copyfile(committed, tmp)
+        os.replace(tmp, pj)
     appended, unconfirmed = append_promotions(pj, promotions, {(r["chart"], r.get("block_sha")) for r in rows if r.get("promotable")})
     ledger["counts"]["appended"] = len(appended)
     # rows already in the file that this run does not promote again: never removed here (the file is
@@ -1928,6 +1946,8 @@ def corpus(workers, date, out_dir=None):
             print("  OFF", r["chart"], "-", r.get("reason"))
     for u in unconfirmed:
         print("  NOT RECONFIRMED (in the file, not promoted by this run):", u["chart"], u["block_sha"][:12], "-", u["why"])
+    print("corpus: wrote %s%s" % (out, "" if to_sources else " - a scratch run, sources/ untouched (`--out-dir sources` "
+                                                                "records the committed ledgers)"))
     return ledger
 
 
@@ -2271,11 +2291,70 @@ def show(rec):
         print("   edit %s-%s %s %s: %s - %s" % (e.get("lo"), e.get("hi"), e.get("basis", ""), (e.get("events") or {}).get("net", ""), e["verdict"], e["reason"]))
 
 
+# every op's options (True: takes a value) and how many chart names it takes (at least, at most).
+# The command line is checked against this before anything runs: an option the op does not take - a
+# typo, or `--help` read as an unknown flag - once ran the whole corpus with its defaults and wrote
+# the committed ledgers.
+CLI = {
+    "chart": ({"--file": True, "--base": True, "--base-rev": True, "--offset": True, "--clock": True, "--whole": False,
+               "--json": False, "--workers": True, "--no-decode": False}, 1, 1),
+    "controls": ({"--workers": True, "--no-decode": False}, 0, 0),
+    "power": ({"--workers": True, "--per-chart": True, "--seed": True, "--no-decode": False}, 0, 0),
+    "corpus": ({"--workers": True, "--date": True, "--out-dir": True, "--no-decode": False}, 0, 0),
+    "crops": ({"--out": True, "--workers": True}, 0, None),
+    "version": ({"--sources": False}, 0, 0),
+    "drills": ({}, 0, 0),
+}
+
+
+def usage():
+    return __doc__ or open(os.path.abspath(__file__), encoding="utf-8").read().split("import bisect")[0]
+
+
+def check_cli(argv):
+    """The op, once argv is known to be one this tool reads exactly as written; -h/--help prints the
+    usage (exit 0), anything else it cannot read refuses before any work (exit 2)."""
+    def refuse(why):
+        print("trace_audit: %s - nothing ran (`trace_audit.py --help` lists the ops and options)" % why, file=sys.stderr)
+        raise SystemExit(2)
+    if len(argv) < 2 or any(a in ("-h", "--help") for a in argv[1:]):
+        print(usage())
+        raise SystemExit(0)
+    op = argv[1]
+    if op not in CLI:
+        refuse("unknown op %r (ops: %s)" % (op, ", ".join(sorted(CLI))))
+    opts, lo, hi = CLI[op]
+    names, vals, i = [], {}, 2
+    while i < len(argv):
+        a = argv[i]
+        if a.startswith("-"):
+            if a not in opts:
+                refuse("%s takes no option %s (it takes %s)" % (op, a, ", ".join(sorted(opts)) or "none"))
+            if opts[a]:
+                if i + 1 >= len(argv):
+                    refuse("%s needs a value" % a)
+                vals[a] = argv[i + 1]
+                i += 2
+                continue
+        else:
+            names.append(a)
+        i += 1
+    if len(names) < lo or (hi is not None and len(names) > hi):
+        refuse("%s takes %s chart name%s, got %d: %s" % (op, lo if lo == hi else "%d or more" % lo, "" if hi == 1 else "s",
+                                                       len(names), names))
+    for k, kind in (("--workers", int), ("--per-chart", int), ("--offset", float), ("--clock", float)):
+        if k in vals:
+            try:
+                kind(vals[k])
+            except ValueError:
+                refuse("%s %r is not a number" % (k, vals[k]))
+    if "--date" in vals and not re.match(r"^\d{4}-\d\d-\d\d$", vals["--date"]):
+        refuse("--date %r is not YYYY-MM-DD" % vals["--date"])
+    return op
+
+
 def main():
-    if len(sys.argv) < 2:
-        print(__doc__ or open(os.path.abspath(__file__), encoding="utf-8").read().split("import bisect")[0])
-        return
-    op = sys.argv[1]
+    op = check_cli(sys.argv)
     workers = int(arg("--workers", 6))
     sweep_overlays()
     try:
