@@ -22,7 +22,9 @@ an append-only ledger. A jobs file is JSON lines, one `{"id", "cmd", "cwd"?, "ti
 "slot"?, "env"?, "meta"?}` per job; `"{py}"` as a whole argument becomes this venv's Python with
 `-X utf8 -B`, and `{root}`, `{tools}`, `{run}`, `{run_dir}`, `{job}` are substituted. A job may
 print `VERDICT: <word>`; the last one is its verdict, otherwise OK or FAIL by exit code. A jobs
-file that does not parse is refused with its line number, before any run folder is created.
+file that does not parse is refused with its line number, before any run folder is created; a
+byte-order mark and CRLF line ends (what PowerShell 5.1's `Out-File` and pipes write) are fine,
+as they are in `slots`' `config.json`.
 Everything shared lives in `work/`, which in a loop worktree is a junction to the main
 checkout's, so all loops see one copy:
 
@@ -50,6 +52,18 @@ checkout's, so all loops see one copy:
   be frozen as a whole, so it is killed and queued again instead (verdict PREEMPTED, not a
   finished row). A job a tool deliberately starts outside its job object (breakaway) is not
   frozen.
+- **A freeze never strands a lock.** The supervisor freezes a job only while it holds every rails
+  mutex itself (the commit lock's, the slot pool's and `rails-events.jsonl`'s, always in that
+  order), so a frozen process is never inside one of them, and it cannot take or give up the
+  commit lock while the supervisor looks. A job whose processes hold the commit lock (a
+  `loopcommit` or `lock-exec` it runs) is not frozen until it lets go: frozen, it would hold every
+  loop's commits and gate-failure `revert-run`s for as long as the owner plays. For that long the
+  pool runs one job past its limit (the event is `freeze-deferred`; `status` says "past the limit:
+  holds the commit lock"), and the job is frozen the moment it releases. If a mutex stays held
+  for 5 s, nothing is frozen that round and the next round (1 s later) tries again. A lock or
+  mutex wait counts only the time its process was awake (a gap between polls longer than the poll
+  plus 2 s is time spent frozen or asleep), so a job frozen while it waited for the commit lock
+  keeps waiting when it thaws instead of being refused at once.
 - **STOP**: `work/STOP` stops every loop, `work/runs/<run>/STOP` one run (`supervise.py stop
   [<run>]` makes them). No new job starts; jobs frozen for the game are killed at once (they
   could not finish in the grace), and running ones get `--grace` (default 10 minutes) to
@@ -59,8 +73,12 @@ checkout's, so all loops see one copy:
 - **Per-job timeout** (`--timeout`, default 2 h; a job's own `timeout` wins; frozen time does
   not count) kills the whole tree. Each child also runs in its own kill-on-close Windows job
   object, because the venv's `python.exe` is a launcher that starts the real interpreter as its
-  child and a tool may start more: the job object catches what taskkill's parent-PID walk cannot
-  (an orphan whose parent already exited), a child that exits while its own children keep
+  child and a tool may start more. The child is created suspended (`CREATE_SUSPENDED`) and
+  resumed only once it is in its job object, so the real interpreter can never start outside it
+  (assigning after an ordinary launch lost it every time the supervisor was descheduled for a
+  few hundred milliseconds, which is exactly when the machine is busy). The job object catches
+  what taskkill's parent-PID walk cannot (an orphan whose parent already exited), a child that
+  exits while its own children keep
   running has them killed (`orphans_killed` in its ledger row counts those processes), and if
   the supervisor itself dies its children die with it instead of decoding outside any slot.
 - **Being a good guest**: children run at BELOW_NORMAL priority with `CREATE_NO_WINDOW` (without
@@ -142,8 +160,9 @@ deleting the shared caches.
 `lock-exec` runs a command holding the commit lock (for a commit step that is not
 `loopcommit`); it names its child in the lock, so killing lock-exec alone does not free the lock
 while the command still runs, and a lock it cannot take within `--timeout` exits 2 with nothing
-run. `commitlock` shows the holder; `--break` removes it only if its holder is dead, `--force`
-even if not. `mainlock` takes and releases `work/.main.lock`, which whoever merges loop branches
+run (the timeout counts only time lock-exec was awake, not time a supervisor kept it frozen).
+`commitlock` shows the holder; `--break` removes it only if its holder is dead, `--force` even
+if not. `mainlock` takes and releases `work/.main.lock`, which whoever merges loop branches
 into main holds for the duration and which the pre-push hook below honors; it is
 existence-based (no PID), because the merge is done by a person or a session, not one process.
 `pins` prints the converter and oracle pins.
@@ -169,7 +188,9 @@ After committing it checks git's return code, that HEAD advanced by exactly one 
 old HEAD, that the commit touched exactly what was staged and nothing undeclared, and that the
 trailer reads back; a failed check undoes that one commit with `reset --soft` and exits 3. It
 passes `--cleanup=whitespace` explicitly, so no `commit.cleanup` setting can strip the lines
-starting with `#` that stepfile commit bodies carry (`#TICKCOUNTS`). This replaces the bare,
+starting with `#` that stepfile commit bodies carry (`#TICKCOUNTS`). A byte-order mark at the
+start of `--body-file` (a file, or `-` for stdin, where PowerShell 5.1 pipes one) is dropped
+rather than committed into the message. This replaces the bare,
 unchecked `git commit` that `extract_repair.py` and `tick_repair.py` used to run in a checkout
 several loops shared.
 
@@ -184,8 +205,8 @@ revert commit that fails its post-commit check is undone with `reset --soft` lik
 (exit 3, the reversal left staged for inspection).
 
 Exit codes: 0 done; 2 refused, nothing committed (every refusal above, and the commit lock not
-taken within `--lock-timeout`, default 30 minutes); 3 a post-commit check failed and the commit
-was undone; 1 an unexpected error, with a traceback.
+taken within `--lock-timeout`, default 30 minutes of time it was awake); 3 a post-commit check
+failed and the commit was undone; 1 an unexpected error, with a traceback.
 
 **`.githooks/pre-push`** (enable once per clone: `git config core.hooksPath .githooks`)
 Refuses every push while `work/.main.lock` exists and prints the lock's note, so nobody
@@ -198,14 +219,21 @@ Proves the rails with toy jobs (python sleeps, no footage): the slot limit with 
 and across two supervisors, the gaming limit, the game starting mid-run (a renamed copy of
 `ping.exe` stands in for `Wow.exe`) freezing the four newest of six running jobs with frozen
 time kept off their timeout, a lowered `slots --max` freezing jobs and a STOP killing frozen
-ones at once, STOP within one job (run and global), the grace kill, the timeout kill with
+ones at once, a job holding the commit lock left running past a lowered limit until it lets go
+(so the oldest job still commits, where a frozen holder made it `LOCK_REFUSED`), ten freezes of
+a job that holds the commit lock's mutex 80% of the time each leaving the mutex free (the old
+freeze left it held all ten times), a job frozen past its lock-exec `--timeout` while waiting
+still taking the lock after it thaws, every interpreter inside its job object with the
+assignment delayed 0.5 s (all four escaped before `CREATE_SUSPENDED`), BOM'd jobs files and slot
+config, STOP within one job (run and global), the grace kill, the timeout kill with
 grandchildren and orphan reaping, resume after killing a supervisor, a transient supervisor
 error retried to completion and a persistent one or a planted bug ending as crashed (never
 finished) with no slot leaked, two supervisors serialized by the commit lock, stale-lock and
 stale-slot recovery (including a 0-byte lock, and a lock-exec killed without its child), the
 disk pause and its 40 GiB floor, a converter-drift halt and the frozen-pin comparison,
-`--detach`, loopcommit's refusals (other drive, lock timeout, changed converter) and its undo
-of a commit or a revert that fails its check, revert-run, the pre-push hook against a throwaway
+`--detach`, loopcommit's refusals (other drive, lock timeout, changed converter), its undo of a
+commit or a revert that fails its check and a BOM'd body file or stdin, revert-run, the pre-push
+hook against a throwaway
 remote, junction unlinking, and worktree-remove's refusals and re-linking in a throwaway
 repository. Drills that need jobs to overlap make their toy jobs wait at a barrier until enough
 have started, so a slow machine cannot fail a correct pool (a pool that lets too many run is
@@ -214,6 +242,12 @@ by hooks in the tools themselves. Every drill uses its own state folder (`PSF_RA
 its own repositories under `--dir` (default `work/rails-selftest/<time>`), so the real pool,
 locks and branches are never touched. About six minutes (more on a busy machine); run it after
 any change to these tools.
+
+Known limits of the freeze, not fixed: a slot a tool takes in-process through `decode_slot()`
+cannot be frozen, so a tool holding two or more of them when the game starts keeps the machine
+past the gaming limit until it lets them go. And jobs in one worktree share its git index: a job
+frozen during the milliseconds a `git status` in it holds the worktree's `index.lock` would make
+every git write there (a `loopcommit` included) fail until it thaws.
 
 ## Checking upstream for new steps
 
