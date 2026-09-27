@@ -665,7 +665,13 @@ do NOT use it - they need the census key set to stay the census key set. `charts
 certified population (the same rows as `extract_repair.charts()`), and the merges are also
 pure functions over loaded data (`merge_chart_map`, `merge_certification`, `certified_charts`)
 so `corpus_grade` can build the population from a commit's copies of the files;
-`certification(sources_only=True)` leaves out the live `work/certification-tail.json`.
+`certification(sources_only=True)` leaves out the live `work/certification-tail.json`. A video
+in more than one ledger keeps every ledger's charts: `charts` merges per chart, and where two
+ledgers carry the same chart or field the census wins. Until 2026-09-27 the merge was a shallow
+dict merge in which the corpus ledger's `charts` replaced the census entry's whole, silently
+dropping the 11 eye-verified census certifications whose videos the corpus certification had
+also read (Set me up S10, Chase Me S20, Final Audition S18, ...); restoring them took the
+certified population from 1,479 to 1,490 and the exact count from 738 to 749.
 
 **`tail_worklist.py <tail.json> [--shape ...] [--min-pct N] [--max-pct N] [--limit N] [--out-tag T]`**
 Turns rows of the catalog sweep into the two inputs a batch needs: `work/ssc-map-tail.json`

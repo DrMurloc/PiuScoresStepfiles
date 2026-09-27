@@ -53,12 +53,19 @@ def chart_map():
     return merge_chart_map(_load(TAIL_MAP, []), _load(CENSUS_MAP, []))
 
 def merge_certification(ledgers):
-    """[{vid: entry}, ...] in the order corpus, work tail, census -> {vid: entry}."""
+    """[{vid: entry}, ...] lowest precedence first (corpus, work tail, census) -> {vid: entry}.
+    A video in several ledgers keeps the charts of all of them: `charts` is merged per chart,
+    and for a chart or a field both ledgers carry, the later ledger wins - census over corpus.
+    (Until 2026-09-27 this was a shallow dict merge in which the corpus entry's `charts`
+    replaced the census entry's whole, silently dropping the 11 census certifications whose
+    videos the corpus ledger also read.)"""
     out = {}
     for entries in ledgers:
         for vid, entry in entries.items():
-            if vid in out:                       # census wins, but keep both videos' charts
-                out[vid] = {**entry, **out[vid]}
+            if vid in out:
+                charts = dict(out[vid].get("charts") or {})
+                charts.update(entry.get("charts") or {})
+                out[vid] = {**out[vid], **entry, "charts": charts}
             else:
                 out[vid] = entry
     return out
