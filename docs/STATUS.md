@@ -610,6 +610,73 @@ AiNqD7lZjiM (Beat of The War S21, 66 decode errors and a stop at 15 s). The owne
 now enforced in every worklist that can ship: Slam D24, which sat in the extraction loop's
 worklist as a PARK, is skipped with its reason.
 
+## The converter variant grader: no rule found (2026-09-27)
+
+Bucket 9 of the loop plan, report-only (`tools/variant_grade.py`, TOOLS.md "The converter variant
+grader"; branch `loops/variants-1`). The question: do the residual disagreements between our files
+and the certified counts hide a hold-judging rule the converter gets wrong? No stepfile, no
+converter and no fork changed, so the snapshot is exactly as far behind as it was.
+
+**The instrument.** Every block of every `.ssc` at HEAD (and the import's copy of every file
+changed since) went through the pinned converter once, with its context: 751 files, **9,578
+blocks, and the base model reproduces the converter on all 9,578, segment by segment**, and equals
+`sources/corpus-grade.json` on all 1,490 certified charts. The research copy's 6 misses were its
+unmerged WARP+FAKES ranges; merged, there are none, so nothing is pinned. Stage 2, the path a
+parse-level rule would have to pass, was proven on the unpatched converter: all 9,578 blocks
+converted through the scratch copy of its modules equal the model, and the fork's HEAD, sources
+and status did not move. A grade of a family takes a few minutes on 3-4 workers.
+
+**The tiers, frozen before any hypothesis.** Of the 1,490 certified charts, 39 are not scored (34
+ORACLE_CONFLICT, 3 quarantined, 2 owner-revisit). The rest: **622 pristine exact** (483 tune, 139
+sealed), **121 fitted exact** (114, 7), 121 within 10 (96, 25), 587 further off (443, 144); **20
+notes-confirmed near misses** (the extraction loop saw the file's notes exactly; 4 sealed), the
+same 20 the proposal counted. **Tier A - the only charts allowed to suggest a rule - is 5 charts**:
+2006. LOVE SONG S12 (+4), A Nightmare D14 (-13), BSPower Explosion D13 (-1) and Visual Dream II (In
+Fiction) D11 (+26) in the tune split, Lucid(PIU Edit) S7 (-15) sealed. All four tune charts run at
+one BPM and one TICKCOUNT with no stop, warp, fake or SCROLLS=0: none carries a gimmick for a rule
+to be about. Their counter gives **20 tier-A clusters, and 19 agree with the lattice**. The one that
+does not is BSPower Explosion D13 at beats 33-38.0625 (lattice 76, counter 77, both cuts
+unanimous): a run of seven holds whose last is 9/16 beat where the six before it are 5/8 - a
+question about that file's notation, not about the converter. The proposal's "3 clusters on 2
+charts" also counted Requiem S16; under the frozen definition it is not tier A, because the
+extraction loop proposed an add-tap there (skipped as the row was taken), so its notes are not
+confirmed. 502 uncertified charts convert to their Phoenix 1 catalog count (91 sealed): the second
+must-not-break set. 186 charts are named in the docs, tools or spec and so tune-only.
+
+**The gate cannot be passed by chance.** 27,690 random rules (+/-1 event on every hold matching 1-3
+structural conditions) through the same gate: **0 pass**; 999 break nothing, 2 pass the tune half
+alone, none reaches 3 notes-confirmed fixes in 2 packs.
+
+**Eight families, three testable, all three net negative** (6 of 40 variants, 0 of 3 hold-out
+reveals used; the stop is three testable families in a row with no positive net):
+
+| family | reach | best variant (tune split) |
+|---|---|---|
+| heads inside SCROLLS=0 (the spec's first) | UNTESTABLE: 2 notes-confirmed carriers (HYPERCUBE D19, Pop Sequence S15); 105 pristine exact carry it | - |
+| a STOP/DELAY while held (ticks by time) | UNTESTABLE: 0 carriers | - |
+| a TICKCOUNTS change while held | 4 carriers | anchor at the change: net -70 (5 pristine, 65 fitted breaks, 0 fixes); head's rate: -304 |
+| rows a few ms apart judged as one | UNTESTABLE: 2 carriers | - |
+| holds with no lattice point | UNTESTABLE: 0 carriers (43 fitted exact carry it) | - |
+| a tap on a release row, on the lattice | 15 carriers | both judged: -420 (413 pristine breaks, 386 catalog breaks, 3 tier-A clusters lost) |
+| WARP/FAKES edges inside a hold | UNTESTABLE: 0 carriers | - |
+| a checkpoint within a frame of its head | 3 carriers | fold within 8 ms: -83 (43 pristine breaks); within 17 ms: -155 |
+
+Every variant graded broke pristine exact charts and fixed at most two charts, none of them
+notes-confirmed. The anchor-at-change variant is the telling one: 65 of its 70 breaks are files we
+fitted, whose TICKCOUNTS changes sit off the new count's grid inside a hold - they are exact only
+under the beat-0 lattice they were written against.
+
+**Conclusion: no rule found at evidence tier A (5 charts, 4 in the tune split; 20 counter
+clusters), nor at the notes-confirmed tier (20 near misses).** Not "the converter is not the
+bottleneck": the tier-A charts are simple, and what they disagree on looks like notation. For
+bucket 10's span mode this removes the converter-rule alternative for the families tried; it says
+nothing about the far-over charts, whose half-rate blocks the research placed in TICKCOUNTS data.
+Nothing is staged for the owner: there is no proposed patch. One disclosure: while choosing the
+second family, Lucid(PIU Edit) S7's timing tags were printed once, before idea generation was
+narrowed to tune-split tier-A charts; no family was built from it, and no hypothesis was ever
+scored on the sealed split (a grade counts the sealed blocks a variant moves, not how they fare;
+only the null run's random rules were scored there).
+
 ## Beyond the census (sized 2026-09-06, listed in full 2026-09-08)
 
 The census was the *blatantly* wrong 121 — its cut was narrow on purpose: taps above the
