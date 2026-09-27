@@ -224,7 +224,9 @@ an LF blob agree) and the **converter pin**: the sha256 over every `piu_annotate
 conversion actually loads (`__init__`, `utils`, `formats/__init__`, `formats/notelines`,
 `formats/sscfile`, `formats/ssc_to_chartstruct` — taken from `sys.modules`, not a hand list; a
 worker that loads a module outside it after converting stops the grade), which catches a
-converter that drifts while keeping the lattice flag. `grade` and `gate` refuse when the working
+converter that drifts while keeping the lattice flag (the converter is the piu-annotate clone
+unless `PIU_ANNOTATE_ROOT` names another checkout, e.g. an exported copy of `e01246d`; the pin
+decides either way). `grade` and `gate` refuse when the working
 tree's oracle or the installed converter differs from the manifest. `freeze` rewrites the
 manifest in an oracle commit, never together with stepfile edits, and moves the converter pin
 only with `--repin`, as a commit of its own. Only committed ledgers are oracle:
@@ -268,6 +270,23 @@ while the file already converts to that catalog count; a block whose converter i
 identical to another block's in its file — HIDDEN / INFOBAR twins the grade cannot tell apart.
 `selfcheck` confirms `guards` splits every file into the blocks the converter sees, with the
 same tags.
+
+Drilled on 2026-09-27 with faults planted in a scratch clone (never in a branch's files), 25
+cases, each caught and named or passed as intended: `#TICKCOUNTS` doubled on a PROTECTED chart
+(fail) and on a PROVISIONAL one (fail; passes with a demotion row naming its block, fails with a
+row naming another block); a quarantined chart demoted without and with `owner`; one tap moved
+in Slam D24's block and a comment added to its file header (owner-revisit fails; a comment line
+inside a block breaks the converter for the whole file, which the gate also catches as every
+sibling leaving exact); a certification value changed (refused while the manifest is stale; an
+ORACLE failure once refrozen; with `--oracle-pass` the chart leaves exact without a demotion);
+an owner-revisit entry removed and refrozen; a repaired sibling reverted to its import block (the
+extract_repair whole-file-copy failure); an uncertified sibling edited (passes, no false alarm);
+a header `#OFFSET` and an in-block `#BPMS` change on a PROTECTED chart that keep every total;
+a compensating edit (one tap to another column, totals kept); Pump me Amadeus S16 padded to its
+wrong certified 871 (ORACLE_CONFLICT); a gain declared as 0 and as 1; an oracle pass carrying a
+stepfile edit; a line removed from `demotions.jsonl`; a converter copy that drifts but keeps the
+lattice flag (`PIU_ANNOTATE_ROOT`, refused). A 0-byte and a torn cache entry are rebuilt and the
+grade stays byte-identical.
 
 **`guards.py`** (library)
 The shared definitions the loops and the gate import. `block_sha(ssc_path, block_id)` is the
