@@ -14,7 +14,17 @@
 # code, that HEAD advanced by exactly one commit on top of the old HEAD, that the commit
 # touched exactly the staged set and nothing outside the declared paths, and that the trailer
 # reads back. A failed check undoes that one commit with `git reset --soft` (the changes stay
-# staged) and exits 3 — it never leaves a commit it could not verify.
+# staged) and exits 3 — it never leaves a commit it could not verify. Before staging anything it
+# checks the converter: when the run has a manifest (work/runs/<run>/manifest.json, written by
+# supervise.py), the converter's source hash must equal the one the run began with, and when
+# sources/oracle-manifest.json freezes a converter pin, the converter must match it (unless the
+# run was started --converter-unpinned) — the loop-bucket rule that the pin is checked at every
+# commit pass. A mismatch refuses the commit and reverts nothing.
+#
+# Exit codes: 0 committed; 2 refused (nothing was committed: a refusal above, the commit lock
+# not taken within --lock-timeout, a path outside the repository or on another drive); 3 a
+# post-commit check failed and the commit was undone (its changes left staged); 1 an unexpected
+# error, with a traceback.
 #
 # Why: the loops' earlier commit code (extract_repair.py, tick_repair.py) ran a bare
 # `git commit` without a pathspec and ignored its return code, in a checkout several loops
@@ -28,7 +38,9 @@
 # "Loop-Revert: <run>" and "Reverts: <sha>" trailers. It deliberately does NOT carry Loop-Run:
 # otherwise a second revert-run would revert the reverts. Commits already reverted are skipped,
 # so running it twice is a no-op. If a reversal no longer applies (a later commit rewrote the
-# same lines), it stops there and says so; the reverts before it stay committed.
+# same lines), it stops there and says so; the reverts before it stay committed. A revert commit
+# that fails its post-commit check is undone with `git reset --soft` like any other (exit 3, the
+# reversal left staged for inspection).
 import argparse
 import os
 import subprocess
@@ -95,7 +107,10 @@ def declare(top, paths):
     out = []
     for p in paths:
         full = os.path.normpath(p if os.path.isabs(p) else os.path.join(top, p))
-        rel = os.path.relpath(full, top).replace(os.sep, "/")
+        try:
+            rel = os.path.relpath(full, top).replace(os.sep, "/")
+        except ValueError:                             # another drive: relpath cannot even express it
+            raise Refused(f"{p!r} is not a path inside the repository (it is on another drive)")
         if rel == "." or rel.startswith("../") or rel == "..":
             raise Refused(f"{p!r} is not a path inside the repository (the whole tree is never a declared path)")
         out.append(rel.rstrip("/"))
@@ -116,6 +131,35 @@ def commit_with(top, message, pathspec):
         return g(top, "commit", "-q", "--cleanup=whitespace", "-F", msgfile, "--", *pathspec)
     finally:
         os.remove(msgfile)
+
+
+def pin_problems(run):
+    """Why the converter may not be committed under right now (empty when it may)."""
+    conv = S.pins()["converter"] or {}
+    pkg = S.converter_dir()
+    manifest = S.read_json(os.path.join(S.RUNS, run, "manifest.json"))
+    manifest = manifest if manifest and "_unreadable" not in manifest else None
+    problems = []
+    if manifest:
+        began = ((manifest.get("pins") or {}).get("converter") or {}).get("py_sha256")
+        if began and began != conv.get("py_sha256"):
+            problems.append(f"the converter changed since run {run} began (source hash {began[:12]} -> "
+                            f"{str(conv.get('py_sha256'))[:12]})")
+    unpinned = bool(manifest) and any(a.get("converter_unpinned") for a in manifest.get("attempts", []))
+    fz = S.frozen_converter_pin(pkg) if pkg else None
+    if fz and not fz["ok"] and not unpinned:
+        problems.append(f"the converter is not the one frozen in sources/oracle-manifest.json (pin {fz['frozen'][:12]}, "
+                        f"found {fz['current'][:12]}; differs: {', '.join(fz['differs'])})")
+    return problems
+
+
+def undo(top, old, new, problems):
+    """Take back a commit that failed its post-commit check, if it sits directly on the old HEAD."""
+    if new != old and g(top, "rev-parse", f"{new}^").stdout.strip() == old:
+        r = g(top, "reset", "-q", "--soft", old)
+        problems.append(f"commit {new[:10]} undone with reset --soft; its changes are still staged" if r.returncode == 0
+                        else f"commit {new[:10]} could NOT be undone (git reset exit {r.returncode}): {r.stderr.strip()}")
+    return problems
 
 
 def verify_commit(top, old, expected_files, allowed=None):
@@ -156,6 +200,9 @@ def cmd_commit(args):
     branch = branch_guard(top, args.allow_branch)
 
     with S.commit_lock(run=run, purpose=f"loopcommit {branch}", timeout=args.lock_timeout):
+        pins_wrong = pin_problems(run)
+        if pins_wrong:
+            raise Refused("; ".join(pins_wrong) + ". A converter mismatch halts the loop; nothing was committed or reverted")
         old = head(top)
         outside = [p for p in staged(top) if not covered(p, decl)]
         if outside:
@@ -180,10 +227,7 @@ def cmd_commit(args):
             if back != run:
                 problems.append(f"the Loop-Run trailer reads back as {back!r}")
         if problems:
-            if new != old and g(top, "rev-parse", f"{new}^").stdout.strip() == old:
-                g(top, "reset", "-q", "--soft", old)
-                problems.append(f"commit {new[:10]} undone with reset --soft; its changes are still staged")
-            raise Refused("post-commit check failed: " + "; ".join(problems))
+            raise Refused("post-commit check failed: " + "; ".join(undo(top, old, new, problems)))
     print(f"{new[:10]} {subject}  [{len(now)} file(s); Loop-Run: {run}]")
     return 0
 
@@ -260,7 +304,8 @@ def cmd_revert_run(args):
             must(commit_with(top, message, files), "git commit")
             new, problems = verify_commit(top, old, files)
             if problems:
-                raise Refused(f"post-commit check of the revert of {sha[:10]} failed: " + "; ".join(problems))
+                raise Refused(f"post-commit check of the revert of {sha[:10]} failed: " + "; ".join(undo(top, old, new, problems))
+                              + f"; left staged for inspection ({done} revert(s) before it are committed)")
             done += 1
             print(f"{new[:10]} reverts {sha[:10]} {c['subject']}")
     return 0
@@ -305,6 +350,9 @@ def main(argv=None):
     except Refused as e:
         print(f"loopcommit: refused: {e}", file=sys.stderr)
         return 3 if "post-commit" in str(e) else 2
+    except TimeoutError as e:                          # the commit lock (or its mutex) was not taken in time
+        print(f"loopcommit: refused: {e}; nothing was committed", file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":
