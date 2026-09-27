@@ -1298,13 +1298,13 @@ def cmd_worktree(args):
     r = git("worktree", "add", "-b", branch, wt, base.stdout.strip(), cwd=main)
     if r.returncode != 0:
         raise SystemExit(f"git worktree add failed:\n{r.stderr}")
-    print(f"created {wt} on {branch} at {base.stdout.strip()[:10]}")
+    print(f"created {wt} on {branch} at {base.stdout.strip()[:10]}", flush=True)
     for sub in ("work", "videos"):
         link, target = os.path.join(wt, sub), os.path.join(main, sub)
         r = quiet(["cmd", "/c", "mklink", "/J", link, target])
         if r.returncode != 0 or not same_dir(link, target):
             raise SystemExit(f"junction {link} -> {target} failed: {r.stdout}{r.stderr}")
-        print(f"  {sub}/ -> {target} (junction)")
+        print(f"  {sub}/ -> {target} (junction)", flush=True)
     if args.no_preflight:
         return 0
     own = os.path.join(wt, "tools", "supervise.py")
