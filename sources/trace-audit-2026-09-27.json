@@ -1,21 +1,25 @@
 {
- "generated": "2026-09-27 09:29",
+ "generated": "2026-09-27 11:21",
  "tool": "tools/trace_audit.py",
- "audit_version": "ed1b01e0154c60a6f03e54d048707abd6c9ff3e4acfb655590d919fb7f50c663",
+ "audit_version": "d2cdb26222103bc174e88271f7b58f40979e93f5f271b0c06fce8804487d7266",
  "audit_sources": {
+  "tools/atomicio.py": "c4385fa0bbdce4470e759919d09dfcfbd13ebfc8fef46746dc212f6a2776254f",
   "tools/author_ticks.py": "af1214f18077c48b1c34052ee68390580a90bdffa0468d2c586cb2de59ef23ec",
-  "tools/combo_reader.py": "af33195a0c86c47108ea15802370ab37ae00ee1e8c904ab9fff0bd74d99a826d",
-  "tools/corpus_map.py": "aa380eee898a2757429142919d20a07e16486e13bded0225312ebbc54fd0cc18",
+  "tools/cachekey.py": "1bef2d776aec6b047a18d65c3ef237eb5bd41b1fa1caceef5d3bd2ce451b7695",
+  "tools/combo_reader.py": "f8302c5b08f800d5f34c79c1781a6bbc90aff899cec4bbade9e2d7a79d0683d9",
+  "tools/corpus_map.py": "a6cfdc350a7c7d18abce1f5f74528e831f993703764543cdba048f96cf8fc59c",
   "tools/edit_notes.py": "d35a96f6847572a0bd107ec7def4bfaa4267dd1d80fdf57d134f124817729854",
-  "tools/extract_repair.py": "1b453769aa86c1a4bd59760397514a34bb804f27d0c934fb29a7d45a6154a8bf",
-  "tools/lattice_reauthor.py": "29e453acafcc70a918cd18fa997bb228e11841514f0ccdd0dca6281d498f6656",
-  "tools/note_extract.py": "79a4cb26758e807e8222edb84bda33b1e3f7e15bc477eea1a373115d7ccf19f4",
+  "tools/extract_repair.py": "aa37d482ca96ae6dc278a43e14ca20779236b54120c19b8d1606a11308e942fe",
+  "tools/gitcommit.py": "7c5e0f2709e60e6ee6400777013703a1bf6ae85f0fcef2644e380080211c050a",
+  "tools/guards.py": "5aabf76059842667a3e6fa2d97a7844d699a001cc3cf349f8051950abee4f9f7",
+  "tools/lattice_reauthor.py": "69c2fa4fd515e5d51754ecf1b129c2ec2a036dfb4d5aba2f216ea6dcef3f59f7",
+  "tools/note_extract.py": "5a4f61631decb0e42946f1bb2fa5a90410bf9e8f4f8234c737d498f23b51cba3",
   "tools/quantize.py": "2e38058caf2581cce17672c1424ae9bfddc8797b11dd131df1cef19b96788e65",
-  "tools/receptors.py": "aad6ff4f15ccb0dc55f5013801363c74ec58e39eb9c5c6a591d522ad20a57355",
-  "tools/sprites.py": "5b9aea4f9b63cb49483bbc38ffb6a0188b18ff989ed78df2d914995a5b8542f5",
-  "tools/tick_model.py": "b188f41010ac12c628ff6dd1e0cac284f35a3bcaf87a2d58d467cdc5fe78a032",
-  "tools/tick_repair.py": "b9de1bd3a27bd284483a512847d82df85e69400b588eb240d8b25b29d08f6b3d",
-  "tools/trace_audit.py": "34ce86bfbd974f542fa2c45be7f3f182a5269f40507fb9a108d33ab63191c57f",
+  "tools/receptors.py": "33216fc9167901f44b89d13582a7cc47af1edf2e41f3e1078ef39f706cc7b27a",
+  "tools/sprites.py": "acdbb6a21001d2cc0afde66fad9d204f0b47faccb5cb0603f79244ed6bf00102",
+  "tools/tick_model.py": "9b3293cec16e0219ec90b1ea03e661fb1eeed16a12f6b1b8c8e2d80b7d4350bb",
+  "tools/tick_repair.py": "1f3c5140ec896d235ebb4d36dae19db0fe8de054a0101e579b97a4ca6a07bef2",
+  "tools/trace_audit.py": "e5f5e793c8cd80e670153198de97cc65d07cf1f0cecb6e4639873c2a7ae47989",
   "piu_annotate/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "piu_annotate/utils.py": "88fa36b9e274aa61388684307a566d8ff79c8b342b742c08063ccffd21991453",
   "piu_annotate/formats/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -64,7 +68,7 @@
    ]
   ]
  },
- "head": "b773f505af41e0a4e2f3bb398273081e9fec4735",
+ "head": "02ce4ff0370bd2effdbf6c0b34340dfc99c648eb",
  "import_rev": "a23cee5",
  "converter": {
   "module": "piu_annotate/formats/ssc_to_chartstruct.py",
@@ -76,38 +80,38 @@
  "population": "certified charts exact at HEAD and not at a23cee5: the edit-derived exact set",
  "quarantine": [
   "Houseplan S17",
-  "Wedding Crashers S10",
-  "Imagination S12"
+  "Imagination S12",
+  "Wedding Crashers S10"
  ],
- "quarantine_from": "the fallback in tools/trace_audit.py (sources/quarantine.json absent or unreadable)",
+ "quarantine_from": "sources/quarantine.json",
  "owner_revisit": [
   "Destination - SHORT CUT - D21"
  ],
  "counts": {
-  "charts": 112,
-  "FLAT": 1,
-  "OFF": 9,
-  "UNCOVERED": 102,
+  "charts": 123,
+  "FLAT": 3,
+  "OFF": 10,
+  "UNCOVERED": 110,
   "ERROR": 0,
   "edits": {
-   "OFF": 37,
-   "UNCOVERED": 347,
-   "FLAT": 9
+   "OFF": 38,
+   "UNCOVERED": 400,
+   "FLAT": 14
   },
   "edits_off_distant": 15,
-  "promoted": 1,
-  "appended": 1
+  "promoted": 3,
+  "appended": 3
  },
  "by_basis": {
-  "counter-derived FLAT": 8,
-  "counter-derived OFF": 34,
-  "counter-derived UNCOVERED": 264,
-  "independent FLAT": 1,
+  "counter-derived FLAT": 11,
+  "counter-derived OFF": 35,
+  "counter-derived UNCOVERED": 308,
+  "independent FLAT": 3,
   "independent OFF": 3,
   "independent UNCOVERED": 6,
-  "None UNCOVERED": 77
+  "None UNCOVERED": 86
  },
- "seconds": 14.9,
+ "seconds": 8.5,
  "charts": [
   {
    "chart": "2006. LOVE SONG D14",
@@ -136,7 +140,7 @@
     "clock": 0.0102,
     "fitted_on": 366,
     "notes": 391,
-    "seconds": 7.1,
+    "seconds": 6.4,
     "lag": 0.097,
     "lag_taps": 88
    },
@@ -157,7 +161,7 @@
      93.028
     ]
    ],
-   "seconds": 0.78,
+   "seconds": 0.43,
    "whole": {
     "strong": 2,
     "evidence": 984,
@@ -260,7 +264,7 @@
      92.475
     ]
    ],
-   "seconds": 0.24,
+   "seconds": 0.18,
    "whole": {
     "strong": 8,
     "evidence": 732,
@@ -350,7 +354,7 @@
      84.85
     ]
    ],
-   "seconds": 0.65,
+   "seconds": 0.37,
    "whole": {
     "strong": 1,
     "evidence": 1925,
@@ -421,7 +425,7 @@
     "clock": 0.0043,
     "fitted_on": 187,
     "notes": 187,
-    "seconds": 3.6,
+    "seconds": 3.0,
     "lag": 0.127,
     "lag_taps": 105
    },
@@ -442,7 +446,7 @@
      91.408
     ]
    ],
-   "seconds": 0.24,
+   "seconds": 0.17,
    "whole": {
     "strong": 16,
     "evidence": 1507,
@@ -513,7 +517,7 @@
     "clock": 0.0791,
     "fitted_on": 348,
     "notes": 350,
-    "seconds": 3.9,
+    "seconds": 3.8,
     "lag": 0.1,
     "lag_taps": 5
    },
@@ -534,7 +538,7 @@
      71.452
     ]
    ],
-   "seconds": 0.69,
+   "seconds": 0.38,
    "whole": {
     "strong": 8,
     "evidence": 557,
@@ -605,7 +609,7 @@
     "clock": 0.0177,
     "fitted_on": 463,
     "notes": 489,
-    "seconds": 9.1,
+    "seconds": 7.4,
     "lag": 0.124,
     "lag_taps": 43
    },
@@ -642,7 +646,7 @@
      90.269
     ]
    ],
-   "seconds": 0.47,
+   "seconds": 0.29,
    "whole": {
     "strong": 3,
     "evidence": 912,
@@ -875,7 +879,7 @@
     "clock": 0.0035,
     "fitted_on": 518,
     "notes": 521,
-    "seconds": 8.4,
+    "seconds": 7.8,
     "lag": 0.203,
     "lag_taps": 116
    },
@@ -924,7 +928,7 @@
      63.743
     ]
    ],
-   "seconds": 1.14,
+   "seconds": 0.65,
    "whole": {
     "strong": 8,
     "evidence": 1291,
@@ -1214,7 +1218,7 @@
     "clock": 0.0101,
     "fitted_on": 648,
     "notes": 648,
-    "seconds": 10.4,
+    "seconds": 9.0,
     "lag": 0.121,
     "lag_taps": 69
    },
@@ -1243,7 +1247,7 @@
      66.501
     ]
    ],
-   "seconds": 0.36,
+   "seconds": 0.25,
    "whole": {
     "strong": 11,
     "evidence": 1074,
@@ -1380,7 +1384,7 @@
     "miss": 0
    },
    "timing_change": 104.5946,
-   "seconds": 0.11,
+   "seconds": 0.07,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for UJjQiElua9w band C"
@@ -1423,7 +1427,7 @@
     "clock": -0.0031,
     "fitted_on": 658,
     "notes": 664,
-    "seconds": 11.3,
+    "seconds": 9.8,
     "lag": 0.1,
     "lag_taps": 4
    },
@@ -1480,7 +1484,7 @@
      122.828
     ]
    ],
-   "seconds": 1.23,
+   "seconds": 0.7,
    "whole": {
     "strong": 1,
     "evidence": 63,
@@ -1835,6 +1839,716 @@
    "quarantined": false
   },
   {
+   "chart": "Baroque Virus - FULL SONG - S15",
+   "key": "Baroque_Virus_-_FULL_SONG_-_-_Zircon_S15_FULLSONG",
+   "vid": "OmtOd1Fmezg",
+   "side": "1p",
+   "expected": 1300,
+   "exact": true,
+   "block_sha": "add71eea46c8c4562f1b7c2c3cd2a45662ef6763e9e201842d1a819c30ede2cd",
+   "header_sha": "231a20a37c7304a09070a6650d77cc0476b21c307ab7a4f50e6de8aff33ba6ce",
+   "base_sha": "cfc23fa660ce549d084f2098fe43deee5c7120487a647a7d9e4ab7ade7b3dcb5",
+   "verdict": "UNCOVERED",
+   "reason": "the nearest strong read before it is 21 rows away; the nearest strong read after it is 53 rows away; 31 rows inside it without one (the limit is 8)",
+   "play": {
+    "band": "L",
+    "judged": 1300,
+    "maxcombo": 929,
+    "clean": false,
+    "good": 0,
+    "bad": 2,
+    "miss": 1
+   },
+   "clock": {
+    "source": "note_extract + extract_repair.align (the tick loop's clock), measured here",
+    "offset": 10.539,
+    "clock": 0.0037,
+    "fitted_on": 1010,
+    "notes": 1035,
+    "seconds": 210.0,
+    "lag": 0.1,
+    "lag_taps": 3
+   },
+   "reads": {
+    "confident": 5337,
+    "on_chain": 4527,
+    "misreads_dropped": 743,
+    "quiet": 439,
+    "strong": 10,
+    "evidence": 398,
+    "runs": 30,
+    "unsettled": 0,
+    "rest_dropped": 0
+   },
+   "brackets": [
+    [
+     11.844,
+     13.933
+    ],
+    [
+     42.067,
+     59.822
+    ],
+    [
+     59.844,
+     66.933
+    ],
+    [
+     66.956,
+     75.267
+    ],
+    [
+     81.178,
+     89.489
+    ],
+    [
+     102.067,
+     103.489
+    ],
+    [
+     116.733,
+     148.044
+    ],
+    [
+     148.733,
+     163.683
+    ],
+    [
+     176.956,
+     210.378
+    ],
+    [
+     216.289,
+     224.6
+    ],
+    [
+     251.844,
+     281.267
+    ],
+    [
+     283.844,
+     298.794
+    ]
+   ],
+   "seconds": 0.86,
+   "whole": {
+    "strong": 10,
+    "evidence": 398,
+    "covered": false,
+    "blind_rows": 227,
+    "share_within_k": 0.44,
+    "unsettled": [],
+    "verdict": "FLAT",
+    "reason": "10 strong level(s), every one agreeing with the file"
+   },
+   "edits": [
+    {
+     "lo": 12.556,
+     "hi": 13.222,
+     "rows": 0,
+     "events": {
+      "added": 0,
+      "removed": 7,
+      "net": -7,
+      "kinds": {
+       "tick": "+0/-7"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 11.695,
+      "level": 0,
+      "run": 0
+     },
+     "right": {
+      "cut": 13.945,
+      "level": 0,
+      "run": 0
+     },
+     "left_rows": 4,
+     "right_rows": 2,
+     "inner_gap_rows": 0,
+     "covered": true,
+     "verdict": "FLAT",
+     "reason": "one run, one level on both sides: 4 row(s) before, 2 after"
+    },
+    {
+     "lo": 42.778,
+     "hi": 55.778,
+     "rows": 31,
+     "events": {
+      "added": 4,
+      "removed": 80,
+      "net": -76,
+      "kinds": {
+       "tick": "+4/-80"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 39.912,
+      "level": 0,
+      "run": 2
+     },
+     "right": {
+      "cut": 96.131,
+      "level": 33,
+      "run": 4
+     },
+     "left_rows": 21,
+     "right_rows": 53,
+     "inner_gap_rows": 31,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 21 rows away; the nearest strong read after it is 53 rows away; 31 rows inside it without one (the limit is 8)"
+    },
+    {
+     "lo": 57.0,
+     "hi": 59.222,
+     "rows": 5,
+     "events": {
+      "added": 0,
+      "removed": 12,
+      "net": -12,
+      "kinds": {
+       "tick": "+0/-12"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 39.912,
+      "level": 0,
+      "run": 2
+     },
+     "right": {
+      "cut": 96.131,
+      "level": 33,
+      "run": 4
+     },
+     "left_rows": 61,
+     "right_rows": 39,
+     "inner_gap_rows": 5,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 61 rows away; the nearest strong read after it is 39 rows away (the limit is 8)"
+    },
+    {
+     "lo": 60.556,
+     "hi": 66.333,
+     "rows": 13,
+     "events": {
+      "added": 2,
+      "removed": 30,
+      "net": -28,
+      "kinds": {
+       "tick": "+2/-30"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 39.912,
+      "level": 0,
+      "run": 2
+     },
+     "right": {
+      "cut": 96.131,
+      "level": 33,
+      "run": 4
+     },
+     "left_rows": 72,
+     "right_rows": 20,
+     "inner_gap_rows": 13,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 72 rows away; the nearest strong read after it is 20 rows away (the limit is 8)"
+    },
+    {
+     "lo": 67.667,
+     "hi": 70.556,
+     "rows": 6,
+     "events": {
+      "added": 0,
+      "removed": 20,
+      "net": -20,
+      "kinds": {
+       "tick": "+0/-20"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 39.912,
+      "level": 0,
+      "run": 2
+     },
+     "right": {
+      "cut": 96.131,
+      "level": 33,
+      "run": 4
+     },
+     "left_rows": 91,
+     "right_rows": 8,
+     "inner_gap_rows": 6,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 91 rows away (the limit is 8)"
+    },
+    {
+     "lo": 71.556,
+     "hi": 74.667,
+     "rows": 2,
+     "events": {
+      "added": 0,
+      "removed": 10,
+      "net": -10,
+      "kinds": {
+       "tick": "+0/-10"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 39.912,
+      "level": 0,
+      "run": 2
+     },
+     "right": {
+      "cut": 96.131,
+      "level": 33,
+      "run": 4
+     },
+     "left_rows": 99,
+     "right_rows": 4,
+     "inner_gap_rows": 2,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 99 rows away (the limit is 8)"
+    },
+    {
+     "lo": 81.889,
+     "hi": 88.778,
+     "rows": 1,
+     "events": {
+      "added": 15,
+      "removed": 53,
+      "net": -38,
+      "kinds": {
+       "tick": "+15/-53"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 39.912,
+      "level": 0,
+      "run": 2
+     },
+     "right": {
+      "cut": 96.131,
+      "level": 33,
+      "run": 4
+     },
+     "left_rows": 102,
+     "right_rows": 2,
+     "inner_gap_rows": 1,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 102 rows away (the limit is 8)"
+    },
+    {
+     "lo": 102.778,
+     "hi": 102.778,
+     "rows": 0,
+     "events": {
+      "added": 0,
+      "removed": 1,
+      "net": -1,
+      "kinds": {
+       "tick": "+0/-1"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 101.915,
+      "level": 33,
+      "run": 4
+     },
+     "right": {
+      "cut": 103.865,
+      "level": 33,
+      "run": 4
+     },
+     "left_rows": 4,
+     "right_rows": 5,
+     "inner_gap_rows": 0,
+     "covered": true,
+     "verdict": "FLAT",
+     "reason": "one run, one level on both sides: 4 row(s) before, 5 after"
+    },
+    {
+     "lo": 117.444,
+     "hi": 147.444,
+     "rows": 135,
+     "events": {
+      "added": 8,
+      "removed": 88,
+      "net": -80,
+      "kinds": {
+       "tick": "+8/-88"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 114.799,
+      "level": 33,
+      "run": 4
+     },
+     "right": {
+      "cut": 163.917,
+      "level": 48,
+      "run": 8
+     },
+     "left_rows": 12,
+     "right_rows": 28,
+     "inner_gap_rows": 135,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 12 rows away; the nearest strong read after it is 28 rows away; 135 rows inside it without one (the limit is 8)"
+    },
+    {
+     "lo": 149.444,
+     "hi": 163.083,
+     "rows": 9,
+     "events": {
+      "added": 52,
+      "removed": 156,
+      "net": -104,
+      "kinds": {
+       "tick": "+52/-156"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 114.799,
+      "level": 33,
+      "run": 4
+     },
+     "right": {
+      "cut": 163.917,
+      "level": 48,
+      "run": 8
+     },
+     "left_rows": 164,
+     "right_rows": 2,
+     "inner_gap_rows": 9,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 164 rows away (the limit is 8)"
+    },
+    {
+     "lo": 177.667,
+     "hi": 190.889,
+     "rows": 43,
+     "events": {
+      "added": 2,
+      "removed": 76,
+      "net": -74,
+      "kinds": {
+       "tick": "+2/-76"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 175.918,
+      "level": 48,
+      "run": 9
+     },
+     "right": {
+      "cut": 231.47,
+      "level": -15,
+      "run": 12
+     },
+     "left_rows": 15,
+     "right_rows": 56,
+     "inner_gap_rows": 43,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 15 rows away; the nearest strong read after it is 56 rows away; 43 rows inside it without one (the limit is 8)"
+    },
+    {
+     "lo": 192.111,
+     "hi": 206.111,
+     "rows": 37,
+     "events": {
+      "added": 5,
+      "removed": 90,
+      "net": -85,
+      "kinds": {
+       "tick": "+5/-90"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 175.918,
+      "level": 48,
+      "run": 9
+     },
+     "right": {
+      "cut": 231.47,
+      "level": -15,
+      "run": 12
+     },
+     "left_rows": 67,
+     "right_rows": 10,
+     "inner_gap_rows": 37,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 67 rows away; the nearest strong read after it is 10 rows away; 37 rows inside it without one (the limit is 8)"
+    },
+    {
+     "lo": 207.111,
+     "hi": 207.556,
+     "rows": 0,
+     "events": {
+      "added": 0,
+      "removed": 2,
+      "net": -2,
+      "kinds": {
+       "tick": "+0/-2"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 175.918,
+      "level": 48,
+      "run": 9
+     },
+     "right": {
+      "cut": 231.47,
+      "level": -15,
+      "run": 12
+     },
+     "left_rows": 106,
+     "right_rows": 8,
+     "inner_gap_rows": 0,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 106 rows away (the limit is 8)"
+    },
+    {
+     "lo": 208.889,
+     "hi": 209.778,
+     "rows": 1,
+     "events": {
+      "added": 0,
+      "removed": 6,
+      "net": -6,
+      "kinds": {
+       "tick": "+0/-6"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 175.918,
+      "level": 48,
+      "run": 9
+     },
+     "right": {
+      "cut": 231.47,
+      "level": -15,
+      "run": 12
+     },
+     "left_rows": 108,
+     "right_rows": 5,
+     "inner_gap_rows": 1,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 108 rows away (the limit is 8)"
+    },
+    {
+     "lo": 217.0,
+     "hi": 223.889,
+     "rows": 1,
+     "events": {
+      "added": 30,
+      "removed": 56,
+      "net": -26,
+      "kinds": {
+       "tick": "+30/-56"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 175.918,
+      "level": 48,
+      "run": 9
+     },
+     "right": {
+      "cut": 231.47,
+      "level": -15,
+      "run": 12
+     },
+     "left_rows": 110,
+     "right_rows": 3,
+     "inner_gap_rows": 1,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 110 rows away (the limit is 8)"
+    },
+    {
+     "lo": 252.556,
+     "hi": 280.556,
+     "rows": 126,
+     "events": {
+      "added": 9,
+      "removed": 107,
+      "net": -98,
+      "kinds": {
+       "tick": "+9/-107"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 241.253,
+      "level": -845,
+      "run": 13
+     },
+     "right": {
+      "cut": 300.089,
+      "level": -1259,
+      "run": 24
+     },
+     "left_rows": 51,
+     "right_rows": 50,
+     "inner_gap_rows": 126,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 51 rows away; the nearest strong read after it is 50 rows away; 126 rows inside it without one (the limit is 8)"
+    },
+    {
+     "lo": 284.556,
+     "hi": 298.194,
+     "rows": 9,
+     "events": {
+      "added": 128,
+      "removed": 161,
+      "net": -33,
+      "kinds": {
+       "tick": "+128/-161"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 241.253,
+      "level": -845,
+      "run": 13
+     },
+     "right": {
+      "cut": 300.089,
+      "level": -1259,
+      "run": 24
+     },
+     "left_rows": 211,
+     "right_rows": 7,
+     "inner_gap_rows": 9,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 211 rows away (the limit is 8)"
+    }
+   ],
+   "promotable": false,
+   "quarantined": false
+  },
+  {
+   "chart": "Beat of The War S16",
+   "key": "Beat_of_The_War_-_Banya_S16_ARCADE",
+   "vid": "XNMIAm04k_c",
+   "side": "2p",
+   "expected": 500,
+   "exact": true,
+   "block_sha": "19c95978371c722e81127b29dbcbb0f66f674fed241eef14dd066532ac09f4c5",
+   "header_sha": "cc09f9e9f69fd2e6c6fa03c15b624f8bd36fe8c91cc3270689ce714b0024e9b4",
+   "base_sha": "9a516a42c97d865441461eb4dda6f8e2624baf8c294bb48eca69ffc5e5be4ea6",
+   "verdict": "UNCOVERED",
+   "reason": "the nearest strong read before it is 20 rows away; no strong read after it (the limit is 8)",
+   "play": {
+    "band": "R",
+    "judged": 500,
+    "maxcombo": 222,
+    "clean": false,
+    "good": 2,
+    "bad": 1,
+    "miss": 10
+   },
+   "clock": {
+    "source": "note_extract + extract_repair.align (the tick loop's clock), measured here",
+    "offset": 12.078,
+    "clock": 0.0134,
+    "fitted_on": 504,
+    "notes": 508,
+    "seconds": 48.4,
+    "lag": 0.087,
+    "lag_taps": 24
+   },
+   "reads": {
+    "confident": 2501,
+    "on_chain": 1911,
+    "misreads_dropped": 576,
+    "quiet": 478,
+    "strong": 11,
+    "evidence": 458,
+    "runs": 17,
+    "unsettled": 0,
+    "rest_dropped": 31
+   },
+   "brackets": [
+    [
+     89.904,
+     91.401
+    ]
+   ],
+   "seconds": 0.22,
+   "whole": {
+    "strong": 11,
+    "evidence": 458,
+    "covered": false,
+    "blind_rows": 23,
+    "share_within_k": 0.938,
+    "unsettled": [],
+    "verdict": "UNCOVERED",
+    "reason": "no level moves within a run, but the play has 2 GOOD(s)"
+   },
+   "edits": [
+    {
+     "lo": 90.504,
+     "hi": 90.801,
+     "rows": 1,
+     "events": {
+      "added": 95,
+      "removed": 1,
+      "net": 94,
+      "kinds": {
+       "head": "+1/-0",
+       "tap": "+0/-1",
+       "tick": "+94/-0"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 87.147,
+      "level": -238,
+      "run": 14
+     },
+     "right": null,
+     "left_rows": 20,
+     "right_rows": null,
+     "inner_gap_rows": 0,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 20 rows away; no strong read after it (the limit is 8)"
+    }
+   ],
+   "promotable": false,
+   "quarantined": false
+  },
+  {
    "chart": "Bee D15",
    "key": "Bee_-_BanYa_D15_ARCADE",
    "vid": "h6hMwb60hhA",
@@ -1861,7 +2575,7 @@
     "clock": 0.0027,
     "fitted_on": 344,
     "notes": 351,
-    "seconds": 8.1,
+    "seconds": 5.9,
     "lag": 0.128,
     "lag_taps": 24
    },
@@ -1882,7 +2596,7 @@
      84.694
     ]
    ],
-   "seconds": 0.7,
+   "seconds": 0.17,
    "whole": {
     "strong": 8,
     "evidence": 724,
@@ -1953,7 +2667,7 @@
     "clock": 0.0024,
     "fitted_on": 463,
     "notes": 463,
-    "seconds": 5.0,
+    "seconds": 4.5,
     "lag": 0.1,
     "lag_taps": 9
    },
@@ -1974,7 +2688,7 @@
      83.452
     ]
    ],
-   "seconds": 0.32,
+   "seconds": 0.17,
    "whole": {
     "strong": 6,
     "evidence": 526,
@@ -2054,7 +2768,7 @@
     "clock": 0.0679,
     "fitted_on": 306,
     "notes": 306,
-    "seconds": 8.4,
+    "seconds": 6.8,
     "lag": 0.115,
     "lag_taps": 42
    },
@@ -2075,7 +2789,7 @@
      98.007
     ]
    ],
-   "seconds": 0.29,
+   "seconds": 0.18,
    "whole": {
     "strong": 8,
     "evidence": 1100,
@@ -2153,7 +2867,7 @@
     "clock": -0.0028,
     "fitted_on": 600,
     "notes": 685,
-    "seconds": 9.9,
+    "seconds": 9.1,
     "lag": 0.153,
     "lag_taps": 20
    },
@@ -2182,7 +2896,7 @@
      95.878
     ]
    ],
-   "seconds": 0.49,
+   "seconds": 0.23,
    "whole": {
     "strong": 7,
     "evidence": 525,
@@ -2354,7 +3068,7 @@
      80.252
     ]
    ],
-   "seconds": 0.3,
+   "seconds": 0.17,
    "whole": {
     "strong": 13,
     "evidence": 811,
@@ -2427,7 +3141,7 @@
     "clock": 0.06,
     "fitted_on": 313,
     "notes": 561,
-    "seconds": 10.7,
+    "seconds": 9.6,
     "lag": 0.255,
     "lag_taps": 35
    },
@@ -2448,7 +3162,7 @@
      102.191
     ]
    ],
-   "seconds": 0.34,
+   "seconds": 0.17,
    "whole": {
     "strong": 5,
     "evidence": 265,
@@ -2517,7 +3231,7 @@
     "clock": 0.0382,
     "fitted_on": 244,
     "notes": 244,
-    "seconds": 5.0,
+    "seconds": 4.6,
     "lag": 0.088,
     "lag_taps": 19
    },
@@ -2542,7 +3256,7 @@
      49.523
     ]
    ],
-   "seconds": 0.22,
+   "seconds": 0.14,
    "whole": {
     "strong": 3,
     "evidence": 140,
@@ -2656,7 +3370,7 @@
     "clock": 0.0214,
     "fitted_on": 302,
     "notes": 302,
-    "seconds": 5.3,
+    "seconds": 4.7,
     "lag": 0.1,
     "lag_taps": 13
    },
@@ -2685,7 +3399,7 @@
      49.523
     ]
    ],
-   "seconds": 0.3,
+   "seconds": 0.15,
    "whole": {
     "strong": 2,
     "evidence": 42,
@@ -2806,7 +3520,7 @@
     "clock": 0.0588,
     "fitted_on": 303,
     "notes": 303,
-    "seconds": 5.4,
+    "seconds": 5.0,
     "lag": 0.087,
     "lag_taps": 16
    },
@@ -2843,7 +3557,7 @@
      49.523
     ]
    ],
-   "seconds": 0.29,
+   "seconds": 0.16,
    "whole": {
     "strong": 2,
     "evidence": 178,
@@ -3020,7 +3734,7 @@
     "clock": 0.0333,
     "fitted_on": 975,
     "notes": 979,
-    "seconds": 15.0,
+    "seconds": 13.9,
     "lag": 0.112,
     "lag_taps": 36
    },
@@ -3041,7 +3755,7 @@
      4.017
     ]
    ],
-   "seconds": 0.93,
+   "seconds": 0.3,
    "whole": {
     "strong": 10,
     "evidence": 847,
@@ -3093,6 +3807,635 @@
    "quarantined": false
   },
   {
+   "chart": "Caprice of DJ Otada S21",
+   "key": "Caprice_of_DJ_Otada_-_Banya_Production_S21_REMIX",
+   "vid": "MoWM7Riiti0",
+   "side": "2p",
+   "expected": 904,
+   "exact": true,
+   "block_sha": "17594a02ff76607fe8a6cea7d37d1c45771fade04794f00bba67a619981a9dc1",
+   "header_sha": "03f86e747bfaeec129121070a167ebb38dfa72f02cdf24916488dec66e5b12e3",
+   "base_sha": "f8ad44dfd0ff2aad615c8e79f876744026cc3bb669d3a5b14cce744a873e7c5e",
+   "verdict": "UNCOVERED",
+   "reason": "the nearest strong read after it is 11 rows away (the limit is 8)",
+   "play": {
+    "band": "R",
+    "judged": 904,
+    "maxcombo": 609,
+    "clean": false,
+    "good": 11,
+    "bad": 1,
+    "miss": 3
+   },
+   "clock": {
+    "source": "note_extract + extract_repair.align (the tick loop's clock), measured here",
+    "offset": 12.126,
+    "clock": 0.0041,
+    "fitted_on": 858,
+    "notes": 869,
+    "seconds": 141.3,
+    "lag": 0.079,
+    "lag_taps": 34
+   },
+   "reads": {
+    "confident": 3838,
+    "on_chain": 2996,
+    "misreads_dropped": 792,
+    "quiet": 1176,
+    "strong": 9,
+    "evidence": 1140,
+    "runs": 14,
+    "unsettled": 2,
+    "rest_dropped": 0
+   },
+   "brackets": [
+    [
+     25.4,
+     28.211
+    ],
+    [
+     36.733,
+     40.142
+    ]
+   ],
+   "seconds": 0.31,
+   "whole": {
+    "strong": 9,
+    "evidence": 1140,
+    "covered": false,
+    "blind_rows": 73,
+    "share_within_k": 0.785,
+    "unsettled": [
+     {
+      "run": 13,
+      "level": -1,
+      "first": 137.067,
+      "last": 139.267,
+      "n": 34,
+      "margin": "35 ms"
+     },
+     {
+      "run": 13,
+      "level": -1,
+      "first": 137.084,
+      "last": 139.251,
+      "n": 16,
+      "wide_agree": 0,
+      "wide_against": 0,
+      "margin": "80 ms"
+     }
+    ],
+    "verdict": "UNCOVERED",
+    "worst": {
+     "run": 9,
+     "level": -5,
+     "first": 40.413,
+     "last": 61.064,
+     "n": 185
+    },
+    "reason": "within run 9 the level moves -5 between 36.41s and 40.41s: a move that size on a play with breaks is a misread or a misplaced reset as often as a file error"
+   },
+   "edits": [
+    {
+     "lo": 26.0,
+     "hi": 27.6,
+     "rows": 3,
+     "events": {
+      "added": 46,
+      "removed": 3,
+      "net": 43,
+      "kinds": {
+       "head": "+1/-0",
+       "tap": "+0/-3",
+       "tick": "+45/-0"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 25.246,
+      "level": -89,
+      "run": 6
+     },
+     "right": {
+      "cut": 30.763,
+      "level": -84,
+      "run": 9
+     },
+     "left_rows": 5,
+     "right_rows": 11,
+     "inner_gap_rows": 2,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read after it is 11 rows away (the limit is 8)"
+    },
+    {
+     "lo": 37.333,
+     "hi": 39.535,
+     "rows": 2,
+     "events": {
+      "added": 103,
+      "removed": 2,
+      "net": 101,
+      "kinds": {
+       "head": "+2/-0",
+       "tap": "+0/-2",
+       "tick": "+101/-0"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 36.413,
+      "level": -84,
+      "run": 9
+     },
+     "right": {
+      "cut": 40.413,
+      "level": -89,
+      "run": 9
+     },
+     "left_rows": 6,
+     "right_rows": 3,
+     "inner_gap_rows": 1,
+     "covered": true,
+     "verdict": "UNCOVERED",
+     "reason": "within one run the level moves -5 between 36.41s and 40.41s: a move that size on a play with breaks is a misread or a misplaced reset as often as a file error"
+    }
+   ],
+   "promotable": false,
+   "quarantined": false
+  },
+  {
+   "chart": "Chase Me S20",
+   "key": "Chase_Me_-_Dreamcatcher_S20_ARCADE",
+   "vid": "xKaQQImTQig",
+   "side": "2p",
+   "expected": 1077,
+   "exact": true,
+   "block_sha": "fdfa2df7a306c0f3de93f8eb2a68d850475ded86db0f303437620856404ae595",
+   "header_sha": "abfe47de7866327607712f34a40beabb0340bd63c88a2c4e519a9575323f29c7",
+   "base_sha": "5e1ee84c4535d24ef76332c11f1eabd17ce809a67117279ed22b7a085c7b17f8",
+   "verdict": "UNCOVERED",
+   "reason": "no strong read before it; the nearest strong read after it is 199 rows away (the limit is 8)",
+   "play": {
+    "band": "R",
+    "judged": 1077,
+    "maxcombo": 1076,
+    "clean": false,
+    "good": 1,
+    "bad": 0,
+    "miss": 0
+   },
+   "clock": {
+    "source": "note_extract + extract_repair.align (the tick loop's clock), measured here",
+    "offset": 9.918,
+    "clock": -0.0094,
+    "fitted_on": 760,
+    "notes": 772,
+    "seconds": 96.5,
+    "lag": 0.1,
+    "lag_taps": 0
+   },
+   "reads": {
+    "confident": 1633,
+    "on_chain": 1039,
+    "misreads_dropped": 408,
+    "quiet": 30,
+    "strong": 1,
+    "evidence": 27,
+    "runs": 1,
+    "unsettled": 3,
+    "rest_dropped": 25
+   },
+   "brackets": [
+    [
+     10.5,
+     12.6
+    ],
+    [
+     12.9,
+     36.3
+    ],
+    [
+     36.65,
+     38.1
+    ],
+    [
+     42.6,
+     47.1
+    ],
+    [
+     54.6,
+     56.025
+    ],
+    [
+     56.55,
+     57.975
+    ],
+    [
+     66.6,
+     85.35
+    ],
+    [
+     85.4,
+     86.85
+    ],
+    [
+     90.6,
+     96.6
+    ],
+    [
+     118.125,
+     120.0
+    ]
+   ],
+   "seconds": 0.37,
+   "whole": {
+    "strong": 1,
+    "evidence": 27,
+    "covered": false,
+    "blind_rows": 380,
+    "share_within_k": 0.077,
+    "unsettled": [
+     {
+      "run": 0,
+      "level": -1,
+      "first": 39.645,
+      "last": 42.045,
+      "n": 27,
+      "margin": "35 ms"
+     },
+     {
+      "run": 0,
+      "level": -1,
+      "first": 87.041,
+      "last": 90.507,
+      "n": 50,
+      "margin": "35 ms"
+     },
+     {
+      "run": 0,
+      "level": -8,
+      "first": 115.238,
+      "last": 117.504,
+      "n": 29,
+      "margin": "35 ms"
+     }
+    ],
+    "verdict": "UNCOVERED",
+    "reason": "3 timing-sensitive stretch(es), first 39.65-42.05s at -1, seen at 35 ms only; the frames decide them"
+   },
+   "edits": [
+    {
+     "lo": 11.153,
+     "hi": 12.0,
+     "rows": 0,
+     "events": {
+      "added": 12,
+      "removed": 12,
+      "net": 0,
+      "kinds": {
+       "tick": "+12/-12"
+      }
+     },
+     "basis": "counter-derived",
+     "left": null,
+     "right": {
+      "cut": 49.194,
+      "level": 0,
+      "run": 0
+     },
+     "left_rows": null,
+     "right_rows": 199,
+     "inner_gap_rows": 0,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "no strong read before it; the nearest strong read after it is 199 rows away (the limit is 8)"
+    },
+    {
+     "lo": 13.55,
+     "hi": 16.95,
+     "rows": 14,
+     "events": {
+      "added": 18,
+      "removed": 16,
+      "net": 2,
+      "kinds": {
+       "tick": "+18/-16"
+      }
+     },
+     "basis": "counter-derived",
+     "left": null,
+     "right": {
+      "cut": 49.194,
+      "level": 0,
+      "run": 0
+     },
+     "left_rows": null,
+     "right_rows": 176,
+     "inner_gap_rows": 14,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "no strong read before it; the nearest strong read after it is 176 rows away (the limit is 8)"
+    },
+    {
+     "lo": 18.375,
+     "hi": 19.35,
+     "rows": 7,
+     "events": {
+      "added": 3,
+      "removed": 7,
+      "net": -4,
+      "kinds": {
+       "tick": "+3/-7"
+      }
+     },
+     "basis": "counter-derived",
+     "left": null,
+     "right": {
+      "cut": 49.194,
+      "level": 0,
+      "run": 0
+     },
+     "left_rows": null,
+     "right_rows": 162,
+     "inner_gap_rows": 7,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "no strong read before it; the nearest strong read after it is 162 rows away (the limit is 8)"
+    },
+    {
+     "lo": 20.425,
+     "hi": 21.575,
+     "rows": 1,
+     "events": {
+      "added": 12,
+      "removed": 44,
+      "net": -32,
+      "kinds": {
+       "tick": "+12/-44"
+      }
+     },
+     "basis": "counter-derived",
+     "left": null,
+     "right": {
+      "cut": 49.194,
+      "level": 0,
+      "run": 0
+     },
+     "left_rows": null,
+     "right_rows": 154,
+     "inner_gap_rows": 1,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "no strong read before it; the nearest strong read after it is 154 rows away (the limit is 8)"
+    },
+    {
+     "lo": 22.825,
+     "hi": 35.68,
+     "rows": 50,
+     "events": {
+      "added": 67,
+      "removed": 266,
+      "net": -199,
+      "kinds": {
+       "tick": "+67/-266"
+      }
+     },
+     "basis": "counter-derived",
+     "left": null,
+     "right": {
+      "cut": 49.194,
+      "level": 0,
+      "run": 0
+     },
+     "left_rows": null,
+     "right_rows": 96,
+     "inner_gap_rows": 50,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "no strong read before it; the nearest strong read after it is 96 rows away; 50 rows inside it without one (the limit is 8)"
+    },
+    {
+     "lo": 37.262,
+     "hi": 37.5,
+     "rows": 0,
+     "events": {
+      "added": 8,
+      "removed": 10,
+      "net": -2,
+      "kinds": {
+       "tick": "+8/-10"
+      }
+     },
+     "basis": "counter-derived",
+     "left": null,
+     "right": {
+      "cut": 49.194,
+      "level": 0,
+      "run": 0
+     },
+     "left_rows": null,
+     "right_rows": 80,
+     "inner_gap_rows": 0,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "no strong read before it; the nearest strong read after it is 80 rows away (the limit is 8)"
+    },
+    {
+     "lo": 43.225,
+     "hi": 46.5,
+     "rows": 16,
+     "events": {
+      "added": 18,
+      "removed": 59,
+      "net": -41,
+      "kinds": {
+       "tick": "+18/-59"
+      }
+     },
+     "basis": "counter-derived",
+     "left": null,
+     "right": {
+      "cut": 49.194,
+      "level": 0,
+      "run": 0
+     },
+     "left_rows": null,
+     "right_rows": 25,
+     "inner_gap_rows": 16,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "a timing-sensitive stretch (39.65-42.05s) lies within 8 rows; the frames decide it"
+    },
+    {
+     "lo": 55.221,
+     "hi": 55.425,
+     "rows": 0,
+     "events": {
+      "added": 10,
+      "removed": 9,
+      "net": 1,
+      "kinds": {
+       "tick": "+10/-9"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 49.811,
+      "level": 0,
+      "run": 0
+     },
+     "right": {
+      "cut": 58.06,
+      "level": 0,
+      "run": 0
+     },
+     "left_rows": 70,
+     "right_rows": 21,
+     "inner_gap_rows": 0,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 70 rows away; the nearest strong read after it is 21 rows away (the limit is 8)"
+    },
+    {
+     "lo": 57.375,
+     "hi": 57.375,
+     "rows": 0,
+     "events": {
+      "added": 0,
+      "removed": 1,
+      "net": -1,
+      "kinds": {
+       "tick": "+0/-1"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 49.811,
+      "level": 0,
+      "run": 0
+     },
+     "right": {
+      "cut": 58.06,
+      "level": 0,
+      "run": 0
+     },
+     "left_rows": 85,
+     "right_rows": 6,
+     "inner_gap_rows": 0,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 85 rows away (the limit is 8)"
+    },
+    {
+     "lo": 67.225,
+     "hi": 84.75,
+     "rows": 68,
+     "events": {
+      "added": 59,
+      "removed": 288,
+      "net": -229,
+      "kinds": {
+       "tick": "+59/-288"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 59.443,
+      "level": 0,
+      "run": 0
+     },
+     "right": null,
+     "left_rows": 102,
+     "right_rows": null,
+     "inner_gap_rows": 68,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 102 rows away; no strong read after it; 68 rows inside it without one (the limit is 8)"
+    },
+    {
+     "lo": 86.25,
+     "hi": 86.25,
+     "rows": 0,
+     "events": {
+      "added": 0,
+      "removed": 1,
+      "net": -1,
+      "kinds": {
+       "tick": "+0/-1"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 59.443,
+      "level": 0,
+      "run": 0
+     },
+     "right": null,
+     "left_rows": 182,
+     "right_rows": null,
+     "inner_gap_rows": 0,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "a timing-sensitive stretch (87.04-90.51s) lies within 8 rows; the frames decide it"
+    },
+    {
+     "lo": 91.225,
+     "hi": 95.975,
+     "rows": 20,
+     "events": {
+      "added": 41,
+      "removed": 100,
+      "net": -59,
+      "kinds": {
+       "tick": "+41/-100"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 59.443,
+      "level": 0,
+      "run": 0
+     },
+     "right": null,
+     "left_rows": 215,
+     "right_rows": null,
+     "inner_gap_rows": 20,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "a timing-sensitive stretch (87.04-90.51s) lies within 8 rows; the frames decide it"
+    },
+    {
+     "lo": 118.763,
+     "hi": 119.4,
+     "rows": 1,
+     "events": {
+      "added": 9,
+      "removed": 16,
+      "net": -7,
+      "kinds": {
+       "tick": "+9/-16"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 59.443,
+      "level": 0,
+      "run": 0
+     },
+     "right": null,
+     "left_rows": 379,
+     "right_rows": null,
+     "inner_gap_rows": 1,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 379 rows away; no strong read after it (the limit is 8)"
+    }
+   ],
+   "promotable": false,
+   "quarantined": false
+  },
+  {
    "chart": "Chimera S18",
    "key": "Chimera_-_YAHPP_S18_ARCADE",
    "vid": "26lAell5CFk",
@@ -3113,7 +4456,7 @@
     "bad": 1,
     "miss": 4
    },
-   "seconds": 0.56,
+   "seconds": 0.18,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for 26lAell5CFk band C"
@@ -3283,7 +4626,7 @@
     "clock": 0.04,
     "fitted_on": 157,
     "notes": 157,
-    "seconds": 3.2,
+    "seconds": 3.1,
     "lag": 0.154,
     "lag_taps": 102
    },
@@ -3304,7 +4647,7 @@
      84.398
     ]
    ],
-   "seconds": 0.4,
+   "seconds": 0.15,
    "whole": {
     "strong": 1,
     "evidence": 1659,
@@ -3375,7 +4718,7 @@
     "clock": -0.0248,
     "fitted_on": 99,
     "notes": 272,
-    "seconds": 4.9,
+    "seconds": 5.1,
     "lag": 0.145,
     "lag_taps": 108
    },
@@ -3424,7 +4767,7 @@
      89.983
     ]
    ],
-   "seconds": 0.64,
+   "seconds": 0.19,
    "whole": {
     "strong": 4,
     "evidence": 461,
@@ -3714,7 +5057,7 @@
     "clock": 0.003,
     "fitted_on": 572,
     "notes": 574,
-    "seconds": 10.1,
+    "seconds": 9.7,
     "lag": 0.117,
     "lag_taps": 42
    },
@@ -3735,7 +5078,7 @@
      102.683
     ]
    ],
-   "seconds": 0.71,
+   "seconds": 0.22,
    "whole": {
     "strong": 7,
     "evidence": 823,
@@ -3805,7 +5148,7 @@
     "clock": 0.0635,
     "fitted_on": 438,
     "notes": 462,
-    "seconds": 7.1,
+    "seconds": 7.0,
     "lag": 0.1,
     "lag_taps": 12
    },
@@ -3846,7 +5189,7 @@
      66.131
     ]
    ],
-   "seconds": 0.65,
+   "seconds": 0.2,
    "whole": {
     "strong": 1,
     "evidence": 45,
@@ -4054,7 +5397,7 @@
     "clock": 0.0303,
     "fitted_on": 1068,
     "notes": 1246,
-    "seconds": 18.4,
+    "seconds": 16.6,
     "lag": 0.1,
     "lag_taps": 13
    },
@@ -4135,7 +5478,7 @@
      140.6
     ]
    ],
-   "seconds": 1.67,
+   "seconds": 0.7,
    "whole": {
     "strong": 0,
     "evidence": 0,
@@ -4552,7 +5895,7 @@
     "clock": -0.0082,
     "fitted_on": 321,
     "notes": 325,
-    "seconds": 5.6,
+    "seconds": 5.4,
     "lag": 0.1,
     "lag_taps": 3
    },
@@ -4613,7 +5956,7 @@
      53.0
     ]
    ],
-   "seconds": 0.56,
+   "seconds": 0.17,
    "whole": {
     "strong": 3,
     "evidence": 81,
@@ -5004,7 +6347,7 @@
     "clock": 0.0021,
     "fitted_on": 452,
     "notes": 453,
-    "seconds": 7.1,
+    "seconds": 6.4,
     "lag": 0.1,
     "lag_taps": 0
    },
@@ -5029,7 +6372,7 @@
      53.4
     ]
    ],
-   "seconds": 0.53,
+   "seconds": 0.17,
    "whole": {
     "strong": 0,
     "evidence": 0,
@@ -5117,7 +6460,7 @@
     "clock": 0.0572,
     "fitted_on": 247,
     "notes": 314,
-    "seconds": 7.0,
+    "seconds": 7.3,
     "lag": 0.111,
     "lag_taps": 24
    },
@@ -5138,7 +6481,7 @@
      97.531
     ]
    ],
-   "seconds": 0.63,
+   "seconds": 0.18,
    "whole": {
     "strong": 9,
     "evidence": 1029,
@@ -5253,7 +6596,7 @@
     "clock": 0.0214,
     "fitted_on": 499,
     "notes": 502,
-    "seconds": 9.8,
+    "seconds": 8.4,
     "lag": 0.1,
     "lag_taps": 12
    },
@@ -5282,7 +6625,7 @@
      69.186
     ]
    ],
-   "seconds": 0.71,
+   "seconds": 0.3,
    "whole": {
     "strong": 8,
     "evidence": 563,
@@ -5428,7 +6771,7 @@
     "clock": -0.0005,
     "fitted_on": 250,
     "notes": 291,
-    "seconds": 4.2,
+    "seconds": 4.3,
     "lag": 0.148,
     "lag_taps": 18
    },
@@ -5457,7 +6800,7 @@
      97.557
     ]
    ],
-   "seconds": 0.6,
+   "seconds": 0.18,
    "whole": {
     "strong": 2,
     "evidence": 778,
@@ -5599,7 +6942,7 @@
     "clock": 0.0461,
     "fitted_on": 480,
     "notes": 481,
-    "seconds": 9.9,
+    "seconds": 9.2,
     "lag": 0.1,
     "lag_taps": 11
    },
@@ -5632,7 +6975,7 @@
      110.35
     ]
    ],
-   "seconds": 0.69,
+   "seconds": 0.34,
    "whole": {
     "strong": 2,
     "evidence": 763,
@@ -5787,7 +7130,7 @@
     "clock": 0.0436,
     "fitted_on": 511,
     "notes": 522,
-    "seconds": 6.0,
+    "seconds": 5.5,
     "lag": 0.1,
     "lag_taps": 12
    },
@@ -5828,7 +7171,7 @@
      107.6
     ]
    ],
-   "seconds": 0.95,
+   "seconds": 0.4,
    "whole": {
     "strong": 8,
     "evidence": 546,
@@ -6089,7 +7432,7 @@
     "bad": 1,
     "miss": 2
    },
-   "seconds": 0.15,
+   "seconds": 0.08,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for QAPaDpe5AVM band C"
@@ -6210,7 +7553,7 @@
     "clock": 0.0041,
     "fitted_on": 335,
     "notes": 335,
-    "seconds": 6.5,
+    "seconds": 5.6,
     "lag": 0.095,
     "lag_taps": 19
    },
@@ -6235,7 +7578,7 @@
      56.908
     ]
    ],
-   "seconds": 0.44,
+   "seconds": 0.19,
    "whole": {
     "strong": 5,
     "evidence": 226,
@@ -6330,7 +7673,7 @@
     "clock": 0.0109,
     "fitted_on": 317,
     "notes": 367,
-    "seconds": 8.7,
+    "seconds": 8.0,
     "lag": 0.092,
     "lag_taps": 86
    },
@@ -6351,7 +7694,7 @@
      92.504
     ]
    ],
-   "seconds": 0.57,
+   "seconds": 0.27,
    "whole": {
     "strong": 7,
     "evidence": 1189,
@@ -6429,7 +7772,7 @@
     "clock": 0.0032,
     "fitted_on": 633,
     "notes": 638,
-    "seconds": 10.7,
+    "seconds": 9.6,
     "lag": 0.105,
     "lag_taps": 32
    },
@@ -6450,7 +7793,7 @@
      22.389
     ]
    ],
-   "seconds": 0.67,
+   "seconds": 0.31,
    "whole": {
     "strong": 7,
     "evidence": 350,
@@ -6530,7 +7873,7 @@
     "clock": 0.0152,
     "fitted_on": 338,
     "notes": 344,
-    "seconds": 7.4,
+    "seconds": 5.8,
     "lag": 0.1,
     "lag_taps": 5
    },
@@ -6551,7 +7894,7 @@
      60.37
     ]
    ],
-   "seconds": 0.39,
+   "seconds": 0.2,
    "whole": {
     "strong": 3,
     "evidence": 249,
@@ -6614,7 +7957,7 @@
     "bad": 1,
     "miss": 0
    },
-   "seconds": 0.21,
+   "seconds": 0.09,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for Ys-1MMRxwL0 band C"
@@ -6721,7 +8064,7 @@
     "clock": -0.0014,
     "fitted_on": 384,
     "notes": 384,
-    "seconds": 6.7,
+    "seconds": 6.1,
     "lag": 0.1,
     "lag_taps": 0
    },
@@ -6750,7 +8093,7 @@
      57.075
     ]
    ],
-   "seconds": 0.38,
+   "seconds": 0.2,
    "whole": {
     "strong": 3,
     "evidence": 139,
@@ -6878,7 +8221,7 @@
     "bad": 1,
     "miss": 1
    },
-   "seconds": 0.21,
+   "seconds": 0.1,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for D5zLc3PhQtE band C"
@@ -6936,7 +8279,7 @@
     "clock": 0.0972,
     "fitted_on": 523,
     "notes": 523,
-    "seconds": 9.3,
+    "seconds": 8.8,
     "lag": 0.1,
     "lag_taps": 14
    },
@@ -6957,7 +8300,7 @@
      96.692
     ]
    ],
-   "seconds": 0.59,
+   "seconds": 0.29,
    "whole": {
     "strong": 2,
     "evidence": 893,
@@ -7035,7 +8378,7 @@
     "clock": 0.0029,
     "fitted_on": 372,
     "notes": 374,
-    "seconds": 9.2,
+    "seconds": 8.0,
     "lag": 0.12,
     "lag_taps": 44
    },
@@ -7060,7 +8403,7 @@
      97.663
     ]
    ],
-   "seconds": 0.51,
+   "seconds": 0.24,
    "whole": {
     "strong": 9,
     "evidence": 826,
@@ -7142,6 +8485,98 @@
    "quarantined": false
   },
   {
+   "chart": "Final Audition Ep. 1 S17",
+   "key": "Final_Audition_Ep.1_-_BanYa_S17_ARCADE",
+   "vid": "DgLesNMzb1w",
+   "side": "1p",
+   "expected": 606,
+   "exact": true,
+   "block_sha": "fbfabbfd4b3e3fa6a4c0b7e677d41c2df7b821ad04438bf151d6efe09435410b",
+   "header_sha": "ef4d8f97962f3e7300615204fe2da935d2701088c8e9d69a8cf6f67a67f4cd8f",
+   "base_sha": "7a894795b3c0393ecc1d3f994d799dabd1cb2ce5ee6b5af550da19d3d5fc7c92",
+   "verdict": "UNCOVERED",
+   "reason": "the nearest strong read before it is 15 rows away; no strong read after it (the limit is 8)",
+   "play": {
+    "band": "C",
+    "judged": 606,
+    "maxcombo": 400,
+    "clean": false,
+    "good": 1,
+    "bad": 2,
+    "miss": 3
+   },
+   "clock": {
+    "source": "note_extract + extract_repair.align (the tick loop's clock), measured here",
+    "offset": 9.466,
+    "clock": 0.0351,
+    "fitted_on": 306,
+    "notes": 516,
+    "seconds": 94.5,
+    "lag": 0.118,
+    "lag_taps": 44
+   },
+   "reads": {
+    "confident": 2260,
+    "on_chain": 1690,
+    "misreads_dropped": 559,
+    "quiet": 612,
+    "strong": 10,
+    "evidence": 599,
+    "runs": 11,
+    "unsettled": 0,
+    "rest_dropped": 25
+   },
+   "brackets": [
+    [
+     95.035,
+     96.552
+    ]
+   ],
+   "seconds": 0.27,
+   "whole": {
+    "strong": 10,
+    "evidence": 599,
+    "covered": false,
+    "blind_rows": 141,
+    "share_within_k": 0.676,
+    "unsettled": [],
+    "verdict": "UNCOVERED",
+    "reason": "no level moves within a run, but the play has 1 GOOD(s)"
+   },
+   "edits": [
+    {
+     "lo": 95.635,
+     "hi": 95.951,
+     "rows": 1,
+     "events": {
+      "added": 163,
+      "removed": 1,
+      "net": 162,
+      "kinds": {
+       "head": "+1/-0",
+       "tap": "+0/-1",
+       "tick": "+162/-0"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 91.348,
+      "level": -402,
+      "run": 10
+     },
+     "right": null,
+     "left_rows": 15,
+     "right_rows": null,
+     "inner_gap_rows": 1,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 15 rows away; no strong read after it (the limit is 8)"
+    }
+   ],
+   "promotable": false,
+   "quarantined": false
+  },
+  {
    "chart": "Final Audition Ep. 2-2 D23",
    "key": "Final_Audition_Ep._2-2_-_YAHPP_D23_ARCADE",
    "vid": "dvdxvkr-4cM",
@@ -7168,7 +8603,7 @@
     "clock": 0.0187,
     "fitted_on": 615,
     "notes": 618,
-    "seconds": 11.2,
+    "seconds": 10.0,
     "lag": 0.1,
     "lag_taps": 0
    },
@@ -7225,7 +8660,7 @@
      99.25
     ]
    ],
-   "seconds": 1.12,
+   "seconds": 0.57,
    "whole": {
     "strong": 1,
     "evidence": 12,
@@ -7521,6 +8956,415 @@
    "quarantined": false
   },
   {
+   "chart": "Final Audition Ep. 2-2 S21",
+   "key": "Final_Audition_Ep._2-2_-_YAHPP_S21_ARCADE",
+   "vid": "yMzGjdvL-Tk",
+   "side": "1p",
+   "expected": 1163,
+   "exact": true,
+   "block_sha": "f41a59c06397703149de5c6a84f4f154d1a6a1ac4b1867543b1af95e0f84b431",
+   "header_sha": "b1e966178101bf8e91734491d94b2c98bffe97ef27c6fbf29b284ac1b8072270",
+   "base_sha": "f0dfa4b7e52e7323b81efbce772d04bf114643bec7a6e872cea0a914a3c21522",
+   "verdict": "UNCOVERED",
+   "reason": "no strong read before it; 38 rows inside it without one (the limit is 8)",
+   "play": {
+    "band": "L",
+    "judged": 1163,
+    "maxcombo": 411,
+    "clean": false,
+    "good": 56,
+    "bad": 32,
+    "miss": 12
+   },
+   "clock": {
+    "source": "note_extract + extract_repair.align (the tick loop's clock), measured here",
+    "offset": 11.597,
+    "clock": 0.0012,
+    "fitted_on": 620,
+    "notes": 621,
+    "seconds": 118.7,
+    "lag": 0.1,
+    "lag_taps": 0
+   },
+   "reads": {
+    "confident": 882,
+    "on_chain": 777,
+    "misreads_dropped": 91,
+    "quiet": 29,
+    "strong": 1,
+    "evidence": 8,
+    "runs": 21,
+    "unsettled": 2,
+    "rest_dropped": 24
+   },
+   "brackets": [
+    [
+     6.9,
+     16.95
+    ],
+    [
+     20.125,
+     30.875
+    ],
+    [
+     37.2,
+     40.5
+    ],
+    [
+     43.5,
+     45.45
+    ],
+    [
+     46.8,
+     50.175
+    ],
+    [
+     65.85,
+     68.325
+    ],
+    [
+     68.4,
+     70.575
+    ],
+    [
+     70.8,
+     72.975
+    ],
+    [
+     73.5,
+     76.65
+    ],
+    [
+     78.0,
+     87.75
+    ],
+    [
+     91.8,
+     98.6
+    ]
+   ],
+   "seconds": 0.63,
+   "whole": {
+    "strong": 1,
+    "evidence": 8,
+    "covered": false,
+    "blind_rows": 667,
+    "share_within_k": 0.037,
+    "unsettled": [
+     {
+      "run": 4,
+      "level": 117,
+      "first": 31.537,
+      "last": 35.337,
+      "n": 26,
+      "margin": "35 ms"
+     },
+     {
+      "run": 4,
+      "level": 117,
+      "first": 31.587,
+      "last": 35.303,
+      "n": 17,
+      "wide_agree": 0,
+      "wide_against": 0,
+      "margin": "80 ms"
+     }
+    ],
+    "verdict": "UNCOVERED",
+    "reason": "2 timing-sensitive stretch(es), first 31.54-35.34s at +117, seen at 35 ms only; the frames decide them"
+   },
+   "edits": [
+    {
+     "lo": 7.525,
+     "hi": 16.35,
+     "rows": 38,
+     "events": {
+      "added": 34,
+      "removed": 155,
+      "net": -121,
+      "kinds": {
+       "tick": "+34/-155"
+      }
+     },
+     "basis": "counter-derived",
+     "left": null,
+     "right": {
+      "cut": 17.087,
+      "level": -38,
+      "run": 4
+     },
+     "left_rows": null,
+     "right_rows": 5,
+     "inner_gap_rows": 38,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "no strong read before it; 38 rows inside it without one (the limit is 8)"
+    },
+    {
+     "lo": 20.75,
+     "hi": 30.275,
+     "rows": 122,
+     "events": {
+      "added": 5,
+      "removed": 250,
+      "net": -245,
+      "kinds": {
+       "tick": "+5/-250"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 18.403,
+      "level": -38,
+      "run": 4
+     },
+     "right": null,
+     "left_rows": 25,
+     "right_rows": null,
+     "inner_gap_rows": 122,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 25 rows away; no strong read after it; 122 rows inside it without one (the limit is 8)"
+    },
+    {
+     "lo": 37.825,
+     "hi": 39.875,
+     "rows": 1,
+     "events": {
+      "added": 0,
+      "removed": 58,
+      "net": -58,
+      "kinds": {
+       "tick": "+0/-58"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 18.403,
+      "level": -38,
+      "run": 4
+     },
+     "right": null,
+     "left_rows": 213,
+     "right_rows": null,
+     "inner_gap_rows": 1,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 213 rows away; no strong read after it (the limit is 8)"
+    },
+    {
+     "lo": 44.125,
+     "hi": 44.85,
+     "rows": 4,
+     "events": {
+      "added": 16,
+      "removed": 11,
+      "net": 5,
+      "kinds": {
+       "tick": "+16/-11"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 18.403,
+      "level": -38,
+      "run": 4
+     },
+     "right": null,
+     "left_rows": 259,
+     "right_rows": null,
+     "inner_gap_rows": 4,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 259 rows away; no strong read after it (the limit is 8)"
+    },
+    {
+     "lo": 47.7,
+     "hi": 49.575,
+     "rows": 8,
+     "events": {
+      "added": 7,
+      "removed": 15,
+      "net": -8,
+      "kinds": {
+       "tick": "+7/-15"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 18.403,
+      "level": -38,
+      "run": 4
+     },
+     "right": null,
+     "left_rows": 293,
+     "right_rows": null,
+     "inner_gap_rows": 8,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 293 rows away; no strong read after it (the limit is 8)"
+    },
+    {
+     "lo": 66.475,
+     "hi": 67.725,
+     "rows": 4,
+     "events": {
+      "added": 0,
+      "removed": 37,
+      "net": -37,
+      "kinds": {
+       "tick": "+0/-37"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 18.403,
+      "level": -38,
+      "run": 4
+     },
+     "right": null,
+     "left_rows": 465,
+     "right_rows": null,
+     "inner_gap_rows": 4,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 465 rows away; no strong read after it (the limit is 8)"
+    },
+    {
+     "lo": 69.025,
+     "hi": 69.975,
+     "rows": 0,
+     "events": {
+      "added": 2,
+      "removed": 23,
+      "net": -21,
+      "kinds": {
+       "tick": "+2/-23"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 18.403,
+      "level": -38,
+      "run": 4
+     },
+     "right": null,
+     "left_rows": 485,
+     "right_rows": null,
+     "inner_gap_rows": 0,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 485 rows away; no strong read after it (the limit is 8)"
+    },
+    {
+     "lo": 71.425,
+     "hi": 72.375,
+     "rows": 0,
+     "events": {
+      "added": 19,
+      "removed": 36,
+      "net": -17,
+      "kinds": {
+       "tick": "+19/-36"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 18.403,
+      "level": -38,
+      "run": 4
+     },
+     "right": null,
+     "left_rows": 501,
+     "right_rows": null,
+     "inner_gap_rows": 0,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 501 rows away; no strong read after it (the limit is 8)"
+    },
+    {
+     "lo": 74.125,
+     "hi": 76.05,
+     "rows": 15,
+     "events": {
+      "added": 0,
+      "removed": 16,
+      "net": -16,
+      "kinds": {
+       "tick": "+0/-16"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 18.403,
+      "level": -38,
+      "run": 4
+     },
+     "right": null,
+     "left_rows": 521,
+     "right_rows": null,
+     "inner_gap_rows": 15,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 521 rows away; no strong read after it (the limit is 8)"
+    },
+    {
+     "lo": 78.625,
+     "hi": 87.15,
+     "rows": 38,
+     "events": {
+      "added": 33,
+      "removed": 142,
+      "net": -109,
+      "kinds": {
+       "tick": "+33/-142"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 18.403,
+      "level": -38,
+      "run": 4
+     },
+     "right": null,
+     "left_rows": 569,
+     "right_rows": null,
+     "inner_gap_rows": 38,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 569 rows away; no strong read after it; 38 rows inside it without one (the limit is 8)"
+    },
+    {
+     "lo": 92.425,
+     "hi": 98.0,
+     "rows": 2,
+     "events": {
+      "added": 139,
+      "removed": 159,
+      "net": -20,
+      "kinds": {
+       "tick": "+139/-159"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 18.403,
+      "level": -38,
+      "run": 4
+     },
+     "right": null,
+     "left_rows": 665,
+     "right_rows": null,
+     "inner_gap_rows": 2,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "the nearest strong read before it is 665 rows away; no strong read after it (the limit is 8)"
+    }
+   ],
+   "promotable": false,
+   "quarantined": false
+  },
+  {
    "chart": "Final Audition Ep. 2-X S17",
    "key": "Final_Audition_Ep._2-X_-_YAHPP_S17_ARCADE",
    "vid": "iOyrIsbNATA",
@@ -7541,7 +9385,7 @@
     "bad": 1,
     "miss": 2
    },
-   "seconds": 0.4,
+   "seconds": 0.18,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for iOyrIsbNATA band C"
@@ -7556,6 +9400,102 @@
     }
    ],
    "promotable": false,
+   "quarantined": false
+  },
+  {
+   "chart": "Final Audition S18",
+   "key": "Final_Audition_-_BanYa_S18_ARCADE",
+   "vid": "ILkwtynEdoU",
+   "side": "1p",
+   "expected": 601,
+   "exact": true,
+   "block_sha": "43b8390b285860e0ee47db7766e61891b4c79f52c197214b6fc801227b0c81ff",
+   "header_sha": "bbeec4028ad2d8b09979f9019cf027156d0d7a1a866e77f5fa4c204f0876a434",
+   "base_sha": "874d26b939399d49d09b19c6ac44656c0057d8f5ce7edcbcdedffd3c6a16dcd5",
+   "verdict": "FLAT",
+   "reason": "level 0 on both sides: 4 row(s) before, 1 after, no blind stretch over 16 rows",
+   "play": {
+    "band": "L",
+    "judged": 601,
+    "maxcombo": 601,
+    "clean": true,
+    "good": 0,
+    "bad": 0,
+    "miss": 0
+   },
+   "clock": {
+    "source": "note_extract + extract_repair.align (the tick loop's clock), measured here",
+    "offset": 13.408,
+    "clock": 0.011,
+    "fitted_on": 484,
+    "notes": 567,
+    "seconds": 96.0,
+    "lag": 0.1,
+    "lag_taps": 9
+   },
+   "reads": {
+    "confident": 2434,
+    "on_chain": 1896,
+    "misreads_dropped": 508,
+    "quiet": 709,
+    "strong": 1,
+    "evidence": 708,
+    "runs": 1,
+    "unsettled": 0,
+    "rest_dropped": 26
+   },
+   "brackets": [
+    [
+     14.113,
+     16.117
+    ]
+   ],
+   "seconds": 0.29,
+   "whole": {
+    "strong": 1,
+    "evidence": 708,
+    "covered": false,
+    "blind_rows": 123,
+    "share_within_k": 0.609,
+    "unsettled": [],
+    "verdict": "FLAT",
+    "reason": "1 strong level(s), every one agreeing with the file"
+   },
+   "edits": [
+    {
+     "lo": 14.713,
+     "hi": 15.51,
+     "rows": 1,
+     "events": {
+      "added": 85,
+      "removed": 1,
+      "net": 84,
+      "kinds": {
+       "head": "+1/-0",
+       "tap": "+0/-1",
+       "tick": "+84/-0"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 13.827,
+      "level": 0,
+      "run": 0
+     },
+     "right": {
+      "cut": 17.094,
+      "level": 0,
+      "run": 0
+     },
+     "left_rows": 4,
+     "right_rows": 1,
+     "inner_gap_rows": 1,
+     "covered": true,
+     "verdict": "FLAT",
+     "reason": "level 0 on both sides: 4 row(s) before, 1 after, no blind stretch over 16 rows"
+    }
+   ],
+   "promotable": true,
    "quarantined": false
   },
   {
@@ -7603,7 +9543,7 @@
     "rest_dropped": 21
    },
    "brackets": [],
-   "seconds": 0.77,
+   "seconds": 0.44,
    "whole": {
     "strong": 5,
     "evidence": 353,
@@ -7709,7 +9649,7 @@
     "clock": 0.0653,
     "fitted_on": 421,
     "notes": 425,
-    "seconds": 8.9,
+    "seconds": 7.2,
     "lag": 0.102,
     "lag_taps": 119
    },
@@ -7730,7 +9670,7 @@
      92.339
     ]
    ],
-   "seconds": 0.45,
+   "seconds": 0.27,
    "whole": {
     "strong": 1,
     "evidence": 1045,
@@ -7824,7 +9764,7 @@
      58.569
     ]
    ],
-   "seconds": 0.32,
+   "seconds": 0.2,
    "whole": {
     "strong": 1,
     "evidence": 2004,
@@ -7893,7 +9833,7 @@
     "bad": 0,
     "miss": 2
    },
-   "seconds": 0.34,
+   "seconds": 0.17,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for nhAI_6qN6gs band C"
@@ -7937,7 +9877,7 @@
     "clock": 0.0226,
     "fitted_on": 850,
     "notes": 858,
-    "seconds": 13.2,
+    "seconds": 11.0,
     "lag": 0.1,
     "lag_taps": 57
    },
@@ -7958,7 +9898,7 @@
      97.379
     ]
    ],
-   "seconds": 0.51,
+   "seconds": 0.32,
    "whole": {
     "strong": 16,
     "evidence": 664,
@@ -8047,7 +9987,7 @@
     "bad": 0,
     "miss": 0
    },
-   "seconds": 0.25,
+   "seconds": 0.15,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for AMUXSFsvko4 band C"
@@ -8109,7 +10049,7 @@
     "rest_dropped": 0
    },
    "brackets": [],
-   "seconds": 0.62,
+   "seconds": 0.38,
    "whole": {
     "strong": 3,
     "evidence": 309,
@@ -8221,7 +10161,7 @@
     "clock": -0.0087,
     "fitted_on": 373,
     "notes": 385,
-    "seconds": 4.6,
+    "seconds": 8.1,
     "lag": 0.1,
     "lag_taps": 0
    },
@@ -8246,7 +10186,7 @@
      50.152
     ]
    ],
-   "seconds": 0.34,
+   "seconds": 0.21,
    "whole": {
     "strong": 0,
     "evidence": 0,
@@ -8342,7 +10282,7 @@
     "clock": -0.0064,
     "fitted_on": 387,
     "notes": 387,
-    "seconds": 4.5,
+    "seconds": 3.5,
     "lag": 0.1,
     "lag_taps": 0
    },
@@ -8367,7 +10307,7 @@
      50.152
     ]
    ],
-   "seconds": 0.42,
+   "seconds": 0.27,
    "whole": {
     "strong": 0,
     "evidence": 0,
@@ -8472,7 +10412,7 @@
     "rest_dropped": 24
    },
    "brackets": [],
-   "seconds": 0.52,
+   "seconds": 0.3,
    "whole": {
     "strong": 8,
     "evidence": 739,
@@ -8612,7 +10552,7 @@
     "clock": -0.0007,
     "fitted_on": 364,
     "notes": 592,
-    "seconds": 7.6,
+    "seconds": 7.0,
     "lag": 0.1,
     "lag_taps": 0
    },
@@ -8633,7 +10573,7 @@
      124.933
     ]
    ],
-   "seconds": 0.67,
+   "seconds": 0.3,
    "whole": {
     "strong": 0,
     "evidence": 0,
@@ -8698,7 +10638,7 @@
     "clock": 0.0194,
     "fitted_on": 362,
     "notes": 372,
-    "seconds": 6.3,
+    "seconds": 5.9,
     "lag": 0.1,
     "lag_taps": 9
    },
@@ -8751,7 +10691,7 @@
      54.061
     ]
    ],
-   "seconds": 0.47,
+   "seconds": 0.24,
    "whole": {
     "strong": 4,
     "evidence": 248,
@@ -9078,7 +11018,7 @@
     "clock": 0.0062,
     "fitted_on": 384,
     "notes": 404,
-    "seconds": 6.2,
+    "seconds": 5.6,
     "lag": 0.1,
     "lag_taps": 4
    },
@@ -9143,7 +11083,7 @@
      54.159
     ]
    ],
-   "seconds": 0.59,
+   "seconds": 0.24,
    "whole": {
     "strong": 1,
     "evidence": 9,
@@ -9524,6 +11464,100 @@
    "quarantined": false
   },
   {
+   "chart": "Kasou Shinja - SHORT CUT - S20",
+   "key": "Kasou_Shinja_-_SHORT_CUT_-_-_MAX_S20_SHORTCUT",
+   "vid": "uv28TOVcMiA",
+   "side": "2p",
+   "expected": 1023,
+   "exact": true,
+   "block_sha": "471525a82aa7f60bd99c39d28274bd4b2a0c19715617431ac52e28d58d78bf4c",
+   "header_sha": "ec9659fd9df04c96873858f825871f3ff13f79a005481b1ee1cb36232671bbbb",
+   "base_sha": "e9b4f499488e27a70c4cfe66a4f0cb53e88f5bef804d7a1db6676a9876badd05",
+   "verdict": "UNCOVERED",
+   "reason": "no counter scan for uv28TOVcMiA band C",
+   "play": {
+    "band": "C",
+    "judged": 1023,
+    "maxcombo": 586,
+    "clean": false,
+    "good": 20,
+    "bad": 6,
+    "miss": 10
+   },
+   "seconds": 0.13,
+   "whole": {
+    "verdict": "UNCOVERED",
+    "reason": "no counter scan for uv28TOVcMiA band C"
+   },
+   "edits": [
+    {
+     "lo": 15.574,
+     "hi": 18.265,
+     "verdict": "UNCOVERED",
+     "covered": false,
+     "reason": "no counter scan for uv28TOVcMiA band C"
+    },
+    {
+     "lo": 22.5,
+     "hi": 23.735,
+     "verdict": "UNCOVERED",
+     "covered": false,
+     "reason": "no counter scan for uv28TOVcMiA band C"
+    },
+    {
+     "lo": 26.691,
+     "hi": 26.735,
+     "verdict": "UNCOVERED",
+     "covered": false,
+     "reason": "no counter scan for uv28TOVcMiA band C"
+    },
+    {
+     "lo": 29.691,
+     "hi": 30.265,
+     "verdict": "UNCOVERED",
+     "covered": false,
+     "reason": "no counter scan for uv28TOVcMiA band C"
+    },
+    {
+     "lo": 32.691,
+     "hi": 33.662,
+     "verdict": "UNCOVERED",
+     "covered": false,
+     "reason": "no counter scan for uv28TOVcMiA band C"
+    },
+    {
+     "lo": 35.515,
+     "hi": 36.044,
+     "verdict": "UNCOVERED",
+     "covered": false,
+     "reason": "no counter scan for uv28TOVcMiA band C"
+    },
+    {
+     "lo": 40.985,
+     "hi": 41.824,
+     "verdict": "UNCOVERED",
+     "covered": false,
+     "reason": "no counter scan for uv28TOVcMiA band C"
+    },
+    {
+     "lo": 46.279,
+     "hi": 46.544,
+     "verdict": "UNCOVERED",
+     "covered": false,
+     "reason": "no counter scan for uv28TOVcMiA band C"
+    },
+    {
+     "lo": 52.235,
+     "hi": 52.294,
+     "verdict": "UNCOVERED",
+     "covered": false,
+     "reason": "no counter scan for uv28TOVcMiA band C"
+    }
+   ],
+   "promotable": false,
+   "quarantined": false
+  },
+  {
    "chart": "Like Me S14",
    "key": "Like_Me_-_SHK_S14_ARCADE",
    "vid": "LCMJoe7QjKM",
@@ -9544,7 +11578,7 @@
     "bad": 0,
     "miss": 1
    },
-   "seconds": 0.24,
+   "seconds": 0.13,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for LCMJoe7QjKM band C"
@@ -9646,7 +11680,7 @@
      55.457
     ]
    ],
-   "seconds": 0.29,
+   "seconds": 0.16,
    "whole": {
     "strong": 1,
     "evidence": 306,
@@ -9758,7 +11792,7 @@
      46.35
     ]
    ],
-   "seconds": 0.53,
+   "seconds": 0.26,
    "whole": {
     "strong": 2,
     "evidence": 860,
@@ -9955,6 +11989,105 @@
    "quarantined": false
   },
   {
+   "chart": "Love is a Danger Zone S17",
+   "key": "Love_is_a_Danger_Zone_-_BanYa_S17_INFOBAR_TITLE_ARCADE",
+   "vid": "4_clp3QK814",
+   "side": "1p",
+   "expected": 790,
+   "exact": true,
+   "block_sha": "acd3a89f10cbe8e9ccf3bf720aaaa5f602498d8a296df2ddef3884cc32b98fea",
+   "header_sha": "5fd84062b370bd389093ce905bdbe271914acfa5d83b1ddbe4478b223abc395b",
+   "base_sha": "c186aee2f7edfafcd66399aa39c98486b158462da771d805614d170c023baa6e",
+   "verdict": "UNCOVERED",
+   "reason": "a timing-sensitive stretch (95.72-96.47s) lies within 8 rows; the frames decide it",
+   "play": {
+    "band": "L",
+    "judged": 790,
+    "maxcombo": 787,
+    "clean": false,
+    "good": 3,
+    "bad": 0,
+    "miss": 0
+   },
+   "clock": {
+    "source": "note_extract + extract_repair.align (the tick loop's clock), measured here",
+    "offset": 10.714,
+    "clock": 0.0094,
+    "fitted_on": 440,
+    "notes": 456,
+    "seconds": 89.4,
+    "lag": 0.092,
+    "lag_taps": 15
+   },
+   "reads": {
+    "confident": 2207,
+    "on_chain": 1623,
+    "misreads_dropped": 530,
+    "quiet": 582,
+    "strong": 1,
+    "evidence": 575,
+    "runs": 1,
+    "unsettled": 1,
+    "rest_dropped": 25
+   },
+   "brackets": [
+    [
+     96.471,
+     100.029
+    ]
+   ],
+   "seconds": 0.27,
+   "whole": {
+    "strong": 1,
+    "evidence": 575,
+    "covered": false,
+    "blind_rows": 145,
+    "share_within_k": 0.683,
+    "unsettled": [
+     {
+      "run": 0,
+      "level": -3,
+      "first": 95.72,
+      "last": 96.47,
+      "n": 10,
+      "margin": "35 ms"
+     }
+    ],
+    "verdict": "UNCOVERED",
+    "reason": "1 timing-sensitive stretch(es), first 95.72-96.47s at -3, seen at 35 ms only; the frames decide them"
+   },
+   "edits": [
+    {
+     "lo": 97.286,
+     "hi": 99.429,
+     "rows": 0,
+     "events": {
+      "added": 358,
+      "removed": 0,
+      "net": 358,
+      "kinds": {
+       "tick": "+358/-0"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 79.618,
+      "level": 0,
+      "run": 0
+     },
+     "right": null,
+     "left_rows": 145,
+     "right_rows": null,
+     "inner_gap_rows": 0,
+     "covered": false,
+     "verdict": "UNCOVERED",
+     "reason": "a timing-sensitive stretch (95.72-96.47s) lies within 8 rows; the frames decide it"
+    }
+   ],
+   "promotable": false,
+   "quarantined": false
+  },
+  {
    "chart": "Love is a Danger Zone pt. 2 - SHORT CUT - D23",
    "key": "Love_is_a_Danger_Zone_pt._2_-_SHORT_CUT_-_-_YAHPP_D23_SHORTCUT",
    "vid": "kvHDjRuzX0Y",
@@ -9981,7 +12114,7 @@
     "clock": 0.0081,
     "fitted_on": 403,
     "notes": 407,
-    "seconds": 7.4,
+    "seconds": 6.5,
     "lag": 0.1,
     "lag_taps": 0
    },
@@ -10030,7 +12163,7 @@
      57.637
     ]
    ],
-   "seconds": 0.7,
+   "seconds": 0.24,
    "whole": {
     "strong": 1,
     "evidence": 11,
@@ -10281,7 +12414,7 @@
     "clock": 0.0112,
     "fitted_on": 676,
     "notes": 680,
-    "seconds": 7.7,
+    "seconds": 6.6,
     "lag": 0.1,
     "lag_taps": 5
    },
@@ -10302,7 +12435,7 @@
      109.998
     ]
    ],
-   "seconds": 0.74,
+   "seconds": 0.28,
    "whole": {
     "strong": 1,
     "evidence": 330,
@@ -10391,7 +12524,7 @@
     "rest_dropped": 6
    },
    "brackets": [],
-   "seconds": 1.09,
+   "seconds": 0.19,
    "whole": {
     "strong": 5,
     "evidence": 1012,
@@ -10483,7 +12616,7 @@
     "clock": 0.025,
     "fitted_on": 335,
     "notes": 335,
-    "seconds": 3.7,
+    "seconds": 3.5,
     "lag": 0.1,
     "lag_taps": 1
    },
@@ -10512,7 +12645,7 @@
      37.933
     ]
    ],
-   "seconds": 0.4,
+   "seconds": 0.19,
    "whole": {
     "strong": 1,
     "evidence": 8,
@@ -10633,7 +12766,7 @@
     "clock": 0.0199,
     "fitted_on": 425,
     "notes": 458,
-    "seconds": 10.1,
+    "seconds": 8.5,
     "lag": 0.104,
     "lag_taps": 19
    },
@@ -10654,7 +12787,7 @@
      96.166
     ]
    ],
-   "seconds": 1.47,
+   "seconds": 0.25,
    "whole": {
     "strong": 5,
     "evidence": 495,
@@ -10725,7 +12858,7 @@
     "clock": 0.007,
     "fitted_on": 529,
     "notes": 533,
-    "seconds": 10.8,
+    "seconds": 9.5,
     "lag": 0.1,
     "lag_taps": 10
    },
@@ -10758,7 +12891,7 @@
      70.889
     ]
    ],
-   "seconds": 1.04,
+   "seconds": 0.33,
    "whole": {
     "strong": 5,
     "evidence": 236,
@@ -10946,7 +13079,7 @@
     "clock": 0.1071,
     "fitted_on": 422,
     "notes": 457,
-    "seconds": 9.4,
+    "seconds": 8.6,
     "lag": 0.093,
     "lag_taps": 112
    },
@@ -10967,7 +13100,7 @@
      98.863
     ]
    ],
-   "seconds": 1.57,
+   "seconds": 0.26,
    "whole": {
     "strong": 2,
     "evidence": 1063,
@@ -11028,6 +13161,150 @@
    "quarantined": false
   },
   {
+   "chart": "My Way S15",
+   "key": "My_Way_-_BanYa_S15_ARCADE",
+   "vid": "bXMj-YNDufs",
+   "side": "2p",
+   "expected": 507,
+   "exact": true,
+   "block_sha": "3b97b82b0f9cbb7cfbae6034ebdb8e4bff380f35aeebb8057fca795f4f06e437",
+   "header_sha": "855b75fc051124a164c9f9ad198b06ba0d5d543177b8d465818bb230b353b7bf",
+   "base_sha": "e7cfcab213ef035ae8b0e98dc9d4fbd8fb88a7edd38ef4b0fea5d66f6ec0a813",
+   "verdict": "OFF",
+   "reason": "a strong read 8 rows before the edit (at 95.72s) is +7 against the file; the nearest reads either side are +7 and none within 8 rows",
+   "play": {
+    "band": "R",
+    "judged": 507,
+    "maxcombo": 507,
+    "clean": true,
+    "good": 0,
+    "bad": 0,
+    "miss": 0
+   },
+   "clock": {
+    "source": "note_extract + extract_repair.align (the tick loop's clock), measured here",
+    "offset": 11.875,
+    "clock": 0.0156,
+    "fitted_on": 337,
+    "notes": 417,
+    "seconds": 88.1,
+    "lag": 0.058,
+    "lag_taps": 111
+   },
+   "reads": {
+    "confident": 3222,
+    "on_chain": 2520,
+    "misreads_dropped": 657,
+    "quiet": 1168,
+    "strong": 2,
+    "evidence": 1117,
+    "runs": 1,
+    "unsettled": 5,
+    "rest_dropped": 27
+   },
+   "brackets": [
+    [
+     96.519,
+     98.227
+    ]
+   ],
+   "seconds": 0.29,
+   "whole": {
+    "strong": 2,
+    "evidence": 1117,
+    "covered": false,
+    "blind_rows": 96,
+    "share_within_k": 0.767,
+    "unsettled": [
+     {
+      "run": 0,
+      "level": 1,
+      "first": 65.127,
+      "last": 68.711,
+      "n": 37,
+      "margin": "35 ms"
+     },
+     {
+      "run": 0,
+      "level": 3,
+      "first": 68.894,
+      "last": 72.628,
+      "n": 16,
+      "wide_agree": 2,
+      "wide_against": 0,
+      "margin": "80 ms"
+     },
+     {
+      "run": 0,
+      "level": 3,
+      "first": 68.894,
+      "last": 72.762,
+      "n": 57,
+      "margin": "35 ms"
+     },
+     {
+      "run": 0,
+      "level": 5,
+      "first": 72.928,
+      "last": 76.696,
+      "n": 15,
+      "wide_agree": 2,
+      "wide_against": 0,
+      "margin": "80 ms"
+     },
+     {
+      "run": 0,
+      "level": 5,
+      "first": 72.928,
+      "last": 76.829,
+      "n": 54,
+      "margin": "35 ms"
+     }
+    ],
+    "verdict": "OFF",
+    "worst": {
+     "run": 0,
+     "level": 7,
+     "first": 77.029,
+     "last": 96.249,
+     "n": 267
+    },
+    "reason": "the counter holds +7 against the file from 77.03s to 96.25s (267 reads)"
+   },
+   "edits": [
+    {
+     "lo": 97.119,
+     "hi": 97.627,
+     "rows": 1,
+     "events": {
+      "added": 139,
+      "removed": 1,
+      "net": 138,
+      "kinds": {
+       "head": "+1/-0",
+       "tap": "+0/-1",
+       "tick": "+138/-0"
+      }
+     },
+     "basis": "counter-derived",
+     "left": {
+      "cut": 96.249,
+      "level": 7,
+      "run": 0
+     },
+     "right": null,
+     "left_rows": 5,
+     "right_rows": null,
+     "inner_gap_rows": 0,
+     "covered": false,
+     "verdict": "OFF",
+     "reason": "a strong read 8 rows before the edit (at 95.72s) is +7 against the file; the nearest reads either side are +7 and none within 8 rows"
+    }
+   ],
+   "promotable": false,
+   "quarantined": false
+  },
+  {
    "chart": "Naissance S20",
    "key": "Naissance_-_BanYa_S20_ARCADE",
    "vid": "FlbgoE8L0dE",
@@ -11054,7 +13331,7 @@
     "clock": 0.0031,
     "fitted_on": 693,
     "notes": 695,
-    "seconds": 8.3,
+    "seconds": 6.8,
     "lag": 0.108,
     "lag_taps": 42
    },
@@ -11079,7 +13356,7 @@
      99.29
     ]
    ],
-   "seconds": 1.51,
+   "seconds": 0.28,
    "whole": {
     "strong": 13,
     "evidence": 916,
@@ -11190,7 +13467,7 @@
     "bad": 0,
     "miss": 1
    },
-   "seconds": 0.85,
+   "seconds": 0.18,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for yy6EH4q9-QI band R"
@@ -11234,7 +13511,7 @@
     "clock": 0.0395,
     "fitted_on": 273,
     "notes": 327,
-    "seconds": 8.3,
+    "seconds": 7.6,
     "lag": 0.12,
     "lag_taps": 103
    },
@@ -11255,7 +13532,7 @@
      95.851
     ]
    ],
-   "seconds": 1.42,
+   "seconds": 0.24,
    "whole": {
     "strong": 7,
     "evidence": 1660,
@@ -11320,7 +13597,7 @@
     "bad": 0,
     "miss": 0
    },
-   "seconds": 0.82,
+   "seconds": 0.17,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for XX3igOboGV8 band L"
@@ -11364,7 +13641,7 @@
     "clock": 0.0096,
     "fitted_on": 328,
     "notes": 331,
-    "seconds": 6.5,
+    "seconds": 6.0,
     "lag": 0.1,
     "lag_taps": 6
    },
@@ -11409,7 +13686,7 @@
      59.194
     ]
    ],
-   "seconds": 1.41,
+   "seconds": 0.24,
    "whole": {
     "strong": 2,
     "evidence": 304,
@@ -11693,7 +13970,7 @@
     "clock": 0.0886,
     "fitted_on": 413,
     "notes": 413,
-    "seconds": 6.0,
+    "seconds": 5.4,
     "lag": 0.1,
     "lag_taps": 2
    },
@@ -11722,7 +13999,7 @@
      45.6
     ]
    ],
-   "seconds": 0.86,
+   "seconds": 0.21,
    "whole": {
     "strong": 0,
     "evidence": 0,
@@ -11831,7 +14108,7 @@
     "clock": 0.1028,
     "fitted_on": 204,
     "notes": 205,
-    "seconds": 2.8,
+    "seconds": 2.9,
     "lag": 0.1,
     "lag_taps": 8
    },
@@ -11856,7 +14133,7 @@
      45.6
     ]
    ],
-   "seconds": 0.9,
+   "seconds": 0.17,
    "whole": {
     "strong": 1,
     "evidence": 233,
@@ -11960,7 +14237,7 @@
     "clock": 0.1015,
     "fitted_on": 206,
     "notes": 206,
-    "seconds": 3.5,
+    "seconds": 2.8,
     "lag": 0.1,
     "lag_taps": 3
    },
@@ -11985,7 +14262,7 @@
      45.6
     ]
    ],
-   "seconds": 0.61,
+   "seconds": 0.16,
    "whole": {
     "strong": 1,
     "evidence": 53,
@@ -12099,7 +14376,7 @@
     "clock": 0.1667,
     "fitted_on": 408,
     "notes": 411,
-    "seconds": 4.2,
+    "seconds": 4.0,
     "lag": 0.1,
     "lag_taps": 1
    },
@@ -12128,7 +14405,7 @@
      45.6
     ]
    ],
-   "seconds": 1.06,
+   "seconds": 0.24,
    "whole": {
     "strong": 0,
     "evidence": 0,
@@ -12237,7 +14514,7 @@
     "clock": 0.0206,
     "fitted_on": 358,
     "notes": 403,
-    "seconds": 8.7,
+    "seconds": 8.2,
     "lag": 0.115,
     "lag_taps": 40
    },
@@ -12258,7 +14535,7 @@
      96.468
     ]
    ],
-   "seconds": 0.61,
+   "seconds": 0.23,
    "whole": {
     "strong": 12,
     "evidence": 800,
@@ -12336,7 +14613,7 @@
     "clock": -0.0036,
     "fitted_on": 394,
     "notes": 394,
-    "seconds": 7.4,
+    "seconds": 6.4,
     "lag": 0.1,
     "lag_taps": 3
    },
@@ -12397,7 +14674,7 @@
      58.007
     ]
    ],
-   "seconds": 0.66,
+   "seconds": 0.23,
    "whole": {
     "strong": 3,
     "evidence": 63,
@@ -12799,7 +15076,7 @@
     "rest_dropped": 20
    },
    "brackets": [],
-   "seconds": 0.67,
+   "seconds": 0.33,
    "whole": {
     "strong": 8,
     "evidence": 487,
@@ -12855,6 +15132,125 @@
    "quarantined": false
   },
   {
+   "chart": "Set me up S10",
+   "key": "Set_Me_Up_-_BanYa_S10_ARCADE",
+   "vid": "Ii5LlE3aznY",
+   "side": "1p",
+   "expected": 274,
+   "exact": true,
+   "block_sha": "67de2cf83a9b73fd0c766b5064af797c59ac01df3ca7a1f65b4ba508c0add5a7",
+   "header_sha": "76c714693334a6beb6df940a59bd001b046d74e24d7d03a574f683e7fb4a3cf3",
+   "base_sha": "3da10bec5764b43bc7b382831e61066a45e684a981775fd806817215c6e0e891",
+   "verdict": "FLAT",
+   "reason": "level 0 on both sides: 0 row(s) before, 0 after, no blind stretch over 16 rows",
+   "play": {
+    "band": "L",
+    "judged": 274,
+    "maxcombo": 274,
+    "clean": true,
+    "good": 0,
+    "bad": 0,
+    "miss": 0
+   },
+   "clock": {
+    "source": "note_extract + extract_repair.align (the tick loop's clock), measured here",
+    "offset": 11.898,
+    "clock": 0.0013,
+    "fitted_on": 330,
+    "notes": 336,
+    "seconds": 76.0,
+    "lag": 0.119,
+    "lag_taps": 210
+   },
+   "reads": {
+    "confident": 3171,
+    "on_chain": 2585,
+    "misreads_dropped": 558,
+    "quiet": 1665,
+    "strong": 1,
+    "evidence": 1664,
+    "runs": 1,
+    "unsettled": 0,
+    "rest_dropped": 27
+   },
+   "brackets": [],
+   "seconds": 0.24,
+   "whole": {
+    "strong": 1,
+    "evidence": 1664,
+    "covered": true,
+    "blind_rows": 12,
+    "share_within_k": 1.0,
+    "unsettled": [],
+    "verdict": "FLAT",
+    "reason": "1 strong level(s), every one agreeing with the file"
+   },
+   "edits": [
+    {
+     "lo": 84.375,
+     "hi": 84.375,
+     "rows": 0,
+     "events": {
+      "added": 0,
+      "removed": 1,
+      "net": -1,
+      "kinds": {
+       "tap": "+0/-1"
+      }
+     },
+     "basis": "independent",
+     "left": {
+      "cut": 84.367,
+      "level": 0,
+      "run": 0
+     },
+     "right": {
+      "cut": 84.384,
+      "level": 0,
+      "run": 0
+     },
+     "left_rows": 0,
+     "right_rows": 0,
+     "inner_gap_rows": 0,
+     "covered": true,
+     "verdict": "FLAT",
+     "reason": "level 0 on both sides: 0 row(s) before, 0 after, no blind stretch over 16 rows"
+    },
+    {
+     "lo": 88.375,
+     "hi": 88.375,
+     "rows": 0,
+     "events": {
+      "added": 0,
+      "removed": 1,
+      "net": -1,
+      "kinds": {
+       "tap": "+0/-1"
+      }
+     },
+     "basis": "independent",
+     "left": {
+      "cut": 87.917,
+      "level": 0,
+      "run": 0
+     },
+     "right": {
+      "cut": 88.584,
+      "level": 0,
+      "run": 0
+     },
+     "left_rows": 3,
+     "right_rows": 1,
+     "inner_gap_rows": 0,
+     "covered": true,
+     "verdict": "FLAT",
+     "reason": "level 0 on both sides: 3 row(s) before, 1 after, no blind stretch over 16 rows"
+    }
+   ],
+   "promotable": true,
+   "quarantined": false
+  },
+  {
    "chart": "She Likes Pizza D11",
    "key": "She_Likes_Pizza_-_BanYa_D11_ARCADE",
    "vid": "Cwt1seaJnxM",
@@ -12902,7 +15298,7 @@
      85.24
     ]
    ],
-   "seconds": 0.56,
+   "seconds": 0.21,
    "whole": {
     "strong": 1,
     "evidence": 1182,
@@ -12973,7 +15369,7 @@
     "clock": -0.0017,
     "fitted_on": 311,
     "notes": 348,
-    "seconds": 4.3,
+    "seconds": 4.6,
     "lag": 0.082,
     "lag_taps": 112
    },
@@ -12994,7 +15390,7 @@
      87.071
     ]
    ],
-   "seconds": 0.43,
+   "seconds": 0.22,
    "whole": {
     "strong": 1,
     "evidence": 893,
@@ -13065,7 +15461,7 @@
     "clock": 0.0056,
     "fitted_on": 637,
     "notes": 637,
-    "seconds": 9.7,
+    "seconds": 10.1,
     "lag": 0.1,
     "lag_taps": 5
    },
@@ -13086,7 +15482,7 @@
      96.055
     ]
    ],
-   "seconds": 0.72,
+   "seconds": 0.27,
    "whole": {
     "strong": 9,
     "evidence": 621,
@@ -13166,7 +15562,7 @@
     "clock": 0.0605,
     "fitted_on": 518,
     "notes": 562,
-    "seconds": 6.3,
+    "seconds": 6.0,
     "lag": 0.106,
     "lag_taps": 26
    },
@@ -13187,7 +15583,7 @@
      95.6
     ]
    ],
-   "seconds": 0.5,
+   "seconds": 0.23,
    "whole": {
     "strong": 17,
     "evidence": 732,
@@ -13265,7 +15661,7 @@
     "clock": 0.0601,
     "fitted_on": 631,
     "notes": 634,
-    "seconds": 6.4,
+    "seconds": 6.3,
     "lag": 0.1,
     "lag_taps": 5
    },
@@ -13286,7 +15682,7 @@
      95.6
     ]
    ],
-   "seconds": 0.63,
+   "seconds": 0.32,
    "whole": {
     "strong": 10,
     "evidence": 325,
@@ -13382,7 +15778,7 @@
     "clock": 0.0071,
     "fitted_on": 260,
     "notes": 260,
-    "seconds": 4.2,
+    "seconds": 3.9,
     "lag": 0.134,
     "lag_taps": 147
    },
@@ -13398,7 +15794,7 @@
     "rest_dropped": 0
    },
    "brackets": [],
-   "seconds": 0.38,
+   "seconds": 0.19,
    "whole": {
     "strong": 1,
     "evidence": 1940,
@@ -13461,7 +15857,7 @@
     "bad": 6,
     "miss": 16
    },
-   "seconds": 0.52,
+   "seconds": 0.25,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for FEXpbeWpYrI band C"
@@ -13541,7 +15937,7 @@
      47.255
     ]
    ],
-   "seconds": 0.33,
+   "seconds": 0.18,
    "whole": {
     "strong": 1,
     "evidence": 33,
@@ -13656,7 +16052,7 @@
     "bad": 0,
     "miss": 0
    },
-   "seconds": 0.19,
+   "seconds": 0.11,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for Ip9-ro43B1M band C"
@@ -13707,7 +16103,7 @@
     "clock": 0.0056,
     "fitted_on": 180,
     "notes": 180,
-    "seconds": 2.9,
+    "seconds": 3.1,
     "lag": 0.19,
     "lag_taps": 141
    },
@@ -13736,7 +16132,7 @@
      57.6
     ]
    ],
-   "seconds": 0.32,
+   "seconds": 0.2,
    "whole": {
     "strong": 7,
     "evidence": 434,
@@ -13872,7 +16268,7 @@
     "clock": 0.0614,
     "fitted_on": 59,
     "notes": 87,
-    "seconds": 8.4,
+    "seconds": 7.7,
     "lag": 0.1,
     "lag_taps": 10
    },
@@ -13909,7 +16305,7 @@
      115.5
     ]
    ],
-   "seconds": 1.98,
+   "seconds": 0.83,
    "whole": {
     "strong": 2,
     "evidence": 37,
@@ -14184,7 +16580,7 @@
     "bad": 0,
     "miss": 3
    },
-   "seconds": 1.71,
+   "seconds": 0.94,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no video clock: no extraction or tick-loop alignment; measuring one failed (the measured clock fitted only 6 notes)"
@@ -14284,7 +16680,7 @@
     "clock": -0.2057,
     "fitted_on": 64,
     "notes": 111,
-    "seconds": 5.2,
+    "seconds": 5.1,
     "lag": 0.061,
     "lag_taps": 20
    },
@@ -14329,7 +16725,7 @@
      115.5
     ]
    ],
-   "seconds": 1.99,
+   "seconds": 0.9,
    "whole": {
     "strong": 3,
     "evidence": 124,
@@ -14652,7 +17048,7 @@
     "clock": -0.0322,
     "fitted_on": 39,
     "notes": 103,
-    "seconds": 6.0,
+    "seconds": 5.1,
     "lag": 0.1,
     "lag_taps": 5
    },
@@ -14713,7 +17109,7 @@
      115.65
     ]
    ],
-   "seconds": 1.84,
+   "seconds": 0.98,
    "whole": {
     "strong": 0,
     "evidence": 0,
@@ -14998,7 +17394,7 @@
     "clock": 0.1288,
     "fitted_on": 244,
     "notes": 244,
-    "seconds": 5.9,
+    "seconds": 5.4,
     "lag": 0.1,
     "lag_taps": 10
    },
@@ -15027,7 +17423,7 @@
      56.457
     ]
    ],
-   "seconds": 0.45,
+   "seconds": 0.19,
    "whole": {
     "strong": 3,
     "evidence": 303,
@@ -15181,7 +17577,7 @@
     "clock": 0.0204,
     "fitted_on": 319,
     "notes": 333,
-    "seconds": 9.7,
+    "seconds": 8.0,
     "lag": 0.105,
     "lag_taps": 45
    },
@@ -15202,7 +17598,7 @@
      90.7
     ]
    ],
-   "seconds": 0.68,
+   "seconds": 0.24,
    "whole": {
     "strong": 5,
     "evidence": 1385,
@@ -15299,7 +17695,7 @@
     "clock": 0.0042,
     "fitted_on": 332,
     "notes": 370,
-    "seconds": 8.2,
+    "seconds": 7.4,
     "lag": 0.112,
     "lag_taps": 41
    },
@@ -15320,7 +17716,7 @@
      96.001
     ]
    ],
-   "seconds": 0.66,
+   "seconds": 0.23,
    "whole": {
     "strong": 11,
     "evidence": 659,
@@ -15391,7 +17787,7 @@
     "clock": 0.0124,
     "fitted_on": 542,
     "notes": 600,
-    "seconds": 11.3,
+    "seconds": 9.6,
     "lag": 0.1,
     "lag_taps": 3
    },
@@ -15416,7 +17812,7 @@
      97.081
     ]
    ],
-   "seconds": 0.72,
+   "seconds": 0.32,
    "whole": {
     "strong": 8,
     "evidence": 152,
@@ -15557,7 +17953,7 @@
     "clock": 0.0214,
     "fitted_on": 213,
     "notes": 254,
-    "seconds": 8.6,
+    "seconds": 6.3,
     "lag": 0.098,
     "lag_taps": 145
    },
@@ -15578,7 +17974,7 @@
      3.397
     ]
    ],
-   "seconds": 0.53,
+   "seconds": 0.19,
    "whole": {
     "strong": 1,
     "evidence": 2083,
@@ -15649,7 +18045,7 @@
     "clock": 0.033,
     "fitted_on": 90,
     "notes": 90,
-    "seconds": 2.6,
+    "seconds": 2.5,
     "lag": 0.12,
     "lag_taps": 61
    },
@@ -15690,7 +18086,7 @@
      56.6
     ]
    ],
-   "seconds": 0.41,
+   "seconds": 0.17,
    "whole": {
     "strong": 4,
     "evidence": 562,
@@ -15964,7 +18360,7 @@
     "rest_dropped": 30
    },
    "brackets": [],
-   "seconds": 0.86,
+   "seconds": 0.3,
    "whole": {
     "strong": 3,
     "evidence": 595,
@@ -16044,7 +18440,7 @@
     "clock": 0.0414,
     "fitted_on": 440,
     "notes": 533,
-    "seconds": 9.8,
+    "seconds": 8.6,
     "lag": 0.101,
     "lag_taps": 54
    },
@@ -16065,7 +18461,7 @@
      89.975
     ]
    ],
-   "seconds": 0.53,
+   "seconds": 0.26,
    "whole": {
     "strong": 10,
     "evidence": 564,
@@ -16153,7 +18549,7 @@
     "clock": 0.0643,
     "fitted_on": 448,
     "notes": 572,
-    "seconds": 9.4,
+    "seconds": 7.3,
     "lag": 0.104,
     "lag_taps": 16
    },
@@ -16174,7 +18570,7 @@
      89.743
     ]
    ],
-   "seconds": 0.62,
+   "seconds": 0.26,
    "whole": {
     "strong": 9,
     "evidence": 323,
@@ -16267,7 +18663,7 @@
     "clock": 0.043,
     "fitted_on": 463,
     "notes": 490,
-    "seconds": 4.7,
+    "seconds": 5.4,
     "lag": 0.085,
     "lag_taps": 46
    },
@@ -16288,7 +18684,7 @@
      89.529
     ]
    ],
-   "seconds": 0.64,
+   "seconds": 0.26,
    "whole": {
     "strong": 1,
     "evidence": 579,
@@ -16359,7 +18755,7 @@
     "clock": 0.0217,
     "fitted_on": 494,
     "notes": 497,
-    "seconds": 8.7,
+    "seconds": 7.0,
     "lag": 0.1,
     "lag_taps": 9
    },
@@ -16380,7 +18776,7 @@
      80.689
     ]
    ],
-   "seconds": 0.54,
+   "seconds": 0.29,
    "whole": {
     "strong": 9,
     "evidence": 334,
@@ -16460,7 +18856,7 @@
     "clock": 0.0407,
     "fitted_on": 513,
     "notes": 516,
-    "seconds": 7.2,
+    "seconds": 7.5,
     "lag": 0.136,
     "lag_taps": 18
    },
@@ -16481,7 +18877,7 @@
      82.029
     ]
    ],
-   "seconds": 0.6,
+   "seconds": 0.26,
    "whole": {
     "strong": 4,
     "evidence": 314,
@@ -16576,7 +18972,7 @@
     "clock": 0.0075,
     "fitted_on": 494,
     "notes": 496,
-    "seconds": 5.9,
+    "seconds": 4.3,
     "lag": 0.1,
     "lag_taps": 11
    },
@@ -16597,7 +18993,7 @@
      79.975
     ]
    ],
-   "seconds": 0.6,
+   "seconds": 0.34,
    "whole": {
     "strong": 7,
     "evidence": 339,
@@ -16695,7 +19091,7 @@
     "bad": 0,
     "miss": 1
    },
-   "seconds": 0.63,
+   "seconds": 0.32,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for 1juO2049sp8 band C"
@@ -16775,7 +19171,7 @@
     "bad": 0,
     "miss": 0
    },
-   "seconds": 0.25,
+   "seconds": 0.14,
    "whole": {
     "verdict": "UNCOVERED",
     "reason": "no counter scan for v58t4Vqw4ZE band R"
@@ -16819,7 +19215,7 @@
     "clock": 0.025,
     "fitted_on": 114,
     "notes": 114,
-    "seconds": 2.8,
+    "seconds": 2.3,
     "lag": 0.13,
     "lag_taps": 53
    },
@@ -16844,7 +19240,7 @@
      44.143
     ]
    ],
-   "seconds": 0.36,
+   "seconds": 0.19,
    "whole": {
     "strong": 3,
     "evidence": 566,
@@ -16954,7 +19350,7 @@
     "clock": -0.001,
     "fitted_on": 568,
     "notes": 587,
-    "seconds": 6.2,
+    "seconds": 5.8,
     "lag": 0.1,
     "lag_taps": 9
    },
@@ -17027,7 +19423,7 @@
      100.863
     ]
    ],
-   "seconds": 0.89,
+   "seconds": 0.47,
    "whole": {
     "strong": 3,
     "evidence": 125,
@@ -17531,7 +19927,7 @@
      4.93
     ]
    ],
-   "seconds": 0.57,
+   "seconds": 0.38,
    "whole": {
     "strong": 1,
     "evidence": 136,
@@ -17577,12 +19973,12 @@
  "calibration": {
   "population": "certified charts exact at HEAD whose block and song header are byte-identical to a23cee5's, with a counter scan",
   "counts": {
-   "UNCOVERED": 243,
+   "UNCOVERED": 244,
    "FLAT": 17
   },
   "clean_plays": 85,
   "covered": 20,
-  "seconds": 93.6,
+  "seconds": 358.0,
   "off": [],
   "unsettled": [
    {
@@ -17733,6 +20129,75 @@
       "first": 153.375,
       "last": 157.125,
       "n": 27,
+      "margin": "35 ms"
+     }
+    ]
+   },
+   {
+    "chart": "Banya-P Classic Remix S21",
+    "stretches": [
+     {
+      "run": 3,
+      "level": 1,
+      "first": 20.623,
+      "last": 21.157,
+      "n": 9,
+      "margin": "35 ms"
+     },
+     {
+      "run": 8,
+      "level": 1,
+      "first": 28.974,
+      "last": 31.091,
+      "n": 22,
+      "margin": "35 ms"
+     },
+     {
+      "run": 16,
+      "level": 1,
+      "first": 52.211,
+      "last": 53.595,
+      "n": 20,
+      "margin": "35 ms"
+     },
+     {
+      "run": 16,
+      "level": 1,
+      "first": 55.062,
+      "last": 57.512,
+      "n": 21,
+      "margin": "35 ms"
+     },
+     {
+      "run": 20,
+      "level": 1,
+      "first": 75.315,
+      "last": 82.449,
+      "n": 48,
+      "margin": "35 ms"
+     },
+     {
+      "run": 20,
+      "level": 1,
+      "first": 83.966,
+      "last": 93.801,
+      "n": 51,
+      "margin": "35 ms"
+     },
+     {
+      "run": 21,
+      "level": 1,
+      "first": 96.301,
+      "last": 98.968,
+      "n": 44,
+      "margin": "35 ms"
+     },
+     {
+      "run": 21,
+      "level": 1,
+      "first": 105.153,
+      "last": 110.704,
+      "n": 32,
       "margin": "35 ms"
      }
     ]
@@ -19107,8 +21572,8 @@
    {
     "chart": "Alone D18",
     "verdict": "UNCOVERED",
-    "covered": false,
-    "reason": "no level moves within a run, but the play has 1 GOOD(s)"
+    "covered": null,
+    "reason": "FOOTAGE_CORRUPT: videos/1rcd4MaRTDg.mp4 stops decoding at 61.6 s of the 127.5 s it declares (sources/footage-corrupt.json) - re-download it; loops may not"
    },
    {
     "chart": "Altale S12",
@@ -19192,7 +21657,7 @@
     "chart": "Banya-P Classic Remix S21",
     "verdict": "UNCOVERED",
     "covered": false,
-    "reason": "no level moves within a run, but the play has 20 GOOD(s)"
+    "reason": "8 timing-sensitive stretch(es), first 20.62-21.16s at +1, seen at 35 ms only; the frames decide them"
    },
    {
     "chart": "Bee S10",
@@ -19307,6 +21772,12 @@
     "verdict": "FLAT",
     "covered": true,
     "reason": "1 strong level(s), every one agreeing with the file"
+   },
+   {
+    "chart": "Chicken Wing S9",
+    "verdict": "UNCOVERED",
+    "covered": null,
+    "reason": "FOOTAGE_CORRUPT: videos/0T1_HBRTVLc.mp4 stops decoding at 76.3 s of the 124.9 s it declares (sources/footage-corrupt.json) - re-download it; loops may not"
    },
    {
     "chart": "Chinese restaurant S18",
@@ -20620,16 +23091,16 @@
    "breaks, no GOOD": 8,
    "GOODs": 2
   },
-  "charts": 257,
+  "charts": 256,
   "charts_by_play": {
    "full combo": 82,
-   "GOODs": 139,
+   "GOODs": 138,
    "breaks, no GOOD": 36
   },
-  "plants": 1072,
+  "plants": 1070,
   "refused": 0,
   "errors": 0,
-  "seconds": 470.3,
+  "seconds": 535.2,
   "table": [
    {
     "rows": "0-4",
@@ -20906,11 +23377,11 @@
     "flat_beyond_k": 0
    },
    "GOODs": {
-    "charts": 139,
+    "charts": 138,
     "per_chart": 2,
-    "plants": 268,
-    "OFF": 6,
-    "UNCOVERED": 262,
+    "plants": 266,
+    "OFF": 5,
+    "UNCOVERED": 261,
     "FLAT": 0,
     "flat_beyond_k": 0
    }
@@ -21531,65 +24002,65 @@
     },
     {
      "rows": "65-128",
-     "plants": 52,
+     "plants": 51,
      "counter-derived": {
-      "OFF": 2,
+      "OFF": 1,
       "UNCOVERED": 50,
       "FLAT": 0,
-      "detected": 0.038,
+      "detected": 0.02,
       "missed": 0.0
      },
      "independent": {
-      "OFF": 3,
+      "OFF": 2,
       "UNCOVERED": 49,
       "FLAT": 0,
-      "detected": 0.058,
+      "detected": 0.039,
       "missed": 0.0
      },
      "counter-derived k=16": {
-      "OFF": 2,
+      "OFF": 1,
       "UNCOVERED": 50,
       "FLAT": 0,
-      "detected": 0.038,
+      "detected": 0.02,
       "missed": 0.0
      },
      "counter-derived k=32": {
-      "OFF": 2,
+      "OFF": 1,
       "UNCOVERED": 50,
       "FLAT": 0,
-      "detected": 0.038,
+      "detected": 0.02,
       "missed": 0.0
      }
     },
     {
      "rows": "129-+",
-     "plants": 64,
+     "plants": 63,
      "counter-derived": {
       "OFF": 2,
-      "UNCOVERED": 62,
+      "UNCOVERED": 61,
       "FLAT": 0,
-      "detected": 0.031,
+      "detected": 0.032,
       "missed": 0.0
      },
      "independent": {
       "OFF": 3,
-      "UNCOVERED": 61,
+      "UNCOVERED": 60,
       "FLAT": 0,
-      "detected": 0.047,
+      "detected": 0.048,
       "missed": 0.0
      },
      "counter-derived k=16": {
       "OFF": 2,
-      "UNCOVERED": 62,
+      "UNCOVERED": 61,
       "FLAT": 0,
-      "detected": 0.031,
+      "detected": 0.032,
       "missed": 0.0
      },
      "counter-derived k=32": {
       "OFF": 2,
-      "UNCOVERED": 62,
+      "UNCOVERED": 61,
       "FLAT": 0,
-      "detected": 0.031,
+      "detected": 0.032,
       "missed": 0.0
      }
     }
@@ -21666,9 +24137,9 @@
     },
     {
      "levels": "16-19",
-     "plants": 118,
-     "OFF": 4,
-     "UNCOVERED": 114,
+     "plants": 116,
+     "OFF": 3,
+     "UNCOVERED": 113,
      "FLAT": 0
     },
     {
