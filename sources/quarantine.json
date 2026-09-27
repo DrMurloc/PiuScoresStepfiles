@@ -1,0 +1,49 @@
+{
+ "purpose": "Charts exact in total whose combo counter shows the interior wrong. A review list for the owner: each is excluded from every benchmark (graded rows carry the 'quarantine' flag) and is never reverted without his yes - tools/corpus_grade.py gate fails a pass that takes one out of exact unless its sources/demotions.jsonl row carries an \"owner\" field saying where he said yes. block_sha is the quarantined state (tools/guards.py).",
+ "recorded": "2026-09-27",
+ "source": "work/loop-buckets-2026-09-26.txt, bucket #1 (BASELINE) and OWNER DECISIONS; the go of 2026-09-27 kept reverting these three gated on him",
+ "charts": [
+  {
+   "chart": "Houseplan S17",
+   "key": "Houseplan_-_Houseplan_S17_ARCADE",
+   "ssc_rel": "14 - XX/1692 - Houseplan/1692 - Houseplan.ssc",
+   "block": "S17_ARCADE",
+   "commit": "3d17dae",
+   "commit_subject": "Fix Houseplan S17 from the footage: 3 releases moved, 1 tap added",
+   "video": "YiV99RHipvM",
+   "side": "2p",
+   "certified": 903,
+   "block_sha": "27d7a428c6321206e9eb51ab15114f9e23da6a1c7875eef4ead82c2e0be9d32a",
+   "status": "exact in total, counter shows wrong inside - review list for the owner; excluded from benchmarks; never reverted without his yes",
+   "why": "Per the 2026-09-26 proposal (bucket #1 baseline): its combo-counter trace audit reads OFF inside while the total is exact - the total closed by compensating errors."
+  },
+  {
+   "chart": "Wedding Crashers S10",
+   "key": "Wedding_Crashers_-_SHK_S10_ARCADE",
+   "ssc_rel": "14 - XX/1601 - Wedding Crashers/1601 - Wedding Crashers.ssc",
+   "block": "S10_ARCADE",
+   "commit": "c40c089",
+   "commit_subject": "Fix Wedding Crashers S10 from the footage: 1 tap added",
+   "video": "rIXOKDQGaH8",
+   "side": "1p",
+   "certified": 545,
+   "block_sha": "0dae7bff8160486be2d27a93a63066ce65806332ebbd07881b6c98bd5a89d99f",
+   "status": "exact in total, counter shows wrong inside - review list for the owner; excluded from benchmarks; never reverted without his yes",
+   "why": "Per the 2026-09-26 proposal (bucket #1 baseline): its combo-counter trace audit reads OFF inside while the total is exact - the total closed by compensating errors."
+  },
+  {
+   "chart": "Imagination S12",
+   "key": "Imagination_-_SHK_S12_ARCADE",
+   "ssc_rel": "14 - XX/1678 - Imagination/1678 - Imagination.ssc",
+   "block": "S12_ARCADE",
+   "commit": "2c374be",
+   "commit_subject": "Fix Imagination S12 from the footage: 3 releases moved, 1 tap added",
+   "video": "i4CncPgOzNU",
+   "side": "1p",
+   "certified": 593,
+   "block_sha": "7d39b9b38f06420199fc0971a477b21a106642140b18750405b786bcb73e9880",
+   "status": "exact in total, counter shows wrong inside - review list for the owner; excluded from benchmarks; never reverted without his yes",
+   "why": "Named with the other two for owner review in the 2026-09-26 proposal (OWNER DECISIONS); shipped by the same extraction-loop run with the same edit shapes (moved releases plus an added tap). No trace verdict is recorded here."
+  }
+ ]
+}

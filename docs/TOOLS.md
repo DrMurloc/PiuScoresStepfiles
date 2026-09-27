@@ -249,6 +249,17 @@ N. It exits 2 when it cannot judge (drift at the head, a revision that does not 
 writes nothing but `--json`, and never reads a grade file to decide anything — both sides are
 re-graded from blobs.
 
+The ledgers and lists it enforces. **`sources/demotions.jsonl`** (append-only, empty until the
+first demotion): one JSON object per line, `{"chart": <census chart name>, "block_sha": <the
+block being demoted, before the change>, "reason": <why the exact total is not to be trusted>,
+"evidence": <what showed it: a trace audit, a video, a commit>, "owner": <where he said yes;
+required for a quarantined chart>, "date", "commit"}` — the only way the exact set may shrink.
+**`sources/quarantine.json`**: Houseplan S17 (3d17dae), Wedding Crashers S10 (c40c089) and
+Imagination S12 (2c374be) — exact in total, the counter shows them wrong inside: a review list
+for the owner, excluded from every benchmark, never reverted without his yes (each entry records
+the quarantined `block_sha`). **`sources/owner-revisit.json`**: each entry's `block_sha` and
+`header_sha` are the accepted state.
+
 `conflicts` builds `sources/oracle-conflict.json` from the data: a video that certifies two or
 more charts on one side (a result screen shows one total per side); a certified count that is
 not the chart's Phoenix 1 catalog count (`p1-note-counts`, matched by song, type and level)
