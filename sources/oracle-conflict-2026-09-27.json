@@ -1,0 +1,87 @@
+{
+ "charts": [
+  {
+   "chart": "Awakening S19",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "the pad's notes (XzSkOH1L4tI) match S16_ARCADE at F1 0.970 against the mapped S19_ARCADE at 0.196; runner-up 0.217",
+     "kind": "identity",
+     "status": "candidate"
+    }
+   ]
+  },
+  {
+   "chart": "Blaze Emotion S2",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "the pad's notes (x1OTFIcEL2c) match S3_ARCADE at F1 0.811 against the mapped S2_ARCADE at 0.145; runner-up 0.145",
+     "kind": "identity",
+     "status": "candidate"
+    }
+   ]
+  },
+  {
+   "chart": "Love is a Danger Zone pt. 2 S22",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "the pad's notes (YvqFYSDl2e4) match SINGLE21 HIDDEN_ARCADE at F1 0.977 against the mapped S22 INFOBAR TITLE_ARCADE at 0.958; runner-up 0.958",
+     "kind": "identity",
+     "status": "ambiguous"
+    }
+   ]
+  },
+  {
+   "chart": "Moonlight S18",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "the pad's notes (d9wLfpyrwUA) match S19_ARCADE at F1 0.825 against the mapped S18 INFOBAR TITLE_ARCADE at 0.216; runner-up 0.216",
+     "kind": "identity",
+     "status": "candidate"
+    }
+   ]
+  },
+  {
+   "chart": "Solitary S17",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "the pad's notes (UvFXQY21ef4) match S18_ARCADE at F1 0.999 against the mapped S17_ARCADE at 0.214; runner-up 0.244",
+     "kind": "identity",
+     "status": "candidate"
+    }
+   ]
+  },
+  {
+   "chart": "Solitary S18",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "the pad's notes (UvFXQY21ef4) match S17_ARCADE at F1 0.935 against the mapped S18_ARCADE at 0.222; runner-up 0.222",
+     "kind": "identity",
+     "status": "candidate"
+    }
+   ]
+  },
+  {
+   "chart": "We will meet again S13",
+   "in_population": true,
+   "reasons": [
+    {
+     "detail": "the pad's notes (j63He18RRoU) match S14_ARCADE at F1 0.964 against the mapped S13_ARCADE at 0.182; runner-up 0.204",
+     "kind": "identity",
+     "status": "candidate"
+    }
+   ]
+  }
+ ],
+ "date": "2026-09-27",
+ "purpose": "PROPOSED additions to sources/oracle-conflict.json (loop bucket #2, tools/identity.py): certified charts, not exact, whose pad's notes match another block of their file far better than their mapped block, or two blocks alike. Not read by the gate: the owner folds them into sources/oracle-conflict.json (owner-only) and refreezes, after which a loop that makes one exact by editing its mapped block halts for review instead of taking the credit.",
+ "report": "C:\\Users\\jonec\\repos\\psf-wt\\identity-1\\work\\identity\\decide-2026-09-27.json",
+ "rule": {
+  "identity": "not exact; the pad's extraction matches another block at F1 >= 0.8 by >= 0.3 over the mapped block (candidate), or its best two blocks lie within 0.3 (ambiguous), or two cached passes of the pad disagree on the best block"
+ }
+}
