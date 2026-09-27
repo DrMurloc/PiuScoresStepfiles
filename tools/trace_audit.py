@@ -17,6 +17,7 @@
 #   python -X utf8 -B tools/trace_audit.py corpus   [--workers N] [--date YYYY-MM-DD] [--out-dir DIR]
 #   python -X utf8 -B tools/trace_audit.py crops    ["<chart>" ...] [--out <dir under work/rails-audit-scratch>]
 #   python -X utf8 -B tools/trace_audit.py version  [--sources]
+#   python -X utf8 -B tools/trace_audit.py drills   (the verdict rules on synthetic reads: no footage, a second)
 # (--workers is capped at 6; --no-decode never reads a frame of footage to measure a missing clock)
 #
 # WHAT IS READ. F(t) is the file's judged events in chart time, enumerated from piu-annotate's own
@@ -1006,16 +1007,27 @@ def rows_between(rowt, x, y):
     return max(0, bisect.bisect_left(rowt, y) - bisect.bisect_right(rowt, x))
 
 
+def edit_window(rowt, lo, hi, K):
+    """(t_left, t_right): the chart-time span holding exactly the reads within K judged rows of the
+    edit [lo, hi] - the count `covered` accepts (rows_between <= K). A read before the edit is
+    within K rows of lo from the (K+1)-th row before the edit on (that row's time included), and one
+    after it up to the (K+1)-th row after it. Until the 2026-09-27 second review this stopped one
+    row short, so a nearest read exactly K rows away counted for coverage but was never compared,
+    and on a play with breaks a level change across the edit came out FLAT."""
+    i_lo = bisect.bisect_left(rowt, lo)
+    i_hi = bisect.bisect_right(rowt, hi)
+    t_left = rowt[i_lo - K - 1] if i_lo - K - 1 >= 0 else -1e9
+    t_right = rowt[i_hi + K] if i_hi + K < len(rowt) else 1e9
+    return t_left, t_right
+
+
 def judge_edit(e, tr, rowt, play, P):
     """FLAT / OFF / UNCOVERED for one edit [lo, hi] from the evidence reads around it."""
     K = P["k_rows"]
     lo, hi = e["lo"], e["hi"]
     evd = tr["evidence"]
     cuts = [c for c, _, _ in evd]
-    i_lo = bisect.bisect_left(rowt, lo)
-    i_hi = bisect.bisect_right(rowt, hi)
-    t_left = rowt[i_lo - K] if i_lo - K >= 0 else -1e9
-    t_right = rowt[i_hi + K - 1] if i_hi + K - 1 < len(rowt) else 1e9
+    t_left, t_right = edit_window(rowt, lo, hi, K)
     j = bisect.bisect_left(cuts, lo) - 1
     left = evd[j] if j >= 0 else None
     j = bisect.bisect_right(cuts, hi)
@@ -1083,6 +1095,13 @@ def judge_edit(e, tr, rowt, play, P):
         return dict(out, verdict="UNCOVERED", reason=uncovered_why(out, K))
     if left[2] != right[2]:
         return dict(out, verdict="UNCOVERED", reason="the combo broke between the readings either side (run %d -> %d)" % (left[2], right[2]))
+    if left[1] != right[1]:
+        # both lie within K rows, so the window holds them and the moves above catch this; the
+        # FLAT's own condition is stated outright here so no window can drift from it again
+        d = right[1] - left[1]
+        verdict, why = move_verdict(d, play, tr, P)
+        return dict(out, verdict=verdict, reason="within one run the level moves %+d across the edit, between %.2fs and %.2fs: %s" % (
+            d, left[0], right[0], why))
     if play.get("good"):
         return dict(out, verdict="UNCOVERED", reason="the reads agree, but the play has %d GOOD(s): a GOOD neither breaks nor increments the counter, so one could hide the event an edit lost" % play["good"])
     return dict(out, verdict="FLAT", reason="one run, one level on both sides: %d row(s) before, %d after" % (out["left_rows"], out["right_rows"]))
@@ -1642,6 +1661,18 @@ SEP_BUCKETS = [(0, 4), (5, 8), (9, 16), (17, 32), (33, 64), (65, 128), (129, 10 
 # plants read as if measured some other way (no brackets), and the default at two wider k_rows
 POWER_VARIANTS = [("counter-derived", {}), ("independent", dict(bracket=None)),
                   ("counter-derived k=16", dict(k_rows=16)), ("counter-derived k=32", dict(k_rows=32))]
+# the three plays the verdict rules tell apart, each planted and tabled on its own: a full combo (one
+# run, level 0 throughout), breaks with no GOOD (runs, FLAT only within one), and GOODs (never FLAT
+# by rule - planted at a quarter of the rate, to measure that the rule holds)
+PLAY_CLASSES = ("full combo", "breaks, no GOOD", "GOODs")
+
+
+def play_class(play):
+    if not play:
+        return None
+    if play.get("clean"):
+        return "full combo"
+    return "GOODs" if play.get("good") else "breaks, no GOOD"
 
 
 def _sites(path, tag):
@@ -1757,10 +1788,11 @@ def _power_job(job):
                 out.append(dict(chart=name, sep=sep, planted=False, why="diff +%d/-%d" % (nplus, nminus)))
                 continue
             row = dict(chart=name, meter=_meter(name), sep=sep, seconds=round(abs(x["t"] - y["t"]), 2), planted=True,
-                       first=("minus" if minus["t"] < plus["t"] else "plus"), clean=None)
+                       first=("minus" if minus["t"] < plus["t"] else "plus"), clean=None, play=None)
             for variant, params in POWER_VARIANTS:
                 r = audit_chart(c, new_path=pp, base_path=path, P=dict(PARAMS, **params))
                 row["clean"] = (r.get("play") or {}).get("clean")
+                row["play"] = play_class(r.get("play"))
                 row[variant] = r["verdict"]
                 row[variant + "_why"] = [e.get("reason") for e in r.get("edits", [])][:2]
             out.append(row)
@@ -1775,13 +1807,7 @@ def _meter(name):
     return int(m.group(2)) if m else None
 
 
-def power(workers, per_chart, seed):
-    t0 = time.time()
-    ctl = json.load(open(os.path.join(SCRATCH, "controls.json"), encoding="utf-8"))
-    names = sorted(r["chart"] for r in ctl["charts"] if (r.get("play") or {}).get("clean") and r.get("clock") and r["chart"] not in BLIND_REVIEW)
-    rows = [x for part in pool_map(_power_job, [(n, seed, per_chart) for n in names], workers) for x in part]
-    ok = [r for r in rows if r.get("planted")]
-    errors = [r for r in rows if r.get("error")]
+def _sep_table(ok):
     table = []
     for lo, hi in SEP_BUCKETS:
         rs = [r for r in ok if lo <= r["sep"] <= hi]
@@ -1792,27 +1818,65 @@ def power(workers, per_chart, seed):
                                  detected=round(cnt["OFF"] / len(rs), 3) if rs else None,
                                  missed=round(cnt["FLAT"] / len(rs), 3) if rs else None)
         table.append(line)
+    return table
+
+
+def _meter_table(ok):
     by_meter = []
     for lo, hi in ((1, 15), (16, 19), (20, 23), (24, 99)):
         rs = [r for r in ok if r["meter"] and lo <= r["meter"] <= hi]
         cnt = Counter(r["counter-derived"] for r in rs)
         by_meter.append(dict(levels="%d-%d" % (lo, hi), plants=len(rs), OFF=cnt["OFF"], UNCOVERED=cnt["UNCOVERED"], FLAT=cnt["FLAT"]))
-    out = dict(generated=time.strftime("%Y-%m-%d %H:%M"), audit_version=AUDIT_VERSION, params=PARAMS, seed=seed, per_chart=per_chart,
+    return by_meter
+
+
+def power(workers, per_chart, seed):
+    """Detection power: compensating pairs planted in scratch copies of the controls, per play class
+    (PLAY_CLASSES). `table` and `by_meter` are the full-combo plays' (the table first published);
+    `tables`, `by_meter_class` and `by_class` hold every class."""
+    t0 = time.time()
+    ctl = json.load(open(os.path.join(SCRATCH, "controls.json"), encoding="utf-8"))
+    per = {"full combo": per_chart, "breaks, no GOOD": per_chart, "GOODs": max(1, per_chart // 4)}
+    jobs, charts_by = [], Counter()
+    for r in sorted(ctl["charts"], key=lambda r: r["chart"]):
+        k = play_class(r.get("play"))
+        if k and r.get("clock") and r["chart"] not in BLIND_REVIEW:
+            jobs.append((r["chart"], seed, per[k]))
+            charts_by[k] += 1
+    rows = [x for part in pool_map(_power_job, jobs, workers) for x in part]
+    ok = [r for r in rows if r.get("planted")]
+    errors = [r for r in rows if r.get("error")]
+    tables = {k: _sep_table([r for r in ok if r["play"] == k]) for k in PLAY_CLASSES}
+    by_meter_class = {k: _meter_table([r for r in ok if r["play"] == k]) for k in PLAY_CLASSES}
+    by_class = {}
+    for k in PLAY_CLASSES:
+        rs = [r for r in ok if r["play"] == k]
+        cnt = Counter(r["counter-derived"] for r in rs)
+        by_class[k] = dict(charts=charts_by[k], per_chart=per[k], plants=len(rs), OFF=cnt["OFF"], UNCOVERED=cnt["UNCOVERED"], FLAT=cnt["FLAT"],
+                           flat_beyond_k=sum(1 for r in rs if r["counter-derived"] == "FLAT" and r["sep"] > PARAMS["k_rows"]))
+    out = dict(generated=time.strftime("%Y-%m-%d %H:%M"), audit_version=AUDIT_VERSION, params=PARAMS, seed=seed, per_chart=per,
                variants={v: p for v, p in POWER_VARIANTS},
-               charts=len(names), plants=len(ok), refused=len(rows) - len(ok) - len(errors), errors=len(errors), seconds=round(time.time() - t0, 1),
-               method="one #TICKCOUNTS-only compensating pair per plant in a scratch copy of an untouched exact chart on a full-combo play: "
+               charts=len(jobs), charts_by_play=dict(charts_by), plants=len(ok), refused=len(rows) - len(ok) - len(errors), errors=len(errors),
+               seconds=round(time.time() - t0, 1),
+               method="one #TICKCOUNTS-only compensating pair per plant in a scratch copy of an untouched exact chart (every control with a "
+                      "clock but the three blind-review charts, tabled by its certified play: full combo, breaks with no GOOD, GOODs): "
                       "a lattice point removed (rate 0 over +-1/2r) in one hold region and one added (rate 2r over [x, x+1/2r) at a midpoint) "
                       "in another, the converter's total unchanged and the event diff exactly +1/-1; separation = judged rows between the two",
-               table=table, by_meter=by_meter, rows=rows)
+               table=tables["full combo"], by_meter=by_meter_class["full combo"], tables=tables, by_meter_class=by_meter_class,
+               by_class=by_class, rows=rows)
     _write_json(os.path.join(SCRATCH, "power.json"), out)
-    print("power: %d plants on %d charts in %.0fs (%d refused, %d errors)" % (len(ok), len(names), out["seconds"], out["refused"], len(errors)))
-    for variant, _ in POWER_VARIANTS:
-        print("  %s: rows apart, plants, OFF / UNCOVERED / FLAT (detected, missed)" % variant)
-        for line in table:
-            x = line[variant]
-            print("    %-9s %4d  %4d %4d %4d  (%s, %s)" % (line["rows"], line["plants"], x["OFF"], x["UNCOVERED"], x["FLAT"], x["detected"], x["missed"]))
-    for m in by_meter:
-        print("  levels %-6s plants %4d  OFF %4d UNC %4d FLAT %4d" % (m["levels"], m["plants"], m["OFF"], m["UNCOVERED"], m["FLAT"]))
+    print("power: %d plants on %d charts in %.0fs (%d refused, %d errors)" % (len(ok), len(jobs), out["seconds"], out["refused"], len(errors)))
+    for k in PLAY_CLASSES:
+        b = by_class[k]
+        print("== %s: %d charts, %d plants - OFF %d / UNCOVERED %d / FLAT %d (FLAT beyond k_rows: %d)" % (
+            k, b["charts"], b["plants"], b["OFF"], b["UNCOVERED"], b["FLAT"], b["flat_beyond_k"]))
+        for variant, _ in POWER_VARIANTS:
+            print("  %s: rows apart, plants, OFF / UNCOVERED / FLAT (detected, missed)" % variant)
+            for line in tables[k]:
+                x = line[variant]
+                print("    %-9s %4d  %4d %4d %4d  (%s, %s)" % (line["rows"], line["plants"], x["OFF"], x["UNCOVERED"], x["FLAT"], x["detected"], x["missed"]))
+        for m in by_meter_class[k]:
+            print("  levels %-6s plants %4d  OFF %4d UNC %4d FLAT %4d" % (m["levels"], m["plants"], m["OFF"], m["UNCOVERED"], m["FLAT"]))
     fail_on_errors("power", errors)
     return out
 
@@ -1869,7 +1933,8 @@ def corpus(workers, date, out_dir=None):
                                     unsettled=[dict(chart=r["chart"], stretches=r["whole"].get("unsettled")) for r in d["charts"] if (r.get("whole") or {}).get("unsettled")],
                                     charts=[dict(chart=r["chart"], verdict=r["verdict"], covered=(r.get("whole") or {}).get("covered"), reason=r.get("reason")) for r in d["charts"]])
             else:
-                ledger[part] = {k: d[k] for k in ("method", "variants", "seed", "per_chart", "charts", "plants", "refused", "errors", "seconds", "table", "by_meter")
+                ledger[part] = {k: d[k] for k in ("method", "variants", "seed", "per_chart", "charts", "charts_by_play", "plants", "refused", "errors", "seconds",
+                                                "table", "by_meter", "by_class", "tables", "by_meter_class")
                                 if k in d}
     if cnt["ERROR"]:
         # a run with any error writes nothing to sources/: its ledger goes to the scratch dir for diagnosis
@@ -2029,6 +2094,161 @@ def crops(names, out="blind-35ms"):
     print("frames in", outd, "- key (do not show the reviewer):", keyf)
 
 
+# ---------------------------------------------------------------- drills (no footage)
+
+def drills():
+    """The verdict rules and the plumbing around them, pinned on synthetic inputs: no footage, no
+    scan, no simfile. Each case is a way this tool was once wrong, or the rule next to one. Exit 1
+    on any failure."""
+    import shutil
+    fails, n = [], [0]
+
+    def check(name, got, want):
+        n[0] += 1
+        if got != want:
+            fails.append("%s: got %r, wanted %r" % (name, got, want))
+
+    # 1. the window holds exactly the reads `covered` counts, for every read position, on grids
+    # with rows that share a time (a warp puts several rows at one instant)
+    grids = [[float(i) for i in range(41)], [0.0, 1.0, 2.0, 2.0, 2.0, 3.0, 4.0, 5.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0],
+             [float(i) for i in range(5)]]
+    for rowt in grids:
+        pos = sorted(set(rowt) | {x + 0.5 for x in rowt} | {rowt[0] - 0.5})
+        for K in (1, 2, 8):
+            for lo in pos:
+                for hi in [p for p in pos if lo <= p <= lo + 1.5]:
+                    t_left, t_right = edit_window(rowt, lo, hi, K)
+                    for x in pos:
+                        if x < lo:
+                            check("window left K=%d lo=%s x=%s" % (K, lo, x), t_left <= x, rows_between(rowt, x, lo) <= K)
+                        elif x > hi:
+                            check("window right K=%d hi=%s x=%s" % (K, hi, x), x <= t_right, rows_between(rowt, hi, x) <= K)
+
+    # 2. judge_edit on one row a second, the edit at 50.5 (row 50 before it, row 51 after)
+    rowt = [float(i) for i in range(101)]
+    K = PARAMS["k_rows"]
+    at_k_before, past_k_before = 50.5 - K, 50.5 - K - 1         # K and K+1 judged rows before the edit
+    at_k_after, past_k_after = 50.5 + K, 50.5 + K + 1
+    full = dict(clean=True, good=0, bad=0, miss=0)
+    breaks = dict(clean=False, good=0, bad=1, miss=1)
+    goods = dict(clean=False, good=2, bad=1, miss=1)
+
+    def judge(evd, play, lo=50.5, hi=50.5, unsettled=(), structure_ok=True, runs=2):
+        tr = dict(evidence=sorted(evd), unsettled=list(unsettled), structure_ok=structure_ok, runs=runs)
+        return judge_edit(dict(lo=lo, hi=hi), tr, rowt, play, PARAMS)
+
+    def v(*a, **k):
+        return judge(*a, **k)["verdict"]
+    # the second review's drill: the read before exactly K rows away at level 5, after at 7
+    check("breaks: a level change with the read before exactly K rows away",
+          v([(at_k_before, 5, 0), (51.5, 7, 0), (52.5, 7, 0)], breaks), "OFF")
+    check("breaks: the same with the read after exactly K rows away",
+          v([(48.5, 5, 0), (49.5, 5, 0), (at_k_after, 7, 0)], breaks), "OFF")
+    check("breaks: the read before K+1 rows away is not near enough",
+          v([(past_k_before, 5, 0), (51.5, 7, 0), (52.5, 7, 0)], breaks), "UNCOVERED")
+    check("breaks: the read after K+1 rows away is not near enough",
+          v([(49.5, 5, 0), (past_k_after, 7, 0)], breaks), "UNCOVERED")
+    check("breaks: one level both sides, exactly K rows each way",
+          v([(at_k_before, 7, 0), (at_k_after, 7, 0)], breaks), "FLAT")
+    check("breaks: the two sides in different runs",
+          v([(at_k_before, 7, 0), (51.5, 7, 1)], breaks), "UNCOVERED")
+    check("breaks: agreeing sides on a play with GOODs",
+          v([(at_k_before, 7, 0), (51.5, 7, 0)], goods), "UNCOVERED")
+    check("breaks: a GOOD explains a fall of one",
+          v([(at_k_before, 7, 0), (51.5, 6, 0)], goods), "UNCOVERED")
+    check("breaks: more runs than resets, so a move is not the file's",
+          v([(at_k_before, 5, 0), (51.5, 7, 0)], breaks, structure_ok=False, runs=6), "UNCOVERED")
+    check("breaks: a move larger than small_move",
+          v([(at_k_before, 5, 0), (51.5, 5 + PARAMS["small_move"] + 1, 0)], breaks), "UNCOVERED")
+    check("full combo: the read before exactly K rows away at +1, nearest",
+          v([(at_k_before, 1, 0), (51.5, 0, 0)], full), "OFF")
+    r = judge([(at_k_before, 1, 0), (51.5, 0, 0)], full)
+    check("full combo: a disagreeing read exactly K rows away is near, not distant", bool(r.get("distant")), False)
+    check("full combo: +1 exactly K rows before, 0 nearer",
+          v([(at_k_before, 1, 0), (48.5, 0, 0), (51.5, 0, 0)], full), "OFF")
+    check("full combo: +1 K+1 rows before, 0 nearer: the step lies outside the edit's window",
+          v([(past_k_before, 1, 0), (48.5, 0, 0), (51.5, 0, 0)], full), "FLAT")
+    check("full combo: 0 exactly K rows each way", v([(at_k_before, 0, 0), (at_k_after, 0, 0)], full), "FLAT")
+    check("full combo: 0 at K+1 rows before", v([(past_k_before, 0, 0), (51.5, 0, 0)], full), "UNCOVERED")
+    r = judge([(20.5, 1, 0), (51.5, 0, 0)], full)
+    check("full combo: the nearest read 30 rows before at +1 with nothing between", (r["verdict"], r.get("distant")), ("OFF", True))
+    check("full combo: no reads at all", v([], full), "UNCOVERED")
+    check("full combo: an unsettled stretch ending exactly K rows before",
+          v([(at_k_before, 0, 0), (51.5, 0, 0)], full, unsettled=[dict(first=at_k_before - 3, last=at_k_before, level=1)]), "UNCOVERED")
+    check("full combo: an unsettled stretch ending K+1 rows before",
+          v([(48.5, 0, 0), (51.5, 0, 0)], full, unsettled=[dict(first=past_k_before - 3, last=past_k_before, level=1)]), "FLAT")
+    check("full combo: a blind stretch of 2K+1 rows inside a long edit",
+          v([(29.5, 0, 0), (71.5, 0, 0)], full, lo=30.2, hi=70.8), "UNCOVERED")
+    check("full combo: a read every 2K rows inside a long edit",
+          v([(29.5, 0, 0), (46.5, 0, 0), (62.5, 0, 0), (71.5, 0, 0)], full, lo=30.2, hi=70.8), "FLAT")
+    # the edges: fewer than K+1 rows before the edit, or after it
+    check("edge: a level change across an edit 3 rows from the start",
+          v([(-0.5, 5, 0), (3.5, 7, 0)], breaks, lo=2.5, hi=2.5), "OFF")
+    check("edge: a level change across an edit 3 rows from the end",
+          v([(96.5, 5, 0), (100.5, 7, 0)], breaks, lo=97.5, hi=97.5), "OFF")
+    check("edge: one level across an edit 3 rows from the end", v([(96.5, 0, 0), (100.5, 0, 0)], full, lo=97.5, hi=97.5), "FLAT")
+
+    # 3. --no-decode: inside frames_off a capture opens and answers its properties, and refuses to
+    # read, grab or retrieve a frame; outside it the real class is back
+    import cv2
+    real = cv2.VideoCapture
+    with frames_off():
+        cap = cv2.VideoCapture(os.path.join(SCRATCH, "drills", "no-such-video.mp4"))
+        cap.get(cv2.CAP_PROP_FPS)
+        for m in ("read", "grab", "retrieve"):
+            try:
+                getattr(cap, m)()
+                check("frames_off refuses %s" % m, "read a frame", "DecodeRefused")
+            except DecodeRefused:
+                check("frames_off refuses %s" % m, "DecodeRefused", "DecodeRefused")
+        cap.release()
+    check("frames_off restores cv2.VideoCapture", cv2.VideoCapture is real, True)
+
+    # 4. the quarantine list: sources/quarantine.json when it reads, the fallback otherwise
+    global ROOT
+    d = os.path.join(SCRATCH, "drills", "root")
+    shutil.rmtree(d, ignore_errors=True)
+    os.makedirs(os.path.join(d, "sources"))
+    saved = ROOT
+    try:
+        ROOT = d
+        check("quarantine: no file, the fallback", quarantine()[0], QUARANTINE_FALLBACK)
+        with open(os.path.join(d, "sources", "quarantine.json"), "w", encoding="utf-8") as f:
+            json.dump(dict(charts=[dict(chart="Houseplan S17", block_sha="0" * 64), dict(chart="Some Chart S1")]), f)
+        check("quarantine: the file's charts", quarantine(), (("Houseplan S17", "Some Chart S1"), "sources/quarantine.json"))
+        with open(os.path.join(d, "sources", "quarantine.json"), "w", encoding="utf-8") as f:
+            json.dump(dict(charts=[]), f)
+        check("quarantine: an empty list in the file is an empty quarantine", quarantine()[0], ())
+        with open(os.path.join(d, "sources", "quarantine.json"), "w", encoding="utf-8") as f:
+            f.write("{not json")
+        check("quarantine: an unreadable file, the fallback", quarantine()[0], QUARANTINE_FALLBACK)
+    finally:
+        ROOT = saved
+
+    # 5. the promotions file: append-only, one row per (chart, block_sha, audit_version)
+    pj = os.path.join(d, "promotions.jsonl")
+    first = '{"chart": "A S1", "key": "a", "block_sha": "%s", "audit": "FLAT", "covered": true, "audit_version": "v1", "run": "x"}\n' % ("1" * 64)
+    other = '{"chart": "B S2", "key": "b", "block_sha": "%s", "audit": "FLAT", "covered": true, "audit_version": "v1", "run": "x"}' % ("2" * 64)
+    with open(pj, "w", encoding="utf-8", newline="") as f:
+        f.write(first + other)          # no newline at the end: the next row must still start a line
+    row = dict(chart="A S1", key="a", block_sha="1" * 64, audit="FLAT", covered=True, audit_version="v2", run="y")
+    new, unconf = append_promotions(pj, [row], {("A S1", "1" * 64)})
+    check("promotions: the same block under a new audit_version is appended", len(new), 1)
+    check("promotions: a row this run does not promote is reported", [u["chart"] for u in unconf], ["B S2"])
+    new, _ = append_promotions(pj, [row], {("A S1", "1" * 64)})
+    check("promotions: the same (chart, block, version) is not written twice", len(new), 0)
+    text = open(pj, encoding="utf-8", newline="").read()
+    check("promotions: the lines already there are kept byte for byte", text.startswith(first + other + "\n"), True)
+    check("promotions: three rows, each a line", [json.loads(x)["audit_version"] for x in text.splitlines()], ["v1", "v1", "v2"])
+    shutil.rmtree(d, ignore_errors=True)
+
+    print("drills: %d checks, %d failed" % (n[0], len(fails)))
+    for f in fails:
+        print("  FAIL", f)
+    if fails:
+        raise SystemExit(1)
+
+
 # ---------------------------------------------------------------- the command line
 
 def show(rec):
@@ -2086,6 +2306,8 @@ def _main(op, workers):
     elif op == "crops":
         names = [a for i, a in enumerate(sys.argv[2:], 2) if not a.startswith("--") and sys.argv[i - 1] != "--out"]
         crops(names or list(BLIND_REVIEW), arg("--out", "blind-35ms"))
+    elif op == "drills":
+        drills()
     elif op == "version":
         print(AUDIT_VERSION)
         if "--sources" in sys.argv:
