@@ -19,9 +19,18 @@ own worktree on a local `loops/<name>` branch, never committing to main, never p
 **`supervise.py status [<run> ...] [--json]`** / **`stop [<run>] [--clear]`** / **`slots [--max N] [--gaming-max N] [--min-free-gb G]`**
 Runs a loop's jobs, one subprocess per job (a job is usually one chart), and records each in
 an append-only ledger. A jobs file is JSON lines, one `{"id", "cmd", "cwd"?, "timeout"?,
-"slot"?, "env"?, "meta"?}` per job; `"{py}"` as a whole argument becomes this venv's Python with
-`-X utf8 -B`, and `{root}`, `{tools}`, `{run}`, `{run_dir}`, `{job}` are substituted. A job may
-print `VERDICT: <word>`; the last one is its verdict, otherwise OK or FAIL by exit code. A jobs
+"slot"?, "env"?, "retry_exit"?, "retry_after"?, "retry_limit"?, "meta"?}` per job; `"{py}"` as a
+whole argument becomes this venv's Python with `-X utf8 -B`, and `{root}`, `{tools}`, `{run}`,
+`{run_dir}`, `{job}` are substituted. A job may print `VERDICT: <word>`; the last one is its
+verdict, otherwise OK or FAIL by exit code. `retry_exit` names exit codes that mean "not now,
+later" rather than a result: such an exit is recorded as outcome `deferred` (verdict
+RETRY_LATER, not a finished row) and the job goes to the back of the queue, launched again no
+sooner than `retry_after` seconds (default 300) later, up to `retry_limit` deferrals in a row
+(default 12), after which the exit is final with verdict RETRY_EXHAUSTED (`--retry nonzero`
+re-runs it on resume). A job whose command runs `tools/corpus_grade.py` gets `retry_exit [2]`
+unless it says otherwise: the grade exits 2 when it refuses - a pool starved past
+`--stall-timeout` while the owner games, a transient MemoryError or OSError, a worker that died -
+never as a verdict on the corpus (that is 0 or 1). A jobs
 file that does not parse is refused with its line number, before any run folder is created; a
 byte-order mark and CRLF line ends (what PowerShell 5.1's `Out-File` and pipes write) are fine,
 as they are in `slots`' `config.json`.
@@ -60,7 +69,11 @@ checkout's, so all loops see one copy:
   loop's commits and gate-failure `revert-run`s for as long as the owner plays. For that long the
   pool runs one job past its limit (the event is `freeze-deferred`; `status` says "past the limit:
   holds the commit lock"), and the job is frozen the moment it releases. If a mutex stays held
-  for 5 s, nothing is frozen that round and the next round (1 s later) tries again. A lock or
+  for 5 s, nothing is frozen that round and the next round (1 s later) tries again; while that
+  lasts the heartbeat carries `quiesce_blocked_s` and `status` prints FREEZE BLOCKED, since jobs
+  past the gaming limit keep running (it is not escalated to a kill: without the mutexes the
+  supervisor cannot tell a commit-lock holder from the rest, and killing one mid-git is what the
+  freeze rules exist to prevent). A lock or
   mutex wait counts only the time its process was awake (a gap between polls longer than the poll
   plus 2 s is time spent frozen or asleep), so a job frozen while it waited for the commit lock
   keeps waiting when it thaws instead of being refused at once.
@@ -80,7 +93,13 @@ checkout's, so all loops see one copy:
   what taskkill's parent-PID walk cannot (an orphan whose parent already exited), a child that
   exits while its own children keep
   running has them killed (`orphans_killed` in its ledger row counts those processes), and if
-  the supervisor itself dies its children die with it instead of decoding outside any slot.
+  the supervisor itself dies its children die with it instead of decoding outside any slot. A
+  child that cannot be resumed after its assignment is the supervisor's failure, not the job's:
+  it is killed and queued again (PREEMPTED), and recorded as a launch error only the third time
+  in a row. Children get `GIT_OPTIONAL_LOCKS=0`, so a read-only `git status` or `git diff` in a
+  job never takes the worktree's `index.lock` (a job frozen in the middle of one used to be able
+  to block every git write in that worktree); real writes still lock, and loop commits run under
+  the commit lock, whose holder is never frozen.
 - **Being a good guest**: children run at BELOW_NORMAL priority with `CREATE_NO_WINDOW` (without
   it a detached supervisor's children pop console windows over the game), OMP/BLAS threads
   capped at `--threads` (default 2), and `tools/childsite/` first on `PYTHONPATH`. Its
@@ -105,12 +124,14 @@ checkout's, so all loops see one copy:
   bytes) and `sources/oracle-manifest.json`'s hash are recorded in the run manifest and
   re-checked before every launch. Drift halts the run (exit 4): running jobs are killed and
   left unfinished, nothing is reverted, and resuming refuses the new pin without
-  `--accept-pin-change`, because one run must not mix two converters. When the oracle manifest
-  freezes a converter pin (`converter.pin` and `converter.files`, written by
-  `corpus_grade.py`), a run also refuses to start unless the converter matches it, computed the
-  same way (sha256 over `<path>\t<sha256 with CRLF read as LF>` lines for the files it lists);
-  `--converter-unpinned` runs a deliberate candidate converter anyway and records that in the
-  run manifest. `pins` shows both.
+  `--accept-pin-change`, because one run must not mix two converters. The converter must also be
+  the one frozen in `sources/oracle-manifest.json` (`converter.pin` and `converter.files`, written
+  by `corpus_grade.py freeze`), computed the same way (sha256 over `<path>\t<sha256 with CRLF read
+  as LF>` lines for the files it lists): a run refuses to start, and `loopcommit` refuses to
+  commit, when it is not - and, now that the manifest is committed, when the manifest is missing,
+  does not read or carries no pin (each named in the refusal). `--converter-unpinned` runs a
+  deliberate candidate converter anyway and records that in the run manifest. `pins` shows both
+  (on 2026-09-27: pin `e82d48350c50`, ok).
 - **Records** in `work/runs/<run>/`: `manifest.json` (tool HEAD and `tools/` tree hash, the
   argv and options, the converter pin with its git HEAD and the frozen-pin comparison, the
   oracle hash — one entry per attempt), `jobs.jsonl` (the job list, frozen at the first run; a
@@ -120,8 +141,8 @@ checkout's, so all loops see one copy:
   `logs/`.
 - **Resume**: running the same run id again skips every job whose latest row finished (outcome
   `exit`, `timeout` or `launch-error`; `--retry` names kinds to re-run). A job killed by STOP, a
-  halt, a crash or a preemption, or in flight when a supervisor died, has no finished row and
-  runs again. One supervisor per run id at a time.
+  halt, a crash or a preemption, deferred by its `retry_exit`, or in flight when a supervisor
+  died, has no finished row and runs again. One supervisor per run id at a time.
 - **`--detach`** relaunches the supervisor with no window in its own process group and returns
   once its first heartbeat appears, or after 2 minutes without one (its output goes to
   `supervisor.log`). It outlives the terminal and the chat session that started it. It does not
@@ -130,11 +151,13 @@ checkout's, so all loops see one copy:
   supervisor stays inside the app's process container. A run that dies that way resumes from
   its ledger.
 - **`status`** reads every run's heartbeat and ledger: state (`running`, `waiting-slot`,
-  `suspended` when every running job is frozen, `paused-disk`, `retrying`, `stopping`,
+  `waiting-retry` when everything queued said "later", `suspended` when every running job is
+  frozen, `paused-disk`, `retrying`, `stopping`,
   `finished`, `stopped`, `halted`, `crashed` with its error, `DEAD` when the heartbeat says
   active but its PID is gone, or `INCOMPLETE` if a heartbeat says finished while jobs lack a
-  finished row), done/total, verdict counts, what is running and what is frozen, plus the slot
-  pool, the commit lock, the main lock and the global STOP. Only `finished` means done.
+  finished row), done/total, verdict counts, what is running, what is frozen and what is deferred
+  (and for how long yet), a blocked freeze, plus the slot pool, the commit lock, the main lock and
+  the global STOP. Only `finished` means done.
 
 Exit codes: 0 finished (every job has a finished row, whatever its verdict), 3 stopped,
 4 halted, 5 crashed.
@@ -180,9 +203,10 @@ them, if a declared path has nothing to commit or is outside the repository (ano
 included), if HEAD is detached, or if the branch is main (or, without `--allow-branch`, anything
 outside `loops/*`). Before staging it checks the converter, the loop-bucket rule that the pin
 is checked at every commit pass: if the run has a manifest (`work/runs/<run>/manifest.json`),
-the converter's source hash must still be the one the run began with, and if
-`sources/oracle-manifest.json` freezes a converter pin, the converter must match it (unless the
-run was started `--converter-unpinned`); a mismatch refuses the commit and reverts nothing. The
+the converter's source hash must still be the one the run began with, and the converter must
+match the pin frozen in `sources/oracle-manifest.json` - a manifest that is missing or has no pin
+refuses too - unless the run was started `--converter-unpinned`; a mismatch refuses the commit
+and reverts nothing. The
 message gets `Loop-Run: <run>` and the Co-Authored-By trailer (the body may not carry either).
 After committing it checks git's return code, that HEAD advanced by exactly one commit on the
 old HEAD, that the commit touched exactly what was staged and nothing undeclared, and that the
@@ -226,11 +250,16 @@ freeze left it held all ten times), a job frozen past its lock-exec `--timeout` 
 still taking the lock after it thaws, every interpreter inside its job object with the
 assignment delayed 0.5 s (all four escaped before `CREATE_SUSPENDED`), BOM'd jobs files and slot
 config, STOP within one job (run and global), the grace kill, the timeout kill with
-grandchildren and orphan reaping, resume after killing a supervisor, a transient supervisor
+grandchildren and orphan reaping, resume after killing a supervisor, `retry_exit` (a job exiting
+2, 2 then 0 deferred twice and then OK, relaunched no sooner than `retry_after`; a toy named
+`corpus_grade.py` deferred on 2 by default; `retry_limit` exhausted; a plain exit 2 still FAIL;
+`retry_exit [0]` refused), a transient supervisor
 error retried to completion and a persistent one or a planted bug ending as crashed (never
 finished) with no slot leaked, two supervisors serialized by the commit lock, stale-lock and
 stale-slot recovery (including a 0-byte lock, and a lock-exec killed without its child), the
-disk pause and its 40 GiB floor, a converter-drift halt and the frozen-pin comparison,
+disk pause and its 40 GiB floor, a converter-drift halt and the frozen-pin comparison (a
+missing or pinless manifest fails it; a resume on a drifted converter is refused by the frozen pin,
+and with `--converter-unpinned` by the run's own pin),
 `--detach`, loopcommit's refusals (other drive, lock timeout, changed converter), its undo of a
 commit or a revert that fails its check and a BOM'd body file or stdin, revert-run, the pre-push
 hook against a throwaway
@@ -240,14 +269,13 @@ have started, so a slow machine cannot fail a correct pool (a pool that lets too
 still caught). Faults are planted by small wrapper scripts that patch the tool in memory, never
 by hooks in the tools themselves. Every drill uses its own state folder (`PSF_RAILS_STATE`) and
 its own repositories under `--dir` (default `work/rails-selftest/<time>`), so the real pool,
-locks and branches are never touched. About six minutes (more on a busy machine); run it after
-any change to these tools.
+locks and branches are never touched. 26 drills, about seven minutes (more on a busy machine);
+run it after any change to these tools.
 
-Known limits of the freeze, not fixed: a slot a tool takes in-process through `decode_slot()`
+Known limit of the freeze, not fixed: a slot a tool takes in-process through `decode_slot()`
 cannot be frozen, so a tool holding two or more of them when the game starts keeps the machine
-past the gaming limit until it lets them go. And jobs in one worktree share its git index: a job
-frozen during the milliseconds a `git status` in it holds the worktree's `index.lock` would make
-every git write there (a `loopcommit` included) fail until it thaws.
+past the gaming limit until it lets them go. (The git-index limit this paragraph used to name is
+closed by `GIT_OPTIONAL_LOCKS=0`, above.)
 
 ## Checking upstream for new steps
 
@@ -305,12 +333,15 @@ write a temp file in the same directory, fsync it and `os.replace` it over the t
 with backoff while Windows refuses the rename because a reader holds the file; they write exactly
 the bytes the call they replaced wrote (same encoding, same text-mode CRLF), so a report is
 byte-identical to one written before. `StreamWriter` is for scans too long to buffer: it writes
-`<name>.partial`, renames it into place only when the stream completes, then writes
+`<name>.<pid>.partial` (per process, so two scans of one band never write into one file), renames
+it into place only when the stream completes, then writes
 `<name>.done.json` (line count, size, sha256, and whatever the producer records about how it was
 made). The loaders - `load_json`, `load_pickle`, `load_npz`, `read_jsonl` - return None for a
 0-byte, truncated or unloadable file exactly as for a missing one, and say so on stderr, so the
 caller rebuilds it; a stream with a sidecar must match it, a legacy stream without one is
-trusted unless a line fails to parse. `forbid_writes(allow)` puts a read-only phase under an
+trusted unless a line fails to parse. A read Windows refuses with `PermissionError` - the
+milliseconds in which another process is renaming the file into place, or was killed doing so -
+is retried for up to about 7 s and then raised; it is never taken for a missing file. `forbid_writes(allow)` puts a read-only phase under an
 audit hook that refuses every write, rename and delete outside `allow` (paths compared after
 resolving junctions) - which patching `json.dump` cannot do, since by then the file is already
 truncated. `drill` kills writers mid-write (TerminateProcess) and checks the target is the old
@@ -320,7 +351,11 @@ reader holding the target open. First run (2026-09-27, 40 kills a mode): the nai
 a partial file 39 times (the 40th kill fell between two writes); the atomic JSON, pickle and
 stream writers never did - every kill left the previous complete file, the new one, or, before
 any write had completed, none; and of 100 writes under a busy reader, 90 needed a retried rename
-and none of 13,773 reads saw a bad file.
+and none of 13,773 reads saw a bad file. The review then found the drill itself flaky (2 of 4
+runs crashed on an unretried `PermissionError` in its checker), so the loaders retry, and the
+contended reader reads through `load_json` and counts every error it raises. At the integration
+(2026-09-27, three runs of 15 kills a mode): the naive writer left a partial file 14-15 times each
+run, the atomic writers never; 15-26 reads a run needed a retried open, 0 bad, 0 errors.
 
 **`cachekey.py`** (library)
 Cache keys that carry everything the cached thing depends on. The sprite-pass name never held the
@@ -353,9 +388,12 @@ went unnoticed, and a bare commit took along anything anyone had staged. It comm
 pathspec (only those paths), then requires git's return code 0, HEAD advanced by exactly one
 commit onto the HEAD it started from, and that commit touching exactly the declared paths;
 anything else raises `CommitError` and the pass stops there, loudly, after writing back the
-commits that did land so a re-run does not repeat them.
+commits that did land so a re-run does not repeat them. One exception to stopping: a candidate
+already identical to HEAD (it landed another way) raises `NothingToCommit`, which the extraction
+and tick loops' commit passes skip with a line saying so. Pathspecs are literal
+(`GIT_LITERAL_PATHSPECS`), so a song folder named `Song [x]` can never match `Song x`.
 
-**`fsck.py [--json <report.json>] [--quarantine] [--only spritepass,receptor,combo,reports]`**
+**`fsck.py [--json <report.json>] [--quarantine [--path <file under work/> ...]] [--only spritepass,receptor,combo,reports]`**
 What is wrong with the caches under `work/` before a loop trips over it. Report-only by default,
 and it cannot be otherwise: it runs under `atomicio.forbid_writes`, allowing only the `--json`
 report. It loads every sprite pass, receptor fit, template and scan npz, counter scan and loop
@@ -364,16 +402,34 @@ need), disagreeing with its sidecar, an orphaned temp file or `.partial` stream,
 whose candidate is gone, and a counter scan that stops more than 3 s before its video ends - which
 it settles by decoding forward from two seconds before the scan's last frame: if the video goes
 on, the scan was cut short (`truncated scan`, rescan it); if the video stops decoding there too,
-it is `short footage` and a rescan would give the same file. Stale key formats and the superseded
-plain/`.sym` field fits are reported and left alone - nothing reads them, and the old fits are
-kept on purpose. `--quarantine` moves the broken ones (with their sidecars) into
-`work/quarantine/fsck-<time>/`, under their paths in `work/`, with a manifest of why; it never
-deletes, and a quarantined cache is simply missing, so the next reader rebuilds it. First run
-(2026-09-27): no 0-byte or unloadable file anywhere (the two 0-byte field caches were already
-gone), 1 truncated scan (`-1hzF02vOFc.R`, ends at 44 s of a 185 s video that decodes on), 3 short
-because the footage stops decoding (`0T1_HBRTVLc` L and R at 76 s of 125 s declared,
-`1rcd4MaRTDg.C` at 62 s of 128 s), and stale formats: 49 sprite passes, 70 template files and 73
-superseded field fits.
+it is `short footage` and a rescan would give the same file. Reported and left alone: stale key
+formats and the superseded plain/`.sym` field fits (nothing reads them, and the old fits are
+kept on purpose); a scan asked to stop early (`to=`, its sidecar says `range end`: `range scan`);
+a scan of a video on `sources/footage-corrupt.json` (`corrupt footage`); and a temp file or
+partial whose writer's pid is alive, or that is under 10 minutes old (`temp file in use` - its
+writer may be about to rename it). `--quarantine` moves the broken ones (with their sidecars) into
+`work/quarantine/fsck-<time>/`, under their paths in `work/`, only the `--path` ones when named.
+Its `manifest.json` is written before the first move (every file it is about to move, and why)
+and again after each move, so a move that fails part-way (a file a process holds) is recorded as
+failed rather than losing the record. It refuses (exit 2) while any loop is live - a supervisor
+heartbeat whose process is alive in an active state, a live commit-lock holder, a held decode
+slot. It never deletes, and a quarantined cache is simply missing, so the next reader rebuilds it.
+First run (2026-09-27): no 0-byte or unloadable file anywhere (the two 0-byte field caches were
+already gone), 1 truncated scan (`-1hzF02vOFc.R`, ends at 44 s of a 185 s video that decodes on),
+3 short because the footage stops decoding (`0T1_HBRTVLc` L and R at 76 s of 125 s declared,
+`1rcd4MaRTDg.C` at 62 s of 128 s; now reported as corrupt footage), and stale formats: 49 sprite
+passes, 70 template files and 73 superseded field fits. At the integration the truncated scan was
+quarantined (`work/quarantine/fsck-20260927-103814/`) and rescanned: 11,111 frames to 185.2 s,
+sealed with its `.done.json`.
+
+**`sources/footage-corrupt.json`** (read through `guards.footage_corrupt_reason`)
+The cached videos no reader can use, each re-checked with OpenCV on 2026-09-27: `D6Th6URU1Sk` and
+`E1LYZv8mCjE` do not open (no moov atom: incomplete downloads), `0T1_HBRTVLc` stops decoding at
+76.3 s of 124.9 s and `1rcd4MaRTDg` at 61.6 s of 127.5 s, and `AiNqD7lZjiM` (Beat of The War S21),
+read from the start, stops at 15.2 s of 114.1 s after 66 h264 errors. The loops give a chart on
+one of these a FOOTAGE_CORRUPT verdict instead of a PARK (`extract_repair`, `tick_repair`,
+`batch_repair`; `trace_audit` calls it UNCOVERED with that reason): a rescan gives the same file,
+and only a fresh download, which loops may not do, helps.
 
 ## The extraction loop
 
@@ -414,6 +470,12 @@ not an addition — `--redo-reason stepf2` re-runs the charts a report parked fo
 unread — for a re-grade (the second corpus run, after the converter changed), not for a census
 of the reader.
 
+A chart on `sources/owner-revisit.json` is never surveyed: it gets verdict SKIP with the reason
+logged (`guards.owner_revisit_skip`), replacing any PARK an earlier run left for it - Slam D24
+was in this loop's worklist as a PARK until the rails landed - and `commit` refuses such a row.
+A chart whose video is on `sources/footage-corrupt.json` is FOOTAGE_CORRUPT, not PARK (an exact
+file stays EXACT, unread).
+
 The report, the candidates and the proofs are written atomically (`atomicio`), so a survey killed
 mid-write leaves its resume report whole, and each commit goes through `gitcommit.commit_exactly`:
 a commit git refuses, or one that touches anything but the chart's file, stops the pass with the
@@ -447,7 +509,9 @@ what the counter measured. Its worklist is the extraction loop's census (`--cens
 newest `sources/extract-loop-*.json`): the parks whose extraction cleared the bar, nearest the
 count first (`--near`, default 10), full-combo plays before plays with breaks; a chart whose
 extraction candidate applied edits is priced and authored on that candidate, so one commit
-carries both.
+carries both. Owner-revisit charts are skipped with the reason logged (SKIP; the extraction
+census still lists Slam D24 as a PARK) and never committed, and a chart on corrupt footage is
+FOOTAGE_CORRUPT, as in the extraction loop.
 
 How a region is read. The counter is a running count of judged events, so on a play that
 counted every event, a read minus the file's own count up to the same instant is the file's
@@ -510,7 +574,9 @@ events, else one event at a time from the largest regions within three seconds).
 candidate schedules with the converter's own post-loop step (`context=` hands it the segments,
 which do not depend on TICKCOUNTS), and writes a block only when the full converter re-derives
 every region and the total, and `tick_verify` agrees in place. Its commits are checked
-(`gitcommit.commit_exactly`) and its report and apply log are written atomically.
+(`gitcommit.commit_exactly`) and its report and apply log are written atomically. `apply` never
+re-authors or reverts an owner-revisit chart (Destination SC D21 is one our commits changed); it
+logs the skip and moves on.
 
 The gate: the priced clusters' differences must sum to the file's whole deficit (so every edit
 is a measured number and the unread regions are, in total, right as they stand); on a play
@@ -519,7 +585,8 @@ increments the counter and an unread region could hide the tick it took; and aft
 the converter must derive the price on every edited cluster, the file's own ticks on every
 other, and the certified count in total. Everything else parks with the full region table —
 cut times, reads, the file's count at each, taps between — in `work/tick-loop-report[.i].json`.
-The counter scan (`work/combo/<vid>.<band>.jsonl`, `combo_reader`) is made on demand at about
+The counter scan (`combo_reader.scan_path`: `work/combo/<vid>.<band>.jsonl` while the atlas and
+reading code have not moved) is made on demand at about
 1.3× real time a video unless `--no-scan`; a scan that is there but broken (0 bytes, a last line
 a killed scan cut short, a file its `.done.json` does not describe) is made again as if missing.
 `commit` mirrors the extraction loop's: candidate in, `tick_verify` in place, the
@@ -541,14 +608,17 @@ and ratchets the result. **`--rev` takes only the blocks from the commit** (its 
 as git blobs, never the working tree); **the oracle — who is certified, and at what count — is
 still read from the working tree unless `--oracle-rev` names a commit too.** Without `--rev` the
 working tree's blocks are graded. The JSON is deterministic (sorted, no timings; timings go to
-stderr), so two grades of one tree are byte-identical: 1,490 charts, plus the import commit's
+stderr, and with `--out -` the summary line goes to stderr too, so stdout is the JSON alone), so
+two grades of one tree are byte-identical: 1,490 charts, plus the import commit's
 blocks for the tiers, in about 40–60 s cold on 6 workers (depending on what else the shared box
 is running) and about 4–7 s when every block is in the conversion cache (`work/corpus-grade-cache/`,
 keyed by the converter pin, the conversion code's own source, the file's content with CRLF read
 as LF, and the block tag; a 0-byte or torn entry is a miss and is rebuilt; writes are tmp +
 `os.replace`). Workers run at BelowNormal priority.
 
-Only a count is cached. An error row is converted again on every run, and a second time in a
+Only a count is cached, and only a count is believed from the cache: an entry under a matching
+key that is not `{taps, ticks, implied}` with `implied == taps + ticks` is a miss and is converted
+again. An error row is converted again on every run, and a second time in a
 fresh worker before it is believed; if the two answers differ the run refuses. (The converter
 catches its own exceptions while it builds the beat map, so a MemoryError there looks like an
 ordinary failure. A cached one would stay a wrong "not exact" until someone deleted it.) A
@@ -582,6 +652,10 @@ manifest in an oracle commit, never together with stepfile edits, and moves the 
 only with `--repin`, as a commit of its own. Only committed ledgers are oracle:
 `work/certification-tail.json` is the live file `result_reader` appends to, and `grade` says on
 stderr when it holds videos the committed ledger does not.
+
+A supervised job that runs the grade or the gate gets `retry_exit [2]` by default
+(`supervise.py`): exit 2 is the grade refusing - often a pool starved past `--stall-timeout` while
+the owner games - so it is retried later, never recorded as a failed commit pass.
 
 The **gate** grades `--base` and `--head` (default: the working tree), each under its own tree's
 oracle, prints every transition — LOST, GAINED, EDITED-EXACT (a block or its file header
@@ -658,6 +732,11 @@ the grade is refused, and nothing is cached. A worker that kills itself is refus
 `--stall-timeout`. A failure the converter returns as `(None, message)` keeps its message, and
 is converted again rather than cached. A swallowed MemoryError that does not repeat is refused.
 
+Re-run on the integrated branch `loops/rails` (2026-09-27, `drills.py` and `drills_r1.py` in a
+fresh scratch clone of its HEAD, the two tier cases' expected counts moved up by the three
+promotions the integrated ledger carries): 24 of 24, 11 of 11 and 7 of 7 as intended. The
+numbers are in docs/STATUS.md, "The rails".
+
 **`guards.py`** (library)
 The shared definitions the loops and the gate import. `block_sha(ssc_path, block_id)` is the
 contract between them: sha256 of one `#NOTEDATA` block — from the line that starts with
@@ -665,9 +744,14 @@ contract between them: sha256 of one `#NOTEDATA` block — from the line that st
 made LF, trailing whitespace at the end of the block stripped (`str.rstrip()`, so the newline
 and blank lines before the next block go too). `block_id` is an index or the converter's tag
 (`"S18_ARCADE"`, the first block carrying it, header tags inherited). `header_sha` hashes the
-text before the first block, which every block inherits. `is_owner_revisit(chart_or_key)` is the
-skip for `sources/owner-revisit.json`'s charts: a loop that gets True does not survey, re-fix or
-flag the chart. `tag_of(key)` is `extract_repair.block_tag`'s rule.
+text before the first block, which every block inherits; `block_sha_text` / `header_sha_text`
+take a file's contents instead of its path, and `trace_audit` hashes through them, so the audit and
+the gate cannot hash a block two ways (checked at the integration on all 1,490 certified blocks).
+`is_owner_revisit(chart_or_key)` is the skip for `sources/owner-revisit.json`'s charts: a loop
+that gets True does not survey, re-fix or flag the chart; `owner_revisit_skip(chart, key)` is the
+reason a worklist logs when it skips one (extract_repair, tick_repair, batch_repair,
+lattice_reauthor all check it). `footage_corrupt_reason(vid, band)` reads
+`sources/footage-corrupt.json`. `tag_of(key)` is `extract_repair.block_tag`'s rule.
 
 ## Reading footage
 
@@ -679,7 +763,15 @@ digest, the reading code's stamp, and whether it ran to the end of the video or 
 stopped early - a scan killed part-way is never left under the real name looking like a short
 video. The file's name is its key (`scan_path`, see `cachekey.py`): today's atlases and code keep
 the plain name, and a glyph added to an atlas or a change to how a frame is read gives new scans a
-keyed name of their own. Finds the COMBO *label* first and hangs the digit window off it,
+keyed name of their own. Readers go through it too: `load_scan(vid, band)` (None for a missing
+or broken scan), `load_band(vid, band, fallback=("C",))` - the analysis tools' old "this band's
+scan, else the C scan" rule, raising with every path it tried - and `load_anchors(vid, band)`.
+Every tool that reads a scan uses them (tick_repair, batch_repair, trace_audit, rail_ticks,
+run_drift, excess_scan, phantom_scan, auto_anchors, triage, hold_observe, storm_fill,
+curve_assembler, align_schedule, extract_holds, batch_survey; grid_screen reads anchors only), so
+a broken scan reads as missing and a keyed scan is found after an atlas change. On 2026-09-27 all
+554 plain-name scans read identically the old way and through `load_band`. Finds the COMBO
+*label* first and hangs the digit window off it,
 which is what stops a BGA's own numbers being read as combo (Tales of Pumpnia's RPG damage
 popups). A digit-sized unknown glyph voids the read rather than truncating it; only
 sub-digit-width edge fragments are dropped. Unknown glyphs are dumped to `work/combo-unknown/`
@@ -978,7 +1070,9 @@ wrong one gained or lost an event. F(t) is every judged event the lattice conver
 chart time (tap rows, heads that are not tap rows, and each tick-lattice point a hold is held
 across outside warps and fakes), enumerated point for point and refused unless it adds up to the
 converter's `taps + ticks`. The clock is the tick loop's (the file's own notes matched on screen,
-`note_extract` then `extract_repair.align`): taken from the extraction and tick loops' census
+`note_extract` then `extract_repair.align`; the counter scan through `combo_reader.load_scan`, and
+a chart on `sources/footage-corrupt.json` is UNCOVERED with a FOOTAGE_CORRUPT reason before
+anything is read): taken from the extraction and tick loops' census
 records when the record names the chart's certified video and side and the file's timing matches
 the file it was measured on, and otherwise measured here
 in a per-video overlay under `work/rails-audit-scratch/` that copies the shared `work/receptor`
@@ -989,7 +1083,9 @@ swapped for one whose `read`, `grab` and `retrieve` raise), so whether a decode 
 happens, not what the cache files are called: a 0-byte or mismatched pass needs one too. Only
 then is the footage decoded, in a slot from `tools/supervise.py`'s machine-wide pool when that
 tool is present, holding the video's overlay lock with a heartbeat, so a decode longer than the
-lock's 15-minute staleness never looks abandoned. `--no-decode` never reads a frame. The display
+lock's 15-minute staleness never looks abandoned. `--no-decode` never reads a frame; a refused
+first attempt still goes on to the fresh re-seed from the shared caches before it gives up (a
+stale overlay file can want a frame the shared pass does not). The display
 lag is `tick_repair.measure_lag`'s.
 
 Only QUIET reads count - at least 80 ms from every judged event and outside every hold region,
@@ -1042,8 +1138,8 @@ judged whole the same way. Every parameter is in one dict; `audit_version` is sh
 and every source a verdict depends on: this tool, every `tools/` module it imports directly or
 through another (found from the source text; `supervise.py`, which only schedules decodes, left
 out) and the converter's six modules (`version --sources` lists them). So it moves whenever any
-module in that closure changes - `tools/guards.py` once it lands (imported when present), and any
-edit to `extract_repair`, `tick_repair`, `note_extract` and the rest - and a recorded version is
+module in that closure changes - `tools/guards.py`, `combo_reader`, and any edit to
+`extract_repair`, `tick_repair`, `note_extract` and the rest - and a recorded version is
 reproducible only by the tool as it stood when it was written: after a merge that touches the
 closure, re-run `corpus` so the ledger and the promotions carry the merged tool's version. An
 audit that raises is an ERROR, never a verdict: `controls`, `power` and `corpus` count errors on
@@ -1063,9 +1159,9 @@ reason, the calibration, the power table) and appends to `sources/protected-prom
 row, bound to the block's `block_sha` (`tools/guards.py`'s contract; `header_sha` rides along for
 the song header the block inherits) and the audit_version, for each chart whose every edit is
 FLAT and covered and whose whole trace has no OFF, never for a quarantined chart (the charts
-`sources/quarantine.json` lists, the corpus grade's record; the tool's own list of Houseplan S17,
-Wedding Crashers S10 and Imagination S12 is only its fallback while that file is absent), and
-never for an owner-revisit chart (its verdict is recorded, not acted on). The file is
+`sources/quarantine.json` lists, the corpus grade's record - read on every run with no fallback:
+a missing file, one that does not parse or an entry with no chart name stops `corpus` with exit 2
+before any work), and never for an owner-revisit chart (its verdict is recorded, not acted on). The file is
 append-only, as `corpus_grade` enforces: lines already there are kept byte for byte, a (chart,
 block_sha, audit_version) already present is not written twice - so a changed tool that vouches
 for the same block again appends that block's row under its own version, which `corpus_grade`
@@ -1078,11 +1174,15 @@ the verdict rules on synthetic reads in about a second, with no footage: the win
 edit holds exactly the reads its coverage counts (every read position, on grids with rows that
 share a time), the FLAT/OFF/UNCOVERED cases for full combos, plays with breaks and plays with
 GOODs at exactly `k_rows` and one row past it, the chart's edges, `--no-decode`'s refusal to read
-a frame, the quarantine file and its fallback, and the promotions file's append rule.
+a frame, the quarantine file (and the refusal when it is missing, unreadable or malformed), the
+block hash being `guards`' (CRLF, a duplicated tag, a missing tag), and the promotions file's
+append rule. It runs in a per-process scratch root, so two runs cannot race.
 
-First run, 2026-09-27 (`sources/trace-audit-2026-09-27.json`, audit_version `ed1b01e0…`, the
-simfiles tree at `8c9b5de`; re-run after the second review, the first review's run was
-`723351a1…`). **Two corrections first.** The first: the run's first version (audit_version
+First run, 2026-09-27 (audit_version `ed1b01e0…`, the simfiles tree at `8c9b5de`; re-run after
+the second review, the first review's run was `723351a1…`). The ledger now committed as
+`sources/trace-audit-2026-09-27.json` is the re-run on the integrated rails (audit_version
+`d2cdb262…`, below, "Re-run on the integrated rails"); the paragraphs up to there describe the
+audit branch's own run. **Two corrections first.** The first: the run's first version (audit_version
 `047724d3…`, never integrated) promoted three charts and described each as having the counter at
 0 within 1-4 rows either side. For A nightmare S6 and She Likes Pizza D11 that was wrong. Each is
 a finale edit whose only read after it was the counter resting at maxcombo after the last judged
@@ -1103,7 +1203,7 @@ control and every full-combo plant. Nine charts' edit reasons now cite a read ex
 or an unsettled stretch there. The promotion is the same block, and its row was appended again
 under the new audit_version. The first row stays, since the file is append-only.
 
-**Calibration:** the 260 untouched exact charts with a scan come out 0 OFF, 17 FLAT and 243
+**Calibration** (the audit branch's run; the integrated re-run is below): the 260 untouched exact charts with a scan come out 0 OFF, 17 FLAT and 243
 UNCOVERED, with 0 errors, chart for chart the same after the second review. 85 are full-combo
 plays; most of the rest are plays with GOODs, which never audit FLAT. 20 are covered end to end.
 The 5 that had been FLAT and are now UNCOVERED (Arirang S13, Bluish Rose D14, Reality S9, Sugar
@@ -1164,6 +1264,24 @@ first version (about 35 minutes on 5 workers). They are cached per note layout a
 after that. A corpus rerun takes about 15 s. The controls take 49 s, or 94-114 s when the
 population is re-graded. The power table takes 3.5 minutes for the full combos alone, and 7.8
 minutes (470 s) for all three plays. `drills` takes about a second.
+
+**Re-run on the integrated rails** (2026-09-27, `loops/rails` at `02ce4ff`, audit_version
+`d2cdb262…`, the ledger committed now). The merges moved the version (guards, the
+plumbing-touched closure modules, combo_reader) and the population: with the corpus_map merge
+fix the edit-derived exact set is **123 charts**, not 112. `drills`: 85,075 checks, 0 failed.
+Controls: 261 audited (Chicken Wing S9 joins, UNCOVERED on corrupt footage), 0 OFF / 17 FLAT /
+244 UNCOVERED, 0 errors, no control changed verdict (Alone D18 and Banya-P Classic Remix S21 only
+changed reason: corrupt footage, and a full rescan in place of a cut-short one). Power: 1,070
+plants on 256 controls, 0 errors; every full-combo and breaks plant identical plant for plant;
+the GOODs class lost Alone D18 (and with it one of its 6 OFF). Corpus: **3 FLAT, 10 OFF, 110
+UNCOVERED**, 0 errors (edits 14 FLAT, 38 OFF of which 15 distant, 400 UNCOVERED). The 112 charts
+of the first ledger kept every verdict and every reason. The 11 charts the merge fix restored had
+no census clock; their footage was decoded once into the scratch overlays (the shared caches
+untouched): Final Audition S18 and Set me up S10 audit FLAT and covered and were promoted (with
+Get Your Groove On D10 again, under the new version), **My Way S15 audits OFF** (a +7 level held
+from 77.0 s to 96.3 s over 267 reads, 8 rows before its finale edit), and eight are UNCOVERED.
+The corpus takes 106 s with `--no-decode` when every clock must be re-measured from cached
+passes, 262 s when 10 of them decode, and 8 s once the clocks are cached.
 
 **`verify_release.py <release> [--old <release>]`**
 Checks a packaged release actually carries the repairs: the `.ssc` through the converter, the
@@ -1260,7 +1378,7 @@ The closed loop. `--survey` walks a batch and classifies every chart without tou
 reverts any that does not land. `--commit` commits them one chart at a time, titled like the
 census repairs, each through `gitcommit.commit_exactly` (a refused commit stops the batch). Both
 write `work/<tag>-report.json` atomically, one row per chart with its measurements and a
-machine-readable reason. A counter scan that is there but broken is scanned again.
+machine-readable reason. A counter scan that is there but broken is scanned again, looked for under `combo_reader.scan_path` (the name `--scan` writes; after an atlas change that is a keyed name, where the plain one used to send it scanning for an hour and still report no scan). A chart on `sources/owner-revisit.json` is skipped with its reason printed, before survey or author, and a chart on corrupt footage is FOOTAGE_CORRUPT.
 
 The gate ships a chart only when four things hold: the footage is **certified** (a result
 screen's judgement sum equals the catalog count), the **grid is clean** (`run_drift` is not
