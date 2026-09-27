@@ -49,10 +49,96 @@ among them. Newer is not better: their current file drifted off an exact count o
 their notes, never by their labels — a label-keyed diff hides exactly the blocks whose labels
 changed, and a half-double block is compared by cell, since a `{…}` cell is one column.
 
+## Caches, reports and commits: the plumbing every loop stands on
+
+The loops run for days, several at once, over caches that cost hours to rebuild (the 1,413
+sprite passes alone are about seven hours of decoding). Four small modules keep a killed process,
+a changed parameter or a refused commit from turning into a silent wrong answer.
+
+**`atomicio.py`** (library) **/ `atomicio.py drill <scratch dir> [--rounds N] [--modes naive,atomic,pickle,stream]`**
+Every cache, report and ledger write goes through here. `open(path, "w")` truncates a file before
+a byte of the new content exists, so a process killed in between leaves a 0-byte or half-written
+file under the real name - two 0-byte receptor field caches, left by a probe that patched
+`json.dump` after the file was already open, broke Another Truth D19 and Emperor S16 in every
+tool. `write_json` / `write_text` / `write_bytes` / `write_pickle` / `write_npz` / `atomic_open`
+write a temp file in the same directory, fsync it and `os.replace` it over the target, retrying
+with backoff while Windows refuses the rename because a reader holds the file; they write exactly
+the bytes the call they replaced wrote (same encoding, same text-mode CRLF), so a report is
+byte-identical to one written before. `StreamWriter` is for scans too long to buffer: it writes
+`<name>.partial`, renames it into place only when the stream completes, then writes
+`<name>.done.json` (line count, size, sha256, and whatever the producer records about how it was
+made). The loaders - `load_json`, `load_pickle`, `load_npz`, `read_jsonl` - return None for a
+0-byte, truncated or unloadable file exactly as for a missing one, and say so on stderr, so the
+caller rebuilds it; a stream with a sidecar must match it, a legacy stream without one is
+trusted unless a line fails to parse. `forbid_writes(allow)` puts a read-only phase under an
+audit hook that refuses every write, rename and delete outside `allow` (paths compared after
+resolving junctions) - which patching `json.dump` cannot do, since by then the file is already
+truncated. `drill` kills writers mid-write (TerminateProcess) and checks the target is the old
+file or the new one and never a part of either, against a naive `open(..., "w")` writer that must
+be caught leaving partial files for the drill to mean anything, plus a contended phase with a
+reader holding the target open. First run (2026-09-27, 40 kills a mode): the naive writer left
+a partial file 39 times (the 40th kill fell between two writes); the atomic JSON, pickle and
+stream writers never did - every kill left the previous complete file, the new one, or, before
+any write had completed, none; and of 100 writes under a busy reader, 90 needed a retried rename
+and none of 13,773 reads saw a bad file.
+
+**`cachekey.py`** (library)
+Cache keys that carry everything the cached thing depends on. The sprite-pass name never held the
+detection floor the pass was cut at (`FLOORS[0]` times the contrast scale), the strip watched or
+the sprite box; the receptor-template name never held the box, the band's rows or the lanes
+between the two ends; neither said which code built it. Each cache now states its full parameter
+set plus a code stamp - a hash of the compute functions' syntax trees, docstrings and comments
+removed, never of the caching wrapper around them - and `keyed()` gives it its old name while
+every parameter equals its value when the existing files were built (the `*_LEGACY` stamps in the
+tools, and the frozen derivations here: `legacy_sprite_box`, `legacy_rows`, `legacy_lanes`), and
+`<old name minus suffix>.k<digest of the parameters><suffix>` the moment one differs. So today's
+caches all still hit (proven on 2026-09-27: four charts re-read with zero frames decoded and
+results byte-identical to main's) and a changed floor, box, band, fit or rule gets a file of its
+own. New files carry a `<file>.meta.json` sidecar spelling the parameters out. Keyed this way:
+sprite passes (`note_extract.pass_path`), receptor templates (`sprites.anchors_path`), field fits
+(`receptors.field_path`, and `field_key()` which the two caches built on the lanes carry),
+geometry fits (whose old name never said how many columns - a different count now gets its own
+file instead of the other one's lanes) and counter scans (`combo_reader.scan_path`, by atlas
+digest, reading code and range). The receptor scan npz is keyed by its name alone on purpose: it
+has two producers whose output its readers use interchangeably; its sidecar says which. A change
+that moves a stamp re-keys that cache and every file of it is rebuilt on next use -
+`selftest.py` says so when it happens; if that is meant, update the stamp table in the selftest,
+never a `*_LEGACY` constant, which names the code that built the files already on disk.
+
+**`gitcommit.py`** (library)
+`commit_exactly(root, paths, message)` for every commit pass (extract_repair, tick_repair,
+batch_repair, lattice_reauthor). They used to run `git add` and a bare `git commit` with no return
+code read, and record whatever `rev-parse HEAD` said as the chart's commit - so a refused commit
+went unnoticed, and a bare commit took along anything anyone had staged. It commits with a
+pathspec (only those paths), then requires git's return code 0, HEAD advanced by exactly one
+commit onto the HEAD it started from, and that commit touching exactly the declared paths;
+anything else raises `CommitError` and the pass stops there, loudly, after writing back the
+commits that did land so a re-run does not repeat them.
+
+**`fsck.py [--json <report.json>] [--quarantine] [--only spritepass,receptor,combo,reports]`**
+What is wrong with the caches under `work/` before a loop trips over it. Report-only by default,
+and it cannot be otherwise: it runs under `atomicio.forbid_writes`, allowing only the `--json`
+report. It loads every sprite pass, receptor fit, template and scan npz, counter scan and loop
+report, and names each broken one: 0 bytes, unloadable, incomplete (missing what its readers
+need), disagreeing with its sidecar, an orphaned temp file or `.partial` stream, a SHIP report row
+whose candidate is gone, and a counter scan that stops more than 3 s before its video ends - which
+it settles by decoding forward from two seconds before the scan's last frame: if the video goes
+on, the scan was cut short (`truncated scan`, rescan it); if the video stops decoding there too,
+it is `short footage` and a rescan would give the same file. Stale key formats and the superseded
+plain/`.sym` field fits are reported and left alone - nothing reads them, and the old fits are
+kept on purpose. `--quarantine` moves the broken ones (with their sidecars) into
+`work/quarantine/fsck-<time>/`, under their paths in `work/`, with a manifest of why; it never
+deletes, and a quarantined cache is simply missing, so the next reader rebuilds it. First run
+(2026-09-27): no 0-byte or unloadable file anywhere (the two 0-byte field caches were already
+gone), 1 truncated scan (`-1hzF02vOFc.R`, ends at 44 s of a 185 s video that decodes on), 3 short
+because the footage stops decoding (`0T1_HBRTVLc` L and R at 76 s of 125 s declared,
+`1rcd4MaRTDg.C` at 62 s of 128 s), and stale formats: 49 sprite passes, 70 template files and 73
+superseded field fits.
+
 ## The extraction loop
 
-**`extract_repair.py survey [--shard i/n] [--only "<chart>"] [--shapes a,b] [--cache] [--redo] [--ssc <alt.ssc> --expected N]`**
-**`extract_repair.py commit [--dry-run] [--only "<chart>"]`**
+**`extract_repair.py survey [--shard i/n] [--only "<chart>"] [--shapes a,b] [--cache] [--redo] [--ssc <alt.ssc> --expected N] [--out <dir>]`**
+**`extract_repair.py commit [--dry-run] [--only "<chart>"] [--out <dir>]`**
 The note-level successor to `batch_repair.py`, for the two thousand charts the counter cannot
 price. It reads each certified chart off its footage (`note_extract`), aligns the extraction to
 the file's own notes — an anchor, then a straight line for the video's clock — matches note for
@@ -88,6 +174,14 @@ not an addition — `--redo-reason stepf2` re-runs the charts a report parked fo
 unread — for a re-grade (the second corpus run, after the converter changed), not for a census
 of the reader.
 
+The report, the candidates and the proofs are written atomically (`atomicio`), so a survey killed
+mid-write leaves its resume report whole, and each commit goes through `gitcommit.commit_exactly`:
+a commit git refuses, or one that touches anything but the chart's file, stops the pass with the
+reason. `--out <dir>` puts the report and candidates under `<dir>` instead of `work/` (on both
+verbs) - for a proof, a comparison or a re-run of charts whose report and candidates belong to an
+earlier run and must not be written over; keep `<dir>` inside the repo (`work/...`), since
+reports record candidates by their path from the repo root.
+
 Proven before it ran (2026-09-22): the five charts the counter loop made exact came back with
 no edit at all (before the rules they drew 4, 3, 6 and 8 stray additions), and six manual
 repairs re-derived from their seed files found the same holds in the same columns — Another
@@ -105,8 +199,8 @@ candidate ran to +1.3 million ticks inside a BPM gimmick before the gate refused
 
 ## The tick loop
 
-**`tick_repair.py survey [--shard i/n] [--only "<chart>"] [--limit N] [--near N] [--census <file>] [--redo] [--redo-verdict V,V] [--redo-reason <text>] [--no-scan]`**
-**`tick_repair.py commit [--dry-run] [--only "<chart>"] [--census <file>]`**
+**`tick_repair.py survey [--shard i/n] [--only "<chart>"] [--limit N] [--near N] [--census <file>] [--redo] [--redo-verdict V,V] [--redo-reason <text>] [--no-scan] [--out <dir>]`**
+**`tick_repair.py commit [--dry-run] [--only "<chart>"] [--census <file>] [--out <dir>]`**
 Where the extraction loop found the screen showing the file's notes and holds and the count
 still off, this prices every hold region of the file from the combo counter and authors only
 what the counter measured. Its worklist is the extraction loop's census (`--census`, else the
@@ -175,7 +269,8 @@ difference comes off the closure it was priced from (the region carrying half th
 events, else one event at a time from the largest regions within three seconds). It counts
 candidate schedules with the converter's own post-loop step (`context=` hands it the segments,
 which do not depend on TICKCOUNTS), and writes a block only when the full converter re-derives
-every region and the total, and `tick_verify` agrees in place.
+every region and the total, and `tick_verify` agrees in place. Its commits are checked
+(`gitcommit.commit_exactly`) and its report and apply log are written atomically.
 
 The gate: the priced clusters' differences must sum to the file's whole deficit (so every edit
 is a measured number and the unread regions are, in total, right as they stand); on a play
@@ -185,14 +280,25 @@ the converter must derive the price on every edited cluster, the file's own tick
 other, and the certified count in total. Everything else parks with the full region table —
 cut times, reads, the file's count at each, taps between — in `work/tick-loop-report[.i].json`.
 The counter scan (`work/combo/<vid>.<band>.jsonl`, `combo_reader`) is made on demand at about
-1.3× real time a video unless `--no-scan`. `commit` mirrors the extraction loop's: candidate in,
-`tick_verify` in place, the outside-the-block guard, one commit per chart naming every reading.
+1.3× real time a video unless `--no-scan`; a scan that is there but broken (0 bytes, a last line
+a killed scan cut short, a file its `.done.json` does not describe) is made again as if missing.
+`commit` mirrors the extraction loop's: candidate in, `tick_verify` in place, the
+outside-the-block guard, one checked commit per chart naming every reading. `--out`, the atomic
+report and candidate writes and the checked commits are the extraction loop's too; the scratch
+`.ssc` the converter reads while a rate is searched is now private to the process
+(`tmp-<key>.<pid>.ssc`) and removed after use, where two surveys of one chart used to share one.
 
 ## Reading footage
 
 **`combo_reader.py --scan <vid> side=<L|R|C> [atlas=tools/atlas-combo-p2]`**
 OCRs the in-game combo counter frame by frame into `work/combo/<vid>.<band>.jsonl` as
-`[time, value, confidence]`. Finds the COMBO *label* first and hangs the digit window off it,
+`[time, value, confidence]`. The scan is written as `<file>.partial` and renamed into place only
+when it completes, beside `<file>.done.json`: its line and byte counts and sha256, the atlas's
+digest, the reading code's stamp, and whether it ran to the end of the video or the decoder
+stopped early - a scan killed part-way is never left under the real name looking like a short
+video. The file's name is its key (`scan_path`, see `cachekey.py`): today's atlases and code keep
+the plain name, and a glyph added to an atlas or a change to how a frame is read gives new scans a
+keyed name of their own. Finds the COMBO *label* first and hangs the digit window off it,
 which is what stops a BGA's own numbers being read as combo (Tales of Pumpnia's RPG damage
 popups). A digit-sized unknown glyph voids the read rather than truncating it; only
 sub-digit-width edge fragments are dropped. Unknown glyphs are dumped to `work/combo-unknown/`
@@ -224,7 +330,9 @@ Fixed-cell OCR for videos whose digit font the shared atlas cannot read (Imagina
 whose counter sits mid-field under the notes (2P doubles, Love is a Danger Zone pt. 2). Cells
 are fixed boxes hung off the COMBO label; `--calibrate` fits the geometry from frames,
 `--bootstrap` learns a per-video atlas from eye-read frames (`<t>=<digits>`, `?` for an
-occluded cell), `--scan` writes the usual `work/combo/<vid>.<side>.jsonl`. Atlases live in
+occluded cell), `--scan` writes the usual `work/combo/<vid>.<side>.jsonl` - deliberately the
+name combo_reader's scan has, since it replaces a scan the shared atlas could not read - sealed
+the same way, with `tool: cell_reader` in its `.done.json`. Atlases live in
 `tools/atlas-cell/<vid>/`. Never label a frame you have not looked at.
 
 **`receptor_reader.py <vid> <t0> <t1> [key] [offset]`** — note extraction
@@ -236,7 +344,8 @@ floor, so a 16th-note drill re-peaks per hit) and hold spans (lane occupancy ≥
 key it matches onsets against the file's taps and reports the best offset and the
 file-only / video-only events per column. Geometry — receptor band and column centres — is
 fitted once per video from the temporal median of the band (the receptors are the only
-static thing there) and cached in `work/receptor/<vid>.geometry.json`; the centres come from
+static thing there) by `receptors.geometry` and cached in `work/receptor/<vid>.<band>.geometry.json`
+(this tool used to carry its own copy of that fit, writing the same file); the centres come from
 the field's extent (outermost strong profile peaks are the outer borders; `ncols` equal
 receptors fill the span), because every comb fit tried locked onto a harmonic of the
 receptors' inner ridges. `RR_COLS=5` for singles; `RR_THRESH` (flash, default 40; 60–70 on
@@ -245,7 +354,11 @@ white level clips and hits merge, so it under-counts drills — the taps are alr
 file; what this tool is for is the holds.
 
 **`receptors.py`** (library) — the reader's functions (`geometry`, `scan`, `onsets`, `rails`,
-`chartstruct`, `match_offset`, `snap_beat`), used by the two drivers below.
+`chartstruct`, `match_offset`, `snap_beat`), used by the two drivers below. Its caches (the
+geometry and field fits, the scan npz) are written atomically and read back through `atomicio`: a
+0-byte or unreadable one is refitted in place rather than handed to every tool. The fits are
+keyed by their parameters and code (`field_path`, `field_key`, see `cachekey.py`); the compute is
+in `_fit_geometry` / `_fit_field`, which is what the stamp covers.
 
 **`extract_holds.py "<chart>" [offset]`**
 The per-chart extraction survey: scans the whole certified video, derives the offset from the
@@ -534,8 +647,13 @@ only one half of a split screen moves, the partner's Side is corrected in the sa
 **`selftest.py`** - the parts that need no footage
 Every case is a bug that shipped once: the pair that shared one bracket and got counted twice,
 the rerate note in parentheses read as chart codes, the full song that took the arcade song's
-video, the sweep that took the first offset instead of the best. Runs in a second, needs
-nothing. Run it after touching a regex, a parser or a matching rule.
+video, the sweep that took the first offset instead of the best. Runs in a few seconds, needs
+nothing but a temp directory and git. Run it after touching a regex, a parser or a matching rule.
+The plumbing has cases too: atomic writes byte-identical to the plain ones, a 0-byte or cut-short
+cache loading as missing, a stream sealed by its sidecar, cache keys keeping their old names
+until a parameter moves, a checked commit carrying only its own file, a read-only phase that
+cannot open a file for writing - and a table of the code stamps every cache is keyed by, which
+fails when a change would re-key a cache without saying so.
 
 **`golden.py [--only "<chart>"] [--record]`** - the charts whose answer we know
 Re-derives seventeen charts from the footage and fails if the analysis reaches a different
@@ -562,8 +680,9 @@ individual tools are for looking into a chart afterwards.
 The closed loop. `--survey` walks a batch and classifies every chart without touching anything;
 `--author` does the edits the survey called for, re-verifies each with the real converter, and
 reverts any that does not land. `--commit` commits them one chart at a time, titled like the
-census repairs. Both write `work/<tag>-report.json`, one row per chart with its measurements
-and a machine-readable reason.
+census repairs, each through `gitcommit.commit_exactly` (a refused commit stops the batch). Both
+write `work/<tag>-report.json` atomically, one row per chart with its measurements and a
+machine-readable reason. A counter scan that is there but broken is scanned again.
 
 The gate ships a chart only when four things hold: the footage is **certified** (a result
 screen's judgement sum equals the catalog count), the **grid is clean** (`run_drift` is not
