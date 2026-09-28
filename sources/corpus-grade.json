@@ -1,6 +1,6 @@
 {
- "blocks": "8a02bad943eb3df1977f37d1eaa7c4f37bbb9eb0",
- "blocks_digest": "eb22cbbbd2fe1d10fd10e8da9abab54bd25b706598f8afcbebb205b14a056c87",
+ "blocks": "2739802cc24236fa1a00db8f7058e331c10d8b62",
+ "blocks_digest": "c04da9f120a7ba7b8117b154f701823511a0c7d4bf49c3a9ad7c6a363fd4b4c2",
  "charts": [
   {
    "block_sha": "91b47f484879af3251cf6f506b75bc49a3ee74a009f7f34896979bab349835fa",
@@ -1625,33 +1625,11 @@
    "vid": "UJjQiElua9w"
   },
   {
-   "block_sha": "00edc4127dba25c85ed0908f3f0eabe5168f3e4ec1bed4287abc5ca217569320",
-   "chart": "Avalanche D19",
-   "exact": false,
-   "expected": 884,
-   "flags": [
-    "oracle_conflict"
-   ],
-   "header_sha": "1e60d4553ae028932749b506c2e81f2150e64501a1db2b39b4d85f39516b6a91",
-   "implied": 973,
-   "key": "Avalanche_-_MEMME_D19_ARCADE",
-   "protected_by": null,
-   "side": "2p",
-   "ssc_rel": "12 - PRIME/1408 - Avalanche/1408 - Avalanche.ssc",
-   "tag": "D19_ARCADE",
-   "taps": 746,
-   "ticks": 227,
-   "tier": null,
-   "vid": "BJDhXGnI9s8"
-  },
-  {
    "block_sha": "a1f8c5c229f47622744a6c570045a90cb40db3de03afb09016c3e45b4212776e",
    "chart": "Avalanche D20",
    "exact": false,
    "expected": 884,
-   "flags": [
-    "oracle_conflict"
-   ],
+   "flags": [],
    "header_sha": "1e60d4553ae028932749b506c2e81f2150e64501a1db2b39b4d85f39516b6a91",
    "implied": 804,
    "key": "Avalanche_-_MEMME_D20_ARCADE",
@@ -1949,6 +1927,24 @@
    "tag": "S4_ARCADE",
    "taps": 201,
    "ticks": 129,
+   "tier": "PROTECTED",
+   "vid": "ZWwJS2OF-Po"
+  },
+  {
+   "block_sha": "dd5b2b68e6bd5e6863e61f67cffabee6bbe33245f99bc4bef8710d92d22ad14b",
+   "chart": "B2 S7",
+   "exact": true,
+   "expected": 514,
+   "flags": [],
+   "header_sha": "2f5a1405e5eeb89c21cacf0a8ae9ffa4a1c956168f5daa073f6b94164bc725ea",
+   "implied": 514,
+   "key": "B2_-_MAX_S7_ARCADE",
+   "protected_by": "import",
+   "side": "2p",
+   "ssc_rel": "12 - PRIME/1412 - B2/1412 - B2.ssc",
+   "tag": "S7_ARCADE",
+   "taps": 293,
+   "ticks": 221,
    "tier": "PROTECTED",
    "vid": "ZWwJS2OF-Po"
   },
@@ -3159,26 +3155,6 @@
    "vid": "AiNqD7lZjiM"
   },
   {
-   "block_sha": "7a5262cc2321941f550a17acac18966a9685404a28e7f5b9c8186b27e4cacb8f",
-   "chart": "Beat of The War S9",
-   "exact": false,
-   "expected": 500,
-   "flags": [
-    "oracle_conflict"
-   ],
-   "header_sha": "cc09f9e9f69fd2e6c6fa03c15b624f8bd36fe8c91cc3270689ce714b0024e9b4",
-   "implied": 380,
-   "key": "Beat_of_The_War_-_Banya_S9_ARCADE",
-   "protected_by": null,
-   "side": "2p",
-   "ssc_rel": "03 - REBIRTH~PREX 3/(1) 820 - Beat of the War/820 - Beat of the War.ssc",
-   "tag": "S9_ARCADE",
-   "taps": 270,
-   "ticks": 110,
-   "tier": null,
-   "vid": "XNMIAm04k_c"
-  },
-  {
    "block_sha": "4b13318a46b004f60bda85d0ad25febe04728128abd057f93ebe5d12970fec5b",
    "chart": "Bee D15",
    "exact": true,
@@ -4113,6 +4089,42 @@
    "ticks": 770,
    "tier": null,
    "vid": "G6fwGIlDa58"
+  },
+  {
+   "block_sha": "45fdd525804a50e9a4da84ec8ddb314c371ee0824b2ec60997c76d3f8c5f3865",
+   "chart": "CROSS OVER feat. LyuU S15",
+   "exact": true,
+   "expected": 978,
+   "flags": [],
+   "header_sha": "3ac8fc55968d0f18488457c1c92d6f5961598b0301388e2a084eb4dad6b2873e",
+   "implied": 978,
+   "key": "CROSS_OVER_feat._LyuU_-_HyuN_S15_ARCADE",
+   "protected_by": "import",
+   "side": "1p",
+   "ssc_rel": "13 - PRIME 2/1505 - CROSS OVER feat. LyuU/1505 - CROSS OVER feat. LyuU.ssc",
+   "tag": "S15_ARCADE",
+   "taps": 562,
+   "ticks": 416,
+   "tier": "PROTECTED",
+   "vid": "0_CEI-ZCa1k"
+  },
+  {
+   "block_sha": "06f5b9f802df8175932c40730fd451454917b54390e59086e28e4bc877e1a248",
+   "chart": "CROSS OVER feat. LyuU S22",
+   "exact": true,
+   "expected": 1317,
+   "flags": [],
+   "header_sha": "3ac8fc55968d0f18488457c1c92d6f5961598b0301388e2a084eb4dad6b2873e",
+   "implied": 1317,
+   "key": "CROSS_OVER_feat._LyuU_-_HyuN_S22_ARCADE",
+   "protected_by": "import",
+   "side": "1p",
+   "ssc_rel": "13 - PRIME 2/1505 - CROSS OVER feat. LyuU/1505 - CROSS OVER feat. LyuU.ssc",
+   "tag": "S22_ARCADE",
+   "taps": 650,
+   "ticks": 667,
+   "tier": "PROTECTED",
+   "vid": "f5AiaSGOOz8"
   },
   {
    "block_sha": "3c624ca09291cb3c390ade5d0eed1a30d6fa8c268d68b6a14bf12ddbb37570a8",
@@ -5591,6 +5603,24 @@
    "vid": "tohNrM2d5H4"
   },
   {
+   "block_sha": "b5f04af7ca3ffa1c282f1cd460be2a697382d80484dd3aabf0e682b321bbc808",
+   "chart": "Conflict S19",
+   "exact": true,
+   "expected": 1111,
+   "flags": [],
+   "header_sha": "c203fe8f1417389fda167c02c75e7359db755eba1a7e2235ef7a90045209aa85",
+   "implied": 1111,
+   "key": "Conflict_-_Siromaru_+_Cranky_S19_ARCADE",
+   "protected_by": "import",
+   "side": "2p",
+   "ssc_rel": "14 - XX/1676 - Conflict/1676 - Conflict.ssc",
+   "tag": "S19_ARCADE",
+   "taps": 820,
+   "ticks": 291,
+   "tier": "PROTECTED",
+   "vid": "aAy5xvXJyyw"
+  },
+  {
    "block_sha": "10b4b7b7b5663f9020b766df30cb844d614a1bd45079d99f818b3267f2cd19bd",
    "chart": "Conflict S22",
    "exact": true,
@@ -6151,33 +6181,11 @@
    "vid": "hrmoZ3N4Ya0"
   },
   {
-   "block_sha": "a9c7f25db6428e4b278a68074442e1bd768cb8fc641f493726a96eeee56ed2f9",
-   "chart": "D D19",
-   "exact": false,
-   "expected": 811,
-   "flags": [
-    "oracle_conflict"
-   ],
-   "header_sha": "8105f91f4c3eb4c9731a6f5044cfd8ff8ca9d99f1738d07244b3c013505d0d5b",
-   "implied": 826,
-   "key": "D_-_MAX_D19_ARCADE",
-   "protected_by": null,
-   "side": "1p",
-   "ssc_rel": "10 - FIESTA 2/(1) 1312 - D/1312 - D.ssc",
-   "tag": "D19_ARCADE",
-   "taps": 412,
-   "ticks": 414,
-   "tier": null,
-   "vid": "-UdlH4AGPQQ"
-  },
-  {
    "block_sha": "2f6704e8d9d2ae5c98d56f975811be7e0943c65b59b1fac59de805965fb25da0",
    "chart": "D D20",
    "exact": false,
    "expected": 811,
-   "flags": [
-    "oracle_conflict"
-   ],
+   "flags": [],
    "header_sha": "8105f91f4c3eb4c9731a6f5044cfd8ff8ca9d99f1738d07244b3c013505d0d5b",
    "implied": 696,
    "key": "D_-_MAX_D20_ARCADE",
@@ -6949,33 +6957,11 @@
    "vid": "eAe6DrvDUnc"
   },
   {
-   "block_sha": "fee2927a0206968bc0b14e4be67d58fc4f06ac2264036e5d62cbaaf5c6ee609b",
-   "chart": "Dignity D20",
-   "exact": false,
-   "expected": 1011,
-   "flags": [
-    "oracle_conflict"
-   ],
-   "header_sha": "658d8c378cb5b86e2416bdc73b1caa0628f8649e4d366a76eead4a004ed14bb3",
-   "implied": 877,
-   "key": "Dignity_-_Crash_D20_ARCADE",
-   "protected_by": null,
-   "side": "1p",
-   "ssc_rel": "04 - EXCEED~ZERO/(3) A08 - Dignity/A08 - Dignity.ssc",
-   "tag": "D20_ARCADE",
-   "taps": 674,
-   "ticks": 203,
-   "tier": null,
-   "vid": "QRhXZdPcsVo"
-  },
-  {
    "block_sha": "ffa4a953beb64815efd4f53de8464daad3ba2fec420da78496d071adf7d772ab",
    "chart": "Dignity D24",
    "exact": false,
    "expected": 1011,
-   "flags": [
-    "oracle_conflict"
-   ],
+   "flags": [],
    "header_sha": "658d8c378cb5b86e2416bdc73b1caa0628f8649e4d366a76eead4a004ed14bb3",
    "implied": 885,
    "key": "Dignity_-_Crash_D24_INFOBAR_TITLE_ARCADE",
@@ -7007,33 +6993,11 @@
    "vid": "QePuozxEFC8"
   },
   {
-   "block_sha": "70e42a9f8e01f825e49d87286288a4aff06bdcad213753b0aed9eb2aed90a121",
-   "chart": "Dignity S15",
-   "exact": false,
-   "expected": 908,
-   "flags": [
-    "oracle_conflict"
-   ],
-   "header_sha": "658d8c378cb5b86e2416bdc73b1caa0628f8649e4d366a76eead4a004ed14bb3",
-   "implied": 537,
-   "key": "Dignity_-_Crash_S15_ARCADE",
-   "protected_by": null,
-   "side": "2p",
-   "ssc_rel": "04 - EXCEED~ZERO/(3) A08 - Dignity/A08 - Dignity.ssc",
-   "tag": "S15_ARCADE",
-   "taps": 476,
-   "ticks": 61,
-   "tier": null,
-   "vid": "_k_p2osf8x0"
-  },
-  {
    "block_sha": "533678855571310027b776928afd9df4b1d8fa8b997caa357db048af5bee7cb3",
    "chart": "Dignity S21",
    "exact": false,
    "expected": 908,
-   "flags": [
-    "oracle_conflict"
-   ],
+   "flags": [],
    "header_sha": "658d8c378cb5b86e2416bdc73b1caa0628f8649e4d366a76eead4a004ed14bb3",
    "implied": 854,
    "key": "Dignity_-_Crash_S21_INFOBAR_TITLE_ARCADE",
@@ -8565,6 +8529,24 @@
    "vid": "f46zP7lxZMM"
   },
   {
+   "block_sha": "4be063820bbb65eae34698f531061755ecec4cb972a8936ff36eda7a98be72bc",
+   "chart": "Final Audition 3 S9",
+   "exact": true,
+   "expected": 362,
+   "flags": [],
+   "header_sha": "215900177da39cc84c8a1c44f8e4a1e996af4d806957010a55ce6a23668f34dd",
+   "implied": 362,
+   "key": "Final_Audition_3_-_BanYa_S9_ARCADE",
+   "protected_by": "import",
+   "side": "2p",
+   "ssc_rel": "04 - EXCEED~ZERO/(3) A01 - Final Audition 3 U.F/A01 - Final Audition 3 U.F.ssc",
+   "tag": "S9_ARCADE",
+   "taps": 315,
+   "ticks": 47,
+   "tier": "PROTECTED",
+   "vid": "f46zP7lxZMM"
+  },
+  {
    "block_sha": "a0e6094617915a185b1348a579629dda5f6c2d7c5f2fb2504bef9723aa7195c5",
    "chart": "Final Audition D19",
    "exact": true,
@@ -8743,6 +8725,24 @@
    "ticks": 314,
    "tier": null,
    "vid": "ciali2-Sf5o"
+  },
+  {
+   "block_sha": "ceb89e228799e5ada3b4f640bdac47c26d020c00a1a00abca799002018648ac3",
+   "chart": "Final Audition Ep. 2-1 S8",
+   "exact": true,
+   "expected": 459,
+   "flags": [],
+   "header_sha": "797918b05ff79b65de4933b056c647ed6940678161deca4d37661f389ea7a878",
+   "implied": 459,
+   "key": "Final_Audition_Ep._2-1_-_YAHPP_S8_ARCADE",
+   "protected_by": "import",
+   "side": "2p",
+   "ssc_rel": "05 - NX~NX2/(2) D28 - Final Audition Episode 2-1/D28 - Final Audition Episode 2-1.ssc",
+   "tag": "S8_ARCADE",
+   "taps": 240,
+   "ticks": 219,
+   "tier": "PROTECTED",
+   "vid": "HmckgcE_mNk"
   },
   {
    "block_sha": "33f1e35dc176ffa3d4a14a82210894c64eaa13a73f8804d4554bf261c57221eb",
@@ -8977,26 +8977,6 @@
    "ticks": 58,
    "tier": null,
    "vid": "JcWL-YZdy2c"
-  },
-  {
-   "block_sha": "cda1f75f6ce3743aeb88516c0d31fd387c0e02b6aa3d3dd4e01b54a27176104b",
-   "chart": "Final Audition Ep.1 S4",
-   "exact": false,
-   "expected": 606,
-   "flags": [
-    "oracle_conflict"
-   ],
-   "header_sha": "ef4d8f97962f3e7300615204fe2da935d2701088c8e9d69a8cf6f67a67f4cd8f",
-   "implied": 121,
-   "key": "Final_Audition_Ep.1_-_BanYa_S4_ARCADE",
-   "protected_by": null,
-   "side": "1p",
-   "ssc_rel": "02 - S.E.~EXTRA/(1) 922 - Final Audition Episode 1/922 - Final Audition Episode 1.ssc",
-   "tag": "S4_ARCADE",
-   "taps": 121,
-   "ticks": 0,
-   "tier": null,
-   "vid": "DgLesNMzb1w"
   },
   {
    "block_sha": "43b8390b285860e0ee47db7766e61891b4c79f52c197214b6fc801227b0c81ff",
@@ -9339,6 +9319,24 @@
    "ticks": 620,
    "tier": "PROTECTED",
    "vid": "uzLAvDeV4mE"
+  },
+  {
+   "block_sha": "6288450e7068a984a32749aabe1549ea6dfe75dbb4192801b1ac4561be9e58a3",
+   "chart": "Fly high S9",
+   "exact": true,
+   "expected": 485,
+   "flags": [],
+   "header_sha": "f9a6e6d0e2092ba3d0f28f000f312fe3f0a373d5d33684c86578a90315f67e96",
+   "implied": 485,
+   "key": "Fly_high_-_Dreamcatcher_S9_ARCADE",
+   "protected_by": "import",
+   "side": "2p",
+   "ssc_rel": "14 - XX/1645 - Fly high/1645 - Fly high.ssc",
+   "tag": "S9_ARCADE",
+   "taps": 337,
+   "ticks": 148,
+   "tier": "PROTECTED",
+   "vid": "P8uto3fBNtg"
   },
   {
    "block_sha": "4639ebe68a0780a58eae963911ea7d5aab523b4120ceff30f6e3f77d92d67bcf",
@@ -10261,6 +10259,24 @@
    "vid": "BCdJuRWgIoY"
   },
   {
+   "block_sha": "4f825a0b0921305406c193a1df2a45198266e8216a8b49073d8f6436f9e16c22",
+   "chart": "God Mode 2.0 feat. Skizzo S13",
+   "exact": true,
+   "expected": 566,
+   "flags": [],
+   "header_sha": "7b3358690f699445260912164a2314bf4b88705240db148642a99b48290bdd6e",
+   "implied": 566,
+   "key": "God_Mode_2.0_feat._Skizzo_-_Nato_S13_ARCADE",
+   "protected_by": "import",
+   "side": "2p",
+   "ssc_rel": "14 - XX/1702 - God Mode 2.0 feat. Skizzo/1702 - God Mode 2.0 feat. Skizzo.ssc",
+   "tag": "S13_ARCADE",
+   "taps": 458,
+   "ticks": 108,
+   "tier": "PROTECTED",
+   "vid": "KphiHqfCWa8"
+  },
+  {
    "block_sha": "791fcadb9e8e1f804bde58d9c40a786be853e90f174987eaf0a79fec7762dcfd",
    "chart": "God Mode 2.0 feat. Skizzo S17",
    "exact": true,
@@ -10313,6 +10329,24 @@
    "ticks": 1433,
    "tier": "PROTECTED",
    "vid": "HN_nw1aX78g"
+  },
+  {
+   "block_sha": "22aa19c04b9c916e6147a06f05aebd9305cde1a1690389f37b016b24192b4d2b",
+   "chart": "Good Night - FULL SONG - S21",
+   "exact": true,
+   "expected": 1700,
+   "flags": [],
+   "header_sha": "ec29464d37ad471d8a85117af11c09ab2157203c7e60d3234c9d71fbb27e77a8",
+   "implied": 1700,
+   "key": "Good_Night_-_FULL_SONG_-_-_Dreamcatcher_S21_FULLSONG",
+   "protected_by": "import",
+   "side": "2p",
+   "ssc_rel": "14 - XX/16B8 - [Full Song] Good Night/16B8 - [Full Song] Good Night.ssc",
+   "tag": "S21_FULLSONG",
+   "taps": 1029,
+   "ticks": 671,
+   "tier": "PROTECTED",
+   "vid": "2fcRpTiCE1o"
   },
   {
    "block_sha": "c7815181dcf8caa8b164495ee1e3f46062d9bedf59e706d24ee2f0cbc1478e0e",
@@ -11535,6 +11569,24 @@
    "tag": "S6_ARCADE",
    "taps": 247,
    "ticks": 138,
+   "tier": "PROTECTED",
+   "vid": "8S_sQLJ-Ti4"
+  },
+  {
+   "block_sha": "c8ca4a6dfcc798923c166d320a60bd2f86a9c79e91fb89bfcdc1a383955d57dd",
+   "chart": "Higgledy Piggledy S9",
+   "exact": true,
+   "expected": 512,
+   "flags": [],
+   "header_sha": "9837d1a57a7d22d894482b35efe79eff2bfe155e17233725c47b19e87fa2324a",
+   "implied": 512,
+   "key": "Higgledy_Piggledy_-_Banya_Production_S9_ARCADE",
+   "protected_by": "import",
+   "side": "2p",
+   "ssc_rel": "05 - NX~NX2/(1) E24 - Higgledy Piggledy/E24 - Higgledy Piggledy.ssc",
+   "tag": "S9_ARCADE",
+   "taps": 208,
+   "ticks": 304,
    "tier": "PROTECTED",
    "vid": "8S_sQLJ-Ti4"
   },
@@ -15629,6 +15681,24 @@
    "vid": "mf6N5_8Dc1Q"
   },
   {
+   "block_sha": "d24825cf4cbb63cf51adcfdde68898c302a1144557a597f045babdc98010782a",
+   "chart": "Mitotsudaira S9",
+   "exact": true,
+   "expected": 503,
+   "flags": [],
+   "header_sha": "bbbc56f33ef62226cccda772eb3c48ebecdaa7d6b7f44e983fc8be02b21bd37e",
+   "implied": 503,
+   "key": "Mitotsudaira_-_ETIA._S9_ARCADE",
+   "protected_by": "import",
+   "side": "2p",
+   "ssc_rel": "12 - PRIME/1479 - Mitotsudaira/1479 - Mitotsudaira.ssc",
+   "tag": "S9_ARCADE",
+   "taps": 332,
+   "ticks": 171,
+   "tier": "PROTECTED",
+   "vid": "drbcgTxkEGk"
+  },
+  {
    "block_sha": "55cb3b4ada44c524b93a1e1fcb2829ed36f9a0d1cab9b793cdfc363348017485",
    "chart": "Moment Day D11",
    "exact": false,
@@ -15881,20 +15951,20 @@
    "vid": "nEE1JWmsrmw"
   },
   {
-   "block_sha": "a55e6bc84334f054874c954143e60bad60144daa2ba4e0b05eccf1ff5165d853",
+   "block_sha": "559d2fd2b305acf79048c879a7998b0543d0780574e5aed7837d462b7502a326",
    "chart": "Moonlight S18",
    "exact": false,
    "expected": 805,
    "flags": [],
    "header_sha": "0223ec16e289e40ee1e9ea2a97cfd9e1f4879dfa2e62723c7b4cdc7c86ff9e26",
-   "implied": 1002,
-   "key": "Moonlight_-_BanYa_S18_INFOBAR_TITLE_ARCADE",
+   "implied": 766,
+   "key": "Moonlight_-_BanYa_S19_ARCADE",
    "protected_by": null,
    "side": "2p",
    "ssc_rel": "04 - EXCEED~ZERO/(1) C02 - Moonlight/C02 - Moonlight.ssc",
-   "tag": "S18 INFOBAR TITLE_ARCADE",
-   "taps": 508,
-   "ticks": 494,
+   "tag": "S19_ARCADE",
+   "taps": 662,
+   "ticks": 104,
    "tier": null,
    "vid": "d9wLfpyrwUA"
   },
@@ -16349,26 +16419,6 @@
    "ticks": 0,
    "tier": null,
    "vid": "A-ua4qFcTYQ"
-  },
-  {
-   "block_sha": "debb5a99f79047636d128f32159ccdb4a8d0b478d717bfaa8e52af99b6346c8a",
-   "chart": "My Way S8",
-   "exact": false,
-   "expected": 507,
-   "flags": [
-    "oracle_conflict"
-   ],
-   "header_sha": "855b75fc051124a164c9f9ad198b06ba0d5d543177b8d465818bb230b353b7bf",
-   "implied": 277,
-   "key": "My_Way_-_BanYa_S8_ARCADE",
-   "protected_by": null,
-   "side": "2p",
-   "ssc_rel": "03 - REBIRTH~PREX 3/(2) 707 - My Way/707 - My Way.ssc",
-   "tag": "S8_ARCADE",
-   "taps": 277,
-   "ticks": 0,
-   "tier": null,
-   "vid": "bXMj-YNDufs"
   },
   {
    "block_sha": "5cce512033e69029a84d6ff587c7c528caf375cd31894848b18fc4e337c0b5e2",
@@ -16947,6 +16997,24 @@
    "ticks": 290,
    "tier": "PROTECTED",
    "vid": "owVgTSjkBEU"
+  },
+  {
+   "block_sha": "e8d166132764d47f8a0127fce19f4ed3982ceb2cb20f481e265c3a73a5149a96",
+   "chart": "Nihilism - Another Ver. - S18",
+   "exact": true,
+   "expected": 1147,
+   "flags": [],
+   "header_sha": "80a0c93e647439f6f315d0331b4bca7424fa4ab5795cc37c36fc073111028bb6",
+   "implied": 1147,
+   "key": "Nihilism_-_Another_Ver._-_-_Nato_S18_ARCADE",
+   "protected_by": "import",
+   "side": "2p",
+   "ssc_rel": "14 - XX/1694 - Nihilism - Another Ver. -/1694 - Nihilism - Another Ver. -.ssc",
+   "tag": "S18_ARCADE",
+   "taps": 585,
+   "ticks": 562,
+   "tier": "PROTECTED",
+   "vid": "c2sRk0Pws7A"
   },
   {
    "block_sha": "c00d175391f3c520c484befcaafb0c07dd799bbb7042e1ca6278f9ad26484ff6",
@@ -17903,6 +17971,42 @@
    "vid": "XX3igOboGV8"
   },
   {
+   "block_sha": "6f7929fe917f0472c9335ffb9d0f02b96ab4d450462ad799d481d0a0ab60fa6e",
+   "chart": "PaPa Gonzales S8",
+   "exact": true,
+   "expected": 250,
+   "flags": [],
+   "header_sha": "f931b0968916e8bac6615a7d9e14b1e3d27cb99bd995c4d980458718ec2d2401",
+   "implied": 250,
+   "key": "PaPa_Gonzales_-_BanYa_S8_ARCADE",
+   "protected_by": "import",
+   "side": "2p",
+   "ssc_rel": "04 - EXCEED~ZERO/(1) C06 - Papa Gonzales/C06 - Papa Gonzales.ssc",
+   "tag": "S8_ARCADE",
+   "taps": 203,
+   "ticks": 47,
+   "tier": "PROTECTED",
+   "vid": "texD-5Oa1aM"
+  },
+  {
+   "block_sha": "7a7485d21d805c9065e5a41ae963eea87bd1580b5dc6dd7a5980b05f1c64bc3d",
+   "chart": "Papasito (feat.  KuTiNA) - FULL SONG - S19",
+   "exact": false,
+   "expected": 1500,
+   "flags": [],
+   "header_sha": "1bfa8e43a30894a153f69c30da0cd4b41ae04857ed57826b19f9c70eaa619e14",
+   "implied": 1492,
+   "key": "Papasito_(feat.__KuTiNA)_-_FULL_SONG_-_-_Yakikaze__Cashew_S19_FULLSONG",
+   "protected_by": null,
+   "side": "2p",
+   "ssc_rel": "14 - XX/16C9 - [Full Song] Papasito (feat. KuTiNA)/16C9 - [Full Song] Papasito (feat. KuTiNA).ssc",
+   "tag": "S19_FULLSONG",
+   "taps": 1029,
+   "ticks": 463,
+   "tier": null,
+   "vid": "McuAzdecSq4"
+  },
+  {
    "block_sha": "c4c21508c345f03577ea25354d5c452abc50a8fbe2e69d556ee4c30b6050b4cc",
    "chart": "Papasito (feat.  KuTiNA) - FULL SONG - S22",
    "exact": false,
@@ -18209,6 +18313,24 @@
    "vid": "AIOq3e6cd2k"
   },
   {
+   "block_sha": "8978c2a97a8dc9729738f2dfa70373c0605878fd82888a8b77f5e7295a49513c",
+   "chart": "Phalanx \"RS2018 Edit\" S19",
+   "exact": true,
+   "expected": 961,
+   "flags": [],
+   "header_sha": "3d8433814c3f7424dcbacb5f70f82edd435c9b1047ae1ab08c5db1b3afcac66c",
+   "implied": 961,
+   "key": "Phalanx_RS2018_Edit_-_Cranky_S19_ARCADE",
+   "protected_by": "import",
+   "side": "2p",
+   "ssc_rel": "14 - XX/1695 - Phalanx RS2018 edit/1695 - Phalanx RS2018 edit.ssc",
+   "tag": "S19_ARCADE",
+   "taps": 676,
+   "ticks": 285,
+   "tier": "PROTECTED",
+   "vid": "AIOq3e6cd2k"
+  },
+  {
    "block_sha": "09716966ffe46acc869b1dcce4e2a044c67d788d9859d5a8fc2b407db822fb65",
    "chart": "Phalanx \"RS2018 Edit\" S22",
    "exact": true,
@@ -18393,23 +18515,39 @@
    "vid": "I0_oG-zXra0"
   },
   {
-   "block_sha": "34745c2efe3c33be13108c9162a463d57055925d8ced9af972fdab821f2c951a",
-   "chart": "Phantom S18",
-   "exact": false,
-   "expected": 897,
-   "flags": [
-    "oracle_conflict"
-   ],
+   "block_sha": "7fdc5cc1a650a05be63f5ac79607cdef8db43c8993295c3b89cb04d16d881bbd",
+   "chart": "Phantom S13",
+   "exact": true,
+   "expected": 509,
+   "flags": [],
    "header_sha": "8e1765020a755a7bb27f24a81f48713ea5a19a783440a83617b2378c22a4a367",
-   "implied": 945,
-   "key": "Phantom_-_BanYa_S18_ARCADE",
-   "protected_by": null,
+   "implied": 509,
+   "key": "Phantom_-_BanYa_S13_ARCADE",
+   "protected_by": "import",
    "side": "2p",
    "ssc_rel": "04 - EXCEED~ZERO/(1) C05 - Phantom/C05 - Phantom.ssc",
-   "tag": "S18_ARCADE",
-   "taps": 483,
-   "ticks": 462,
-   "tier": null,
+   "tag": "S13_ARCADE",
+   "taps": 321,
+   "ticks": 188,
+   "tier": "PROTECTED",
+   "vid": "d0CKcE6VWhY"
+  },
+  {
+   "block_sha": "d7791365a140f21575c878f764654505a245dc1671e49ad0a5ba85037585dffa",
+   "chart": "Phantom S18",
+   "exact": true,
+   "expected": 897,
+   "flags": [],
+   "header_sha": "8e1765020a755a7bb27f24a81f48713ea5a19a783440a83617b2378c22a4a367",
+   "implied": 897,
+   "key": "Phantom_-_BanYa_S19_ARCADE",
+   "protected_by": "import",
+   "side": "2p",
+   "ssc_rel": "04 - EXCEED~ZERO/(1) C05 - Phantom/C05 - Phantom.ssc",
+   "tag": "S19_ARCADE",
+   "taps": 487,
+   "ticks": 410,
+   "tier": "PROTECTED",
    "vid": "-E5Z5OEkvTc"
   },
   {
@@ -19011,33 +19149,11 @@
    "vid": "5e3nzEulFXY"
   },
   {
-   "block_sha": "3a20829408323a0014aaaf6fb7a00e1baa4cecce4147409ffe99233e1c1c5dfe",
-   "chart": "Pump me Amadeus S16",
-   "exact": false,
-   "expected": 871,
-   "flags": [
-    "oracle_conflict"
-   ],
-   "header_sha": "7beadcb821ef09d2695fbc22c2f67abf0d940d435e37098e580201dc0f3427f4",
-   "implied": 620,
-   "key": "Pump_me_Amadeus_-_BanYa_S16_ARCADE",
-   "protected_by": null,
-   "side": "2p",
-   "ssc_rel": "04 - EXCEED~ZERO/(3) A05 - Pump Me Amadeus/A05 - Pump Me Amadeus.ssc",
-   "tag": "S16_ARCADE",
-   "taps": 363,
-   "ticks": 257,
-   "tier": null,
-   "vid": "PpkLiRF_9kw"
-  },
-  {
    "block_sha": "331ebfb9c586c772833f4b781e3d3056342c33c6460453cc7f7484c17026a6bd",
    "chart": "Pump me Amadeus S18",
    "exact": false,
    "expected": 871,
-   "flags": [
-    "oracle_conflict"
-   ],
+   "flags": [],
    "header_sha": "7beadcb821ef09d2695fbc22c2f67abf0d940d435e37098e580201dc0f3427f4",
    "implied": 601,
    "key": "Pump_me_Amadeus_-_BanYa_S18_ARCADE",
@@ -19159,33 +19275,11 @@
    "vid": "M1nawo2Zu1A"
   },
   {
-   "block_sha": "425a82bd0f3500afa634e0e3cd8ddab25a62a5547f953f193f9481cdd43cbe48",
-   "chart": "Pumptris 8 Bit ver. S17",
-   "exact": false,
-   "expected": 948,
-   "flags": [
-    "oracle_conflict"
-   ],
-   "header_sha": "55acf55483b2b008d71e51b0d23a03ba4cfca39ea500035a678385f1963e2dc1",
-   "implied": 523,
-   "key": "Pumptris_8_Bit_ver._-_YAHPP_S17_ARCADE",
-   "protected_by": null,
-   "side": "2p",
-   "ssc_rel": "06 - NX ABSOLUTE/FE13B - Pumptris 8Bit ver/FE13B - Pumptris 8Bit ver.ssc",
-   "tag": "S17_ARCADE",
-   "taps": 523,
-   "ticks": 0,
-   "tier": null,
-   "vid": "hxbQAQYt4Co"
-  },
-  {
    "block_sha": "ac8ef52d47c72925e9a0b3dae33d79d20f4b88a4467a7a35741a5eb6ede2f4d6",
    "chart": "Pumptris 8 Bit ver. S18",
    "exact": false,
    "expected": 948,
-   "flags": [
-    "oracle_conflict"
-   ],
+   "flags": [],
    "header_sha": "55acf55483b2b008d71e51b0d23a03ba4cfca39ea500035a678385f1963e2dc1",
    "implied": 950,
    "key": "Pumptris_8_Bit_ver._-_YAHPP_S18_ARCADE",
@@ -19559,6 +19653,42 @@
    "vid": "TkQL-g3Co7A"
   },
   {
+   "block_sha": "4cf27222018f76a536006a22d76c48f111a284a1bbf44ddfefa003489bb88b34",
+   "chart": "Rave'til the earth's end D14",
+   "exact": true,
+   "expected": 498,
+   "flags": [],
+   "header_sha": "9d1566d4b6508c81cb5afd8fca25dafd892b3b9dd9aa2f29d153404190de0368",
+   "implied": 498,
+   "key": "Ravetil_the_earths_end_-_5argon_D14_ARCADE",
+   "protected_by": "import",
+   "side": "1p",
+   "ssc_rel": "13 - PRIME 2/1540 - Rave'til the earth's end/1540 - Rave'til the earth's end.ssc",
+   "tag": "D14_ARCADE",
+   "taps": 381,
+   "ticks": 117,
+   "tier": "PROTECTED",
+   "vid": "PmpkstadFM4"
+  },
+  {
+   "block_sha": "9a413d0a8c68e07a0adbd71896b9ec192c4be9a744ff66bd29eef21e10904dec",
+   "chart": "Rave'til the earth's end S15",
+   "exact": true,
+   "expected": 638,
+   "flags": [],
+   "header_sha": "9d1566d4b6508c81cb5afd8fca25dafd892b3b9dd9aa2f29d153404190de0368",
+   "implied": 638,
+   "key": "Ravetil_the_earths_end_-_5argon_S15_ARCADE",
+   "protected_by": "import",
+   "side": "2p",
+   "ssc_rel": "13 - PRIME 2/1540 - Rave'til the earth's end/1540 - Rave'til the earth's end.ssc",
+   "tag": "S15_ARCADE",
+   "taps": 535,
+   "ticks": 103,
+   "tier": "PROTECTED",
+   "vid": "X1w01nMkyrM"
+  },
+  {
    "block_sha": "6b969164ba6481f61c37663d5ec9b31d8e6ad734b4d8f1cc47a03ee6c45a73b7",
    "chart": "Re \\: End of a Dream S19",
    "exact": true,
@@ -19573,6 +19703,24 @@
    "tag": "S19_ARCADE",
    "taps": 575,
    "ticks": 508,
+   "tier": "PROTECTED",
+   "vid": "HoCyS7TGbCI"
+  },
+  {
+   "block_sha": "9e4999e1d9f25e363301273a213e9d6a0494ded251173405f88814de16354494",
+   "chart": "Re \\: End of a Dream S21",
+   "exact": true,
+   "expected": 1373,
+   "flags": [],
+   "header_sha": "0092e3ca4f0c79580a592807b9abbf4da9a7c3a4a79191ceea3c146d480c3aaf",
+   "implied": 1373,
+   "key": "Re__End_of_a_Dream_-_uma_vs._Morimori_Atsushi_S21_ARCADE",
+   "protected_by": "import",
+   "side": "2p",
+   "ssc_rel": "14 - XX/16B2 - Re End of a Dream/16B2 - Re End of a Dream.ssc",
+   "tag": "S21_ARCADE",
+   "taps": 768,
+   "ticks": 605,
    "tier": "PROTECTED",
    "vid": "HoCyS7TGbCI"
   },
@@ -19755,6 +19903,24 @@
    "ticks": 760,
    "tier": null,
    "vid": "xrt7ZP_Em04"
+  },
+  {
+   "block_sha": "136646bcd782f126c57308b8bee34907f2ddff8e33c9422eaebe229fb10cb7bb",
+   "chart": "Red Swan S7",
+   "exact": true,
+   "expected": 456,
+   "flags": [],
+   "header_sha": "8d08f34a09e961faca8a45341f730dca24574f07be249559ea8e63eb3ede805f",
+   "implied": 456,
+   "key": "Red_Swan_-_Yahpp_S7_ARCADE",
+   "protected_by": "import",
+   "side": "2p",
+   "ssc_rel": "12 - PRIME/1421 - Red Swan/1421 - Red Swan.ssc",
+   "tag": "S7_ARCADE",
+   "taps": 251,
+   "ticks": 205,
+   "tier": "PROTECTED",
+   "vid": "U40FoPbp64w"
   },
   {
    "block_sha": "9d74d1661c7f8045131ebd49aed032893871ba193c85ceaa6c3872d2b7ea5db8",
@@ -20945,6 +21111,42 @@
    "vid": "KVM_tG19cg0"
   },
   {
+   "block_sha": "8fcffdbff8e42c777d8cbce273508760c896d8a937bf4e66bd548215fc7a9712",
+   "chart": "Silver Beat feat. ChisaUezono D13",
+   "exact": true,
+   "expected": 639,
+   "flags": [],
+   "header_sha": "8db3432ee1d7e49a196262f896a87a2f707cea72d7e30db166b6251b0146ecfb",
+   "implied": 639,
+   "key": "Silver_Beat_feat._ChisaUezono_-_Tatsh_D13_ARCADE",
+   "protected_by": "import",
+   "side": "1p",
+   "ssc_rel": "13 - PRIME 2/1511 - Silver Beat feat. ChisaUezono/1511 - Silver Beat feat. ChisaUezono.ssc",
+   "tag": "D13_ARCADE",
+   "taps": 370,
+   "ticks": 269,
+   "tier": "PROTECTED",
+   "vid": "fZqK0R6jmy4"
+  },
+  {
+   "block_sha": "af40f36ae55b6ea6e7c93e3b7074e0c8934bc6f9fcc2236fbf805b5712b4728e",
+   "chart": "Silver Beat feat. ChisaUezono S13",
+   "exact": true,
+   "expected": 717,
+   "flags": [],
+   "header_sha": "8db3432ee1d7e49a196262f896a87a2f707cea72d7e30db166b6251b0146ecfb",
+   "implied": 717,
+   "key": "Silver_Beat_feat._ChisaUezono_-_Tatsh_S13_ARCADE",
+   "protected_by": "import",
+   "side": "2p",
+   "ssc_rel": "13 - PRIME 2/1511 - Silver Beat feat. ChisaUezono/1511 - Silver Beat feat. ChisaUezono.ssc",
+   "tag": "S13_ARCADE",
+   "taps": 384,
+   "ticks": 333,
+   "tier": "PROTECTED",
+   "vid": "rqy-6NY0-j8"
+  },
+  {
    "block_sha": "13a0beab84fd06f5af6e805ee350e3e1d38eb55f2d5dfa29d14b458477f2a298",
    "chart": "Silver Beat feat. ChisaUezono S16",
    "exact": true,
@@ -20959,6 +21161,24 @@
    "tag": "S16_ARCADE",
    "taps": 412,
    "ticks": 582,
+   "tier": "PROTECTED",
+   "vid": "znNabG4gI6w"
+  },
+  {
+   "block_sha": "acd3a4a631d12773ac96787547688313395857589dd4a57001e947aa0c73ca02",
+   "chart": "Silver Beat feat. ChisaUezono S18",
+   "exact": true,
+   "expected": 1199,
+   "flags": [],
+   "header_sha": "8db3432ee1d7e49a196262f896a87a2f707cea72d7e30db166b6251b0146ecfb",
+   "implied": 1199,
+   "key": "Silver_Beat_feat._ChisaUezono_-_Tatsh_S18_ARCADE",
+   "protected_by": "import",
+   "side": "2p",
+   "ssc_rel": "13 - PRIME 2/1511 - Silver Beat feat. ChisaUezono/1511 - Silver Beat feat. ChisaUezono.ssc",
+   "tag": "S18_ARCADE",
+   "taps": 437,
+   "ticks": 762,
    "tier": "PROTECTED",
    "vid": "znNabG4gI6w"
   },
@@ -21379,39 +21599,39 @@
    "vid": "EWFf8XA0tJI"
   },
   {
-   "block_sha": "b9743ac4ae76282247b22872b7fe90af5130f02f07a20e12a4a32580f1f100d7",
+   "block_sha": "8f66f5eb0ed51a357ef4224f0b447068c935af685db251e1f81360db3c93cac4",
    "chart": "Solitary S17",
    "exact": false,
    "expected": 713,
    "flags": [],
    "header_sha": "ee5091e10502ca101d7aee81f6fc632557b8785029f27e91b29a88e3020846fb",
-   "implied": 618,
-   "key": "Solitary_-_BanYa_S17_ARCADE",
-   "protected_by": null,
-   "side": "1p",
-   "ssc_rel": "02 - S.E.~EXTRA/(4) 404 - Solitary/404 - Solitary.ssc",
-   "tag": "S17_ARCADE",
-   "taps": 534,
-   "ticks": 84,
-   "tier": null,
-   "vid": "UvFXQY21ef4"
-  },
-  {
-   "block_sha": "8f66f5eb0ed51a357ef4224f0b447068c935af685db251e1f81360db3c93cac4",
-   "chart": "Solitary S18",
-   "exact": false,
-   "expected": 618,
-   "flags": [],
-   "header_sha": "ee5091e10502ca101d7aee81f6fc632557b8785029f27e91b29a88e3020846fb",
    "implied": 629,
    "key": "Solitary_-_BanYa_S18_ARCADE",
    "protected_by": null,
-   "side": "2p",
+   "side": "1p",
    "ssc_rel": "02 - S.E.~EXTRA/(4) 404 - Solitary/404 - Solitary.ssc",
    "tag": "S18_ARCADE",
    "taps": 525,
    "ticks": 104,
    "tier": null,
+   "vid": "UvFXQY21ef4"
+  },
+  {
+   "block_sha": "b9743ac4ae76282247b22872b7fe90af5130f02f07a20e12a4a32580f1f100d7",
+   "chart": "Solitary S18",
+   "exact": true,
+   "expected": 618,
+   "flags": [],
+   "header_sha": "ee5091e10502ca101d7aee81f6fc632557b8785029f27e91b29a88e3020846fb",
+   "implied": 618,
+   "key": "Solitary_-_BanYa_S17_ARCADE",
+   "protected_by": "import",
+   "side": "2p",
+   "ssc_rel": "02 - S.E.~EXTRA/(4) 404 - Solitary/404 - Solitary.ssc",
+   "tag": "S17_ARCADE",
+   "taps": 534,
+   "ticks": 84,
+   "tier": "PROTECTED",
    "vid": "UvFXQY21ef4"
   },
   {
@@ -23217,6 +23437,24 @@
    "vid": "lCI1UWHNfUg"
   },
   {
+   "block_sha": "d6b451f2f6bc00110efc72c2840bfbf1c123c0cd9b4e63fe7f6aad494302e792",
+   "chart": "The People didn't know S16",
+   "exact": true,
+   "expected": 573,
+   "flags": [],
+   "header_sha": "b0786786dbc373fa3135a59861226faaad0a5b55063545f6e09b232d8f1ecb37",
+   "implied": 573,
+   "key": "The_People_didnt_know_-_Banya_Production_S16_ARCADE",
+   "protected_by": "import",
+   "side": "2p",
+   "ssc_rel": "06 - NX ABSOLUTE/F22 - The People didn't Know/F22 - The People didn't Know.ssc",
+   "tag": "S16_ARCADE",
+   "taps": 475,
+   "ticks": 98,
+   "tier": "PROTECTED",
+   "vid": "Y9Li24XWv7Y"
+  },
+  {
    "block_sha": "0836c05ae6222fb19d68fa9414470fd0dcc8f92f82a09f1c36b8b56de31984ac",
    "chart": "The Quick Brown Fox Jumps Over The Lazy Dog D24",
    "exact": true,
@@ -23865,6 +24103,42 @@
    "vid": "x48P0YQdlnE"
   },
   {
+   "block_sha": "ddacd6e3abccb6bcf0064e038f8462bf89edbea1db4cd524f8b229bffd98ea8d",
+   "chart": "Twist of Fate (feat. Ruriling) S10",
+   "exact": true,
+   "expected": 621,
+   "flags": [],
+   "header_sha": "c38277a39ee584a1ecfab08c898ad4bcf7b0f8f62100be40166f060ecc232f14",
+   "implied": 621,
+   "key": "Twist_of_Fate_(feat._Ruriling)_-_Jehezukiel_S10_ARCADE",
+   "protected_by": "import",
+   "side": "2p",
+   "ssc_rel": "13 - PRIME 2/1536 - Twist of Fate (feat. Ruriling)/1536 - Twist of Fate (feat. Ruriling).ssc",
+   "tag": "S10_ARCADE",
+   "taps": 289,
+   "ticks": 332,
+   "tier": "PROTECTED",
+   "vid": "VRJsqe5B_lw"
+  },
+  {
+   "block_sha": "f7abd70762ce38fcf7c5ba314d18923d0dbb3c9e959d141eedc31765c7a5cd80",
+   "chart": "Twist of Fate (feat. Ruriling) S16",
+   "exact": true,
+   "expected": 851,
+   "flags": [],
+   "header_sha": "c38277a39ee584a1ecfab08c898ad4bcf7b0f8f62100be40166f060ecc232f14",
+   "implied": 851,
+   "key": "Twist_of_Fate_(feat._Ruriling)_-_Jehezukiel_S16_ARCADE",
+   "protected_by": "import",
+   "side": "1p",
+   "ssc_rel": "13 - PRIME 2/1536 - Twist of Fate (feat. Ruriling)/1536 - Twist of Fate (feat. Ruriling).ssc",
+   "tag": "S16_ARCADE",
+   "taps": 381,
+   "ticks": 470,
+   "tier": "PROTECTED",
+   "vid": "kJNt1CHDoWg"
+  },
+  {
    "block_sha": "189e1919cba98037512fd6970c731e48b469fe9a87c69b269f9c5d6bcef5a524",
    "chart": "U Got 2 Know S19",
    "exact": false,
@@ -24169,6 +24443,24 @@
    "ticks": 592,
    "tier": null,
    "vid": "QduChQxkSQ8"
+  },
+  {
+   "block_sha": "ffc0a3801a8b267d4574972e667dbb7cf0856e61a17ddda09057ca48963ce75f",
+   "chart": "Up & Up (Produced by AWAL) D21",
+   "exact": true,
+   "expected": 836,
+   "flags": [],
+   "header_sha": "c248b4e06be3efb91904861ac78f2f22bd0a2a68f1109acdc8a92fa12b9ed72d",
+   "implied": 836,
+   "key": "Up__Up_(Produced_by_AWAL)_-_Skizzo_D21_ARCADE",
+   "protected_by": "import",
+   "side": "1p",
+   "ssc_rel": "13 - PRIME 2/1538 - Up & Up (Produced by AWAL)/1538 -  Up & Up (Produced by AWAL).ssc",
+   "tag": "D21_ARCADE",
+   "taps": 484,
+   "ticks": 352,
+   "tier": "PROTECTED",
+   "vid": "mF3QNUtKTFE"
   },
   {
    "block_sha": "469246368c0b0628bd581af1836a1fcad1baf83828bbdbb7922bf82478c404bd",
@@ -24999,23 +25291,21 @@
    "vid": "f0Syr_zdY_0"
   },
   {
-   "block_sha": "c55ca22f38e5e6a634a82b525f9ff5be77e274721bd1cac755d35336816709b8",
+   "block_sha": "49ac4b9dc2621e9d81c0efb53ce286f1eb038ed0905ce5833f2549634b837daa",
    "chart": "Vook S10",
-   "exact": false,
+   "exact": true,
    "expected": 552,
-   "flags": [
-    "oracle_conflict"
-   ],
+   "flags": [],
    "header_sha": "c51b407adfb8c4eb02f59d64acb08bc1cfaca5ff88268d0cbe7d31b2b88cc7ac",
-   "implied": 354,
-   "key": "Vook_-_Banya_S10_ARCADE",
-   "protected_by": null,
+   "implied": 552,
+   "key": "Vook_-_Banya_S16_INFOBAR_TITLE_ARCADE",
+   "protected_by": "import",
    "side": "2p",
    "ssc_rel": "03 - REBIRTH~PREX 3/(2) 735 - Vook/735 - Vook.ssc",
-   "tag": "S10_ARCADE",
-   "taps": 354,
+   "tag": "S16 INFOBAR TITLE_ARCADE",
+   "taps": 552,
    "ticks": 0,
-   "tier": null,
+   "tier": "PROTECTED",
    "vid": "3PO5ckDXVpc"
   },
   {
@@ -25759,33 +26049,11 @@
    "vid": "F3YBg2Xxjoo"
   },
   {
-   "block_sha": "904b32a9ecebf1114d226bfd733c5bc1637504faed834109c34b2bfd2aa2bd2e",
-   "chart": "Witch Doctor #1 D20",
-   "exact": false,
-   "expected": 1050,
-   "flags": [
-    "oracle_conflict"
-   ],
-   "header_sha": "9e995c1400f50ad3626e2e036af66d45df6bce885490f2c4ce2f946364a3386c",
-   "implied": 1111,
-   "key": "Witch_Doctor_1_-_YAHPP_D20_INFOBAR_TITLE_ARCADE",
-   "protected_by": null,
-   "side": "1p",
-   "ssc_rel": "05 - NX~NX2/(2) D01 - Witch Doctor #1/D01 - Witch Doctor #1.ssc",
-   "tag": "D20 INFOBAR TITLE_ARCADE",
-   "taps": 447,
-   "ticks": 664,
-   "tier": null,
-   "vid": "YuuOqPltYlc"
-  },
-  {
    "block_sha": "065c6915dcadc6f4d4fb836a3945d7aee1f0ef86c0142a99c2feb61ac15a4456",
    "chart": "Witch Doctor #1 D21",
    "exact": false,
    "expected": 1050,
-   "flags": [
-    "oracle_conflict"
-   ],
+   "flags": [],
    "header_sha": "9e995c1400f50ad3626e2e036af66d45df6bce885490f2c4ce2f946364a3386c",
    "implied": 978,
    "key": "Witch_Doctor_1_-_YAHPP_D21_INFOBAR_TITLE_ARCADE",
@@ -25797,26 +26065,6 @@
    "ticks": 496,
    "tier": null,
    "vid": "YuuOqPltYlc"
-  },
-  {
-   "block_sha": "e2e771ba0bcd87877a892f88168892146dca0d61b716e5cd0c4a5ada6bc0c2f4",
-   "chart": "Witch Doctor #1 S17",
-   "exact": false,
-   "expected": 807,
-   "flags": [
-    "oracle_conflict"
-   ],
-   "header_sha": "9e995c1400f50ad3626e2e036af66d45df6bce885490f2c4ce2f946364a3386c",
-   "implied": 723,
-   "key": "Witch_Doctor_1_-_YAHPP_S17_ARCADE",
-   "protected_by": null,
-   "side": "2p",
-   "ssc_rel": "05 - NX~NX2/(2) D01 - Witch Doctor #1/D01 - Witch Doctor #1.ssc",
-   "tag": "S17_ARCADE",
-   "taps": 411,
-   "ticks": 312,
-   "tier": null,
-   "vid": "Aq6KNVdA6N4"
   },
   {
    "block_sha": "76609124d5b1dd24cd010c5dde789103a41bc1614585ca1aa6372073965c895e",
@@ -25841,9 +26089,7 @@
    "chart": "Witch Doctor #1 S19",
    "exact": false,
    "expected": 807,
-   "flags": [
-    "oracle_conflict"
-   ],
+   "flags": [],
    "header_sha": "9e995c1400f50ad3626e2e036af66d45df6bce885490f2c4ce2f946364a3386c",
    "implied": 718,
    "key": "Witch_Doctor_1_-_YAHPP_S19_ARCADE",
@@ -25875,21 +26121,21 @@
    "vid": "MDYoadm6CCQ"
   },
   {
-   "block_sha": "72b56d6f084928d4ea7249ec229512d373c72a29c4f9b8d556b1506a78f25006",
+   "block_sha": "ed89e5cdba5d0bef28ac669e6308840149be2c5a07397cf275551abd865bccb7",
    "chart": "Witch Doctor D22",
-   "exact": false,
+   "exact": true,
    "expected": 1162,
    "flags": [],
    "header_sha": "29c00e31551d79c2593937a4c4a5d9dfa81e7d43727d09b0e02352925306ee1d",
-   "implied": 1340,
-   "key": "Witch_Doctor_-_BanYa_D22_ARCADE",
-   "protected_by": null,
+   "implied": 1162,
+   "key": "Witch_Doctor_-_BanYa_D23_INFOBAR_TITLE_ARCADE",
+   "protected_by": "import",
    "side": "1p",
    "ssc_rel": "04 - EXCEED~ZERO/(1) C03 - Witch Doctor/C03 - Witch Doctor.ssc",
-   "tag": "D22_ARCADE",
-   "taps": 534,
-   "ticks": 806,
-   "tier": null,
+   "tag": "D23 INFOBAR TITLE_ARCADE",
+   "taps": 641,
+   "ticks": 521,
+   "tier": "PROTECTED",
    "vid": "yuOeT6liU_w"
   },
   {
@@ -26905,16 +27151,16 @@
  "import_commit": "a23cee5be405f5f9571d268f6ad71c162c1fb9fd",
  "legacy_oracle_reads": [],
  "oracle": "WORKTREE",
- "oracle_hash": "054afdd6fbe93ce7b1ddc160e6434147cc6dfe166aa50116215458abda4bc687",
+ "oracle_hash": "a90d9a0628b7baf5dedb0c73b855f80ec1082ef0e7f0de4a7fbef51bb35af573",
  "summary": {
-  "certified": 1490,
+  "certified": 1506,
   "errors": 0,
-  "exact": 749,
-  "exact_at_import": 626,
+  "exact": 779,
+  "exact_at_import": 656,
   "exact_oracle_conflict": 2,
   "exact_quarantine": 3,
-  "protected": 629,
-  "protected_by_import": 626,
+  "protected": 659,
+  "protected_by_import": 656,
   "protected_by_promotion": 3,
   "protected_not_exact": [],
   "provisional": 120
