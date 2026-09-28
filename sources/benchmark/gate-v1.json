@@ -1,0 +1,83 @@
+{
+ "bench": "extractor-replay",
+ "caps": {
+  "candidates": 40,
+  "looks_per_family": 3,
+  "looks_per_split": 20,
+  "sealed_looks": 1
+ },
+ "criteria": [
+  {
+   "id": "f1_gain",
+   "on": "split",
+   "rule": "pooled note F1 at 45 ms rises by at least 0.20 points"
+  },
+  {
+   "id": "bootstrap",
+   "on": "split",
+   "rule": "the 2.5th percentile of the pooled F1 gain over 2000 resamples of the split's components (with replacement, seed from the candidate's diff hash) is above 0"
+  },
+  {
+   "id": "top5",
+   "on": "split",
+   "rule": "the pooled F1 gain stays above 0 with the 5 charts that gained most removed"
+  },
+  {
+   "id": "tolerances",
+   "on": "split",
+   "rule": "the pooled F1 gain is above 0 at 30 ms and at 60 ms as well"
+  },
+  {
+   "id": "timing_p90",
+   "on": "split",
+   "rule": "the p90 of |timing error| over matched notes at 45 ms does not rise by more than 0.1 ms (read of 'the gain shows in p90': not bought with looser matches)"
+  },
+  {
+   "id": "real_lost",
+   "on": "split+tune",
+   "rule": "file notes the baseline matched and the candidate does not: at most max(3, 0.02% of the file notes) in all, and at most 1 on any chart"
+  },
+  {
+   "id": "removed_extras",
+   "on": "split+tune",
+   "rule": "of the baseline's notes the candidate removed, at least 99% were extras"
+  },
+  {
+   "id": "additions",
+   "on": "split+tune",
+   "rule": "planned add-tap + add-hold edits on these count-exact files (frozen alignment) do not rise"
+  },
+  {
+   "id": "hold_edits",
+   "on": "split+tune",
+   "rule": "planned tail + tap->hold edits on these count-exact files do not rise"
+  },
+  {
+   "id": "pinned_holds",
+   "on": "split+tune",
+   "rule": "on holds the count pins: hold-state recall does not fall, and the share of pinned tails read within 60 ms does not fall"
+  },
+  {
+   "id": "jack_sentinel",
+   "on": "sentinel",
+   "rule": "recall of jack notes on the jack sentinels does not fall"
+  },
+  {
+   "id": "short_hold_sentinel",
+   "on": "sentinel",
+   "rule": "recall of short-hold heads on the short-hold sentinels does not fall"
+  },
+  {
+   "id": "backed_sentinel",
+   "on": "sentinel",
+   "rule": "every counter-backed note the baseline extracts is still extracted"
+  },
+  {
+   "id": "canary",
+   "on": "canary",
+   "rule": "official-canary pooled recall does not fall and no canary loses more than 1 real note (N/A until the canary is frozen: such accepts carry 'NEVSISTER-validated only')"
+  }
+ ],
+ "fixed": "with the manifest, before any baseline",
+ "version": "v1"
+}

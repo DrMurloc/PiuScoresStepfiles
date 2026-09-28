@@ -75,6 +75,26 @@ HIPASS = 0.0              # rows, in sprite heights, the smooth-down-the-screen 
                           # measured over and removed from both pictures
 REST = 0.0                # share of a column's own dimmest frames the receptor is read from
 MERGE = 0.015             # two detections nearer than this in one column are one note
+# A short hold's tail cap (tools/bench_rules.py tailcap-d, accepted by the extractor bench). A cap is
+# the head's own sprite, and mark_holds swallows it only inside a rail its head claimed - but the lit
+# bar a hold of about a tenth of a second leaves under its lane is too faint and brief for the rails
+# mark_holds reads (0.40 occupancy, 0.065 s), so the head claims nothing and the cap survives as an
+# extra: half of the extras on the benchmark's tune charts. Read looser, the bar is there, and it
+# opens as the head arrives and CLOSES as the cap goes by, where a jack's first tap leaves a flash
+# that does not wait for the second; both sprites of a short hold correlate weaker than the chart's
+# taps (the body runs through the matching window) and scroll at one speed. Every bound is the
+# central 90% of the caps the rule's looser form removed on the tune split - except where the bar may
+# open: a second pass (tailcap-e) lets it open up to 35 ms from the head, which is where the caps the
+# first pass left on the tune split opened (a median 24 ms). Two passes, in this order, because that
+# is what the benchmark graded: the second reads the chart's median correlation after the first.
+CAP_OCC, CAP_RAIL_MIN = 0.25, 0.03        # the looser lane reading: occupancy, shortest bar (s)
+CAP_OPEN = (0.019, 0.035)                 # s: the bar opens this near the head, one pass per value
+CAP_CLOSE = 0.012                         # s: and closes this near the cap
+CAP_BAR = (0.075, 0.125)                  # s: and runs this long (5-7 frames)
+CAP_GAP = (0.065, 0.100)                  # s: from head to cap
+CAP_HEAD_Q = (0.78, 0.945)                # the head's strongest correlation, as a share of the chart's median
+CAP_Q = 0.91                              # the cap's, under this share
+CAP_SPEED = 0.02                          # the two scroll at one speed, within this share
 # The decode is the whole cost, and everything after it - which correlation to believe, the
 # holds, the grid - is post-processing worth re-running many times over the same pass. Off by
 # default: a corpus run of two thousand charts should not leave two thousand of these behind.
@@ -418,6 +438,53 @@ def mark_holds(scan, notes, tol=0.15):
     notes[:] = keep
     return n_hold
 
+def streak_q(n, ts, scored, floor):
+    """The strongest correlation on a note's own streak: the pass's hits in its column on the frames
+    it was tracked over, within 6 px of the line it was fitted to."""
+    cst = n["yj"] - n["v"] * n["t"]
+    i0, i1 = np.searchsorted(ts, n["first"] - 1e-6), np.searchsorted(ts, n["last"] + 1e-6)
+    best = None
+    for i in range(i0, i1):
+        y = n["v"] * ts[i] + cst
+        for a, b, q, s in scored[i][n["col"]]:
+            if q >= floor and abs(a - y) <= 6 and (best is None or q > best):
+                best = q
+    return best
+
+def drop_short_caps(ts, scored, scan, notes, floor, open_):
+    """The tail caps of short holds no rail was claimed for (CAP_*, the bar opening within `open_` of
+    the head), out of `notes`. Returns how many."""
+    speeds = [-n["v"] for n in notes if n.get("v")]
+    lag = ((scan["y1"] - scan["y0"]) / 2.0 + 8.0) / float(np.median(speeds)) if speeds else 0.06
+    rails = R.rails(scan, CAP_OCC, CAP_RAIL_MIN)
+    qs = [streak_q(n, ts, scored, floor) for n in notes]
+    known = [q for q in qs if q is not None]
+    if not known:
+        return 0
+    med = float(np.median(known))
+    cols = {}
+    for k, n in enumerate(notes):
+        cols.setdefault(n["col"], []).append(k)
+    drop = set()
+    for c, idx in cols.items():
+        idx.sort(key=lambda k: notes[k]["t"])
+        spans = rails.get(c, [])
+        for u, v in zip(idx, idx[1:]):
+            nu, nv = notes[u], notes[v]
+            gap = nv["t"] - nu["t"]
+            if nu.get("hold_end") is not None or u in drop or not (CAP_GAP[0] <= gap <= CAP_GAP[1]):
+                continue
+            if qs[u] is None or qs[v] is None or not (CAP_HEAD_Q[0] * med <= qs[u] < CAP_HEAD_Q[1] * med) \
+                    or qs[v] >= CAP_Q * med:
+                continue
+            if not nu.get("v") or abs(nv["v"] / nu["v"] - 1.0) > CAP_SPEED:
+                continue
+            if any(abs(a + lag - nu["t"]) <= open_ and CAP_BAR[0] <= b - a <= CAP_BAR[1] and abs(b + lag - nv["t"]) <= CAP_CLOSE
+                   for a, b in spans):
+                drop.add(v)
+    notes[:] = [n for k, n in enumerate(notes) if k not in drop]
+    return len(drop)
+
 def extract_video(vid, ncols, side="1p", band="C", dur=None, quiet=False):
     """Read a chart off a video this repo knows nothing else about.
 
@@ -444,7 +511,14 @@ def extract(name, quiet=False):
     six extra passes the blob detector cost are gone; what is left to choose is how strong a
     correlation to believe, and that is re-cut from the one pass at no further cost.
     """
-    cert = corpus_map.certification()
+    return _read(*footage_of(name), quiet)
+
+def footage_of(name, cert=None):
+    """(vid, band, ncols, side, dur): the footage a read of this certified chart is - its certified
+    video, the pad's band and side, and how much of it to read. `cert` is a certification ledger as
+    corpus_map.certification() returns it (that, when None); tools/bench.py passes the committed
+    ledgers so a frozen benchmark does not move with the live one."""
+    cert = corpus_map.certification() if cert is None else cert
     ncols = 10 if name.split()[-1][0] == "D" else 5
     vid, e = next((v, e) for v, e in cert.items() if name in (e.get("charts") or {}))
     # An UNCERTIFIED video has not been shown to be this chart, and worse, nothing says WHICH
@@ -459,7 +533,7 @@ def extract(name, quiet=False):
     side = e["charts"][name].get("side") or "1p"
     other = e.get("2p" if side == "1p" else "1p") or {}
     band = "C" if not other.get("judged") else ("L" if side == "1p" else "R")
-    return _read(vid, band, ncols, side, float(e.get("t") or 150), quiet)
+    return vid, band, ncols, side, float(e.get("t") or 150)
 
 def _pass_code():
     """The stamp of everything that decides what a sprite pass holds: the decode loop, the matcher,
@@ -503,7 +577,11 @@ def pass_path(params):
                                           y0=r0, y1=r1, xs=legacy_lanes(p["xs"]), th=th0, tw=tw0, field="",
                                           code=PASS_CODE_LEGACY[p["refine"]]))
 
-def _read(vid, band, ncols, side, dur, quiet):
+def _pass_for(vid, band, ncols, side, dur):
+    """Which sprite pass a read of this footage is: the receptor templates, how sharp they say the
+    footage is, the correlation floors that sharpness scales to, and the pass's parameters and cache
+    file. Nothing here reads a frame when the templates and the field fit are cached - which is what
+    lets tools/bench.py replay a pass exactly as a read would, from the cache alone."""
     anc, th, tw = anchor_set(vid, band, ncols, side)
     if not any(A is not None for A in anc):
         raise RuntimeError("no receptor sprites for %s band %s" % (vid, band))
@@ -512,8 +590,6 @@ def _read(vid, band, ncols, side, dur, quiet):
     sharp = float(np.mean([A.std() for A in anc if A is not None]))
     scale = min(1.0, sharp / REFERENCE)
     floors = [round(f * scale, 3) for f in FLOORS]
-    if REFINE:
-        anc, kept = harvest(vid, band, ncols, 0.5, min(60.0, dur), side)
     cap = cv2.VideoCapture(os.path.join(ROOT, "videos", vid + ".mp4"))
     fy0, fy1, fxs = R.field(cap, vid, band, ncols, side)
     frame_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -522,7 +598,12 @@ def _read(vid, band, ncols, side, dur, quiet):
         raise IOError("videos/%s.mp4 does not open (no frame height): nothing to extract" % vid)
     params = _pass_params(vid, band, side, ncols, dur, scale, floors[0], fy0, fy1, fxs, th, tw,
                           R.field_key(vid, band, ncols, side), frame_h)
-    ck = pass_path(params)
+    return anc, sharp, floors, params, pass_path(params)
+
+def _read(vid, band, ncols, side, dur, quiet):
+    anc, sharp, floors, params, ck = _pass_for(vid, band, ncols, side, dur)
+    if REFINE:
+        anc, kept = harvest(vid, band, ncols, 0.5, min(60.0, dur), side)
     got = atomicio.load_pickle(ck) if CACHE else None
     if got is not None and not (isinstance(got, tuple) and len(got) == 6):
         print("[note_extract] %s: not a sprite pass - read again" % ck, file=sys.stderr)
@@ -542,7 +623,16 @@ def _read(vid, band, ncols, side, dur, quiet):
     cap.release()
     if same:
         R.save_scan(vid, band, ncols, 0.5, dur, scan)
+    return post_decode(ts, scored, fps, y0, y1, scan, floors, ncols, vid=vid, band=band, side=side,
+                       sharp=sharp, quiet=quiet)
 
+def post_decode(ts, scored, fps, y0, y1, scan, floors, ncols, vid=None, band=None, side=None, sharp=None,
+                quiet=True):
+    """Everything after the decode, over one sprite pass: which correlation floor to believe, the
+    notes at it, and which of them are holds. The ONE copy of this step - _read calls it on the pass
+    it just decoded or loaded, and tools/bench.py calls it on a cached pass to grade a change to it
+    without decoding anything. `floors` are FLOORS scaled to the footage (_pass_for); vid, band,
+    side and sharp only label the output."""
     # Which correlation to believe is settled by a SECOND, unrelated sensor: the receptor
     # flashes, judged events read at the top of the screen by completely different means. A
     # floor is good when the two agree in both directions. Neither sensor sees the stepfile.
@@ -591,8 +681,9 @@ def _read(vid, band, ncols, side, dur, quiet):
                                                      np.percentile(speeds, 95)))
         print("  extracted %d note events" % len(notes))
     n_hold = mark_holds(scan, notes)
+    n_cap = sum(drop_short_caps(ts, scored, scan, notes, floor, o) for o in CAP_OPEN)
     if not quiet:
-        print("  %d of them hold" % n_hold)
+        print("  %d of them hold, %d short-hold tail caps dropped" % (n_hold, n_cap))
     # the receptor flashes ride along: they are the second sensor, and a caller deciding whether
     # to believe a note the file lacks can ask whether the game lit the receptor for it
     return notes, dict(vid=vid, band=band, fps=fps, floor=floor, colour=sat, holds=n_hold,

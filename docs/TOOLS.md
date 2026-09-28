@@ -613,6 +613,146 @@ them *further* from the count — the rail's last frame is noise at that scale, 
 candidate ran to +1.3 million ticks inside a BPM gimmick before the gate refused it — and an
 85% precision bar (against 93%) shipped 0 of 24 precision-limited parks. Both defaults stay.
 
+## The extractor replay bench
+
+**`bench.py identity --against <rev> [--shard i/n] [--subshard j/k] [--stale]`** / **`identity-summary --against <rev> [--json F]`** / **`verify-anchor`**
+**`bench.py freeze [--version v1] [--salt S]`** / **`register --rule R`** / **`replay --rule R [--set tune,validate,sentinel,canary] [--shard i/n] [--workers N] [--extractor-rev REV]`**
+**`bench.py grade --rule R --split tune|validate|sealed [--final] [--base-rev REV] [--json F]`** / **`baseline [--json F]`** / **`chain`**
+**`bench.py canary-candidates`** / **`canary-fit --vid V`** / **`canary-select`** / **`canary-decode --vid V`** / **`canary-freeze [--partial]`** / **`canary-grade --base-rev A [--rev B]`**
+A frozen benchmark that grades a change to the extractor's post-decode step from the cached sprite
+passes alone (bucket #5 of work/loop-buckets-2026-09-26.txt), so a tuning loop can claim an
+extractor gain honestly. Candidate changes live in `tools/bench_rules.py`.
+
+*One copy of the step.* `note_extract._read` decodes a video once into a sprite pass, and everything
+after the decode - which correlation floor the receptor flashes vouch for, the notes at it, the
+holds - is `note_extract.post_decode()`, which production and the bench both call (`_pass_for` is
+which pass a read is, `footage_of` which footage a certified chart is; `extract` and `_read` are
+those three in a row). A research replay that hand-copied the step crashed on Beat of The War S21,
+whose pass (15 s of corrupt footage) takes the step's no-candidate fallback. `identity` runs every
+cached pass through a reference revision's code and ours - the whole read where today's caches
+still resolve the pass (it must load exactly that pass), otherwise the step alone, cut
+mechanically from the reference's `_read` (the statements from its `R.onsets` call to the end,
+compiled verbatim) - and compares the output's pickle and canonical JSON; `--stale` runs the step
+alone on the passes in older key formats (no read resolves to them any more, but they are cached
+passes all the same); `identity-summary` merges the shards and also checks `footage_of` against the
+reference's `extract` on every certified chart. The proof is bound to the bytes of our
+`note_extract.py` (`work/bench/identity/<reference>/<ours>/`).
+
+*Nothing decoded, nothing written.* Every frame read raises (a missing pass is a FAIL that scores
+zero, never a silent decode) and every process runs under `atomicio.forbid_writes`, allowing only
+`work/bench/`: the truth cache (each graded block through the pinned converter, keyed by block,
+header, converter pin and code), the replay records (`replay/<key>/`, keyed by the rule's code
+hash, the extractor's stamp - `post_decode` and everything it calls, with the constants it reads -
+the scorer's stamp and the manifest), `post/` (post_decode's output per pass sha and extractor
+stamp: a rule that only acts on that output costs a pickle load) and `onsets/`
+(`receptors.onsets` by the content of the scan it reads, two thirds of a post-decode's time).
+Each cache round-trips exactly (JSON floats, pickles), and `identity` exercises the onsets cache:
+its reference side computes, ours reads back. The baseline's alignment is extract_repair's own
+`align`, with quantize's anchor search (6,000 offsets of pure-Python bisects, ~20 s a chart on a
+busy machine) replaced in the replay workers by `fast_anchor_offset`, the same arithmetic over
+every offset at once, first-candidate matching and first-maximum tie-break included;
+**`bench.py verify-anchor`** re-aligns every record the original search produced and requires it
+to the bit (2026-09-27: 128 of 128).
+
+*The manifest* (`sources/benchmark/manifest-<v>.json`, its sha256 over the canonical body inside)
+is the population of `sources/corpus-grade.json` with, per chart, the block and header sha, the
+import's, the certified count, the footage (video, band, side, columns, duration from the
+committed ledgers only - never the live `work/certification-tail.json`), the sprite pass file,
+its sha256 and floors, the lane pitch, a stratum and a split. **truth**: count-exact, block and
+song header byte-identical to the import `a23cee5` (so no extractor- or footage-derived edit is
+its own truth), a cached pass, not a lane misfit; **repo-edited**: the same but edited since
+(reported, never gated); **lane-misfit**: a field fit with a lane pitch under 70 px (bucket #4's
+misfits; reported until #4 refits them and the manifest is re-frozen as v2); **sentinel-only**: a
+chart the file lacks a counter-backed note on (below); **excluded**: the rest, with the reasons.
+Quarantined and owner-revisit charts and corrupt footage are excluded outright. A chart whose
+count cannot tell its block from a sibling (another block of the song of its width derives the
+same total, or an ORACLE_CONFLICT) is flagged `identity.pending` - bucket #2's identity
+verification is what would clear it. The split is three-way by component - charts joined by
+title family (`family_of`: the title's first two words, cut and sequel markers dropped), video
+and song file - with every component holding a chart named in the docs, the code or the loop
+plan, or a sentinel, pinned to tune, and the rest in thirds by a salted hash. The freeze writes
+the gate (`gate-<v>.json`) with it and chains a row into `sources/runs.jsonl` before any baseline;
+a frozen manifest is never rewritten.
+
+*Sentinels* (chosen by the freeze from the files alone): the 15 truth charts with the most jack
+notes (both notes of a same-column pair under 0.25 s whose first is a tap) plus the proposal's
+named jack charts; the 15 with the most holds under 0.25 s; and nine extracted notes the combo
+counter backs as real where the file lacks them (a +1/+2 counter step at the tap, the 2026-09-26
+research: Betrayer S9 80.70 s, Phantom S18 45.77 s, ...).
+
+*The canary*: Andamiro's own autoplay uploads of doubles charts (one field, band C) whose file
+derives the published count - out-of-distribution footage the benchmark has none of. Decoded once
+each, in an overlay under `work/bench/canary/ov/<vid>` (the video hard-linked in, every cache the
+read writes kept there, so nothing lands in the shared caches), chosen blind to any extraction:
+candidates in a salted-hash order, field fits first (`canary-fit`, a slot each), then only a clean
+single field within 3% of the official skin's modal lane pitch (`canary-select`), the first 15
+decoded (`canary-decode`, a slot each) and pinned (`canary-freeze`, `canary-v1.json`). Until it is
+frozen the canary criterion reads N/A and an accept carries "NEVSISTER-validated only". Canaries
+are tune-only, and a canary is never in the manifest (its own split reads None), so
+`canary-candidates` holds off any upload whose title family, video or song file belongs to a
+validate or sealed component - what joins a component - and `canary-freeze` refuses a chosen list
+that reaches one (the first selection, 2026-09-27, carried Neo Catharsis - SHORT CUT - D23, whose
+family is on sealed, and Moment Day D23, whose song file is on validate). `canary-grade` is the
+canary criterion between two extractors (`--base-rev`, and `--rev` or ours), every canary printed
+with its recall, precision, real notes lost and removals, the look chained into
+`sources/runs.jsonl` as a `canary-look` row.
+
+*Older extractors.* `replay --extractor-rev REV` replays the baseline as the extractor stood at REV:
+that revision's whole `note_extract.py`, loaded beside ours over the same receptors and atomicio
+(the onsets cache and the frame refusal hold for it too). The record key carries the extractor's
+stamp, which hashes syntax trees and constants, not file names, so the records land under the key
+the revision's own checkout gives (f0ebca0 and c48604a: `21672f3b79026df3`, the original;
+ca1278f: `9ae7710be1858c1f`; df848d5: `235fce2ff4a28461`), and post_decode recomputed through the
+loaded module, with no post cache, equals the stored records note for note (5 tune charts each
+way, 2026-09-27). `grade --base-rev REV` grades against that extractor instead of ours: `grade
+--rule baseline --base-rev <original> --split sealed --final` is the one look at everything the
+loop accepted.
+
+*Grading.* Matching is extract_repair's own (`match`, one-to-one per column), under the baseline's
+alignment frozen per chart, at 30, 45 and 60 ms; an extracted note on a drawn fake is neither a hit
+nor an extra. Holds are graded only where the count pins them: a hold with a lattice point of its
+own (else it counts exactly as a tap), and its tail only where it cannot slide 60 ms either way
+without crossing one (`tick_model.lattice` on the block's `#TICKCOUNTS`). `grade` prints every
+criterion of the gate with its numbers and the verdict:
+- on the split: pooled F1 at 45 ms up at least 0.20 points; the 2.5th percentile of a 2,000-resample
+  component bootstrap of that gain above 0; still above 0 without the 5 charts that gained most; above
+  0 at 30 and at 60 ms; the p90 of matched timing error not up by more than 0.1 ms;
+- on the split and on tune: real notes lost (file notes the baseline matched and the candidate does
+  not) at most max(3, 0.02%) and at most 1 on any chart; at least 99% of the notes the candidate removed
+  were extras; planned additions (add-tap, add-hold) and planned hold edits (tail, tap->hold) on these
+  count-exact files not up; pinned-hold state recall and pinned-tail hits within 60 ms not down;
+- on the sentinels: jack-note recall and short-hold-head recall not down, every counter-backed note
+  still extracted; on the canary: recall not down and at most 1 real note lost on any canary.
+
+*Ledgers.* `register` records a rule's code hash (its function's syntax tree and parameters,
+`cachekey.code_stamp`) in `sources/benchmark/rules.jsonl` and as a row of the hash-chained
+`sources/runs.jsonl`; `replay` and `grade` refuse a rule whose code no longer hashes to its
+registration, so a rule adjusted after a look is a new candidate. A `grade --split validate` of a
+candidate is a held-out look: one chained row keyed by the change's diff hash (the rule's code hash
+over the extractor's stamp) with its numbers and verdict, capped at 20 per split and 3 per rule
+family (the drills are family "drill"), 40 candidates in all; the same change is never looked at
+twice. The sealed split opens once, at the stop (`--final`), for one comparison - a candidate, or
+the baseline with `--base-rev` - and is logged either way; a grade of the sealed split without
+both is refused (the baseline's own numbers there included), and once a manifest's sealed split
+has been opened `register` refuses: that manifest's loop is closed and the next candidate waits for
+`freeze --version v2`. `grade` prints how many of the top gainers it drops, never which: naming
+the held-out charts that gained most is a per-chart look at the split. `chain` verifies the ledger.
+
+**`park_resurvey.py survey --out work/<dir> [--from work] [--shard i/n] [--only "<chart>"] [--redo]`** / **`summary --out work/<dir>`**
+The extraction loop's parks re-surveyed under the extractor as it stands, the step after an
+accepted post-decode rule (bucket #5): `extract_repair.survey_chart`, unchanged, over every chart
+the run-1 reports under `--from` parked, with frames refused (a chart whose sprite pass is not
+cached is NO_PASS, never decoded), every write outside `--out` refused and `receptors.save_scan`
+a no-op, and only tail moves and tap->hold applied. The plan's additions are withheld and
+recorded (an addition on one of bench.py's counter-backed notes is marked backed; none is applied):
+a chart that closes on its certified count on tail/tap->hold alone is SHIP_CANDIDATE, one only
+additions would move is NEEDS_OWNER (with whether the whole plan would close it), and the
+survey's 2% additions cap still parks a chart whatever it closes on. Every record carries the
+git blob of `tools/note_extract.py`, the extractor's stamp and HEAD. `summary` merges the shards
+into `park-resurvey-summary.json` (the ship candidates and the needs-owner list). It commits
+nothing: a ship candidate still goes through `extract_repair.py commit`'s in-place tick_verify
+and the gate, and a stepfile pass is refused while the gate's code differs from main's.
+
 ## The tick loop
 
 **`tick_repair.py survey [--shard i/n] [--only "<chart>"] [--limit N] [--near N] [--census <file>] [--redo] [--redo-verdict V,V] [--redo-reason <text>] [--no-scan] [--out <dir>]`**

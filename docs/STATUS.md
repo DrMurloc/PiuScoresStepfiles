@@ -1210,6 +1210,176 @@ loopcommit,pass,revert_run` passes against the patched loopcommit.
 
 Owner items from the four buckets are collected in `work/owner-list/round1.md`.
 
+## The extractor replay bench (2026-09-27)
+
+Bucket 5 of the loop plan, on the local branch `loops/bench-1`: a frozen benchmark that grades a
+change to the extractor's post-decode step from the cached sprite passes alone, and the first rules
+through it. TOOLS.md, "The extractor replay bench", has the tool. No stepfile changed.
+
+**One copy of the step.** `note_extract._read` is now `_pass_for` (which cached pass a read is),
+the decode or the cache load, and `post_decode()` (the floor, the notes, the holds), which the bench
+calls too; `extract` is `footage_of` plus `_read`. `bench.py identity --against main` ran every cached
+pass through main's `_read` and ours: **all 1,413 byte-identical** (pickle and canonical JSON of the notes and meta), 0 different - 1,351 through the whole read, which had to load exactly that pass; 13 by the step alone, because a field fit moved since they were cut and today's caches resolve their read to another pass; 49 in older key formats by the step alone. Beat of The War S21's pass (AiNqD7lZjiM, the
+15 s of corrupt footage the research's hand copy crashed on) takes the step's no-candidate fallback
+and is identical. `footage_of` against main's `extract` on all 1,490 certified charts: the same video, band, columns, side and duration on every one.
+
+**The manifest** (`sources/benchmark/manifest-v1.json`, sha `a887d2be`, chained into
+`sources/runs.jsonl` before any baseline): of the 1,490 certified charts, **593 truth** (count-exact,
+block and header byte-identical to the import, a cached pass - all 593 are PROTECTED), **29
+repo-edited** (exact, but our commits edited them: the stratum the proposal counted as 30), **12
+lane misfits** (lane pitch under 70 px - bucket #4's), 6 sentinel-only (the counter-backed notes'
+charts) and 850 excluded (735 not count-exact, 140 with no cached pass, 109 of those exact; 3
+quarantined, 2 owner-revisit, 4 on corrupt footage). Split by component (263 of them over the truth
+charts), with the 180 charts the docs, code and loop plan name and every sentinel pinned to tune:
+**tune 313 truth charts (208,179 notes), validate 149 (94,408), sealed 131 (81,480)**. 12 graded
+charts are identity-pending - a sibling block derives the same count or an ORACLE_CONFLICT names
+them (1949 D28, 1950 D27/S25, Cosmical Rhythm D19, Elise S11, Harmagedon S16/S19/S22, Kokugen
+Kairou Labyrinth S23, Love is a Danger Zone pt. 2 D24, Mopemope S23, Overblow S18); bucket #2's
+verification would clear them.
+
+**The baseline** (the extractor as it stands, per split, truth stratum):
+
+| | charts | notes | recall | precision | F1@45 | bar-pass | median chart timing |
+|---|---|---|---|---|---|---|---|
+| tune | 313 | 208,179 | 94.61% | 93.03% | 93.81 | 200 | 4.2 ms |
+| validate | 149 | 94,408 | 96.24% | 94.07% | 95.14 | 105 | 4.3 ms |
+
+The research's 616-chart figure (95.40% / 92.12%, 406 of 616 over both bars, 4.3 ms) was over a
+different population (every exact chart with a pass, edited ones included, under the old merge);
+tune and validate together are 95.12% / 93.36%, 305 of 462. Sentinels: jack-note recall 82.8% of
+13,200, short-hold heads 74.4% of 3,390, the 9 counter-backed notes all extracted. On the files
+the count pins, 67.7% (tune) of pinned holds read as holds and 59.7% of pinned tails fall within
+60 ms of the file's - the rail reader's release is the weakest thing it measures. The extraction
+plans 1,419 additions and 892 hold edits on these 313 count-exact files, every one wrong by
+construction.
+
+**Sabotage, rejected.** The naive under-80 ms gap rule raises F1 by 0.964 points on tune and 1.069 on
+validate and loses 727 and 159 real notes (up to 76 on one chart): rejected on real notes, removed
+extras (5,024 of 5,805), pinned holds and both sentinels. Every release 50 ms later changes no note
+and is rejected on hold edits (892 -> 2,519) and pinned tails within 60 ms (59.7% -> 50.3%).
+MERGE=0.035 is the one that would have passed on F1 alone - +0.421 points on tune, +0.363 on validate, above the 0.2 bar with its bootstrap - and is rejected on everything the gate guards besides: 210 and 56 real notes lost (a merged pair can carry a different floor with it), 2,004 of 7,600 and 837 of 2,914 removals extras, planned additions and hold edits up, both sentinels down. Each drill's held-out look is a chained row in `sources/runs.jsonl`.
+
+**Tail caps.** Half of the extras on the tune charts are the tail cap of a hold under a quarter
+second whose head the rail reader never claimed. The pre-registered first rule (tailcap-a: drop the
+later of two notes in a column under 0.25 s apart when the lane reads held on 55% of the frames
+between) fails on tune: it removes 77 notes, 38 of them real, and moves F1 by -0.000 - the lane is
+not lit between a short hold's head and cap. What is lit, read looser (occupancy 0.25, bars from
+0.03 s), is a bar that opens with the head and **closes with the cap** (within +-12 ms on 98% of
+them), where a jack's first tap leaves a flash that does not wait for the second; and both sprites
+of a short hold correlate weaker than the chart's taps. tailcap-b (that, tune-fitted) passed every
+criterion on tune except real notes (15, 6 on one chart); tailcap-c added the guards the tune
+losses showed (one speed, a head that is not the chart's weakest detection, a cap within a hold of
+it) and on the held-out split gained 0.638 points and lost 2 real notes - on one chart: rejected.
+**tailcap-d** holds every guard to the central 90% of what tailcap-c removed on tune, and on the
+held-out split: **F1 +0.423 points (bootstrap lower bound +0.320, +0.368 without the top five, above
+0 at 30, 45 and 60 ms), 0 real notes lost, 846 of 846 removed notes extras, planned additions 586 ->
+454, holds and sentinels unchanged** - ACCEPTED, NEVSISTER-validated only (the official canary was
+not frozen yet). On tune it gained 0.434 points, lost 1 real note and removed 1,935 extras of 1,936.
+It is now `note_extract.drop_short_caps`, the last step of `post_decode` (its bounds are the `CAP_*`
+constants): the bench's replay of production after the move gives tailcap-d's notes on all 508
+replayed charts. It changes what `extract_repair` and `tick_repair` read, so the extraction loop's
+parks want surveying again under it (in a directory of their own).
+
+**What is left, on tune, after tailcap-d** (12,829 extras, 11,227 misses): 4,171 more short-hold
+caps, 3,232 notes seen twice (an extra 45-120 ms from a note the file has and the extraction
+matched), 2,074 real notes timed 45-120 ms off (a third of them on two gimmick charts, Vacuum
+Cleaner D26 and WI-EX-DOC-VA D24, where a third of the notes match at all), 1,254 extras with
+nothing in the file near, 1,172 in the wrong lane. Measured on tune and not registered, because
+none separates at the gate's 99%: an extra in the lane next to a real note correlates like a real
+jump's partner (334 bleeds against 11,746 jump notes); a slow re-acquisition within 100 ms of a
+note in its column catches 100-170 extras for 6-18 real notes; a weak ghost just before a
+confident note is clean (253 for 1) but worth 0.06 points; and a streak correlating under half the
+chart's median is 343 extras for 11 real notes. Of the caps tailcap-d leaves, 2,181 fail only its
+bar test, their bar opening a median 24 ms from the head: tailcap-e (the same rule with the bar
+allowed to open within 35 ms) gains 0.808 points on tune against the original baseline, 3,587
+extras of 3,589 removals, 2 real notes on 2 charts. Graded against the extractor with tailcap-d in
+it (the family's third and last held-out look): **F1 +0.413 points on validate (bootstrap lower bound
++0.299, +0.343 without the top five, above 0 at 30, 45 and 60 ms), 1 real note lost, 820 of 821
+removals extras, planned additions 454 -> 298** - ACCEPTED, NEVSISTER-validated only; on tune +0.381,
+1 real note, 1,685 of 1,686. It is a second pass of `drop_short_caps` (`CAP_OPEN = (0.019, 0.035)`,
+in that order, because the second pass reads the chart's median correlation after the first - which
+is what was graded; one pass at 35 ms is a different rule), and the bench's replay of production
+after the move gives tailcap-e's notes on all 508 replayed charts.
+
+**Where the two leave the extractor** (truth stratum, 45 ms, production against the frozen baseline):
+validate F1 95.14 -> 95.98 (+0.84), precision 94.07% -> 95.72%, recall 96.24% -> 96.24%, bar-pass
+105 -> 126 of 149, planned additions 586 -> 298; tune F1 93.81 -> 94.63, precision 93.03% -> 94.65%,
+bar-pass 200 -> 236 of 313, additions 1,419 -> 817. Real notes lost across both: 1 on validate, 2 on
+tune.
+
+The timing family's first candidate, retime-a (re-time a short streak more than 8% off the local
+speed at the local median), nets +0.071 points on tune by pulling 359 notes into the window and
+pushing 212 real ones out, up to 30 on one chart: rejected on tune, no look spent.
+
+**Where the loop stands.** 9 candidates registered of 40 (3 drills among them), 6 held-out looks of
+20 on validate, 2 accepted. The drill and tail-cap families have had their 3 looks each. Nothing else
+measured on tune separates at the gate's standard; what is left is timing on gimmick charts, notes
+the pass never saw (recall 94.6% on tune) and lanes - the decode-level and lane-fit buckets (#11,
+#4). The official canary (15 of Andamiro's single-chart doubles uploads, modal lane pitch 67 px,
+chosen blind to any extraction) is decoding in its own overlay (run `bench-1-canary-decode`); both
+accepted rules are NEVSISTER-validated only until it is frozen and replayed. The sealed split is
+unopened.
+
+## The extractor bench closed: the canary, the sealed look, the parks again (2026-09-28)
+
+The rest of bucket 5, on `loops/bench-1`. No stepfile changed.
+
+**The canary is frozen** (`sources/benchmark/canary-v1.json`, sha `557f0280`): 15 of Andamiro's own
+single-chart doubles uploads, 12,648 file notes. The first selection broke the rule that canaries are
+tune-only: a canary is never in the manifest, so the filter on its split excluded nothing, and Neo
+Catharsis - SHORT CUT - D23 (family on sealed) and Moment Day D23 (song file on validate) were among
+the 15. `canary-candidates` now holds off any upload sharing a title family, video or song file with a
+validate/sealed component (10 of 262), and the same salted order and fit rule replace those two with
+Underworld ft. Skizzo (PIU Edit.) D18 and Awakening D24 (two more decodes, a slot each).
+
+**The canary gate passes, and says little.** Replayed under the original extractor (f0ebca0),
+after tailcap-d (ca1278f) and after tailcap-e (ours) with `replay --extractor-rev`: tailcap-d PASS,
+tailcap-e PASS, both together PASS - because neither rule removes a single note on any canary.
+The extractor itself reads these uploads badly: recall 72.51%, precision 50.48%, F1 59.53, against
+about 95 on the certified footage. On four canaries, of 644 short same-column pairs 68 pass both
+correlation gates and 2 scroll at one speed within 2% (on four tune doubles charts: 56, and 52, with
+19 closing on the cap). So the canary shows the step leaves footage unlike the corpus alone - no
+collateral - and nothing about a gain on it. The two rules are canary-checked, inert on the canary.
+
+**The sealed look** (one chained row, final): everything the loop accepted, production against the
+original extractor, on the 131 sealed charts (81,480 notes) - the unbiased estimate:
+
+| | original | production |
+|---|---|---|
+| F1 at 45 ms | 95.856 | 96.621 (+0.765) |
+| recall | 98.11% | 98.11% |
+| precision | 93.70% | 95.17% |
+| bar-pass (93%/93%) | 94 | 111 of 131 |
+| planned additions | 564 | 364 |
+
+Bootstrap 2.5th percentile +0.497 points (57 components), +0.618 without the five charts that gained
+most, +0.760 at 30 ms and +0.766 at 60 ms, p90 timing 12.27 ms both ways; 1,320 notes removed, every
+one an extra, no real note lost; hold edits, pinned holds and all three sentinels unchanged. The
+validate estimate (+0.836, taken adaptively) was 0.07 points high. The loop on manifest v1 is closed:
+9 candidates registered of 40 (3 drills), 6 validate looks and the sealed one, 2 accepted, and
+`register` now refuses until a v2 manifest.
+
+**The parks again** (`tools/park_resurvey.py`, runs `bench-1-resurvey` and `-b`, into
+`work/bench-1-resurvey`): the 713 charts the extraction loop's first run parked (714 rows, Club Night
+D18 twice), read by production from cached passes only - no chart lacked one, nothing decoded - with
+only tail moves and tap->hold applied:
+
+- **2 ship candidates**, each one release moved: After a thousand years D20 (the new extractor's:
+  under the original, precision 89.9% parked it below the bar; now 94.6%) and Money Fingers S17
+  (not the extractor's: the original gives the same; run 1 also applied 2 add-taps and landed +2).
+  Not shipped - a stepfile pass is refused on the branch until main has this note_extract, and a
+  single release that lands exact still has to pass the gate's trace audit.
+- **209 need the owner**: the plan's only move is an addition. 683 withheld (679 taps, 4 holds),
+  682 of them unbacked by the counter (the backed one, Get Up! D15 at 7.84 s, is a counter-backed
+  sentinel note); applying every edit the plan has, additions included, closes **none** of the 209
+  (median 156 off, 20 within 5). The additions are not the lever for any park.
+- 497 still park: 150 below the 93% bars (run 1 had 299 there), 58 on the 2% additions cap, 134 off
+  the count, 155 whose notes match and whose ticks do not. 2 are exact now (Love is a Danger Zone
+  S11, YOU AND I D20, repaired since), 2 are corrupt footage, Slam D24 is the owner's.
+
+The plans on these charts propose 3,579 additions against run 1's 4,983 - not a controlled number
+(run 1 read them on 2026-09-22 with that day's files), but the direction the bench measured.
+
 ## Beyond the census (sized 2026-09-06, listed in full 2026-09-08)
 
 The census was the *blatantly* wrong 121 — its cut was narrow on purpose: taps above the
