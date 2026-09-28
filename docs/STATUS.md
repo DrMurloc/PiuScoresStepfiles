@@ -692,8 +692,20 @@ confident note is clean (253 for 1) but worth 0.06 points; and a streak correlat
 chart's median is 343 extras for 11 real notes. Of the caps tailcap-d leaves, 2,181 fail only its
 bar test, their bar opening a median 24 ms from the head: tailcap-e (the same rule with the bar
 allowed to open within 35 ms) gains 0.808 points on tune against the original baseline, 3,587
-extras of 3,589 removals, 2 real notes on 2 charts - its held-out look is graded against the
-extractor with tailcap-d in it, and it is the tail-cap family's third and last.
+extras of 3,589 removals, 2 real notes on 2 charts. Graded against the extractor with tailcap-d in
+it (the family's third and last held-out look): **F1 +0.413 points on validate (bootstrap lower bound
++0.299, +0.343 without the top five, above 0 at 30, 45 and 60 ms), 1 real note lost, 820 of 821
+removals extras, planned additions 454 -> 298** - ACCEPTED, NEVSISTER-validated only; on tune +0.381,
+1 real note, 1,685 of 1,686. It is a second pass of `drop_short_caps` (`CAP_OPEN = (0.019, 0.035)`,
+in that order, because the second pass reads the chart's median correlation after the first - which
+is what was graded; one pass at 35 ms is a different rule), and the bench's replay of production
+after the move gives tailcap-e's notes on all 508 replayed charts.
+
+**Where the two leave the extractor** (truth stratum, 45 ms, production against the frozen baseline):
+validate F1 95.14 -> 95.98 (+0.84), precision 94.07% -> 95.72%, recall 96.24% -> 96.24%, bar-pass
+105 -> 126 of 149, planned additions 586 -> 298; tune F1 93.81 -> 94.63, precision 93.03% -> 94.65%,
+bar-pass 200 -> 236 of 313, additions 1,419 -> 817. Real notes lost across both: 1 on validate, 2 on
+tune.
 
 ## Beyond the census (sized 2026-09-06, listed in full 2026-09-08)
 

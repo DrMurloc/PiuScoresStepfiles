@@ -212,6 +212,28 @@ def loose_rail_cap2(notes, meta, scan, got, dist, rail_len, rail_max, reach, occ
     return [n for k, n in enumerate(notes) if k not in drop]
 
 
+def retime_off_speed(notes, meta, scan, dev, max_frames):
+    """A streak that runs slower or faster than the scroll around it was fitted on too few frames or
+    through something covering its lane; what was seen of it is still where the arrow was, so re-time
+    its crossing from its centroid at the local median speed (author_new.retime's arithmetic) when
+    its own speed is more than `dev` off the local median and it was tracked over `max_frames` frames
+    or fewer. EXTRACTION.md measured re-timing every short streak as a loss on 15 charts; this asks
+    the narrower question on the tune split."""
+    order = sorted(range(len(notes)), key=lambda k: notes[k]["t"])
+    sp = np.array([-notes[k]["v"] for k in order])
+    new_t = {}
+    for x, k in enumerate(order):
+        n = notes[k]
+        med = float(np.median(sp[max(0, x - 25):x + 25]))
+        if med <= 0 or "mt" not in n or n["frames"] > max_frames:
+            continue
+        if abs(-n["v"] / med - 1.0) > dev:
+            new_t[k] = n["mt"] + (n["yj"] - n["my"]) / -med
+    for k, t in new_t.items():
+        notes[k]["t"] = t
+    return sorted(notes, key=lambda n: (n["t"], n["col"]))
+
+
 RULES = {r.name: r for r in (
     Rule("baseline", "baseline", "note_extract.post_decode as it stands."),
     Rule("drill-gap80", "drill", "SABOTAGE: the naive < 80 ms same-column gap rule.", post=naive_gap,
@@ -240,5 +262,9 @@ RULES = {r.name: r for r in (
          "the tune split that failed only its bar test opened a median 24 ms from the head, and closed within 8 ms of the cap).",
          post=loose_rail_cap2, wants_pass=True,
          params=dict(dist=0.035, rail_len=0.075, rail_max=0.125, reach=0.012, occ_th=0.25, rail_min=0.03, qu_min=0.78, qu_max=0.945,
-                     qv_max=0.91, speed_tol=0.02, min_gap=0.065, max_gap=0.100)),
+                     qv_max=0.91, speed_tol=0.02, min_gap=0.065, max_gap=0.100),
+         accepted="note_extract.drop_short_caps second pass (CAP_OPEN[1]); held-out look 2026-09-27"),
+    Rule("retime-a", "timing", "Re-time a streak of 12 frames or fewer whose speed is more than 8% off the local median, "
+         "at the local median speed (author_new.retime's arithmetic).", post=retime_off_speed,
+         params=dict(dev=0.08, max_frames=12)),
 )}
