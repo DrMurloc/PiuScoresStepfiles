@@ -9,6 +9,10 @@
 #   --build-atlas <videoId> <t>   calibrate digit atlas from the known frame
 #   --all [--force]               certify every downloaded worklist video (ledger-cached)
 #   <videoId> [...]               certify specific videos
+#   --read-one <videoId> --out <file.json> [--unknown-dir <dir>]
+#                                 read one video's result screen, plus a confirming second
+#                                 frame, into its own file - never into a ledger (the loops'
+#                                 way in: one supervised subprocess per video)
 #
 # Ledger: work/certification.json. Geometry (720p): rows y=311..466 pitch 31 anchored
 # on the MAX COMBO label; 1P digits left-aligned at anchor-139, 2P right-aligned at
@@ -26,6 +30,9 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ATLAS = os.path.join(ROOT, "tools", "atlas")
 LEDGER = os.path.join(ROOT, "work", "certification.json")
 LABELS = ["perfect", "great", "good", "bad", "miss", "maxcombo"]
+# where a glyph no atlas digit matches is dumped for atlas work (--unknown-dir moves it, so a
+# loop's reads never write into the shared folder)
+UNKNOWN_DIR = os.path.join(ROOT, "work", "unknown-glyphs")
 
 # Result screens come in more than one skin. Each is a different font AND a different layout -
 # the Phoenix one sets the counts just left of the labels, the older one puts them far left -
@@ -33,9 +40,27 @@ LABELS = ["perfect", "great", "good", "bad", "miss", "maxcombo"]
 #   pitch  rows apart          x0  digits' left edge, measured left from the anchor
 #   cw/ch  digit cell          rx  the 2P column's right edge, right of the anchor (None: no 2P)
 #   cy     anchor centre       cells  most digits a count can have
+# The XX skin has a 2P column too, right-aligned 500 px right of its MAX COMBO label. Until
+# 2026-09-27 the profile said it showed one side only (rx=None), so every XX play on the 2P side
+# read as a 1P total that matched nothing, or as no result screen at all when 1P was empty.
+#
+# Prime (2015) and Prime 2's DANCE GRADE screen set their counts in the XX font (the XX digit
+# atlas matches them at 0.8-1.0, the Phoenix one at 0.1-0.7), 1P left-aligned far left and 2P
+# right-aligned far right, with the labels between - but each draws its own MAX COMBO label, so
+# each has its own anchor (digit_atlas says where the digits come from). Their number columns
+# sit up to ~5 px either way of where the label puts them from one capture to the next, so these
+# profiles search the column's horizontal offset (align: +-px, the offset whose cells match the
+# digits best) and read a 20 px band, which lets an 18 px digit settle a pixel up or down.
+# Built 2026-09-27 from bootstrap footage that never counts toward yield: Prime from CetRYCDq8eE
+# (1P; its label is the anchor) and J6A2eZGu-yc (2P), DANCE GRADE from FsFAU37qmj4 (1P; anchor)
+# and 9waUMyMNqLM (2P).
 PROFILES = [
     dict(name="phoenix", atlas="atlas", pitch=31, cw=10, ch=18, x0=139, rx=330, cy=15, cells=6),
-    dict(name="xx", atlas="atlas-xx", pitch=35, cw=16, ch=18, x0=358, rx=None, cy=15, cells=6),
+    dict(name="xx", atlas="atlas-xx", pitch=35, cw=16, ch=18, x0=358, rx=500, cy=15, cells=6),
+    dict(name="prime", atlas="atlas-prime", digit_atlas="atlas-xx", pitch=35, cw=16, ch=20, x0=388, rx=550,
+         cy=14, cells=6, align=8),
+    dict(name="dancegrade", atlas="atlas-prime-dancegrade", digit_atlas="atlas-xx", pitch=35, cw=16, ch=20,
+         x0=384, rx=557, cy=14, cells=6, align=8),
 ]
 ROW_PITCH, CELL_W, CELL_H, MAX_CELLS = 31, 10, 18, 6      # build_atlas still calibrates Phoenix
 ANCHOR_TO_X0, ANCHOR_TO_RX, ANCHOR_CY = 139, 330, 15
@@ -49,6 +74,11 @@ def frame_at(cap, t):
     cap.set(cv2.CAP_PROP_POS_MSEC, t * 1000)
     ok, f = cap.read()
     return f if ok else None
+
+def frame_pos(cap, t):
+    """frame_at, plus where the decoder says that frame is (s): a broken stream seeks short of t."""
+    f = frame_at(cap, t)
+    return f, (cap.get(cv2.CAP_PROP_POS_MSEC) / 1000 if f is not None else None)
 
 def glyph_mask(bgr):
     hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
@@ -92,6 +122,8 @@ def load_profiles():
     out = []
     for prof in PROFILES:
         digits, anchor = load_atlas(prof["atlas"])
+        if prof.get("digit_atlas"):
+            digits = load_atlas(prof["digit_atlas"])[0]
         if digits and anchor is not None:
             out.append({**prof, "digits": digits, "anchor": anchor})
     return out
@@ -103,15 +135,56 @@ def classify(cell, digits, tag):
         if score > best:
             best, best_d = score, d
     if best < 0.55:
-        os.makedirs(os.path.join(ROOT, "work", "unknown-glyphs"), exist_ok=True)
-        cv2.imwrite(os.path.join(ROOT, "work", "unknown-glyphs", tag + ".png"), cell)
+        os.makedirs(UNKNOWN_DIR, exist_ok=True)
+        cv2.imwrite(os.path.join(UNKNOWN_DIR, tag + ".png"), cell)
         return "?"
     return best_d
+
+def side_cells(frame, ax, ay_c, side, prof, dx=0):
+    """[cells of each of the six rows] for one side, the column shifted dx px from the profile's."""
+    cw, ch, n = prof["cw"], prof["ch"], prof["cells"]
+    rows = []
+    for k in range(len(LABELS)):
+        y0 = int(ay_c - prof["pitch"] * (5 - k) - ch / 2)
+        if side == "1P":
+            x0 = max(0, ax - prof["x0"] + dx)
+            rows.append(cells_left(glyph_mask(frame[y0:y0 + ch, x0:x0 + cw * n]), cw, n))
+        else:
+            rx = ax + prof["rx"] + dx
+            rows.append(cells_right(glyph_mask(frame[y0:y0 + ch, max(0, rx - cw * n):rx]), cw, n))
+    return rows
+
+def best_offset(frame, ax, ay_c, side, prof):
+    """The column offset (within +-prof['align'] px) whose cells match the digit atlas best on
+    average, over the offsets where every row has a cell; None when no offset gives six rows. Ties
+    go to the smaller offset."""
+    best = None
+    for dx in range(-prof["align"], prof["align"] + 1):
+        rows = side_cells(frame, ax, ay_c, side, prof, dx)
+        if not all(rows):
+            continue
+        scores = [max(float(cv2.matchTemplate(c, t, cv2.TM_CCOEFF_NORMED).max()) for t in prof["digits"].values())
+                  for r in rows for c in r]
+        key = (sum(scores) / len(scores), -abs(dx))
+        if best is None or key > best[0]:
+            best = (key, dx)
+    return None if best is None else best[1]
 
 def read_side(frame, ax, ay_c, side, vid, prof):
     cw, ch, n = prof["cw"], prof["ch"], prof["cells"]
     if side == "2P" and prof["rx"] is None:            # this skin shows one side only
         return {k: "" for k in LABELS} | {"judged": None}
+    if prof.get("align"):                              # a column that moves between captures
+        dx = best_offset(frame, ax, ay_c, side, prof)
+        if dx is None:
+            return {k: "" for k in LABELS} | {"judged": None}
+        rows = side_cells(frame, ax, ay_c, side, prof, dx)
+        out = {label: "".join(classify(c, prof["digits"], f"{vid}_{side}_{label}_{i}") for i, c in enumerate(cells))
+               for label, cells in zip(LABELS, rows)}
+        complete = all(out[k] != "" and out[k].isdigit() for k in LABELS)
+        out["judged"] = sum(int(out[k]) for k in LABELS[:5]) if complete else None
+        out["dx"] = dx
+        return out
     out = {}
     for k, label in enumerate(LABELS):
         y0 = int(ay_c - prof["pitch"] * (5 - k) - ch / 2)
@@ -146,14 +219,23 @@ def read_frame(f, vid, prof, scale=1.0):
     return sides if any(sides[s]["judged"] is not None for s in sides) else None
 
 def read_result(vid, profiles):
+    """The first result screen found stepping back from the end of the video. A video the decoder
+    cannot open, or whose last 45 s do not decode (a download cut short, a stream that stops
+    decoding mid-file), is `corrupt-video` with a reason - never `no-result-screen`, which says
+    the footage was read and holds no result screen."""
     path = video_path(vid)
     if not path:
         return dict(vid=vid, status="no-video")
     cap = cv2.VideoCapture(path)
+    if not cap.isOpened():
+        return dict(vid=vid, status="corrupt-video", reason="the decoder cannot open it")
     dur = cap.get(cv2.CAP_PROP_FRAME_COUNT) / (cap.get(cv2.CAP_PROP_FPS) or 30)
     hit, best = None, (0.0, None, None, None)
+    on_target = 0          # frames that decoded where they were asked for (a broken stream seeks short)
     for back in np.arange(1.5, 45, 1.0):
-        f = frame_at(cap, dur - back)
+        f, pos = frame_pos(cap, dur - back)
+        if f is not None and abs(pos - (dur - back)) <= 2.0:
+            on_target += 1
         if f is None or f.shape[0] != 720:
             continue
         for prof in profiles:
@@ -178,7 +260,105 @@ def read_result(vid, profiles):
                            scale=round(float(scale), 2), **{s.lower(): sides[s] for s in sides})
                 break
     cap.release()
-    return hit or dict(vid=vid, status="no-result-screen")
+    if hit:
+        return hit
+    if not on_target:
+        return dict(vid=vid, status="corrupt-video",
+                    reason="no frame decodes in the last 45 s of the %.1f s it declares" % dur)
+    import guards                                  # the recorded list of unusable footage
+    bad = guards.footage_corrupt_reason(vid)
+    if bad:
+        return dict(vid=vid, status="corrupt-video", reason=bad)
+    return dict(vid=vid, status="no-result-screen")
+
+
+# ---------------------------------------------------------------- the certification gate
+# A read certifies a (video, side) only when it passes every check here: all six cells are digits;
+# maxcombo <= P+G (a GOOD neither breaks nor extends the combo, so no combo can outrun P+G); a
+# play with no BAD and no MISS has maxcombo == P+G; and a second frame at least 1 s from the
+# first reads the same six cells. (Checked on the 1,648 committed reads on 2026-09-27: every read
+# of a certified side passes the two combo rules.) The blind transcription the loops add on top
+# lives in tools/cert_skins.py.
+
+CONFIRM_OFFSETS = (-1.1, -1.5, -2.0, -2.5, -3.0, -4.0, 1.1, 1.5)
+
+def side_checks(s):
+    """[failure, ...] for one side's read (empty = it passes the on-screen checks)."""
+    if not s or s.get("judged") is None:
+        return ["not all six cells are digits"]
+    fails = []
+    cells = [s.get(k, "") for k in LABELS]
+    if not all(c.isdigit() for c in cells):
+        return ["not all six cells are digits"]
+    P, G, Gd, B, M, MC = (int(c) for c in cells)
+    if MC > P + G:
+        fails.append("maxcombo %d > P+G %d" % (MC, P + G))
+    if B == 0 and M == 0 and MC != P + G:
+        fails.append("no BAD or MISS but maxcombo %d != P+G %d" % (MC, P + G))
+    return fails
+
+def confirm_read(vid, hit, profiles):
+    """Re-read the result screen of `hit` (a read_result() answer) on other frames at least 1.1 s
+    from it - the hit's own profile and scale - and return every read tried, in order:
+    [{t, dt, 1p, 2p}] (a side that reads nothing is None). It stops once every side the hit read
+    has a second read with the same six cells; confirmed() judges the list."""
+    prof = next((p for p in profiles if p["name"] == hit.get("skin")), None)
+    path = video_path(vid)
+    if prof is None or not path:
+        return []
+    cap = cv2.VideoCapture(path)
+    dur = cap.get(cv2.CAP_PROP_FRAME_COUNT) / (cap.get(cv2.CAP_PROP_FPS) or 30)
+    wanted = [s for s in ("1p", "2p") if (hit.get(s) or {}).get("judged") is not None]
+    out = []
+    for dt in CONFIRM_OFFSETS:
+        t = float(hit["t"]) + dt
+        if t < 0 or t > dur:
+            continue
+        f = frame_at(cap, t)
+        if f is None or f.shape[0] != 720:
+            continue
+        sides = read_frame(f, vid, prof, hit.get("scale", 1.0)) or {}
+        out.append(dict(t=round(t, 2), dt=dt, **{s.lower(): sides.get(s) for s in ("1P", "2P")}))
+        if all(confirmed(hit, out, s)[0] for s in wanted):
+            break
+    cap.release()
+    return out
+
+def confirmed(hit, reads, side):
+    """(True, t) when some read at least 1 s from the hit gives `side` the same six cells; else
+    (False, why) - the first complete read that differs, or that no other frame read the side."""
+    first = hit.get(side) or {}
+    differ = None
+    for r in reads:
+        s = r.get(side) or {}
+        if s.get("judged") is None:
+            continue
+        if all(s.get(k) == first.get(k) for k in LABELS):
+            return True, r["t"]
+        differ = differ or "the frame at %.2f s reads %s" % (r["t"], "/".join(s.get(k, "") for k in LABELS))
+    return False, differ or "no second frame at least 1 s away reads this side"
+
+def read_one(vid, out_path=None, confirm=True):
+    """The loops' reader: one video, its confirming reads and the per-side checks (unless
+    `confirm` is False: a read wanted only for comparison), written to its own file (atomically)
+    when `out_path` is given, never into a ledger."""
+    import hashlib
+    profiles = load_profiles()
+    hit = read_result(vid, profiles)
+    doc = dict(vid=vid, read=hit, code=hashlib.sha256(open(__file__, "rb").read()).hexdigest()[:16])
+    if hit.get("status") == "ok" and confirm:
+        reads = confirm_read(vid, hit, profiles)
+        doc["confirm"] = reads
+        doc["checks"] = {}
+        for side in ("1p", "2p"):
+            if (hit.get(side) or {}).get("judged") is None:
+                continue
+            ok, why = confirmed(hit, reads, side)
+            fails = side_checks(hit[side]) + ([] if ok else ["unconfirmed: " + why])
+            doc["checks"][side] = dict(fails=fails, confirm_t=why if ok else None)
+    if out_path:
+        atomicio.write_json(out_path, doc, encoding="utf-8", ensure_ascii=False, indent=1)
+    return doc
 
 def build_atlas(vid, t):
     TRUTH = [(311, "1103"), (342, "018"), (373, "001"), (404, "000"), (435, "003"), (466, "609")]
@@ -203,8 +383,18 @@ def build_atlas(vid, t):
     print("atlas digits:", sorted(got))
 
 def main():
+    global UNKNOWN_DIR
     if sys.argv[1] == "--build-atlas":
         build_atlas(sys.argv[2], float(sys.argv[3]))
+        return
+    if sys.argv[1] == "--read-one":
+        if "--unknown-dir" in sys.argv:
+            UNKNOWN_DIR = sys.argv[sys.argv.index("--unknown-dir") + 1]
+        doc = read_one(sys.argv[2], sys.argv[sys.argv.index("--out") + 1])
+        r = doc["read"]
+        print("VERDICT: %s" % r["status"].upper().replace("-", "_"))
+        print(json.dumps({k: r.get(k) for k in ("status", "t", "skin", "scale", "reason") if k in r}),
+              {s: (r.get(s) or {}).get("judged") for s in ("1p", "2p")}, doc.get("checks"))
         return
     profiles = load_profiles()
     # --map/--ledger let a batch beyond the census certify into its own files; the census

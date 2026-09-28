@@ -25,6 +25,12 @@ TAIL_CERT = os.path.join(ROOT, "work", "certification-tail.json")
 # ledger is also kept in sources/ as evidence. work/ wins when both exist - it is the live one
 # result_reader appends to - and the committed copy is what survives a cleaned working tree.
 CORPUS_CERT = os.path.join(ROOT, "sources", "certification-corpus-2026-09-10.json")
+# Result screens the corpus ledger could not read - the XX screen's 2P column and the Prime
+# screen - certified 2026-09-27 by tools/cert_land.py (bucket #12). It holds only what it adds:
+# the new read of each video and the charts it newly certifies; the per-chart merge keeps every
+# chart the older ledgers carry. It merges after the live tail (which mirrors the corpus ledger and
+# would otherwise hand back the old, one-sided read) and before the census.
+SKINS_CERT = os.path.join(ROOT, "sources", "certification-skins-2026-09-27.json")
 # the two inputs certified_charts() reads besides the map and the ledgers
 TAIL_SWEEP = os.path.join(ROOT, "sources", "tail-2026-09-08.json")
 CENSUS = os.path.join(ROOT, "sources", "census-final.json")
@@ -73,8 +79,10 @@ def merge_certification(ledgers):
 def certification(sources_only=False):
     """video id -> {vid, status, t, 1p, 2p, charts: {name: {expected, side, verdict}}}.
     `sources_only` leaves out work/certification-tail.json, so the answer is exactly what the
-    committed ledgers say (the corpus grade's oracle); every other tool wants the live merge."""
-    srcs = (CORPUS_CERT, CENSUS_CERT) if sources_only else (CORPUS_CERT, TAIL_CERT, CENSUS_CERT)
+    committed ledgers say; every other tool wants the live merge. (The corpus grade builds its
+    population from its own list of oracle files, not from here: the skins ledger reaches it only
+    once the owner adds the file to corpus_grade's oracle and refreezes the manifest.)"""
+    srcs = (CORPUS_CERT, SKINS_CERT, CENSUS_CERT) if sources_only else (CORPUS_CERT, TAIL_CERT, SKINS_CERT, CENSUS_CERT)
     return merge_certification([ledger_entries(_load(src, {})) for src in srcs])
 
 def certified_charts(cert, smap, tail_sweep, census):
