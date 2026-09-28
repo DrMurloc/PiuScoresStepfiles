@@ -260,16 +260,6 @@
    ]
   },
   {
-   "chart": "Phantom S18",
-   "in_population": true,
-   "reasons": [
-    {
-     "detail": "certified 897 on -E5Z5OEkvTc, but the Phoenix 1 catalog lists 945 and the file already converts to 945",
-     "kind": "catalog"
-    }
-   ]
-  },
-  {
    "chart": "Pump me Amadeus D19",
    "in_population": true,
    "reasons": [
@@ -347,16 +337,6 @@
    "reasons": [
     {
      "detail": "certified 306 on obPE9ohrkLw, but the Phoenix 1 catalog lists 248 and the file already converts to 248",
-     "kind": "catalog"
-    }
-   ]
-  },
-  {
-   "chart": "Vook S10",
-   "in_population": true,
-   "reasons": [
-    {
-     "detail": "certified 552 on 3PO5ckDXVpc, but the Phoenix 1 catalog lists 354 and the file already converts to 354",
      "kind": "catalog"
     }
    ]
