@@ -97,6 +97,16 @@ so there is an order of magnitude in hand.
    swallow anything, because a short bar of bright saturated art also reads as a rail, and
    deleting real notes inside one is a silent loss where keeping a tail is a false positive the
    count gate catches.
+
+   Under a hold of about a tenth of a second the head claims no rail at all - the lit bar is too
+   faint and brief for the 0.40 occupancy and 0.065 s the rails are read at - and its cap was half
+   of every extra on the extractor bench's tune charts (tools/bench.py, 2026-09-27). Read looser
+   (0.25, bars from 0.03 s) the bar is there, and it closes as the cap goes by where a jack's first
+   tap leaves a flash that does not wait for the second; both sprites of a short hold also
+   correlate weaker than the chart's taps and scroll at one speed. `drop_short_caps` (the `CAP_*`
+   constants, two passes) is the last step of `post_decode`: on the bench's held-out charts the two
+   passes took F1 at 45 ms from 95.14 to 95.98, removing 1,666 extras and 1 real note (docs/STATUS.md,
+   "The extractor replay bench").
 3. **Holds need no new machinery.** The game already reports a held hold at the receptor, as a
    saturated bright rail down the lane, and `receptors.rails` reads it: the head is the note
    that opens the rail and the tail is where it closes. Two settings had to be got right. The
@@ -450,6 +460,16 @@ Kept because each one looks obviously right:
   Beethoven Virus D13, 0.28 scores 32% recall where 0.36 scores 86%.
 - **Running the continuity repair over the whole scan** before pricing (a different tool, same
   lesson): it prices more rails and rewrites ones that were already right.
+- **Re-timing a streak that runs off the local speed**, at the local median (author_new.retime's
+  arithmetic, only on streaks of 12 frames or fewer more than 8% off). On the extractor bench's 313
+  tune charts it nets +0.07 points of F1 by pulling 359 notes into the 45 ms window and pushing 212
+  real ones out of it, up to 30 on one chart - the fifteen-chart finding below, at twenty times the
+  size.
+- **Suppressing a short hold's cap by the lane read between head and cap** (occupancy 0.55 over the
+  frames between, the proposal's first rule): the lane is not lit there under a short hold, so it
+  removes 77 notes on the tune charts, 38 of them real, and moves F1 by nothing. What is lit is a
+  faint bar at the receptor that opens with the head and closes with the cap - the rule that
+  shipped reads that.
 
 ## What is still missing
 

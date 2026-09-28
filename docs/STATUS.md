@@ -707,6 +707,19 @@ validate F1 95.14 -> 95.98 (+0.84), precision 94.07% -> 95.72%, recall 96.24% ->
 bar-pass 200 -> 236 of 313, additions 1,419 -> 817. Real notes lost across both: 1 on validate, 2 on
 tune.
 
+The timing family's first candidate, retime-a (re-time a short streak more than 8% off the local
+speed at the local median), nets +0.071 points on tune by pulling 359 notes into the window and
+pushing 212 real ones out, up to 30 on one chart: rejected on tune, no look spent.
+
+**Where the loop stands.** 10 candidates registered of 40 (3 drills among them), 6 held-out looks of
+20 on validate, 2 accepted. The drill and tail-cap families have had their 3 looks each. Nothing else
+measured on tune separates at the gate's standard; what is left is timing on gimmick charts, notes
+the pass never saw (recall 94.6% on tune) and lanes - the decode-level and lane-fit buckets (#11,
+#4). The official canary (15 of Andamiro's single-chart doubles uploads, modal lane pitch 67 px,
+chosen blind to any extraction) is decoding in its own overlay (run `bench-1-canary-decode`); both
+accepted rules are NEVSISTER-validated only until it is frozen and replayed. The sealed split is
+unopened.
+
 ## Beyond the census (sized 2026-09-06, listed in full 2026-09-08)
 
 The census was the *blatantly* wrong 121 — its cut was narrow on purpose: taps above the
