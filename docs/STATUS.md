@@ -610,6 +610,119 @@ AiNqD7lZjiM (Beat of The War S21, 66 decode errors and a stop at 15 s). The owne
 now enforced in every worklist that can ship: Slam D24, which sat in the extraction loop's
 worklist as a PARK, is skipped with its reason.
 
+## The converter variant grader: no rule found (2026-09-27)
+
+Bucket 9 of the loop plan, report-only (`tools/variant_grade.py`, TOOLS.md "The converter variant
+grader"; branch `loops/variants-1`). The question: do the residual disagreements between our files
+and the certified counts hide a hold-judging rule the converter gets wrong? No stepfile, no
+converter and no fork changed, so the snapshot is exactly as far behind as it was.
+
+**The instrument.** Every block of every `.ssc` at HEAD (and the import's copy of every file
+changed since) went through the pinned converter once, with its context: 751 files, 10,020 blocks.
+442 of them the converter itself cannot convert (297 stop on a symbol it does not know - co-op
+player markers, 277 in doubles blocks; 142 on a measure whose line count does not divide, 122 of
+them routine; 3 others; no certified chart among them), and nothing grades those. **On the other
+9,578 the base model reproduces the converter, segment by segment**, and it equals
+`sources/corpus-grade.json` on all 1,490 certified charts. The research copy's 6 misses were its
+unmerged WARP+FAKES ranges; merged, there are none, so nothing is pinned. Stage 2, the path a
+parse-level rule would have to pass, was proven on the unpatched converter: all 9,578 blocks
+converted through the scratch copy of its modules equal the model, and the fork's HEAD, sources
+and status did not move. That first stage 2 would also have passed a patch that broke every
+block, because it skipped any block the scratch copy failed on; it now counts every block (below).
+A grade of a family takes a few minutes on 3-4 workers.
+
+**The tiers, frozen before any hypothesis.** Of the 1,490 certified charts, 39 are not scored (34
+ORACLE_CONFLICT, 3 quarantined, 2 owner-revisit). The rest: **622 pristine exact** (483 tune, 139
+sealed), **121 fitted exact** (114, 7), 121 within 10 (96, 25), 587 further off (443, 144); **20
+notes-confirmed near misses** (the extraction loop saw the file's notes exactly; 4 sealed), the
+same 20 the proposal counted. **Tier A is 5 charts** (by the bucket's rule the only charts that
+may suggest a rule - a rule this run did not keep, below): 2006. LOVE SONG S12 (+4), A Nightmare D14 (-13), BSPower Explosion D13 (-1) and Visual Dream II (In
+Fiction) D11 (+26) in the tune split, Lucid(PIU Edit) S7 (-15) sealed. All four tune charts run at
+one BPM and one TICKCOUNT with no stop, warp, fake or SCROLLS=0: none carries a gimmick for a rule
+to be about. Their counter gives **20 tier-A clusters, and 19 agree with the lattice**. The one that
+does not is BSPower Explosion D13 at beats 33-38.0625 (lattice 76, counter 77, both cuts
+unanimous): a run of seven holds whose last is 9/16 beat where the six before it are 5/8 - a
+question about that file's notation, not about the converter. The proposal's "3 clusters on 2
+charts" also counted Requiem S16; under the frozen definition it is not tier A, because the
+extraction loop proposed an add-tap there (skipped as the row was taken), so its notes are not
+confirmed. 502 uncertified charts convert to their Phoenix 1 catalog count (91 sealed): the second
+must-not-break set. 186 charts are named in the docs, tools or spec and so tune-only.
+
+**The gate cannot be passed by chance.** 27,690 random rules (+/-1 event on every hold matching 1-3
+structural conditions) through the same gate: **0 pass**; 999 break nothing, 2 pass the tune half
+alone, none reaches 3 notes-confirmed fixes in 2 packs.
+
+**Eight families, three testable, all three net negative** (6 of 40 variants, 0 of 3 hold-out
+reveals used; the stop is three testable families in a row with no positive net):
+
+| family (in the order run) | idea from | reach | best variant (tune split) |
+|---|---|---|---|
+| heads inside SCROLLS=0 | the bucket spec (its first family) | UNTESTABLE: 2 notes-confirmed carriers (HYPERCUBE D19, Pop Sequence S15); 105 pristine exact carry it | - |
+| a STOP/DELAY while held (ticks by time) | the research's residual list (b10_reach, F2b) | UNTESTABLE: 0 carriers | - |
+| a TICKCOUNTS change while held | the research's residual list (feature "xtick") | 4 carriers | anchor at the change: net -70 (5 pristine, 65 fitted breaks, 0 fixes); head's rate: -304 |
+| rows a few ms apart judged as one | the converter's own row-merge threshold | UNTESTABLE: 2 carriers | - |
+| holds with no lattice point | the converter's head-only reading of a checkpoint-less hold | UNTESTABLE: 0 carriers (43 fitted exact carry it) | - |
+| a tap on a release row, on the lattice | **tier A**: A Nightmare D14 (five such rows, 13 short) | 15 carriers | both judged: -420 (413 pristine breaks, 386 catalog breaks, 3 tier-A clusters lost) |
+| WARP/FAKES edges inside a hold | the research's residual list (b10_reach, F4) | UNTESTABLE: 0 carriers | - |
+| a checkpoint within a frame of its head | first principles (a judge that steps by frames) | 3 carriers | fold within 8 ms: -83 (43 pristine breaks); within 17 ms: -155 |
+
+Every variant graded broke pristine exact charts and fixed at most two charts, none of them
+notes-confirmed. The anchor-at-change variant is the telling one: 65 of its 70 breaks are files we
+fitted, whose TICKCOUNTS changes sit off the new count's grid inside a hold - they are exact only
+under the beat-0 lattice they were written against.
+
+**Where the ideas came from, and what the stop rests on.** The bucket's rule is that only tier A
+generates ideas. This run did not keep it, and the first version of this section and the bucket's
+report said it had. Of the eight families one was mandated by the spec and **one came from tier A**
+(a tap on a release row, from A Nightmare D14). The other six came from elsewhere, as each
+hypothesis file's header says: three from the research's residual list (b10_reach, whose counts
+cover hold-out charts as well), two from the converter's own internals, one from first
+principles. So tier A yielded one testable idea besides the mandated family, and it lost 420.
+The stop - three testable families in a row with no positive net - was completed by two families
+the rule would not have produced (the TICKCOUNTS change and the checkpoint near its head); kept to
+the rule, the run would have ended for want of tier-A ideas after the tap-on-release family, not
+on the streak. **The null therefore rests on tier A itself having almost nothing to explain**: 19
+of its 20 counter clusters agree with the lattice, and the one that does not looks like notation.
+The three graded families show only that those three readings break exact charts. The tool now
+enforces the rule: a family names the tune-split tier-A charts its idea came from, or the spec,
+and `family-begin` refuses anything else (TOOLS.md, "The converter variant grader").
+
+**Conclusion: no rule found at evidence tier A (5 charts, 4 in the tune split; 20 counter
+clusters, 19 agreeing), nor, for the families tried, at the notes-confirmed tier (20 near
+misses).** Not "the converter is not the bottleneck": the tier-A charts are simple, and what they
+disagree on looks like notation. For bucket 10's span mode this removes the converter-rule
+alternative for the families tried; it says nothing about the far-over charts, whose half-rate
+blocks the research placed in TICKCOUNTS data. Nothing is staged for the owner: there is no
+proposed patch. One disclosure: while choosing the second family, Lucid(PIU Edit) S7's timing tags
+(a sealed tier-A chart) were printed once; no family was built from it, and no hypothesis was ever
+scored on the sealed split (a grade counts the sealed blocks a variant moves, not how they fare;
+only the null run's random rules were scored there). The first version said idea generation was
+narrowed to tune-split tier-A charts after that; it was not (above). This section names Lucid
+S7, so a later epoch holds it in the tune split.
+
+**After verification (2026-09-27).** A verification pass reproduced every number above (the tiers
+from sources, the self-test, a fresh conversion sample, all six grades with the committed tool)
+and found, besides the idea-source misstatement, four gaps in the tool, fixed on the branch.
+Stage 2 skipped any block the scratch copy failed on, so it could pass having compared nothing:
+it now needs every one of the 9,578 convertible blocks back converted and equal to the model and
+each of the 442 others to fail in the copy too; a planted patch that raises on every block now
+fails as a whole, 0 of 9,578 equal, where the first version would have compared nothing and
+passed. The identity patch's re-run through the hardened check (supervise run `vg-stage2-2`, in
+the scratch epoch below) had not finished when this was written: it yields to the owner's game.
+The gate's code was not pinned between the freeze and the grades (the freeze row recorded the
+tool as `e318bdb453cf`, all six grades `1844184bafa4`; the model hash stayed `b3a101ccc90b`, and
+the re-run grades came out identical): the freeze row now records a hash of the gate's code and the
+model, and every command that registers, grades or reveals refuses when either moved. `grade` and
+`reveal` ignored the stop row: they now refuse after a stop, past 12 hours and on a closed family.
+A missing hypothesis file exited 75 ("retry later") instead of 2. The fixes were exercised on a
+scratch epoch (a copy of the dump, a fresh freeze and salt, `work/variants-1-scratch/fix1/`): it
+re-froze the same tier classes, refused families whose idea source was missing or not tier A,
+reproduced the first run's code hashes, and refused a grade on a closed family and a moved gate.
+Its fresh split put some of this epoch's sealed charts in the tune half when it regraded
+tap-on-release, which costs nothing: this epoch can never reveal. This epoch was frozen before the
+pin, so it can never grade again either; a further search is a new work directory and a fresh
+freeze. Its ledger is as the run left it: 32 rows, the last the stage-2 check.
+
 ## Beyond the census (sized 2026-09-06, listed in full 2026-09-08)
 
 The census was the *blatantly* wrong 121 — its cut was narrow on purpose: taps above the

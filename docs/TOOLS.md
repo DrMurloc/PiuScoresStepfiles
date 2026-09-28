@@ -922,6 +922,144 @@ reason a worklist logs when it skips one (extract_repair, tick_repair, batch_rep
 lattice_reauthor all check it). `footage_corrupt_reason(vid, band)` reads
 `sources/footage-corrupt.json`. `tag_of(key)` is `extract_repair.block_tag`'s rule.
 
+## The converter variant grader (report-only)
+
+**`variant_grade.py jobs --out <jobs.jsonl> [--shards N]`** / **`dump [--shard I/N]`** / **`index`** / **`selftest`** / **`freeze`**
+**`variant_grade.py family-begin <hyp.py>`** / **`register <hyp.py> [<variant> ...]`** / **`grade <hyp.py> [<variant> ...]`** / **`reveal <hyp.py> <variant>`** / **`family-end <hyp.py>`**
+**`variant_grade.py null [--seed S] [--triples N]`** / **`stage2 <hyp.py>|BASE <variant> --patch <p.py> [--clean-room <c.py>] [--scratch <dir>]`** / **`status`** / **`stop <why>`**
+(all take `--work <dir>`, default `work/variant-grade`, and `--workers N`, default 3, at most 4;
+run with `-X utf8 -B`, or it refuses)
+Bucket 9 of the loop plan: "what if the game judged hold events this way" questions, graded over
+the whole corpus in about two minutes, report-only. It never edits the converter, its clone or a
+stepfile; a rule that clears its gate becomes a proposed patch and a draft EVIDENCE-RULES section
+under `work/variant-grade/proposals/` for the owner, who alone decides whether anything reaches
+the piu-annotate fork. Nothing it writes is committed: the ledger, the tiers, the context cache and
+the hypothesis files all live under `work/variant-grade/`.
+
+**The dump.** `jobs` writes a supervise.py jobs file (slot-free: nothing decodes video) whose
+`dump` shards run piu-annotate's converter - the pinned clone, read-only - over every block of
+every `.ssc` at HEAD and over the import `a23cee5`'s copy of every file changed since, through the
+converter's own `context=` hook: its hold segments with their tick counts, the judged holds, every
+row (beat, time, line), TICKCOUNTS, WARPS and FAKES, plus the raw timing, scroll and speed tags of
+the block. One pickle per file content (CRLF read as LF) under a key of the converter pin and the
+dump code, written atomically. `index` seals it: a manifest of every file with the simfiles tree,
+the oracle hash, the converter pin and the fork's HEAD, `.py` hash and `.py` git-status hash.
+Every later command refuses (exit 2, "re-dump") when any of those moved, when simfiles or the
+oracle has uncommitted changes, or when the dump code changed. First dump (2026-09-27): 751 files
+(664 at HEAD, 87 import copies), 10,020 blocks, about 11 minutes on four shards while the lanes
+bucket was decoding. **9,578 of them convert; the other 442 the pinned converter itself cannot
+convert** (297 stop on a symbol it does not know - co-op player markers, 277 of them in doubles
+blocks; 142 on a measure whose line count does not divide, 122 of them routine; 3 others). No
+certified chart is among them. Nothing grades those 442: every "every block" below means every
+convertible block, and stage 2 only checks that the scratch copy fails on them too.
+
+**The base model is the converter.** It recounts every segment from the dumped inputs exactly as
+`lattice_hold_ticks` does - the lattice points of the TICKCOUNT in effect, held, outside a WARP or
+FAKES range (overlapping ranges merged, which the research copy in `rules.py` did not do and which
+is what cost it Aragami D26/S22/S24, Shub Niggurath D26, Sudden Appearance Image D23 and Infinity
+RMX D19), less the points a judged row sits on, plus one event per head row that is not a tap row,
+each in the segment it opens - and every command that grades first checks it against the
+converter on every dumped block, segment by segment, in the worker pool (the startup self-test;
+a mismatch refuses with exit 1). `selftest` adds a serial re-check, the dump against
+`sources/corpus-grade.json` for every certified chart, and planted edits (an identity edit moves
+nothing, one extra head event moves one block by one, an exclusion over everything leaves only the
+taps). On 2026-09-27: 9,578 of 9,578 blocks segment for segment, 1,490 of 1,490 certified charts
+equal to the corpus grade, 180 of 180 planted checks.
+
+**The tiers, frozen before any hypothesis** (`freeze`; `tiers.json`, whose sha256 the ledger's
+freeze row carries and every command re-checks). The population is the committed oracle's
+certified charts less the ORACLE_CONFLICT, quarantine and owner-revisit charts, which are never
+scored. *Pristine exact*: exact, block and song header unchanged since the import. *Fitted exact*:
+exact, edited since; a break there is excused only when the variant makes the chart's import block
+exact. *Near miss*: within 10. *Notes-confirmed*: a near miss the extraction loop's 2026-09-23 run
+parked as "the screen shows the file's notes exactly", its file unchanged since that report.
+*Tier A* (the only charts that may suggest a rule): not exact, within 30, notes-confirmed, a clean
+play (maxcombo equals judged, no GOOD, BAD or MISS); *tier-A clusters* are the tick loop's priced
+clusters on tier-A charts whose two cuts were unanimous and whose segments still count what the
+report counted (the tick loop priced many charts on an extraction candidate, not the file).
+*Catalog exact*: an uncertified chart of the merged map whose file converts to its Phoenix 1
+catalog count - a second must-not-break set. The *split*: song families (the title less its
+level, SHORT CUT / FULL SONG / REMIX markers, parentheticals and a trailing sequel number), joined
+with every chart that shares a video or a file, go to the SEALED hold-out with probability 0.3
+under a salt drawn at freeze; a group holding a chart named in `docs/`, the tools, README, CLAUDE.md
+or the loop-bucket spec is tune-only. `freeze` refuses a second time (`--force` exists for a new
+epoch, never to re-draw after looking).
+
+**Hypotheses** are files in `work/variant-grade/hypotheses/`: `FAMILY`, `TITLE`, `KIND` (`count`
+when the rule reads only what the converter already parses; `parse` when it reads a tag the
+converter does not, or changes how rows are built - then only stage 2 can make it a winner),
+`IDEAS_FROM` (where the idea came from: a list of the tune-split tier-A charts that suggested it,
+or `"spec"` for a family the loop-bucket spec itself mandates; `family-begin` refuses a family
+with neither, or naming any chart that is not tier A in the tune split, and writes the answer into
+the family's ledger row - the first epoch did not enforce this, and six of its eight families
+came from elsewhere, see STATUS.md), a
+`feature(block)` predicate (the blocks the family can touch at all) and `VARIANTS = {name: (rule
+text, transform)}`, where a transform edits a copy of the base inputs: TICKCOUNTS entries, held
+spans, excluded ranges, heads, judged rows, explicit event adjustments placed the way a head is,
+the tap count. `family-begin` re-checks the dump (the family boundary) and runs the **reach
+precheck**: a family is UNTESTABLE, spends nothing and is closed at once, when fewer than 3
+notes-confirmed near misses in at least 2 packs carry its feature, none of them is in the tune
+split, or no sealed chart off its count carries it - the gate could not pass whatever the variant
+did. `register` records each variant's code hash in the ledger BEFORE any grade: sha256 over the
+rule text and the syntax tree of its transform and of every module-level name it reaches
+(comments and docstrings dropped); a re-edited variant is refused as a new one. At most 40
+variants, 6 testable families and 12 hours from the freeze.
+
+**The gate** (in the tool; the null run calls the same functions). `grade` prints the TUNE split
+only - no pristine break, no unexcused fitted break, no catalog break, no tier-A cluster the base
+agrees with lost, at least 1 notes-confirmed near-miss fix and fixes above breaks - plus a blast
+radius over every block that says how many sealed blocks moved but not how they fared. `reveal`
+(at most 3 in all, only for a tune pass) opens the sealed split: no break of any kind there and
+at least 1 fix, and over tune and sealed together no pristine, unexcused fitted or catalog break,
+at least 3 notes-confirmed near-miss fixes across at least 2 packs, no tier-A cluster lost, and
+the whole-corpus blast radius in full. A parse-level rule wins only when **`stage2`** reproduces
+it: the rule written as `PATCH(source) -> source` into a scratch copy of the pinned converter
+modules (`<scratch>/conv-<patch hash>/`, `--scratch` defaulting to the work directory's name plus
+`-scratch`; refused inside the clone), every dumped file converted through that copy in workers
+that must have loaded it, totals compared block by block with the model, the fork's state
+compared before and after; with `--clean-room`, a second implementation written from the rule's
+text alone (`count(block) -> total`) compared the same way. **Nothing is skipped**: every
+convertible block must come back from the scratch copy converted and equal to the model; a block
+the scratch copy fails on or never returns, a file it cannot read, or a worker that did not load
+the scratch copy is a difference; each of the 442 blocks the pinned converter cannot convert must
+fail in the scratch copy too; and the row records `blocks`, `equal`, `dump_errors`, `both_error`
+and the differences by reason (`ok` needs `equal == blocks`). The first version skipped any block
+the scratch copy failed on, so a patch that broke every block would have compared nothing and
+passed; a planted patch that raises on every block now fails on all 9,578 (2026-09-27, in a
+scratch epoch). `stage2 BASE <name> --patch <identity>` checks the machinery against the
+unpatched base (2026-09-27, supervised, before the hardening: 9,578 blocks, 0 differ, the fork
+unchanged; after it, see STATUS.md). `family-end` closes a family (its net is its best tune net);
+three testable families in a row with no positive net, or a winner, write a stop row.
+
+**The epoch is closed by its stop row, and the gate is frozen with the tiers.** After a stop row,
+or 12 hours from the freeze, `register`, `grade` and `reveal` refuse (the first version refused
+only `register`, so a stopped epoch could still grade, and reveal a registered tune pass); a closed
+family (`family-end`) takes no more registrations, grades or reveals. The freeze row records the
+hash of the gate's code - `GATE_CODE` in the tool: the gate functions, the grading worker, the
+code hashing, the stop and cap checks, the family-begin, register, grade, reveal, family-end and
+null commands, and the `GATE` constants - and of
+the base model, and `family-begin`, `register`, `grade`, `reveal`, `family-end`, `null` and a
+variant's `stage2` refuse when either differs (the first version recorded the whole tool's hash in
+each row but compared nothing, so the gate could change between the freeze and a grade). An
+epoch frozen before this, like the first one, cannot grade again: a further search is a new
+`--work` and a fresh `freeze`. `status` prints whether the pin holds.
+
+**The null run** (`null`): random 1-3-condition predicates over 15 structural hold features
+(length, head and tail grid, rate, a BPM or TICKCOUNT change inside, a rate-0 span, a STOP or DELAY
+at either end, a warp or fake overlap, a staggered group, tail on the lattice, head on a BPM
+change, tail on a judged row, head inside a SCROLLS=0 span), each +/-1 event per matching hold,
+through the same tune and full gates, must pass 0. On 2026-09-27: 0 of 27,690 (999 had no break;
+2 passed the tune gate alone; none reached 3 notes-confirmed fixes in 2 packs).
+
+Guards: `tools/tick_model.py` is never imported. The ledger (`ledger.jsonl`) is append-only and
+hash-chained - every row carries the previous row's hash, a broken chain refuses every command -
+and written under an exclusive lock file. Exit codes: 0 done (a gate that fails is a recorded
+result, not an error; `stage2` prints `VERDICT: PASS` or `FAIL` for supervise.py); 1 a self-test
+mismatch; 2 refused (drift, a stale dump, an unregistered or re-edited variant, a cap, a stop, a
+closed family, a gate changed since the freeze, a fourth reveal, a hypothesis, patch or other file
+that does not exist - waiting does not fix a typo); 75 the machine stopped it (a MemoryError or any
+other OSError).
+
 ## Reading footage
 
 **`combo_reader.py --scan <vid> side=<L|R|C> [atlas=tools/atlas-combo-p2]`**
