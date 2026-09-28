@@ -132,6 +132,7 @@ import shadowcheck  # noqa: E402
 shadowcheck.guard("supervise", exit_code=2)
 
 import argparse
+import atexit
 import contextlib
 import ctypes
 import datetime
@@ -173,6 +174,8 @@ TRANSIENT_BUDGET_S = 1800    # how long one supervisor error may persist before 
 RETRY_BASE_S, RETRY_MAX_S = 5.0, 300.0
 POLL_S = 0.5
 SLOT_RETRY_S = 2.0
+WAIT_STALE_S = 30.0          # a slot waiter that has not asked again in this long has stopped waiting
+WAIT_REFRESH_S = 5.0         # how often a waiter that keeps asking rewrites its record
 PREEMPT_EVERY_S = 1.0
 QUIESCE_TIMEOUT_S = 5.0      # how long a freeze waits for the rails mutexes before trying again next round
 AWAKE_GAP_S = 2.0            # a lock wait's poll gap longer than its poll plus this was spent frozen (or asleep)
@@ -863,16 +866,83 @@ class Slot:
             _retry(lambda: os.remove(self.path))
 
 
+def _wait_path(pid=None):
+    return os.path.join(SLOTS, f"wait-{pid or os.getpid()}.json")
+
+
+_WAIT_CLEANUP = []
+
+
+def _forget_wait():
+    with contextlib.suppress(OSError):
+        _retry(lambda: os.remove(_wait_path()))
+
+
+def slot_waiters(now=None, recover=False):
+    """The processes waiting for a decode slot, longest wait first: [(since_ts, pid, record)]. One
+    record a process (wait-<pid>.json), written when it asks and finds no slot for it, refreshed
+    while it keeps asking, removed when it gets one. A waiter whose process is gone, or that has not
+    asked again within WAIT_STALE_S (it stopped wanting one), is not waiting."""
+    now = time.time() if now is None else now
+    out = []
+    try:
+        names = sorted(os.listdir(SLOTS))
+    except FileNotFoundError:
+        return out
+    for name in names:
+        if not (name.startswith("wait-") and name.endswith(".json")):
+            continue
+        path = os.path.join(SLOTS, name)
+        rec = read_json(path)
+        if not rec or "_unreadable" in rec:
+            continue
+        try:
+            seen, since = float(rec.get("seen_ts") or 0), float(rec.get("since_ts") or now)
+        except (TypeError, ValueError):
+            seen, since = 0.0, now
+        if now - seen > WAIT_STALE_S or not proc_alive(rec.get("pid"), rec.get("created")):
+            if recover:
+                with contextlib.suppress(FileNotFoundError):
+                    _retry(lambda: os.remove(path))
+            continue
+        out.append((since, int(rec.get("pid") or 0), rec))
+    return sorted(out, key=lambda w: (w[0], w[1]))
+
+
 def try_acquire_slot(run=None, job=None, suspendable=False):
     # Frozen slots count: while a game has jobs frozen, nothing new launches until the frozen
     # ones have thawed and finished.
+    # First come, first served: a free slot goes to the process that has waited longest. Without
+    # that, a supervisor refilling the slot its finished job just released asks within the same
+    # step and wins every race against a process polling every SLOT_RETRY_S, so whichever runs
+    # took the slots first kept them until their queues drained (2026-09-28: a 159-job run got 3
+    # launches in 90 minutes, an in-process decode_slot tool waited over 20). A process asking
+    # without having waited queues behind every live waiter.
     limit, hits = slot_limit()                         # the game check runs outside the mutex
     with FileMutex(os.path.join(SLOTS, ".mutex")):
-        if len(live_slots(recover=True)) >= limit:
+        now, me = time.time(), os.getpid()
+        free = limit - len(live_slots(recover=True))
+        wpath = _wait_path()
+        mine = read_json(wpath) or {}
+        if ("_unreadable" in mine or not proc_alive(mine.get("pid"), mine.get("created"))
+                or now - float(mine.get("seen_ts") or 0) > WAIT_STALE_S):
+            mine = {}                                  # not this process's, or it stopped asking: a new wait
+        since = float(mine.get("since_ts") or now)
+        ahead = [w for w in slot_waiters(now, recover=True) if w[1] != me and (w[0], w[1]) < (since, me)]
+        if free <= len(ahead):
+            if not mine or now - float(mine.get("seen_ts") or 0) >= WAIT_REFRESH_S:
+                rec = dict(mine) if mine else me_record(run=run, job=job)
+                rec.update(run=run, job=job, seen_ts=now, seen=now_iso(now))
+                write_json(wpath, rec)
+                if not _WAIT_CLEANUP:
+                    _WAIT_CLEANUP.append(atexit.register(_forget_wait))
             return None
+        if mine:
+            with contextlib.suppress(FileNotFoundError):
+                _retry(lambda: os.remove(wpath))
         rec = me_record(run=run, job=job, child=None, child_created=None, limit=limit, gaming=hits,
                         suspendable=bool(suspendable))
-        path = os.path.join(SLOTS, f"slot-{os.getpid()}-{rec['token'][:12]}.json")
+        path = os.path.join(SLOTS, f"slot-{me}-{rec['token'][:12]}.json")
         write_json(path, rec)
     return Slot(path, rec)
 
@@ -1848,6 +1918,7 @@ def cmd_status(args):
     slots = [rec for _, rec in live_slots()]
     machine = {"slots_used": len(slots), "slots_limit": limit, "gaming": hits,
                "slots": [{k: s.get(k) for k in ("pid", "child", "run", "job", "since", "suspended")} for s in slots],
+               "waiting": [{k: w[2].get(k) for k in ("pid", "run", "job", "since")} for w in slot_waiters()],
                "commit_lock": read_json(COMMIT_LOCK), "main_lock": read_json(MAIN_LOCK),
                "global_stop": os.path.exists(GLOBAL_STOP), "free_gb": free_gb(), "state_dir": STATE}
     if args.json:
@@ -1863,6 +1934,8 @@ def cmd_status(args):
     for s in machine["slots"]:
         print(f"  slot: pid {s['pid']} child {s['child']} run {s['run']} job {s['job']} since {s['since']}"
               + (f"  FROZEN since {s['suspended']}" if s.get("suspended") else ""))
+    for w in machine["waiting"]:
+        print(f"  waiting: pid {w['pid']} run {w['run']} job {w['job']} since {w['since']}")
     for s in summaries:
         verd = ", ".join(f"{k} {v}" for k, v in sorted(s["verdicts"].items(), key=lambda kv: -kv[1]))
         print(f"\n{s['run']}: {s['state']}  {s['completed']}/{s['total']} done"
@@ -1939,6 +2012,8 @@ def cmd_slots(args):
     print(f"{len(live)}/{limit} slots held" + (f" (gaming: {', '.join(hits)})" if hits else "") + f"; config {slot_config()}")
     for _, rec in live:
         print(f"  pid {rec.get('pid')} child {rec.get('child')} run {rec.get('run')} job {rec.get('job')} since {rec.get('since')}")
+    for _, _, rec in slot_waiters():
+        print(f"  waiting: pid {rec.get('pid')} run {rec.get('run')} job {rec.get('job')} since {rec.get('since')}")
     return 0
 
 

@@ -329,6 +329,41 @@ def _():
         eq(r.returncode, 9, "guard() exits with the caller's code")
         eq("tools/tempfile" in r.stdout and "shadow ran" not in r.stdout + r.stderr, True, "names the shadow, never runs it")
 
+@case("a free decode slot goes to the process that has waited longest, not to whoever asks first")
+def _():
+    import subprocess
+    with _scratch() as d:
+        # a child process is the asker; this process plays a supervisor that has been waiting for a while
+        code = """
+import json, os, sys, time
+sys.path.insert(0, %r)
+import supervise as S
+S.slot_limit = lambda: (1, [])
+os.makedirs(S.SLOTS, exist_ok=True)
+other = S._wait_path(os.getppid())
+def older(seen_ago):
+    now = time.time()
+    S.write_json(other, dict(pid=os.getppid(), created=S.proc_created(os.getppid()), since_ts=now - 10,
+                             seen_ts=now - seen_ago, run="older", job="j"))
+out = []
+older(1)
+out.append(S.try_acquire_slot("asker", "a") is None)          # an older live waiter goes first
+out.append(os.path.exists(S._wait_path()))                     # and the asker now waits in line
+os.remove(other)
+slot = S.try_acquire_slot("asker", "a")
+out.append(slot is not None)                                   # nobody ahead: the slot is its
+out.append(os.path.exists(S._wait_path()))                     # and it is no longer waiting
+out.append(S.try_acquire_slot("asker", "b") is None)           # the pool is full
+slot.release()
+older(S.WAIT_STALE_S + 5)
+out.append(S.try_acquire_slot("asker", "c") is not None)      # a waiter that stopped asking is passed over
+print(json.dumps(out))
+""" % os.path.dirname(os.path.abspath(__file__))
+        env = dict(os.environ, PSF_RAILS_STATE=d)
+        r = subprocess.run([sys.executable, "-X", "utf8", "-B", "-c", code], capture_output=True, text=True, env=env)
+        eq(r.returncode, 0, "the asker ran (%s)" % r.stderr.strip()[-300:])
+        eq(r.stdout.strip().splitlines()[-1], "[true, true, true, false, true, true]", "who got the slot, in turn")
+
 def main():
     failed = []
     for name, fn in CASES:
