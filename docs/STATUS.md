@@ -651,7 +651,7 @@ official singles fields pass - the official uploads' fits are mostly misfits, at
 doubles and 57.1-58.0 for singles fields, so the pitch histogram's own median (67.3 for official
 doubles) would have set the band on the misfit.
 
-**The partitions were corrected once (v2), before any F1.** Verification found v1's `seen` scan
+**The partitions were corrected twice (v2, v3), both before any F1.** Verification found v1's `seen` scan
 too narrow: it matched only the exact string "Title Level", so a sealed chart the extraction notes
 name as "Legendary Dominion S20 and S16" stayed sealed, and so did the census rows of its video,
 which also carry the seen S20; a validation chart named as "DESTRUCIMATE S21 (...), D23 (...)"
@@ -664,16 +664,32 @@ back. `seen` is now 31 charts; validate 55 (44 scorable), sealed 51 (41 scorable
 is logged in `heldout-looks.jsonl`: the only held-out result seen before it was rule 1's verdict
 counts, no extraction and no F1, and the V5gJ5gKqTi0 rows were not cached then.
 
+The second round of verification found the scan still one source short: it read the loop
+proposal's text but not its full record (`work/loop-buckets-2026-09-26.full.json`), which this
+bucket reads for its guards and which publishes per-chart results of a 14-chart counter probe
+(`official_final_probe2.json`). The research rule counts that probe as a listing and leaves it
+unread. Partitions v3 keeps v2's rules and adds that record to the scan, decoded and read whole
+like the text. Rebuilt through v3's code, v2 comes back byte for byte, so the rules did not change.
+Five official charts moved to `seen`, two from the validation half and three from the sealed half.
+Each is the only chart on its video, so seven census rows moved with them, and nothing moved back.
+`seen` is now 36 charts; validate 53 (**42 scorable**), sealed 48 (**38 scorable**). The correction
+is logged the same way. Two of the seven rows were among rule 1's logged verdict counts, both
+counted as accepted. The other five were not cached then, and nothing of theirs has been computed
+since.
+
 Two things the partitions do not do, measured rather than fixed. The scan reads a research file
 only when it is a script, text or JSON of at most 20 KB that names at most ten corpus charts (a
-longer listing is a script's output over a population, not a look at a chart). 105 held-out charts
-are named in research files it does not read, but none in a file naming ten or fewer: 29 appear at
-best in files naming 11-30 (mostly the misfit stratum's own discovery listings, such as
-`ext/lowsharp_below.txt`, and a counter probe of five official charts), 76 only in larger ones.
+longer listing is a script's output over a population, not a look at a chart). Anything the
+proposal publishes about a chart is still read, because the proposal and its full record are read
+whole. 100 held-out charts are named in research files the scan does not read. None of them is in a
+file naming ten or fewer, and none is named in the proposal. 24 appear at best in files naming
+11-30, and all 24 are misfits (16 of them are in `ext/lowsharp_below.txt`, the listing that found
+the misfit stratum). The other 76 appear only in larger files.
 And the split is grouped by song family and video only between the two halves, not against the
 tune side: 14 song families span `seen` and the halves, 86 tune census charts in 27 families share a
 held-out family, and 7 band-sample videos - the videos the frozen bands and receptor library were
-computed from - carry a held-out family. So the bands and the library were
+computed from - carry a held-out family (all four numbers the same under v2 and v3: each family
+v3 touched keeps another held-out chart). So the bands and the library were
 recomputed without those 7 videos (`lanefit.py sensitivity`, after a recompute with nothing left
 out that reproduced the frozen bands and library exactly): **no band edge or centre moves in any of
 the 14 templates**; passing fits drop by at most 2 per template, and the NEVSISTER library is built
