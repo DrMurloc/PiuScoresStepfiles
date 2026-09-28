@@ -889,6 +889,8 @@ the 27. The patch is staged. From the repo root, run `git apply
 work/skins-1-scratch/owner/corpus-grade-skins-ledger.patch`, then `corpus_grade.py freeze`. Merge
 the patch together with the branch. In between, a loop that repaired Papasito FULL SONG S19 would
 fail its gate on DECLARED, and an edit that broke one of the 26 exact charts would pass unseen.
+(Landed at merge round 1, 2026-09-28: the patch was folded into the combined rails change and the
+ledger frozen into the oracle at `0d8438e`. See "Merge round 1" below.)
 
 *The trace audit sees it at once.* `corpus_map.py` is gate code. `trace_audit` imports it, and it is
 in the audit's `audit_version` closure and in its `clock_code`. The audit's `play_of` takes a play's
@@ -1077,7 +1079,8 @@ another chart. Rebuilt under the overlay, ORACLE_CONFLICT goes from 34 charts on
 3. Not in the grade until the owner lands it; the landing (a review commit for the two catalog
 conflicts it resolves, then `freeze --accept-identity`) is drilled end to end in a throwaway clone of
 main - PASS at every step, `--declared 4` at the acceptance, an edited accepted overlay refused - and
-listed in `work/owner-list/identity.json`.
+listed in `work/owner-list/identity.json`. (Landed at merge round 1, 2026-09-28: the review commit
+`5f296a5`, the acceptance `c72bd0e` and the rebuild `57c4a17`. See "Merge round 1" below.)
 
 **Song-level findings** (owner items plus ORACLE_CONFLICT proposals in
 `sources/oracle-conflict-2026-09-27.json`; never overlay rows - the fix is to human data, and all four
@@ -1122,93 +1125,153 @@ overlay: a change to gate code, landed the same way.
 ## Merge round 1 (2026-09-28)
 
 The first four wave-2 checkpoints, merged `--no-ff` on the local branch `loops/merge-r1` (from
-main `f27b6ef`) for the owner's fast-forward: `loops/variants-1` (`2e1c4b2`), `loops/lanes-1`
-(`dee6e8c`), `loops/skins-1` (`3bc9d97`) and `loops/identity-1` (`e9d6d79`). Before each merge
+main `f27b6ef`): `loops/variants-1` (`2e1c4b2`), `loops/lanes-1` (`dee6e8c`), `loops/skins-1`
+(`3bc9d97`) and `loops/identity-1` (`e9d6d79`). Before each merge
 `corpus_grade.py gate --base main --head loops/<x> --declared 0` ran from main's checkout, and all
 four passed: exact 749 -> 749, PROTECTED 629 -> 629, oracle `054afdd6fbe9`. The conflicts were
 docs only (every branch appended a section here and in TOOLS.md), plus `corpus_map.certification()`,
 where skins added its ledger to the merge order and identity applied the overlays over the merge.
 Both are kept: corpus, (live tail,) skins, census, then the overlays. Each resolution was checked
 against both parents: outside the conflicted hunks, the result differs from each parent by exactly
-the other side's changes. Main's code gates the merged head at PASS 749 -> 749. No stepfile
-changed, so the snapshot is exactly as far behind as it was at `f27b6ef`.
+the other side's changes. Main was fast-forwarded to `dee6e8c` (variants and lanes: no gate code,
+and a `corpus_map` that reads neither the skins ledger nor an overlay) and pushed. Past it, a loop
+would have drawn the 27 skins charts into its population while the grade could not see them, so
+the rest waited for the rails change.
 
-**What did not land: the rails change.** The two staged owner patches, the skins ledger's
-(`corpus_grade` reads `sources/certification-skins-2026-09-27.json`) and identity's (the overlay
-and `freeze --accept-identity`), were reconciled into one `corpus_grade.py` + `loopcommit.py`
-change: `work/owner-list/merge-r1-rails.patch` (sha256 `7f634684`). The merge's attempt to edit
-those files was refused as rails code, so the change and its landing wait for the owner. Until they
-land, the grade on this branch reads neither file. `corpus_map`, and so every loop's population and
-the trace audit, already reads the skins ledger; the overlay stays inert until a manifest lists it.
-So main should not move past `dee6e8c` (variants and lanes, no gate code) without the rails change:
-past it, a loop could repair or break one of the 27 skins charts and the grade would not see it.
+**The rails change landed under the owner's ruling of 2026-09-28** (CLAUDE.md, `882e1ad`: the
+orchestrating session may apply adversarially reviewed rails patches and run the oracle landing
+steps at merge time, each its own commit, after a gate-security review and the full drill set).
+The change is `work/owner-list/merge-r1-combined.patch` (sha256 `735b9ede`, 23,201 bytes:
+`corpus_grade.py`, `corpus_map.py`, `identity.py`, `loopcommit.py`). It reconciles the two staged
+owner patches, the skins ledger's and identity's, and adds the fixes of the round-1 review; it
+supersedes the earlier `merge-r1-rails.patch` (now in `work/owner-list/superseded/`), which lacked
+them. It was drilled 41 of 41 in a private clone before it landed. `882e1ad` was merged into the
+branch first (`764d3e1`), then each step was its own commit, gated by the new code:
 
-What the reconciled change makes the gate read, and why no ratchet weakens:
-- **The oracle becomes ORACLE_DATA plus two lists taken from corpus_map's own merge.**
+| Commit | Step | Gate | Result |
+|---|---|---|---|
+| `440c43c` | the rails change | `--base 764d3e1 --declared 0` | REFUSED (exit 2): the tree has the skins ledger and its manifest does not list it. No gate can pass here, as designed, until the freeze |
+| `0d8438e` | `freeze`: the skins ledger into the oracle | `--base main --oracle-pass --declared 26` | PASS, exact 749 -> 775, PROTECTED 629 -> 655: 26 ENTERED-EXACT (every one on its import block, so no ship to audit) and Papasito FULL SONG S19 ENTERED, not exact. Oracle `054afdd6fbe9` -> `7dee65b29657` |
+| `5f296a5` | review: Phantom S18 and Vook S10 out of ORACLE_CONFLICT (owner list item 3), refrozen | `--oracle-pass --declared 0` | PASS, net 0. -> `399a7349d5b1` |
+| `c72bd0e` | `freeze --accept-identity` (owner list item 4) | `--oracle-pass --declared 4` | PASS, 775 -> 779, PROTECTED 655 -> 659: 4 GAINED, 2 EDITED-OFF, 11 LEFT, no ship to audit. -> `ea51aab7aeb7` |
+| `57c4a17` | `conflicts --write`, `freeze` | `--oracle-pass --declared 0` | PASS, net 0. ORACLE_CONFLICT goes from 32 charts on 14 videos to 13 on 3. -> `a90d9a0628b7` |
+
+Two more commits followed, both gate net 0. `c3ad688` is supervise's slot fairness: bucket #2's
+staged patch (sha256 `5d81678d`), applied under the same ruling. A freed decode slot now goes to the
+process that has waited longest (docs/TOOLS.md, "First come, first served"), and a new
+`selftest.py` case drills the order. `94b24bc` merges `loops/bench-1` (bucket #5, below: the
+extractor replay bench and the tailcap-d/e post-decode rules in `note_extract`, sealed look +0.765
+F1 with no real note lost). Its conflict was this file only, resolved keeping both sides, with no
+line lost. `note_extract` is not on the grade's path; it is on the trace audit's (below).
+
+What the change makes the gate read, and why no ratchet weakens:
+- **The oracle becomes ORACLE_DATA plus two lists that mirror corpus_map's own merge.**
   ORACLE_OPTIONAL (the skins ledger) is oracle wherever a tree has it. ORACLE_IDENTITY (the
   overlays) is oracle once the tree's manifest lists it. The grade's population is then
-  corpus_map's in the same order, so it cannot disagree with the loops' (drilled: equal before and
-  after acceptance, 1,517 and 1,506).
+  corpus_map's in the same order, so the two cannot disagree: 1,517 at `5f296a5`, 1,506 at the
+  head, equal row for row. The rails keep ORACLE_IDENTITY as a literal, and `check_lists` refuses
+  (exit 2) while corpus_map's ledger or overlay list differs from the rails'. This is review
+  finding 2: `corpus_map` is not owner-only, so taking the list from it would let a loop drop an
+  accepted overlay out of loopcommit's owner-only paths.
 - **Both are hashed, checked against the manifest, and owner-only in loopcommit.** Once either is
   oracle, editing or deleting it without a freeze is refused (exit 2), and freezing the change
   without `--oracle-pass` fails ORACLE, as for every oracle file. The skins ledger is refused as
-  soon as a tree has it and the manifest does not list it (the moment corpus_map reads it); an
+  soon as a tree has it and the manifest does not list it (the moment corpus_map reads it). An
   overlay no manifest lists is inert, in the grade and in corpus_map alike.
+- **An oracle pass audits what it makes exact off the import.** Every chart an `--oracle-pass`
+  leaves GAINED, ENTERED-EXACT or EDITED-EXACT on a block or header that is not the import's is
+  trace-audited against the import. This is review finding 1, the launder route: a stepfile pass
+  fills Beat of The War's uncertified S18 block, then an oracle pass re-keys S21 onto it. The
+  oracle pass used to pass `--declared 1` unaudited; it now fails.
+- **A base that carries an oracle file its own manifest does not pin is named in a note.**
+  Gated from such a base (any commit from the skins merge `3bc9d97` up to `440c43c`), the skins
+  landing reads 775 -> 775, because the 26 hide in the base. So it is gated from main.
 - **An old tree hashes exactly as before.** An optional ledger a tree lacks is left out rather
-  than hashed as "absent", so main's tree under the new code is still `054afdd6fbe9`. The skins
-  patch alone moved it to `2117b26d`.
-- **Nothing is removed from any check.** The additions are one freeze flag, the gate naming a
-  changed oracle file from either side, and ORACLE_CONFLICT's `built_from` recording the ledger
-  and overlay it was built from.
+  than hashed as "absent", so main's tree under the new code is still `054afdd6fbe9`.
+- **Nothing is removed from any check.** Beyond the above, the additions are one freeze flag, the
+  gate naming a changed oracle file from either side, and ORACLE_CONFLICT's `built_from` recording
+  the ledger and the overlay it was built from.
 
-**The landing, drilled** in a private clone of this branch with the patch applied (every step
-gated by the new code, 30 of 30 as intended; `work/merge-r1-scratch/landing-drill/`):
+**The numbers.** The head grades **1,506 certified, 779 exact, 659 PROTECTED (656 import + 3
+promotion), 120 PROVISIONAL**, the prediction made before the landing: skins +27 certified, +26
+exact, +26 PROTECTED; identity -11 certified, +4 exact, +4 PROTECTED. The two datasets share no
+video and no chart, and no skins chart trips the conflict rules. Chart by chart against main (the
+head graded with its own tools, set-diffed against main's baseline):
+- 27 skins charts entered. 26 are exact and PROTECTED at the import; Papasito FULL SONG S19 is not
+  exact.
+- The 11 withdrawn certifications left the population. None was exact.
+- 6 charts were re-keyed. Phantom S18, Vook S10, Witch Doctor D22 and Solitary S18 are now exact
+  and PROTECTED at the import. Moonlight S18 and Solitary S17 sit on their right blocks, still off.
+- 8 same-side partners of withdrawn certifications lost the `oracle_conflict` flag and nothing else:
+  Avalanche D20, D D20, Dignity D24, Dignity S21, Pump me Amadeus S18, Pumptris 8 Bit ver. S18,
+  and Witch Doctor #1 D21 and S19.
+- Nothing else moves.
 
-| Step (its own commit) | Gate | Result |
-|---|---|---|
-| the patch | `--base` the identity merge | REFUSED: the manifest does not list the skins ledger (correct) |
-| `freeze` | `--base` the lanes merge `--oracle-pass --declared 26` | PASS, 749 -> 775, PROTECTED 629 -> 655, 26 ENTERED-EXACT, Papasito ENTERED |
-| review: Phantom S18 and Vook S10 out of ORACLE_CONFLICT, frozen | `--oracle-pass --declared 0` | PASS |
-| `freeze --accept-identity` | `--oracle-pass --declared 4` | PASS, 775 -> 779, 4 GAINED, 2 EDITED-OFF, 11 LEFT |
-| `conflicts --write`, `freeze` | `--oracle-pass --declared 0` | PASS; 13 charts on 3 videos (from 34) |
-
-The final grade is **1,506 certified, 779 exact, 659 PROTECTED (656 import + 3 promotion), 120
-PROVISIONAL**, exactly the prediction made before the run: skins +27 certified, +26 exact, +26
-PROTECTED; identity -11 certified, +4 exact, +4 PROTECTED. The two datasets share no video and no
-chart, and no skins chart trips the conflict rules. Chart by chart against main: +27 skins charts
-(26 exact), the 11 withdrawn (none exact), the 6 re-keys (Phantom S18, Vook S10, Witch Doctor D22
-and Solitary S18 exact at import; Moonlight S18 and Solitary S17 on their right blocks, still off),
-and 8 same-side partners of withdrawn certifications losing the `oracle_conflict` flag. Nothing else
-moves.
+No stepfile changed, so the snapshot is exactly as far behind as it was at `f27b6ef`.
 
 Two gates cannot pass over the whole landing, by design, so the landing is judged step by step.
 The new code's `gate --base main --oracle-pass --declared 30` FAILs on Phantom S18 and Vook S10:
 ORACLE_CONFLICT is judged over the union of the base's and the head's sets, so a review that takes
-charts out cannot share a gate with their gain. Main's own code REFUSES the landed head, because the
+charts out cannot share a gate with their gain. Main's own code REFUSES the head, because the
 manifest lists two files it does not read. The backstop that remains is main's code grading the
-landed blocks under main's oracle: rows, summary and digest are byte-identical to main's baseline.
+head's blocks under main's oracle, and that grade is byte-identical to main's baseline in its rows,
+summary, digest and oracle hash.
 
-**The trace audit on the merged tools** (`--no-decode`, measured into
-`work/merge-r1-scratch/ta-merge/`; the committed ledger is not re-recorded, because the re-record
-appends to `protected-promotions.jsonl` and belongs with the landing). `corpus_map` moved
-audit_version `3794914c` -> `dcbe150d` and clock_code to `74bb7be0cf`. The population is 1,517
-certified, 123 gained and 650 untouched exact. The 123 audit 3 FLAT, 10 OFF, 110 UNCOVERED, record
-for record as the ledger, with the same three promotable blocks; the one difference is Asterios
--ReEntry- S4's band (C -> L) and reason text, UNCOVERED both ways. Every clock and verdict equals
-the skins branch's own measurement. The controls go 261 -> 256 (UNCOVERED 244 -> 239, FLAT 17,
-0 OFF): the five band-C controls whose band moved to L (Cleaner S7, God Mode 2.0 S17, Higgledy
-Piggledy S6, Nihilism Another Ver. S15, Passacaglia S4) have no band-L scan. Re-record after the
-landing (`controls`, `power`, `corpus --out-dir sources`, all `--no-decode`): accepting the overlay
-adds four untouched exact charts, and two of them have a counter scan in their band (Phantom S18,
-Vook S10), so the controls should read 258 there, and the corpus 123 as above.
+**Round 3: the landed head, verified** (the gate-security review the ruling asks for, 2026-09-28).
+It ran in a scratch clone of `94b24bc` and in the branch's worktree; the scripts and logs are in
+`work/merge-r1-scratch/round3/`.
+- **The landing replayed** with the head's code (`r3_landing.py`). Every gate in the table came out
+  as recorded. Each oracle hash of the chain, `054afdd6fbe9` -> `7dee65b29657` -> `399a7349d5b1` ->
+  `ea51aab7aeb7` -> `a90d9a0628b7`, came from its own tree. `c3ad688` and `94b24bc` gate net 0, the
+  whole-range gate fails on Phantom S18 and Vook S10 as designed, and `conflicts --write` at the
+  head rebuilds the committed ORACLE_CONFLICT byte for byte.
+- **Planted faults on the head**, all as intended (40 of 40 steps with the replay). Editing or
+  deleting the skins ledger without a freeze, or editing the accepted overlay, is REFUSED.
+  Refreezing an edited overlay without `--oracle-pass` FAILs ORACLE. When `corpus_map` names
+  another overlay, adds one or reorders the ledgers, `check_lists` REFUSES it, in `grade` and in
+  `gate`, and loopcommit still holds the accepted overlay owner-only. An overlay no manifest lists,
+  edited at `5f296a5`, is inert. The grade's and corpus_map's populations are equal at 1,517 and at
+  1,506. The launder route played on the head passes its stepfile pass and fails the oracle pass
+  that re-keys onto it (`AUDIT GAINED Beat of The War S21`), and the whole range fails too.
+- **The corpus_grade drills** (`drills_r3.py`, the rails integration's 27 planted faults, with
+  drill 7 on Solitary S6): 27 of 27.
+- **`selftest.py`** 23 of 23, the slot-order case included. **`trace_audit.py drills`**: 85,075
+  checks, 0 failed.
+- **`supervise_selftest.py`** (full): 26 of 27. `stop_run` fails, and it fails the same way on the
+  supervise from before slot fairness (`57c4a17`, twice), so the machine caused it, not `c3ad688`.
+  The drill assumes its `supervise.py stop` lands within one 2-second toy job. While six decode
+  slots of other loops and this review's own grading ran, the STOP was seen 11-12 s after the
+  first job started, and each toy took 7-11 s, so a second job started (three reruns on the head:
+  2, 2 and 3 of 6). The four slot-pool drills and every other drill pass. It should be re-run on a
+  quiet machine.
+- **The bench's post-decode identity** (`bench.py identity --against main --shard 7/40`: 39
+  cached passes, 2 in older key formats skipped). With the two accepted tailcap passes switched
+  off (`CAP_OPEN = ()`), the merged read is byte-identical to main's on all 37 (36 whole reads, 1
+  step). As shipped, 13 are identical and 24 differ, and in every one that differs the only change
+  is notes removed at the same floor (the step alone: 22 of 37, all removals). `--against
+  loops/bench-1` cannot run: the reference cut needs `R.onsets` inline in `_read`, and bench-1's
+  own `note_extract` has moved it into `post_decode`.
+- **The trace audit re-recorded** on the merged tools (`206f1f4`, `sources/trace-audit-2026-09-28.json`,
+  audit_version `8bada42e`). `corpus_map` and `note_extract` moved, so every clock the census
+  records do not serve was measured again. The 123 kept every verdict, reason, edit and clock (94
+  measured, none moved): 3 FLAT, 10 OFF, 110 UNCOVERED, the same three promotions appended again.
+  The one record that differs is Asterios -ReEntry- S4's band, C -> L. Controls 261 -> 258
+  (UNCOVERED 244 -> 241, FLAT 17, 0 OFF): the five band-C controls whose band moved to L have no
+  band-L scan (Cleaner S7, God Mode 2.0 feat. Skizzo S17, Higgledy Piggledy S6, Nihilism - Another
+  Ver. - S15, Passacaglia S4), and the overlay adds Phantom S18 and Vook S10. Power: 1,052 plants
+  on 254 controls, identical plant for plant where both runs planted. The bench's extractor change
+  moved no clock and no verdict.
+- **The backstop from main's checkout.** Main's code grading the head's blocks under main's oracle
+  is byte-identical to main's `sources/corpus-grade.json` (1,490 rows, summary, digest,
+  `054afdd6fbe9`) but for its `blocks` label. Main's `gate --base main --head loops/merge-r1
+  --declared 30` REFUSES (exit 2, "manifest 8b1f7f007795, file None" for the skins ledger and
+  "4645b464e44d" for the overlay), as expected. The head's own grade set-diffs against main exactly
+  as listed under "The numbers".
+- **`sources/corpus-grade.json`** is refreshed for the final head: 1,506 certified, 779 exact, 659
+  PROTECTED, 120 PROVISIONAL, oracle `a90d9a0628b7`.
 
-**Selftests on the merged tools:** `selftest.py` 22 of 22; `trace_audit.py drills` 85,075 checks,
-0 failed; `supervise_selftest.py` 27 of 27. The corpus_grade planted-fault drills (`drills_v3`,
-adapted) came out 27 of 27 as intended on this branch, and again 27 of 27 in the landed clone, with
-drill 7 on Solitary S6 because Pump me Amadeus S16 is withdrawn there. `supervise_selftest.py --only
-loopcommit,pass,revert_run` passes against the patched loopcommit.
-
-Owner items from the four buckets are collected in `work/owner-list/round1.md`.
+Owner items from the four buckets are collected in `work/owner-list/round1.md`; its items 1 and
+3-5 are settled by the landing above.
 
 ## The extractor replay bench (2026-09-27)
 

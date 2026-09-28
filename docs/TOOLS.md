@@ -52,6 +52,20 @@ checkout's, so all loops see one copy:
   PID does not keep it alive) and logged to `work/rails-events.jsonl`. `slots --max`/
   `--gaming-max` can lower the limits (never raise them past 6 and 2), live, for every running
   loop.
+- **First come, first served** (since 2026-09-28). A freed slot goes to the process that has
+  waited longest, not to whoever asks first. A process that asks and finds no slot for itself
+  writes a wait record, `work/.slots/wait-<pid>.json`, stamped with when it first asked and
+  refreshed (at most every 5 s) while it keeps asking; waiters are ranked by that first ask (then
+  PID), and a process gets a slot only when fewer waiters are ahead of it than slots are free. One
+  that asks without having waited queues behind every live waiter; one whose process is gone, or
+  that has not asked again for 30 s (it stopped wanting one), is passed over and its record
+  removed; a slot taken, or the process exiting, removes its own. The record is per process, so a
+  supervisor running several jobs waits once. Before, a supervisor refilling the slot its own
+  finished job had just released asked within the same step and won every race against a process
+  polling every 2 s, so the runs that took the slots first kept them until their queues drained
+  (2026-09-28: a 159-job run got 3 launches in 90 minutes; `identity-1-pad-dec3` waited from 03:16
+  while three runs held all 6 slots). `status` and `slots` list the waiters, longest first.
+  `selftest.py` drills the order.
 - **The limit binds jobs already running.** When it falls below the slots held (the game starts,
   or `slots --max` is lowered), the jobs past it are *frozen*: every process in the job's job
   object is suspended (`NtSuspendProcess`), so a frozen decoder uses no CPU while the owner
@@ -163,8 +177,8 @@ checkout's, so all loops see one copy:
   `finished`, `stopped`, `halted`, `crashed` with its error, `DEAD` when the heartbeat says
   active but its PID is gone, or `INCOMPLETE` if a heartbeat says finished while jobs lack a
   finished row), done/total, verdict counts, what is running, what is frozen and what is deferred
-  (and for how long yet), a blocked freeze, plus the slot pool, the commit lock, the main lock and
-  the global STOP. Only `finished` means done.
+  (and for how long yet), a blocked freeze, plus the slot pool (and who is waiting for a slot,
+  longest first), the commit lock, the main lock and the global STOP. Only `finished` means done.
 
 Exit codes: 0 finished (every job has a finished row, whatever its verdict), 1 refused to start
 and nothing ran (a run or global STOP is present, the converter is not the frozen pin, the jobs
@@ -207,7 +221,14 @@ itself): the round-2 review's two probes - a neutered gate committed around loop
 POWER D14). If the branch changes the gate's own code (`git diff main..loops/<x> -- tools`; its
 tools-only passes say so in `passes.jsonl`), that change's own effect is the owner's to see as
 well: grade the same revision with main's tools and with the branch's
-(`corpus_grade.py grade --rev loops/<x>` in each checkout) and compare.
+(`corpus_grade.py grade --rev loops/<x>` in each checkout) and compare. A branch that adds an
+oracle file main's code does not read (merge round 1's skins ledger and identity overlay) cannot
+be gated by main's code at all: its manifest pins files main's Oracle never hashes, so main's
+`gate` REFUSES it (exit 2), as designed. The backstop there is main's code grading the branch's
+blocks under main's oracle (`grade --rev loops/<x>` from main's checkout, no `--oracle-rev`),
+which for a branch that changed no stepfile is byte-identical to main's own
+`sources/corpus-grade.json` but for its `blocks` label, plus the set-diff of the two grades above,
+which must be exactly the oracle growth the branch declares.
 `pins` prints the converter and oracle pins.
 
 Library use, for a tool that decodes in-process: `with supervise.decode_slot(): ...` (a no-op
@@ -227,7 +248,8 @@ included), **if what it stages reaches a path only the owner changes** (below; n
 staged), if HEAD is detached, or if the branch is main (or, without `--allow-branch`, anything
 outside `loops/*`). Owner-only: the rails' own code (`tools/corpus_grade.py`, `guards.py`,
 `trace_audit.py`, `loopcommit.py`, `supervise.py`, `atomicio.py`, `tools/childsite/`,
-`.githooks/`), the oracle files and `sources/oracle-manifest.json`, `sources/demotions.jsonl`
+`.githooks/`), the oracle files (the optional certification ledgers and the identity overlays
+included, whether or not a manifest lists them yet) and `sources/oracle-manifest.json`, `sources/demotions.jsonl`
 (a demotion is the owner's call), `sources/protected-promotions.jsonl` (the trace audit's corpus
 run writes it) and `sources/footage-corrupt.json`. Before staging it checks the converter, the loop-bucket rule that the pin
 is checked at every commit pass: if the run has a manifest (`work/runs/<run>/manifest.json`),
@@ -853,13 +875,14 @@ report and candidate writes and the checked commits are the extraction loop's to
 
 **`corpus_grade.py grade [--rev <commit>] [--oracle-rev <commit>] [--out <path>|-]`**
 **`corpus_grade.py gate --base <rev> [--head <rev> | --worktree] [--oracle-pass] [--declared N] [--json <path>] [--audit-no-decode]`**
-**`corpus_grade.py freeze [--repin]`** / **`conflicts [--write]`** / **`selfcheck`**
+**`corpus_grade.py freeze [--repin] [--accept-identity]`** / **`conflicts [--write]`** / **`selfcheck`**
 (all take `--workers N` (default 6), `--no-cache`, `--cache-dir <dir>`, `--unpinned`,
 `--stall-timeout S` (default 600); run with `-X utf8 -B`, or it refuses)
 Exit codes: 0 done (the gate: PASS); 1 the gate FAILs (`selfcheck`: a mismatch); **2 REFUSED** -
 it cannot judge until something is fixed (an oracle or converter that is not the manifest's, an
 oracle edited without a freeze, a revision that does not resolve, a converter without the lattice,
-an incomplete oracle tree, an internal error); **75 REFUSED, RETRY LATER** (`EX_TEMPFAIL`) - the
+an incomplete oracle tree, `corpus_map` naming other certification ledgers or identity overlays
+than the rails do (`check_lists`, below), an internal error); **75 REFUSED, RETRY LATER** (`EX_TEMPFAIL`) - the
 machine, not the work, stopped it (a pool starved or a worker hung past `--stall-timeout`, a
 MemoryError or OSError, a converter that answered two ways, a ship audit the machine stopped).
 Only 75 means the same command may succeed later.
@@ -897,10 +920,39 @@ covered audit, read here. **PROVISIONAL**: every other exact chart. A `sources/d
 row takes the import protection away (a promotion of a block no demotion names gives it back).
 Flags ride on each row: `oracle_conflict`, `owner_revisit`, `quarantine`, `demoted`.
 
-The **oracle** is every file that decides who is certified and at what count — the census and
-corpus certification ledgers, `ssc-map.json` and `ssc-map-tail.json`, `census-final.json`, the
-sweep, the Phoenix 1 catalog counts, `video-map.json` — plus the three policy files the gate
-enforces (`oracle-conflict.json`, `owner-revisit.json`, `quarantine.json`).
+The **oracle** is every file that decides who is certified and at what count, in three lists that
+are `corpus_grade.py`'s own (rails code), plus the three policy files the gate enforces
+(`oracle-conflict.json`, `owner-revisit.json`, `quarantine.json`; `ORACLE_POLICY`):
+- **`ORACLE_DATA`**, required in every tree: the census and corpus certification ledgers,
+  `ssc-map.json` and `ssc-map-tail.json`, `census-final.json`, the sweep, the Phoenix 1 catalog
+  counts, `video-map.json`.
+- **`ORACLE_OPTIONAL`**, the certification ledgers added after the rails froze - today one, the
+  result-screen skins ledger `sources/certification-skins-2026-09-27.json` (bucket #12) - oracle
+  wherever a tree has it. A tree without it hashes exactly as it did before the file existed (the
+  file is left out, not hashed as "absent"), so an older revision keeps the oracle hash its own
+  manifest recorded (main before the skins merge is still `054afdd6fbe9` under today's code) and a
+  gate across the file's introduction still judges. A tree that has the file while its manifest does
+  not list it, or the reverse, is refused like any oracle edited without a freeze - from the moment
+  `corpus_map`, and so every loop's population, reads it. A plain `freeze` lists it (the skins
+  ledger was frozen that way, 2026-09-28).
+- **`ORACLE_IDENTITY`**, the identity overlays (`sources/identity-overlay-2026-09-27.json`; see
+  "Chart identity"): oracle from the freeze that first lists one in the manifest - `freeze
+  --accept-identity`, the owner's acceptance - and inert before that, in the grade and in
+  `corpus_map` alike. A plain `freeze` keeps an overlay the manifest already lists and never adds one.
+
+The population is `corpus_map`'s merge over those files in `corpus_map`'s order - the corpus
+ledger, the optional ledgers, the census, then the accepted overlays applied last - so the grade
+and the loops draw one population (1,517 with the overlay inert, 1,506 once accepted). The rails
+keep the lists as literals instead of importing `corpus_map`'s, because `corpus_map` is not
+owner-only: a loop that edited its list could otherwise take an accepted overlay out of
+`loopcommit`'s owner-only paths. **`check_lists` refuses** (exit 2, wherever an Oracle is built:
+`grade`, `gate`, `freeze`, `conflicts`) while `corpus_map.SOURCE_LEDGERS` or
+`corpus_map.IDENTITY_OVERLAYS` names other files, or the same files in another order, than
+`LEDGER_ORDER` and `ORACLE_IDENTITY` - "corpus_map and the oracle disagree about what the
+population reads", naming the list - so a ledger or overlay added to `corpus_map` alone is never
+read by the loops alone. Every file of all three lists is hashed into the manifest, checked
+against it, and owner-only in `loopcommit` (the optional ledgers and the overlays whether or not a
+manifest lists them yet: accepting an overlay is the owner's freeze, and so is editing one).
 `sources/oracle-manifest.json` holds each one's sha256 (CRLF read as LF, so a CRLF checkout and
 an LF blob agree) and the **converter pin**: the sha256 over every `piu_annotate` module the
 conversion actually loads (`__init__`, `utils`, `formats/__init__`, `formats/notelines`,
@@ -911,7 +963,12 @@ unless `PIU_ANNOTATE_ROOT` names another checkout, e.g. an exported copy of `e01
 decides either way). `grade` and `gate` refuse when the working
 tree's oracle or the installed converter differs from the manifest. `freeze` rewrites the
 manifest in an oracle commit, never together with stepfile edits, and moves the converter pin
-only with `--repin`, as a commit of its own. Only committed ledgers are oracle:
+only with `--repin`, as a commit of its own. **`freeze --accept-identity`** also lists every
+identity overlay present in the tree, which makes it oracle from that commit on (applied, hashed,
+refused if edited without a freeze) - the owner's acceptance, as a commit of its own whose
+`--oracle-pass` gate shows what the overlay moved (2026-09-28: `c72bd0e`, 4 GAINED, 2 EDITED-OFF,
+11 LEFT). `conflicts --write` records in `built_from` the hash of every oracle file but the policy
+files, the skins ledger and an accepted overlay included. Only committed ledgers are oracle:
 `work/certification-tail.json` is the live file `result_reader` appends to, and `grade` says on
 stderr when it holds videos the committed ledger does not.
 
@@ -954,8 +1011,27 @@ or OSError, a worker that died, a converter that answered twice differently). It
 but `--json` and the trace audit's own scratch (`work/rails-audit-scratch/`: clocks, file blobs,
 overlays), and never reads a grade file to decide anything — both sides are re-graded from blobs.
 
+**An oracle change in a gate.** The gate names every oracle file that differs between the sides,
+from either side (a file one side lacks - an optional ledger before it existed - counts). Each side
+is graded under the oracle its own tree holds, and where the base's tree is not what the base's
+own manifest pins - a tree that gained an optional ledger before a freeze listed it - the gate
+says so in a note ("the base's oracle is not the one its own manifest pins", naming the file):
+an oracle change already in the base's files counts as the base's, not this change's, so the
+delta it prints is not the one the base's manifest implies. Merge round 1 is the case: the skins
+and identity merges and the rails commit itself carry the skins ledger unlisted, and a skins
+landing gated from any of them reads `exact 775 -> 775` with that note, where from main (or the
+lanes merge) it reads `749 -> 775`. Gate an oracle landing from a base whose manifest pins its
+tree.
+
 **Every ship is trace-audited.** A ship is a chart exact at the head whose block or file header the
-change edited: GAINED, or EDITED-EXACT (a PROTECTED chart's re-edit too, promotion row or not). The
+change edited: GAINED, or EDITED-EXACT (a PROTECTED chart's re-edit too, promotion row or not).
+**An `--oracle-pass` has ships too.** It edits no stepfile (any edit fails it), but it can still
+make exact a block an earlier pass edited and nobody audited - a re-key moves a chart onto it, a
+certification row starts counting it, a count moves to meet it - so every chart an oracle pass
+leaves GAINED, ENTERED-EXACT or EDITED-EXACT on a block or file header that is not the import's
+own is a ship, audited against the import like a GAINED one. A chart it makes exact on the
+import's own block and header is not (nothing edited it; the 26 skins charts and the 4 the
+identity overlay gained all sit on import blocks, so those landings audited nothing). The
 gate runs `trace_audit.audit_chart` on the head's file in a child process (`corpus_grade.py
 audit-ships`, which loads the converter the grade pinned before the audit's own imports, and is
 refused if any pinned module differs): a GAINED chart against the import `a23cee5` - its whole
@@ -969,7 +1045,12 @@ measured by decoding the footage in a machine-wide slot; `--audit-no-decode` mak
 UNCOVERED instead. A ship whose clock and scan are cached audits in about a second. Found by the
 integration review: `Come to Me S17`, put back at its import block and re-shipped as its current
 file, passed `--declared 1` although the audit ledger reads it OFF; it now fails
-(`AUDIT GAINED Come to Me S17: trace audit vs import a23cee5be405: OFF ...`).
+(`AUDIT GAINED Come to Me S17: trace audit vs import a23cee5be405: OFF ...`). Found by the merge
+round 1 review (the launder route): a stepfile pass fills the uncertified S18 sibling of Beat of
+The War with 43 taps (it passes - no certified chart moves), then an oracle pass re-keys Beat of
+The War S21 onto that block in the accepted overlay and freezes. The oracle pass used to audit
+nothing, so it passed `--declared 1` with an interior no one had looked at; it now fails
+(`AUDIT GAINED Beat of The War S21: trace audit vs import ...`).
 
 The ledgers and lists it enforces. **`sources/demotions.jsonl`** (append-only, empty until the
 first demotion): one JSON object per line, `{"chart": <census chart name>, "block_sha": <the
@@ -1045,6 +1126,24 @@ run's commit to the base and halts it, and the halted run can neither commit nor
 Your Groove On D10 re-shipped the same way passes (FLAT, its one edit covered) as a supervised
 job; the committed %X regression fails `pass gate` and is reverted; a tap moved to another column
 on YOU AND I D20 (EDITED-EXACT, no judged event moved) passes - 23 of 23 checks.
+
+Merge round 1 (2026-09-28): the oracle lists, `check_lists`, `--accept-identity` and the
+oracle-pass ship audit were drilled 41 of 41 in a private clone before they landed, and again on
+the landed head (`94b24bc`) by the gate-security review, in a scratch clone
+(`work/merge-r1-scratch/round3/`, `r3_landing.py`, 40 of 40 as intended). The five landing
+commits and the two after them (docs/STATUS.md, "Merge round 1") were re-gated with the head's
+code as recorded, each oracle hash of the chain came from its own tree, and `conflicts --write`
+at the head rebuilt the committed ORACLE_CONFLICT byte for byte. The planted faults: the skins ledger edited
+or deleted without a freeze, and the accepted overlay edited, are REFUSED; the overlay edited and
+refrozen without `--oracle-pass` FAILs ORACLE; `corpus_map` naming another overlay, adding one or
+reordering the ledgers is REFUSED by `check_lists` in `grade` and in `gate`, while `loopcommit`
+still holds the accepted overlay owner-only; an overlay no manifest lists, edited at `5f296a5`, is
+inert (PASS, 775 -> 775); the grade's and `corpus_map`'s populations are equal before and after
+acceptance (1,517 and 1,506); and the launder route played on the head fails at its oracle pass
+(`AUDIT GAINED Beat of The War S21`, one ship audited) and over the whole range (`ORACLE PASS EDITS
+A STEPFILE` as well), while its stepfile pass alone passes. The 27 planted-fault drills above
+(`drills_r3.py`, drill 7 on Solitary S6 because Pump me Amadeus S16 is withdrawn) came out 27 of
+27 as intended.
 
 **`guards.py`** (library)
 The shared definitions the loops and the gate import. `block_sha(ssc_path, block_id)` is the
@@ -1283,10 +1382,13 @@ confirmation. The predictions registered before the reads are scored in the outp
 evidence: F1 table, margins, count, catalog row, ChartVideo side, the ball read where one decided)
 and `withdraw` (vid, side, chart: this side does not show this chart). `--extra` adds the rows a
 `reads` output settled; one replaces the report's row for the same kind, chart, video and side (a
-census withdrawal a ball confirmed carries the read) rather than doubling it. `grade-delta` grades the corpus with and without an overlay
-under the pinned converter and the working tree's oracle - `corpus_grade`'s own Oracle, grader and
-conflict builder, the overlay applied to a copy the way the staged `corpus_grade` change applies it -
-and reports it as ORACLE GROWTH, never as repairs (no block changes). `owner-list` writes the rows
+census withdrawal a ball confirmed carries the read) rather than doubling it. `grade-delta` grades the corpus under
+the working tree's oracle, and again with an overlay applied over a copy of it, both under the
+pinned converter - `corpus_grade`'s own Oracle, grader and conflict builder - and reports the
+difference as ORACLE GROWTH, never as repairs (no block changes). Since merge round 1 the Oracle
+already applies every overlay the manifest lists and the rows are idempotent, so for an accepted
+overlay the growth is zero; for one not yet accepted it is what `freeze --accept-identity` would
+move. `owner-list` writes the rows
 the rule may not settle, one line of reason each (and exact charts whose notes match another block
 by the margin, which the count vetoed; `--reads` adds a batch's owner items), and with
 `--conflicts-out` the proposed ORACLE_CONFLICT additions: not-exact charts whose notes match another
@@ -1299,12 +1401,17 @@ the gate; the owner folds it into `sources/oracle-conflict.json`.
 ledgers (`overlay_chart_map`, `overlay_certification`; a `rekey` row applies only while the chart
 still maps to its `from_key`, and never leaves two charts on one key) - but only once
 `sources/oracle-manifest.json` lists the file, so a loop's population and the gate's cannot
-disagree about it. Until then the overlay is inert everywhere. `corpus_grade` reading it as oracle
-is a change to the rails' own code, the owner's: the staged patch (`work/owner-list/identity-corpus_grade.patch`,
-listed in `work/owner-list/identity.json`) adds `ORACLE_IDENTITY` (corpus_map's list) and the same
-rule - an overlay is inert until the tree's manifest lists it, oracle after (hashed, checked, owner-only
-in `loopcommit`) - and `freeze --accept-identity`, which lists every overlay present: the owner's
-acceptance, a commit of its own whose gate shows what the overlay moved. Drilled in a throwaway
+disagree about it. Until then the overlay is inert everywhere. `corpus_grade` reads it by the same
+rule (since merge round 1, `440c43c`: "The corpus grade" above): `ORACLE_IDENTITY`, its own copy
+of `corpus_map`'s list (`check_lists` refuses while they differ), an overlay inert until the
+tree's manifest lists it and oracle after - hashed, checked, owner-only in `loopcommit` - and
+`freeze --accept-identity`, which lists every overlay present: the owner's acceptance, a commit of
+its own whose gate shows what the overlay moved. The 2026-09-27 overlay was accepted at merge round
+1 (`c72bd0e`: `--oracle-pass --declared 4`, 775 -> 779, four GAINED, two EDITED-OFF, eleven LEFT),
+after the review commit `5f296a5` took Phantom S18 and Vook S10 out of ORACLE_CONFLICT, and
+ORACLE_CONFLICT was rebuilt under it (`57c4a17`, 34 charts to 13). Before it landed, the patch
+(then staged as `work/owner-list/identity-corpus_grade.patch`, since folded into the merge round 1
+rails change) was drilled in a throwaway
 clone of main with the final 2026-09-27 overlay (`work/identity-1-scratch/drill.sh`): the branch with
 the overlay committed inert gates 749 -> 749 on today's rails and on the patched ones; a review
 commit removing the two ORACLE_CONFLICT charts the overlay resolves passes as an oracle pass (the gate
@@ -1965,10 +2072,12 @@ block hash being `guards`' (CRLF, a duplicated tag, a missing tag), and the prom
 append rule. It runs in a per-process scratch root, so two runs cannot race.
 
 First run, 2026-09-27 (audit_version `ed1b01e0…`, the simfiles tree at `8c9b5de`; re-run after
-the second review, the first review's run was `723351a1…`). The ledger now committed as
-`sources/trace-audit-2026-09-27.json` is the re-run on the integrated rails (audit_version
-`d2cdb262…`, below, "Re-run on the integrated rails"); the paragraphs up to there describe the
-audit branch's own run. **Two corrections first.** The first: the run's first version (audit_version
+the second review, the first review's run was `723351a1…`). The ledger committed as
+`sources/trace-audit-2026-09-27.json` was first the re-run on the integrated rails (audit_version
+`d2cdb262…`, below, "Re-run on the integrated rails"), then its re-record on the merged rails
+tools (`3794914c…`); the current ledger is `sources/trace-audit-2026-09-28.json` (below,
+"Re-recorded at merge round 1"). The paragraphs up to there describe the audit branch's own
+run. **Two corrections first.** The first: the run's first version (audit_version
 `047724d3…`, never integrated) promoted three charts and described each as having the counter at
 0 within 1-4 rows either side. For A nightmare S6 and She Likes Pizza D11 that was wrong. Each is
 a finale edit whose only read after it was the counter resting at maxcombo after the last judged
@@ -2086,6 +2195,26 @@ the flag, ran the corpus and appended to `sources/protected-promotions.jsonl`. N
 changed: a `--no-decode` rerun reproduces all 123 chart records. The committed ledger still
 carries `d2cdb262` and head `02ce4ff` (its calibration and power sections read as stale under a
 newer version); it is re-recorded once, when the rails merge into main (docs/STATUS.md).
+It was, on the merged rails tools (`76a9b87`, audit_version `3794914c…`): no verdict moved.
+
+**Re-recorded at merge round 1** (2026-09-28, `loops/merge-r1` at `94b24bc`, audit_version
+`8bada42e…`, clock code `791d32b936`; `sources/trace-audit-2026-09-28.json`, the ledger committed
+now). Two modules of the closure moved: `corpus_map` (the rails change, which merges the skins
+ledger as oracle) and `note_extract` (bucket #5's tailcap-d/e post-decode rules), so every clock
+the census records do not serve was measured again from the cached passes. The extractor rules
+moved no clock: the 123 edit-derived exact charts kept every verdict, reason, edit
+and clock (94 of them measured here, 12 from census records, 17 without one) - **3 FLAT, 10 OFF,
+110 UNCOVERED**, the same three promotions appended again under the new version - and the one
+record that differs is Asterios -ReEntry- S4's reader band, C -> L, from the skins ledger's split
+screen (UNCOVERED both ways, no scan in either band). Controls: **258** audited (was 261),
+UNCOVERED 241, FLAT 17, 0 OFF. Five band-C controls moved to band L with the skins ledger and have
+no band-L scan (Cleaner S7, God Mode 2.0 feat. Skizzo S17, Higgledy Piggledy S6, Nihilism -
+Another Ver. - S15, Passacaglia S4); of the four charts the accepted identity overlay makes
+untouched-exact, the two with a scan in their band join (Phantom S18, Vook S10); the other 256 are
+unchanged, clocks included. Power: 1,052 plants on 254 controls, 0 errors, every control planted
+in both runs identical plant for plant. `--no-decode` with every clock measured again took 719 s
+for the controls, 2,422 s for power and 1,053 s for the corpus on a machine running six decode
+slots of other loops.
 
 **`verify_release.py <release> [--old <release>]`**
 Checks a packaged release actually carries the repairs: the `.ssc` through the converter, the
@@ -2152,8 +2281,11 @@ nothing but a temp directory and git. Run it after touching a regex, a parser or
 The plumbing has cases too: atomic writes byte-identical to the plain ones, a 0-byte or cut-short
 cache loading as missing, a stream sealed by its sidecar, cache keys keeping their old names
 until a parameter moves, a checked commit carrying only its own file, a read-only phase that
-cannot open a file for writing - and a table of the code stamps every cache is keyed by, which
-fails when a change would re-key a cache without saying so.
+cannot open a file for writing, a `tools/` module named after a real one refused by the rails, a
+freed decode slot going to the process that has waited longest (a live waiter ahead goes first,
+the asker then waits in line, and a waiter that stopped asking is passed over) - and a table of the
+code stamps every cache is keyed by, which fails when a change would re-key a cache without saying
+so. 23 cases (2026-09-28).
 
 **`golden.py [--only "<chart>"] [--record]`** - the charts whose answer we know
 Re-derives seventeen charts from the footage and fails if the analysis reaches a different
@@ -2214,11 +2346,16 @@ Since 2026-09-27 `certification()` also merges `sources/certification-skins-2026
 (bucket #12's result-screen skins, written by `cert_land.py land`: the XX screen's 2P column and
 the Prime screen), after the live tail and before the census. That ledger holds only what it
 adds - each video's new read and the charts it newly certifies - so the per-chart merge keeps
-every chart the older ledgers carry. The gate sees that ledger in two different ways:
-- **The grade does not see it until the owner acts.** `corpus_grade` builds its population from
-  its own list of oracle files, not through `certification()`. So the certified and exact counts,
-  PROTECTED and DECLARED see the ledger only once the owner adds it to that list and refreezes the
-  manifest.
+every chart the older ledgers carry. `SOURCE_LEDGERS` is the committed ledgers in that order
+(`certification()` slips the live tail in after the corpus ledger). The gate sees that ledger in
+two ways:
+- **The grade reads it as oracle** (since merge round 1). `corpus_grade` builds its population
+  from its own lists of oracle files, not through `certification()`: the skins ledger is its
+  `ORACLE_OPTIONAL`, merged in the same place, and `check_lists` refuses while `SOURCE_LEDGERS`
+  and the grade's `LEDGER_ORDER` differ ("The corpus grade" above). It was frozen into the
+  manifest at `0d8438e` (2026-09-28: +27 certified, +26 exact, all 26 PROTECTED at the import;
+  Papasito FULL SONG S19 entered not exact), so an edit to it is an oracle change: owner-only,
+  refused without a freeze, a FAIL ORACLE without `--oracle-pass`.
 - **The ship audit sees it as soon as it merges.** `trace_audit` imports `corpus_map`, and its
   `play_of` takes a play's reader band from `certification()`: C for a one-sided screen, L or R
   for a split one. `corpus_map.py` is also in the audit's `audit_version` closure and its
@@ -2233,7 +2370,9 @@ every chart the older ledgers carry. The gate sees that ledger in two different 
 
   Measured on 2026-09-27 with the branch's tools (docs/STATUS.md, "Result-screen skins"), the
   123-chart corpus kept every verdict, clock and promotable block. Only Asterios -ReEntry- S4's
-  band and reason text changed.
+  band and reason text changed. The committed ledger was re-recorded at merge round 1 with the
+  same result, and the controls lost the five band-C charts whose band moved to L ("Re-recorded
+  at merge round 1", under the trace audit).
 
 The identity overlays (`IDENTITY_OVERLAYS`, written by `identity.py`) are applied last, over both
 merges, and only once the oracle manifest lists them (see "Chart identity" above); `chart_map`,
