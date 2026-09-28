@@ -15,18 +15,23 @@
 #                half. Quarantined and owner-revisit charts are excluded from every benchmark.
 #                v2 (partitions-2026-09-27.v2.json) corrects v1's scan before any F1: a chart named by
 #                title and level token in one phrase, and every held-out chart on a video carrying a
-#                named chart, is 'seen' (see build_partitions_v2); the correction is in the looks ledger.
+#                named chart, is 'seen' (see build_partitions_next); the correction is in the looks
+#                ledger. v3 (.v3.json, round 2) keeps v2's rules and adds one source to the scan: the
+#                loop proposal's full record (loop-buckets-2026-09-26.full.json, decoded), which the
+#                bucket was told to read for its guards and which publishes per-chart probe results.
 #   census       every fit the corpus asks for (certified charts, official charts, every cached .inset
 #                fit), with its template, partition and the BEFORE fit stamped with the rule that
 #                made it (receptors._fit_field's code stamp). v2 is v1's rows relabelled under
-#                partitions v2 ('seen' outranks both halves); nothing in a row but its partition moves.
+#                partitions v2 ('seen' outranks both halves), v3 is v2's relabelled under v3; nothing
+#                in a row but its partition moves.
 #   bands        per-template pitch bands, from tune-partition fits only. A template is assigned from
 #                metadata - channel and layout (band, columns) - never from pitch.
 #   rules        each rule's id and code stamp, registered before it is run; with the effect the
 #                held-out validation gate must show, written before any held-out look.
 #
-#   lanefit.py partitions [--write] [--v1] build (and freeze) partitions v2 from v1 (--v1: v1's builder)
-#   lanefit.py census [--write] [--v1]     census v2: v1 relabelled under partitions v2 (--v1: v1's builder)
+#   lanefit.py partitions [--write] [--v1|--v2]  build (and freeze) partitions v3 from v2; --v1/--v2
+#                                          re-derive an older version and say whether it matches its freeze
+#   lanefit.py census [--write] [--v1|--v2]      census v3: v2 relabelled under partitions v3 (same)
 #   lanefit.py recompute                   BEFORE fits recomputed from the cache: every cached .inset
 #                                          fit must come back byte for byte; zero recomputed = exit 1
 #   lanefit.py sample [--write] [--missing F]  the band sample (frozen before any band is computed)
@@ -69,10 +74,14 @@ SRC = os.path.join(ROOT, "sources", "lanes")
 WORK = os.path.join(ROOT, "work", "lanes")
 PARTITIONS_V1 = os.path.join(SRC, "partitions-%s.json" % DATE)
 CENSUS_V1 = os.path.join(SRC, "census-before-%s.json" % DATE)
-# v2 (verification round 1): the partition correction; everything reads these from now on, and the
-# v1 tables stay committed as the record of what was frozen first
-PARTITIONS = os.path.join(SRC, "partitions-%s.v2.json" % DATE)
-CENSUS = os.path.join(SRC, "census-before-%s.v2.json" % DATE)
+# v2 (verification round 1) and v3 (round 2): partition corrections. Everything reads the newest from
+# now on; the older tables stay committed as the record of what was frozen first.
+PARTITIONS_V2 = os.path.join(SRC, "partitions-%s.v2.json" % DATE)
+CENSUS_V2 = os.path.join(SRC, "census-before-%s.v2.json" % DATE)
+PARTITIONS = os.path.join(SRC, "partitions-%s.v3.json" % DATE)
+CENSUS = os.path.join(SRC, "census-before-%s.v3.json" % DATE)
+PROPOSAL = os.path.join(ROOT, "work", "loop-buckets-2026-09-26.txt")
+PROPOSAL_RECORD = os.path.join(ROOT, "work", "loop-buckets-2026-09-26.full.json")
 BANDS = os.path.join(SRC, "pitch-bands-%s.json" % DATE)
 RULES = os.path.join(SRC, "rules.jsonl")
 LOOKS = os.path.join(SRC, "heldout-looks.jsonl")
@@ -280,17 +289,40 @@ def research_files(all_charts):
     return out
 
 
-def seen_corpus(all_charts, rev=SEEN_REV, research=None):
+def _strings(o, out):
+    if isinstance(o, str):
+        out.append(o)
+    elif isinstance(o, dict):
+        for k, v in o.items():
+            out.append(str(k))
+            _strings(v, out)
+    elif isinstance(o, list):
+        for v in o:
+            _strings(v, out)
+    return out
+
+
+def proposal_record_text():
+    """The loop proposal's full record decoded for the scan: every string value and every dict key,
+    in document order, one per line (JSON escapes resolved, so a title reads as the corpus writes it).
+    The record is read whole, like the proposal's .txt: it is the proposal, not a research listing."""
+    return "\n".join(_strings(load_json(PROPOSAL_RECORD), []))
+
+
+def seen_corpus(all_charts, rev=SEEN_REV, research=None, record=False):
     """The text in which a chart counts as 'previously inspected': the docs, the tools (this bucket's
     own included - its preflight videos are named in code) and the root *.md as committed at `rev`,
     the loop proposal, and those research notes (scripts, texts, JSON under 20 KB) that name at most
     RESEARCH_LIST_MAX corpus charts: a file listing dozens of charts is a script's output over a
     population, not a look at any one of them. File names anywhere under the research notes count
-    too - an image or a notes file named after a video is a video someone looked at. Returns (text,
-    file names, research files used, skipped listings, {source: text})."""
+    too - an image or a notes file named after a video is a video someone looked at. With `record`
+    (v3), the proposal's full record too (proposal_record_text): the bucket reads it for its guards,
+    and it publishes per-chart results of research probes the listing rule leaves unread. Returns
+    (text, file names, research files used, skipped listings, {source: text})."""
     by_src = dict(tracked_texts(rev))
-    by_src["work/loop-buckets-2026-09-26.txt"] = open(os.path.join(ROOT, "work", "loop-buckets-2026-09-26.txt"),
-                                                      encoding="utf-8").read()
+    by_src["work/loop-buckets-2026-09-26.txt"] = open(PROPOSAL, encoding="utf-8").read()
+    if record:
+        by_src["work/loop-buckets-2026-09-26.full.json"] = proposal_record_text()
     research = research if research is not None else research_files(all_charts)
     used, skipped = [], []
     for r in research:
@@ -534,13 +566,22 @@ def split_overlap(parts, census, sample):
                 band_sample_videos_carrying_a_heldout_family={v: sorted(f) for v, f in sorted(band_vids.items())})
 
 
-def build_partitions_v2(meta, v1, census_v1, sample):
+def build_partitions_next(meta, v1, prev, census_v1, sample, version):
+    """Partitions v<version> from v<version-1> (`prev`; for v2 that is v1). v2 and v3 apply one rule
+    set - v1's exact 'Title Level', the phrase rule and the video rule - and differ only in what the
+    scan reads: v3 adds the loop proposal's full record (seen_corpus record=True). A chart moves one
+    way only, held out -> seen, and the halves are never reshuffled. Re-deriving v2 through this
+    function must give the frozen v2 table byte for byte (cmd_partitions --v2 checks it), which is
+    what shows v3's rules are v2's."""
     allc = list(meta.smap)
     research = research_files(allc)
-    text, names, used, skipped, by_src = seen_corpus(allc, research=research)
+    text, names, used, skipped, by_src = seen_corpus(allc, research=research, record=version >= 3)
     phrase = phrase_named(by_src, allc)
+    prev_held = {n for n, c in prev["charts"].items() if c["partition"] in ("validate", "sealed")}
+    exact = {n for n in prev_held if n in text}     # v1's rule; v1 read the same text as v2, so only new text adds
     v1_seen = {n for n, c in v1["charts"].items() if c["partition"] == "seen"}
-    named = set(phrase) | v1_seen
+    prev_seen = {n for n, c in prev["charts"].items() if c["partition"] == "seen"}
+    named = set(phrase) | v1_seen | exact
     v2c = video_charts(meta, census_v1, v1)
     c2v = defaultdict(set)
     for v, cs in v2c.items():
@@ -551,20 +592,22 @@ def build_partitions_v2(meta, v1, census_v1, sample):
         for v in sorted(c2v.get(c, ())):
             seen_vids.setdefault(v, "carries %s, named" % c)
     charts, moved = {}, []
-    for n, c in sorted(v1["charts"].items()):
+    for n, c in sorted(prev["charts"].items()):
         c = dict(c)
         if c["partition"] in ("validate", "sealed"):
             why = []
             if n in phrase:
                 why.append("named in a phrase: %s: %s" % phrase[n])
+            elif n in exact:
+                why.append("named: the exact string")
             why += ["video %s: %s" % (v, seen_vids[v]) for v in sorted(c2v.get(n, ())) if v in seen_vids]
             if why:
-                c.update(partition_v1=c["partition"], partition="seen", seen=why)
+                c.update({"partition_v%d" % (version - 1): c["partition"]}, partition="seen", seen=why)
                 moved.append(n)
         charts[n] = c
-    lost = [n for n in v1_seen if charts[n]["partition"] != "seen"]
+    lost = [n for n in prev_seen if charts[n]["partition"] != "seen"]
     if lost:
-        raise SystemExit("v2 would move a v1-seen chart back into a held-out half: %s" % lost)
+        raise SystemExit("v%d would move a seen chart back into a held-out half: %s" % (version, lost))
     parts = dict(charts=charts)
     held = {n for n, c in charts.items() if c["partition"] in ("validate", "sealed")}
     unread = []
@@ -581,7 +624,7 @@ def build_partitions_v2(meta, v1, census_v1, sample):
             smallest[c] = min(smallest.get(c, 10 ** 9), u["charts_named"])
     counts = Counter((c["partition"], c["stratum"]) for c in charts.values())
     scorable = Counter((c["partition"], c["stratum"]) for c in charts.values() if c["scorable"])
-    return dict(
+    out = dict(
         what="bucket #4 lane partitions, v2: v1 with its 'seen' scan corrected before any F1 was scored. "
              "Held-out charts named by title and level token in one phrase, and held-out charts on a video that "
              "carries a named chart, move to 'seen'; nothing moves the other way and the halves are not reshuffled.",
@@ -618,39 +661,82 @@ def build_partitions_v2(meta, v1, census_v1, sample):
                               smallest_file_names_over_30=sum(1 for v in smallest.values() if v > 30))),
         split_overlap=split_overlap(dict(charts=charts), census_v1, sample),
         official=v1["official"], misfit36=v1["misfit36"])
+    if version == 2:
+        return out
+    # v3: the same rules over one more source. A held-out chart the proposal's record names is seen by
+    # the rules above, so a held-out chart still sitting in an unread research file is one whose
+    # per-chart result the proposal does not publish; assert it rather than claim it.
+    rec_src = "work/loop-buckets-2026-09-26.full.json"
+    leaked = sorted(c for c in held if c in by_src[rec_src] or c in phrase_named({rec_src: by_src[rec_src]}, allc))
+    if leaked:
+        raise SystemExit("v3 left a chart the proposal's record names in a held-out half: %s" % leaked)
+    with open(PROPOSAL_RECORD, "rb") as f:
+        rec = f.read()
+    rel = lambda p: os.path.relpath(p, ROOT).replace("\\", "/")  # noqa: E731
+    out.update(
+        what="bucket #4 lane partitions, v3: v2 with one more source in its 'seen' scan, corrected before any F1 was "
+             "scored - the loop proposal's full record, which the bucket reads for its guards and which publishes "
+             "per-chart results of research probes the research rule leaves unread (a 14-chart probe is a 'listing'). "
+             "v2's rules are unchanged; nothing moves the other way and the halves are not reshuffled.",
+        version=3,
+        supersedes=dict(path=rel(PARTITIONS_V2), sha256=prev["sha256"]),
+        lineage=[dict(path=rel(PARTITIONS_V1), sha256=v1["sha256"]), dict(path=rel(PARTITIONS_V2), sha256=prev["sha256"])],
+        rules=dict(prev["rules"], seen_v3=(
+            "v2's rules unchanged (v1's exact 'Title Level', the phrase rule, the video rule), over v2's sources plus "
+            "the loop proposal's full record, %s, decoded: every string value and every dict key in document order, "
+            "JSON escapes resolved, read whole like the proposal's .txt - it is the proposal the bucket was told to "
+            "read for its guards, not a research listing. A chart whose per-chart result the proposal publishes is "
+            "named there, so it is seen even when the research file the result came from is a listing the research "
+            "rule leaves unread." % rel(PROPOSAL_RECORD))),
+        seen_sources=dict(out["seen_sources"], proposal_record=dict(
+            path=rel(PROPOSAL_RECORD), bytes=len(rec), sha256=hashlib.sha256(rec).hexdigest(),
+            decoded_chars=len(by_src[rec_src]),
+            heldout_named_after_v3=0)))
+    return out
+
+
+def build_partitions_v2(meta, v1, census_v1, sample):
+    return build_partitions_next(meta, v1, v1, census_v1, sample, 2)
 
 
 RANK_V2 = {"excluded": 6, "seen": 5, "sealed": 4, "validate": 3, "tune": 1}
 
 
-def relabel_census(census_v1, parts, sample):
-    """Census v2: v1's rows and BEFORE fits unchanged (nothing is recomputed or re-read), each row's
-    partition the strictest of its charts' under the v2 partitions."""
+def relabel_census(prev, parts, sample, version=2):
+    """Census v<version>: census v<version-1>'s rows and BEFORE fits unchanged (nothing is recomputed
+    or re-read), each row's partition the strictest of its charts' under partitions v<version>. A
+    relabelled row keeps what it was as partition_v<version-1>."""
+    tag = "partition_v%d" % (version - 1)
     rows, changed = [], Counter()
-    for r in census_v1["rows"]:
+    for r in prev["rows"]:
         r = dict(r)
         ps = [partition_of(parts, c) for c in r["charts"]] or ["tune"]
         p = max(ps, key=lambda x: RANK_V2[x])
         if any(q == "seen" for q in ps) and any(q in ("validate", "sealed") for q in ps):
-            raise SystemExit("row %s carries a seen and a held-out chart under v2" % row_key(r))
+            raise SystemExit("row %s carries a seen and a held-out chart under v%d" % (row_key(r), version))
         if p != r["partition"]:
             changed[(r["partition"], p)] += 1
-            r["partition_v1"] = r["partition"]
+            r[tag] = r["partition"]
             r["partition"] = p
         rows.append(r)
     want = {(t, v) for t, vs in sample["templates"].items() for v in vs}
     bad = [row_key(r) for r in rows if (r["template"], r["vid"]) in want and r["partition"] not in ("tune", "seen")
-           and r.get("partition_v1") in ("tune", "seen")]
+           and r.get(tag) in ("tune", "seen")]
     if bad:
-        raise SystemExit("a band-sample row left the tune side under v2: %s" % bad[:5])
-    out = {k: v for k, v in census_v1.items() if k not in ("rows", "counts", "sha256")}
+        raise SystemExit("a band-sample row left the tune side under v%d: %s" % (version, bad[:5]))
+    out = {k: v for k, v in prev.items() if k not in ("rows", "counts", "sha256")}
     counts = Counter((r["template"], r["partition"]) for r in rows)
-    out.update(version=2, partitions_sha256=parts["sha256"],
-               derived_from=dict(path=os.path.relpath(CENSUS_V1, ROOT).replace("\\", "/"), sha256=census_v1["sha256"]),
-               relabel="v1's rows, BEFORE fits and templates unchanged; each row's partition re-taken as the strictest "
-                       "of its charts' under partitions v2, ranking excluded > seen > sealed > validate > tune",
+    src = CENSUS_V1 if version == 2 else CENSUS_V2
+    out.update(version=version, partitions_sha256=parts["sha256"],
+               derived_from=dict(path=os.path.relpath(src, ROOT).replace("\\", "/"), sha256=prev["sha256"]),
+               relabel="v%d's rows, BEFORE fits and templates unchanged; each row's partition re-taken as the strictest "
+                       "of its charts' under partitions v%d, ranking excluded > seen > sealed > validate > tune"
+                       % (version - 1, version),
                relabelled={"%s->%s" % k: v for k, v in sorted(changed.items())},
                counts={"%s/%s" % k: v for k, v in sorted(counts.items())}, rows=rows)
+    if version >= 3:
+        out["lineage"] = [dict(path=os.path.relpath(CENSUS_V1, ROOT).replace("\\", "/"), sha256=prev["derived_from"]["sha256"]),
+                          dict(path=os.path.relpath(CENSUS_V2, ROOT).replace("\\", "/"), sha256=prev["sha256"])]
     return out
 
 
@@ -963,7 +1049,7 @@ def cmd_sensitivity(a):
     band-sample videos that carry a held-out song family. Never writes a band. First recomputes
     with nothing excluded, which must give the frozen bands and library exactly. The bands were
     computed over census v1, so the recompute reads census v1; the exclusion is taken under the
-    current partitions (v2)."""
+    current partitions (v3; --also-v1 adds v1's, a superset of every later version's)."""
     census = read_frozen(CENSUS_V1)
     sample = read_frozen(SAMPLE)
     bf = read_frozen(BANDS)
@@ -1441,12 +1527,26 @@ def cmd_look(a):
 
 # ---------------------------------------------------------------- CLI
 
+def _frozen_match(path, obj):
+    """Say whether a table built now is the one frozen at `path` (its sha256 over the same content)."""
+    if not os.path.exists(path):
+        return None
+    got = sha_obj({k: v for k, v in obj.items() if k != "sha256"})
+    want = read_frozen(path)["sha256"]
+    print("built sha256 %s; frozen %s: %s" % (got[:16], os.path.relpath(path, ROOT), want[:16])
+          + ("  (re-derives exactly)" if got == want else "  (DIFFERS)"))
+    return got == want
+
+
 def cmd_partitions(a):
     meta = Meta()
+    path = PARTITIONS_V1 if a.v1 else PARTITIONS_V2 if a.v2 else PARTITIONS
     if a.v1:
         parts = build_partitions(meta)
     else:
-        parts = build_partitions_v2(meta, read_frozen(PARTITIONS_V1), read_frozen(CENSUS_V1), read_frozen(SAMPLE))
+        v1 = read_frozen(PARTITIONS_V1)
+        prev = v1 if a.v2 else read_frozen(PARTITIONS_V2)
+        parts = build_partitions_next(meta, v1, prev, read_frozen(CENSUS_V1), read_frozen(SAMPLE), 2 if a.v2 else 3)
         print("moved to seen: %s" % parts["moved_to_seen"])
         for n in parts["moved_to_seen"]:
             print("  %-45s %s" % (n, "; ".join(parts["charts"][n]["seen"])[:200]))
@@ -1459,36 +1559,42 @@ def cmd_partitions(a):
         print("  %-28s %d" % (k, v))
     sc = Counter((c["partition"], c["scorable"]) for c in parts["charts"].values())
     print("  scorable:", dict(sc))
+    _frozen_match(path, parts)
     if a.write:
-        sha = write_frozen(PARTITIONS_V1 if a.v1 else PARTITIONS, parts)
-        print("froze %s (sha256 %s)" % (os.path.relpath(PARTITIONS_V1 if a.v1 else PARTITIONS, ROOT), sha[:16]))
+        sha = write_frozen(path, parts)
+        print("froze %s (sha256 %s)" % (os.path.relpath(path, ROOT), sha[:16]))
     return 0
 
 
 def cmd_census(a):
+    path = CENSUS_V1 if a.v1 else CENSUS_V2 if a.v2 else CENSUS
     if a.v1:
         c = build_census(Meta(), read_frozen(PARTITIONS_V1))
+    elif a.v2:
+        c = relabel_census(read_frozen(CENSUS_V1), read_frozen(PARTITIONS_V2), read_frozen(SAMPLE), 2)
+        print("relabelled: %s" % c["relabelled"])
     else:
-        c = relabel_census(read_frozen(CENSUS_V1), read_frozen(PARTITIONS), read_frozen(SAMPLE))
+        c = relabel_census(read_frozen(CENSUS_V2), read_frozen(PARTITIONS), read_frozen(SAMPLE), 3)
         print("relabelled: %s" % c["relabelled"])
     print("census rows %d, with a cached fit %d" % (c["n_rows"], c["n_with_fit"]))
     for k, v in c["counts"].items():
         print("  %-32s %d" % (k, v))
+    _frozen_match(path, c)
     if a.write:
-        sha = write_frozen(CENSUS_V1 if a.v1 else CENSUS, c)
-        print("froze %s (sha256 %s)" % (os.path.relpath(CENSUS_V1 if a.v1 else CENSUS, ROOT), sha[:16]))
+        sha = write_frozen(path, c)
+        print("froze %s (sha256 %s)" % (os.path.relpath(path, ROOT), sha[:16]))
     return 0
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    p = sub.add_parser("partitions")
-    p.add_argument("--write", action="store_true")
-    p.add_argument("--v1", action="store_true", help="the v1 builder (frozen already; for re-derivation)")
-    p = sub.add_parser("census")
-    p.add_argument("--write", action="store_true")
-    p.add_argument("--v1", action="store_true", help="the v1 builder (frozen already; for re-derivation)")
+    for name in ("partitions", "census"):
+        p = sub.add_parser(name)
+        p.add_argument("--write", action="store_true")
+        g = p.add_mutually_exclusive_group()
+        g.add_argument("--v1", action="store_true", help="the v1 builder (frozen already; for re-derivation)")
+        g.add_argument("--v2", action="store_true", help="the v2 builder (frozen already; for re-derivation)")
     p = sub.add_parser("recompute")
     p.add_argument("--workers", type=int, default=WORKERS)
     p = sub.add_parser("sample")

@@ -1061,15 +1061,24 @@ the parent, the four processes a loop may run outside the supervisor), at BelowN
   denominators, the held-out charts named in research files it does not read (with why: extension,
   size, or a listing of more than ten charts), and where the split is not grouped (song families
   shared between the tune side and the halves, band-sample videos carrying a held-out family).
+  **v3** (`partitions`, the default now; `--v2` re-derives v2) keeps v2's rules and adds one source:
+  the loop proposal's full record, `work/loop-buckets-2026-09-26.full.json`, decoded (every string
+  value and dict key in document order, escapes resolved) and read whole like the `.txt` - the bucket
+  reads it for its guards, and it publishes per-chart results of research probes the listing rule
+  leaves unread (a 14-chart counter probe is a "listing"). `--v1`/`--v2` rebuild an older version and
+  print whether it matches its freeze byte for byte; v2 rebuilt through v3's code does, which is what
+  shows v3 changed the sources and not the rules. v3 refuses to freeze if a held-out chart is still
+  named anywhere in the proposal's record.
 - `census --write`: every fit the corpus asks for (each certified chart's band and side as
   `note_extract.extract` reads it; both fields of an official singles upload, since the pad is
   never taken from the map's stored side; every cached `.inset` fit), with a template from
   metadata - channel group (NEVSISTER, OFFICIAL, OTHER, NOT_IN_MAP), band and columns, never pitch -
   the strictest partition of its charts, and the fit on disk stamped with the rule that made it
-  (`field.inset@<_fit_field's code stamp>`). Census v2 (`census`, default; `--v1` runs v1's builder)
-  is v1's rows relabelled under partitions v2 with `seen` outranking both halves (excluded > seen >
-  sealed > validate > tune); nothing else in a row changes, and it refuses a row carrying both a
-  seen and a held-out chart.
+  (`field.inset@<_fit_field's code stamp>`). Census v2 (`--v2`) is v1's rows relabelled under
+  partitions v2 with `seen` outranking both halves (excluded > seen > sealed > validate > tune);
+  census v3 (`census`, the default; `--v1` runs v1's builder) is v2's rows relabelled the same way
+  under partitions v3, a relabelled row keeping its old partition as `partition_v<n-1>`. Nothing
+  else in a row changes, and it refuses a row carrying both a seen and a held-out chart.
 - `recompute`: every BEFORE fit recomputed from the cache; each cached `.inset` fit must come back
   byte for byte, and a run that recomputes nothing exits 1.
 - `sample --write` then `bands --write`: the band sample (every non-AV1 tune video of an OFFICIAL
