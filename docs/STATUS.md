@@ -1253,9 +1253,13 @@ It ran in a scratch clone of `94b24bc` and in the branch's worktree; the scripts
   own `note_extract` has moved it into `post_decode`.
 - **The trace audit re-recorded** on the merged tools (`206f1f4`, `sources/trace-audit-2026-09-28.json`,
   audit_version `8bada42e`). `corpus_map` and `note_extract` moved, so every clock the census
-  records do not serve was measured again. The 123 kept every verdict, reason, edit and clock (94
-  measured, none moved): 3 FLAT, 10 OFF, 110 UNCOVERED, the same three promotions appended again.
-  The one record that differs is Asterios -ReEntry- S4's band, C -> L. Controls 261 -> 258
+  records do not serve was measured again. The 123 kept every verdict, reason and edit, and no
+  clock's offset, rate, lag or fitted-on count moved (94 measured): 3 FLAT, 10 OFF, 110 UNCOVERED,
+  the same three promotions appended again. Ten clocks read 1-17 fewer screen notes - the tail-cap
+  rules' removals (Xenesis S18 587 -> 570, Kasou Shinja SC D21 404 -> 388; also Chase Me S20,
+  Desaparecer D25, Emperor S16, Final Audition Ep. 2-2 D23 and S21, Love is a Danger Zone pt.2 SC
+  D23, Pop The Track SC D16, Poseidon SC S21) - and the one other record change is Asterios
+  -ReEntry- S4's band, C -> L. Controls 261 -> 258
   (UNCOVERED 244 -> 241, FLAT 17, 0 OFF): the five band-C controls whose band moved to L have no
   band-L scan (Cleaner S7, God Mode 2.0 feat. Skizzo S17, Higgledy Piggledy S6, Nihilism - Another
   Ver. - S15, Passacaglia S4), and the overlay adds Phantom S18 and Vook S10. Power: 1,052 plants

@@ -2203,9 +2203,10 @@ now). Two modules of the closure moved: `corpus_map` (the rails change, which me
 ledger as oracle) and `note_extract` (bucket #5's tailcap-d/e post-decode rules), so every clock
 the census records do not serve was measured again from the cached passes. The extractor rules
 moved no clock: the 123 edit-derived exact charts kept every verdict, reason, edit
-and clock (94 of them measured here, 12 from census records, 17 without one) - **3 FLAT, 10 OFF,
-110 UNCOVERED**, the same three promotions appended again under the new version - and the one
-record that differs is Asterios -ReEntry- S4's reader band, C -> L, from the skins ledger's split
+and clock offset, rate, lag and fitted-on count (94 of them measured here, 12 from census records,
+17 without one) - **3 FLAT, 10 OFF, 110 UNCOVERED**, the same three promotions appended again under
+the new version. Ten clocks read 1-17 fewer screen notes (the tail-cap rules' removals), and the one
+other record change is Asterios -ReEntry- S4's reader band, C -> L, from the skins ledger's split
 screen (UNCOVERED both ways, no scan in either band). Controls: **258** audited (was 261),
 UNCOVERED 241, FLAT 17, 0 OFF. Five band-C controls moved to band L with the skins ledger and have
 no band-L scan (Cleaner S7, God Mode 2.0 feat. Skizzo S17, Higgledy Piggledy S6, Nihilism -
