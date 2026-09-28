@@ -23,7 +23,7 @@
   "sources/certification-corpus-2026-09-10.json": "5ad2c9844b13e64a85700eabbab80ad2284c98f79c57fd480c6a1876776124bc",
   "sources/certification-skins-2026-09-27.json": "8b1f7f00779570cd26219bf4430e914003cfbd6fc2339a90a9bdf8b8f6162591",
   "sources/identity-overlay-2026-09-27.json": "4645b464e44d53a5f132fa5127d177fd3fa67be20c0a88ba1bc54d035cd6a691",
-  "sources/oracle-conflict.json": "44163f416c15152a06e54ec3f3a370c1e012e907601824dbaf164da2c5a06ed8",
+  "sources/oracle-conflict.json": "f2005787845a787e171f369cc8c24410f85bd38d2f9ddbc68c05d2bb7543fcbf",
   "sources/owner-revisit.json": "2f075c60f3f508d91afe7fb7d01edafde05a2e558db010b7216545217e43b541",
   "sources/p1-note-counts-2026-07-04.json": "331e5e7ede73d3e4b7d783a6d8186ce42c91b3f429cbbece351a8066093227bc",
   "sources/quarantine.json": "640c031ec71ad433363a9ce1899c68b311f15a20bd9503ae93666d9a4624dcba",
@@ -32,6 +32,6 @@
   "sources/tail-2026-09-08.json": "f62d548b10bc984f66850ba2dceed9f673392008651a516203e7c241646d53e7",
   "sources/video-map.json": "ca53f1059830f8125d47767cb729fdc564106751c9215ce78fb64f08cea07164"
  },
- "oracle_hash": "ea51aab7aeb70db5ff09324d402a184710e825a0846a0434f21809caebfc80c8",
+ "oracle_hash": "a90d9a0628b7baf5dedb0c73b855f80ec1082ef0e7f0de4a7fbef51bb35af573",
  "purpose": "The frozen oracle: the sha256 (CRLF read as LF) of every file the corpus grade reads to decide who is certified and at what count, the policy files its gate enforces, and the converter pin. tools/corpus_grade.py grade and gate refuse to run when the working tree or the installed converter differs from this. Rewrite it with `corpus_grade.py freeze` in an oracle commit (never together with stepfile edits); `--repin` moves the converter pin, as a commit of its own; `--accept-identity` lists the identity overlays present, which makes them oracle from that commit on."
 }
