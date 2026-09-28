@@ -1,0 +1,796 @@
+{
+ "code": "5f9eb41cd9d21338",
+ "date": "2026-09-27",
+ "evidence_classes": [
+  "Phoenix 1 catalog row (chartId)",
+  "blind level-ball read",
+  "census ledger (eye-verified)",
+  "extraction F1 (cached sprite pass, replayed)",
+  "result-screen total (certification ledger)"
+ ],
+ "purpose": "Chart identity overlay (tools/identity.py): corrections to WHICH block of its song's .ssc a certified chart is (kind rekey), and to whether a video's side shows a chart at all (kind withdraw), from the extraction's column+time F1 against every same-width block of the song, checked against the certified result-screen total (count agreement), the eye-verified census ledger, or a blind read of the result screen's level ball. It never edits the chart map, the certification ledgers or the census: corpus_map applies it LAST, over their merge, and only once sources/oracle-manifest.json lists this file (the owner's freeze), so that the loops' populations and the corpus grade's change together. A rekey row applies only while the chart still maps to its from_key.",
+ "rows": [
+  {
+   "chart": "Moonlight S18",
+   "evidence": {
+    "ball": {
+     "agrees_with": "the chartId's catalog level (SINGLE/19/SINGLE/20)",
+     "confidence": "sure",
+     "item": "b3866b47fb39",
+     "packet": "b1-636a9809",
+     "read": "SINGLE/19",
+     "readers": 2
+    },
+    "catalog": {
+     "chartId": "d4d72efb-db4a-41f8-a764-bfcbc0438cb9",
+     "p1_level": 19,
+     "p1_notes": 805,
+     "p2_level": 20,
+     "type": "Single"
+    },
+    "chartvideo_side": "Right",
+    "chosen_by": "twins",
+    "count_agrees": false,
+    "f1_best": 0.8253,
+    "f1_mapped": 0.2161,
+    "f1_runner": 0.2161,
+    "margin_mapped": 0.6092,
+    "margin_runner": 0.6092,
+    "pass_name": "d9wLfpyrwUA.R.2p.5.0.50.0.50.50.h0.00.r0.00.s0.98.123.5.x729-1032.pkl",
+    "table": [
+     [
+      "S19_ARCADE",
+      0.8253,
+      [
+       766
+      ]
+     ],
+     [
+      "S18 INFOBAR TITLE_ARCADE",
+      0.2161,
+      [
+       1002
+      ]
+     ],
+     [
+      "UCS_ARCADE",
+      0.1945,
+      [
+       745
+      ]
+     ],
+     [
+      "S11_ARCADE",
+      0.1797,
+      [
+       481
+      ]
+     ]
+    ],
+    "to_implied": 766,
+    "twins": []
+   },
+   "expected": 805,
+   "from_key": "Moonlight_-_BanYa_S18_INFOBAR_TITLE_ARCADE",
+   "kind": "rekey",
+   "side": "2p",
+   "ssc_rel": "04 - EXCEED~ZERO/(1) C02 - Moonlight/C02 - Moonlight.ssc",
+   "to_key": "Moonlight_-_BanYa_S19_ARCADE",
+   "to_tag": "S19_ARCADE",
+   "vid": "d9wLfpyrwUA"
+  },
+  {
+   "chart": "Phantom S18",
+   "evidence": {
+    "catalog": {
+     "chartId": "85b77570-89f8-4da5-8eba-857050f1633a",
+     "p1_level": 19,
+     "p1_notes": 897,
+     "p2_level": 19,
+     "type": "Single"
+    },
+    "chartvideo_side": "Right",
+    "chosen_by": "count",
+    "count_agrees": true,
+    "f1_best": 0.8386,
+    "f1_mapped": 0.147,
+    "f1_runner": 0.2234,
+    "margin_mapped": 0.6916,
+    "margin_runner": 0.6152,
+    "oracle_conflict": [
+     "catalog"
+    ],
+    "pass_name": "-E5Z5OEkvTc.R.2p.5.0.50.0.50.50.h0.00.r0.00.s1.00.118.4.x729-1032.pkl",
+    "table": [
+     [
+      "S19_ARCADE",
+      0.8386,
+      [
+       897
+      ]
+     ],
+     [
+      "S20 QUEST_ARCADE",
+      0.2234,
+      [
+       831
+      ]
+     ],
+     [
+      "S13_ARCADE",
+      0.219,
+      [
+       509
+      ]
+     ],
+     [
+      "S19 QUEST (PRIME)_ARCADE",
+      0.2068,
+      [
+       1024
+      ]
+     ]
+    ],
+    "to_implied": 897,
+    "twins": []
+   },
+   "expected": 897,
+   "from_key": "Phantom_-_BanYa_S18_ARCADE",
+   "kind": "rekey",
+   "side": "2p",
+   "ssc_rel": "04 - EXCEED~ZERO/(1) C05 - Phantom/C05 - Phantom.ssc",
+   "to_key": "Phantom_-_BanYa_S19_ARCADE",
+   "to_tag": "S19_ARCADE",
+   "vid": "-E5Z5OEkvTc"
+  },
+  {
+   "chart": "Solitary S17",
+   "crosses": "Solitary S18",
+   "evidence": {
+    "ball": {
+     "agrees_with": "the chartId's catalog level (SINGLE/17)",
+     "confidence": "sure",
+     "item": "e63b6fe4ba31",
+     "packet": "b1-fe2bfb2d",
+     "read": "SINGLE/17",
+     "readers": 2
+    },
+    "catalog": {
+     "chartId": "341dffbe-48dc-4c3b-b39c-57790f1ab8e0",
+     "p1_level": 17,
+     "p1_notes": 713,
+     "p2_level": 17,
+     "type": "Single"
+    },
+    "chartvideo_side": "Left",
+    "chosen_by": "twins",
+    "count_agrees": false,
+    "f1_best": 0.9992,
+    "f1_mapped": 0.2142,
+    "f1_runner": 0.244,
+    "margin_mapped": 0.785,
+    "margin_runner": 0.7552,
+    "pass_name": "UvFXQY21ef4.L.1p.5.0.50.0.50.50.h0.00.r0.00.s1.00.122.2.x249-552.pkl",
+    "table": [
+     [
+      "S18_ARCADE",
+      0.9992,
+      [
+       629
+      ]
+     ],
+     [
+      "SQUEST_ARCADE",
+      0.244,
+      [
+       519
+      ]
+     ],
+     [
+      "S18 UCS_ARCADE",
+      0.2176,
+      [
+       473
+      ]
+     ],
+     [
+      "S17_ARCADE",
+      0.2142,
+      [
+       618
+      ]
+     ]
+    ],
+    "to_implied": 629,
+    "twins": []
+   },
+   "expected": 713,
+   "from_key": "Solitary_-_BanYa_S17_ARCADE",
+   "kind": "rekey",
+   "side": "1p",
+   "ssc_rel": "02 - S.E.~EXTRA/(4) 404 - Solitary/404 - Solitary.ssc",
+   "to_key": "Solitary_-_BanYa_S18_ARCADE",
+   "to_tag": "S18_ARCADE",
+   "vid": "UvFXQY21ef4"
+  },
+  {
+   "chart": "Solitary S18",
+   "crosses": "Solitary S17",
+   "evidence": {
+    "ball": {
+     "agrees_with": "the chartId's catalog level (SINGLE/18)",
+     "confidence": "sure",
+     "item": "59d1919bafc9",
+     "packet": "b1-1807fc19",
+     "read": "SINGLE/18",
+     "readers": 2
+    },
+    "catalog": {
+     "chartId": "068b71eb-82c7-4c93-a342-652fa44de9c0",
+     "p1_level": 18,
+     "p1_notes": 618,
+     "p2_level": 18,
+     "type": "Single"
+    },
+    "chartvideo_side": "Right",
+    "chosen_by": "count",
+    "count_agrees": true,
+    "f1_best": 0.9348,
+    "f1_mapped": 0.2224,
+    "f1_runner": 0.2224,
+    "margin_mapped": 0.7124,
+    "margin_runner": 0.7124,
+    "pass_name": "UvFXQY21ef4.R.2p.5.0.50.0.50.50.h0.00.r0.00.s1.00.122.2.x729-1032.pkl",
+    "table": [
+     [
+      "S17_ARCADE",
+      0.9348,
+      [
+       618
+      ]
+     ],
+     [
+      "S18_ARCADE",
+      0.2224,
+      [
+       629
+      ]
+     ],
+     [
+      "SQUEST_ARCADE",
+      0.2154,
+      [
+       519
+      ]
+     ],
+     [
+      "S18 UCS_ARCADE",
+      0.2021,
+      [
+       473
+      ]
+     ]
+    ],
+    "to_implied": 618,
+    "twins": []
+   },
+   "expected": 618,
+   "from_key": "Solitary_-_BanYa_S18_ARCADE",
+   "kind": "rekey",
+   "side": "2p",
+   "ssc_rel": "02 - S.E.~EXTRA/(4) 404 - Solitary/404 - Solitary.ssc",
+   "to_key": "Solitary_-_BanYa_S17_ARCADE",
+   "to_tag": "S17_ARCADE",
+   "vid": "UvFXQY21ef4"
+  },
+  {
+   "chart": "Vook S10",
+   "evidence": {
+    "catalog": {
+     "chartId": "b0fa33e5-1f53-43ef-bf69-062525ac1569",
+     "p1_level": 16,
+     "p1_notes": 552,
+     "p2_level": 16,
+     "type": "Single"
+    },
+    "chartvideo_side": "",
+    "chosen_by": "count",
+    "count_agrees": true,
+    "f1_best": 0.9133,
+    "f1_mapped": 0.4325,
+    "f1_runner": 0.4325,
+    "margin_mapped": 0.4808,
+    "margin_runner": 0.4808,
+    "oracle_conflict": [
+     "catalog"
+    ],
+    "pass_name": "3PO5ckDXVpc.C.2p.5.0.50.0.50.50.h0.00.r0.00.s1.00.121.2.x729-1032.pkl",
+    "table": [
+     [
+      "S16 INFOBAR TITLE_ARCADE",
+      0.9133,
+      [
+       552
+      ]
+     ],
+     [
+      "S10_ARCADE",
+      0.4325,
+      [
+       354
+      ]
+     ],
+     [
+      "S5 HIDDEN_ARCADE",
+      0.3228,
+      [
+       219
+      ]
+     ],
+     [
+      "S18_ARCADE",
+      0.2412,
+      [
+       1275
+      ]
+     ]
+    ],
+    "to_implied": 552,
+    "twins": []
+   },
+   "expected": 552,
+   "from_key": "Vook_-_Banya_S10_ARCADE",
+   "kind": "rekey",
+   "side": "2p",
+   "ssc_rel": "03 - REBIRTH~PREX 3/(2) 735 - Vook/735 - Vook.ssc",
+   "to_key": "Vook_-_Banya_S16_INFOBAR_TITLE_ARCADE",
+   "to_tag": "S16 INFOBAR TITLE_ARCADE",
+   "vid": "3PO5ckDXVpc"
+  },
+  {
+   "chart": "Witch Doctor D22",
+   "evidence": {
+    "catalog": {
+     "chartId": "b5cc8967-f513-42e6-af09-a81f1bfe658b",
+     "p1_level": 23,
+     "p1_notes": 1162,
+     "p2_level": 23,
+     "type": "Double"
+    },
+    "chartvideo_side": "",
+    "chosen_by": "count",
+    "count_agrees": true,
+    "f1_best": 0.9874,
+    "f1_mapped": 0.1226,
+    "f1_runner": 0.4034,
+    "margin_mapped": 0.8648,
+    "margin_runner": 0.584,
+    "pass_name": "yuOeT6liU_w.C.1p.10.0.50.0.50.50.h0.00.r0.00.s1.00.110.6.x301-980.pkl",
+    "table": [
+     [
+      "D23 INFOBAR TITLE_ARCADE",
+      0.9874,
+      [
+       1162
+      ]
+     ],
+     [
+      "D14 QUEST_ARCADE",
+      0.4034,
+      [
+       553
+      ]
+     ],
+     [
+      "D10 PRO_ARCADE",
+      0.1279,
+      [
+       501
+      ]
+     ],
+     [
+      "UCS_ARCADE",
+      0.1262,
+      [
+       750
+      ]
+     ]
+    ],
+    "to_implied": 1162,
+    "twins": []
+   },
+   "expected": 1162,
+   "from_key": "Witch_Doctor_-_BanYa_D22_ARCADE",
+   "kind": "rekey",
+   "side": "1p",
+   "ssc_rel": "04 - EXCEED~ZERO/(1) C03 - Witch Doctor/C03 - Witch Doctor.ssc",
+   "to_key": "Witch_Doctor_-_BanYa_D23_INFOBAR_TITLE_ARCADE",
+   "to_tag": "D23 INFOBAR TITLE_ARCADE",
+   "vid": "yuOeT6liU_w"
+  },
+  {
+   "chart": "Avalanche D19",
+   "evidence": {
+    "ball": {
+     "confidence": "sure",
+     "item": "552d0ded8546",
+     "packet": "b1-1807fc19",
+     "read": "DOUBLE/20",
+     "readers": 2
+    },
+    "why": "a blind read of the result screen's level ball (two readers agree, seeded) shows DOUBLE/20: Avalanche D20's name level and its chartId's catalog level",
+    "winner": "Avalanche D20",
+    "winner_catalog": {
+     "chartId": "c712328a-7845-4f34-b42e-651e033d03af",
+     "p1_level": 20,
+     "p1_notes": 884,
+     "p2_level": 20,
+     "type": "Double"
+    }
+   },
+   "expected": 884,
+   "from_key": "Avalanche_-_MEMME_D19_ARCADE",
+   "kind": "withdraw",
+   "names": [
+    "Avalanche D19",
+    "Avalanche D20"
+   ],
+   "side": "2p",
+   "to_tag": null,
+   "vid": "BJDhXGnI9s8"
+  },
+  {
+   "chart": "Beat of The War S9",
+   "evidence": {
+    "ball": {
+     "confidence": "sure",
+     "item": "69eaa5637196",
+     "packet": "b1-fe2bfb2d",
+     "read": "SINGLE/16",
+     "readers": 2
+    },
+    "census_verified": [
+     "Beat of The War S16"
+    ],
+    "fingerprint": {
+     "Beat of The War S16": {
+      "best_f1": null,
+      "best_tags": null,
+      "mapped_f1": null,
+      "mapped_tag": null,
+      "pass_name": null,
+      "runner_f1": null,
+      "status": "no-pass"
+     },
+     "Beat of The War S9": {
+      "best_f1": null,
+      "best_tags": null,
+      "mapped_f1": null,
+      "mapped_tag": null,
+      "pass_name": null,
+      "runner_f1": null,
+      "status": "no-pass"
+     }
+    },
+    "why": "the census ledger (eye-verified) certifies Beat of The War S16 on this side"
+   },
+   "kind": "withdraw",
+   "names": [
+    "Beat of The War S16",
+    "Beat of The War S9"
+   ],
+   "side": "2p",
+   "vid": "XNMIAm04k_c"
+  },
+  {
+   "chart": "D D19",
+   "evidence": {
+    "ball": {
+     "confidence": "sure",
+     "item": "d0e451089899",
+     "packet": "b1-94968972",
+     "read": "DOUBLE/20",
+     "readers": 2
+    },
+    "why": "a blind read of the result screen's level ball (two readers agree, seeded) shows DOUBLE/20: D D20's name level and its chartId's catalog level",
+    "winner": "D D20",
+    "winner_catalog": {
+     "chartId": "9288ab2d-c56c-47f5-8322-0ecf64181c0b",
+     "p1_level": 20,
+     "p1_notes": 811,
+     "p2_level": 20,
+     "type": "Double"
+    }
+   },
+   "expected": 811,
+   "from_key": "D_-_MAX_D19_ARCADE",
+   "kind": "withdraw",
+   "names": [
+    "D D19",
+    "D D20"
+   ],
+   "side": "1p",
+   "to_tag": null,
+   "vid": "-UdlH4AGPQQ"
+  },
+  {
+   "chart": "Dignity D20",
+   "evidence": {
+    "ball": {
+     "confidence": "sure",
+     "item": "b01455db1908",
+     "packet": "b1-844d7640",
+     "read": "DOUBLE/24",
+     "readers": 2
+    },
+    "why": "a blind read of the result screen's level ball (two readers agree, seeded) shows DOUBLE/24: Dignity D24's name level and its chartId's catalog level",
+    "winner": "Dignity D24",
+    "winner_catalog": {
+     "chartId": "630c7449-6c0b-4803-b5a4-baa8b1bfe475",
+     "p1_level": 24,
+     "p1_notes": 1011,
+     "p2_level": 25,
+     "type": "Double"
+    }
+   },
+   "expected": 1011,
+   "from_key": "Dignity_-_Crash_D20_ARCADE",
+   "kind": "withdraw",
+   "names": [
+    "Dignity D20",
+    "Dignity D24"
+   ],
+   "side": "1p",
+   "to_tag": null,
+   "vid": "QRhXZdPcsVo"
+  },
+  {
+   "chart": "Dignity S15",
+   "evidence": {
+    "ball": {
+     "confidence": "sure",
+     "item": "56a7f88effb7",
+     "packet": "b1-844d7640",
+     "read": "SINGLE/21",
+     "readers": 2
+    },
+    "why": "a blind read of the result screen's level ball (two readers agree, seeded) shows SINGLE/21: Dignity S21's name level and its chartId's catalog level",
+    "winner": "Dignity S21",
+    "winner_catalog": {
+     "chartId": "dffadee8-351b-4b8a-9a81-fc35680f5f26",
+     "p1_level": 21,
+     "p1_notes": 908,
+     "p2_level": 21,
+     "type": "Single"
+    }
+   },
+   "expected": 908,
+   "from_key": "Dignity_-_Crash_S15_ARCADE",
+   "kind": "withdraw",
+   "names": [
+    "Dignity S15",
+    "Dignity S21"
+   ],
+   "side": "2p",
+   "to_tag": null,
+   "vid": "_k_p2osf8x0"
+  },
+  {
+   "chart": "Final Audition Ep.1 S4",
+   "evidence": {
+    "ball": {
+     "confidence": "sure",
+     "item": "f3d5934ffb0d",
+     "packet": "b1-94968972",
+     "read": "SINGLE/17",
+     "readers": 2
+    },
+    "census_verified": [
+     "Final Audition Ep. 1 S17"
+    ],
+    "fingerprint": {
+     "Final Audition Ep. 1 S17": {
+      "best_f1": null,
+      "best_tags": null,
+      "mapped_f1": null,
+      "mapped_tag": null,
+      "pass_name": null,
+      "runner_f1": null,
+      "status": "no-pass"
+     },
+     "Final Audition Ep.1 S4": {
+      "best_f1": null,
+      "best_tags": null,
+      "mapped_f1": null,
+      "mapped_tag": null,
+      "pass_name": null,
+      "runner_f1": null,
+      "status": "no-pass"
+     }
+    },
+    "why": "the census ledger (eye-verified) certifies Final Audition Ep. 1 S17 on this side"
+   },
+   "kind": "withdraw",
+   "names": [
+    "Final Audition Ep. 1 S17",
+    "Final Audition Ep.1 S4"
+   ],
+   "side": "1p",
+   "vid": "DgLesNMzb1w"
+  },
+  {
+   "chart": "My Way S8",
+   "evidence": {
+    "ball": {
+     "confidence": "sure",
+     "item": "9a86678f043a",
+     "packet": "b1-636a9809",
+     "read": "SINGLE/15",
+     "readers": 2
+    },
+    "census_verified": [
+     "My Way S15"
+    ],
+    "fingerprint": {
+     "My Way S15": {
+      "best_f1": null,
+      "best_tags": null,
+      "mapped_f1": null,
+      "mapped_tag": null,
+      "pass_name": null,
+      "runner_f1": null,
+      "status": "no-pass"
+     },
+     "My Way S8": {
+      "best_f1": null,
+      "best_tags": null,
+      "mapped_f1": null,
+      "mapped_tag": null,
+      "pass_name": null,
+      "runner_f1": null,
+      "status": "no-pass"
+     }
+    },
+    "why": "the census ledger (eye-verified) certifies My Way S15 on this side"
+   },
+   "kind": "withdraw",
+   "names": [
+    "My Way S15",
+    "My Way S8"
+   ],
+   "side": "2p",
+   "vid": "bXMj-YNDufs"
+  },
+  {
+   "chart": "Pump me Amadeus S16",
+   "evidence": {
+    "ball": {
+     "confidence": "sure",
+     "item": "077446ab5483",
+     "packet": "b1-94968972",
+     "read": "SINGLE/18",
+     "readers": 2
+    },
+    "why": "a blind read of the result screen's level ball (two readers agree, seeded) shows SINGLE/18: Pump me Amadeus S18's name level and its chartId's catalog level",
+    "winner": "Pump me Amadeus S18",
+    "winner_catalog": {
+     "chartId": "1e7dbaff-6bcd-4628-aaf1-ffb1f44f6469",
+     "p1_level": 18,
+     "p1_notes": 871,
+     "p2_level": 18,
+     "type": "Single"
+    }
+   },
+   "expected": 871,
+   "from_key": "Pump_me_Amadeus_-_BanYa_S16_ARCADE",
+   "kind": "withdraw",
+   "names": [
+    "Pump me Amadeus S16",
+    "Pump me Amadeus S18"
+   ],
+   "side": "2p",
+   "to_tag": null,
+   "vid": "PpkLiRF_9kw"
+  },
+  {
+   "chart": "Pumptris 8 Bit ver. S17",
+   "evidence": {
+    "ball": {
+     "confidence": "sure",
+     "item": "856a5d33908f",
+     "packet": "b1-636a9809",
+     "read": "SINGLE/18",
+     "readers": 2
+    },
+    "why": "a blind read of the result screen's level ball (two readers agree, seeded) shows SINGLE/18: Pumptris 8 Bit ver. S18's name level and its chartId's catalog level",
+    "winner": "Pumptris 8 Bit ver. S18",
+    "winner_catalog": {
+     "chartId": "ad44ce4b-0f56-4a70-b8f6-61c6d4b1bc7a",
+     "p1_level": 18,
+     "p1_notes": 948,
+     "p2_level": 18,
+     "type": "Single"
+    }
+   },
+   "expected": 948,
+   "from_key": "Pumptris_8_Bit_ver._-_YAHPP_S17_ARCADE",
+   "kind": "withdraw",
+   "names": [
+    "Pumptris 8 Bit ver. S17",
+    "Pumptris 8 Bit ver. S18"
+   ],
+   "side": "2p",
+   "to_tag": null,
+   "vid": "hxbQAQYt4Co"
+  },
+  {
+   "chart": "Witch Doctor #1 D20",
+   "evidence": {
+    "ball": {
+     "confidence": "sure",
+     "item": "892959355203",
+     "packet": "b1-636a9809",
+     "read": "DOUBLE/21",
+     "readers": 2
+    },
+    "why": "a blind read of the result screen's level ball (two readers agree, seeded) shows DOUBLE/21: Witch Doctor #1 D21's name level and its chartId's catalog level",
+    "winner": "Witch Doctor #1 D21",
+    "winner_catalog": {
+     "chartId": "a1534d9f-d763-4b8e-9ab2-a688357478bd",
+     "p1_level": 21,
+     "p1_notes": 1050,
+     "p2_level": 21,
+     "type": "Double"
+    }
+   },
+   "expected": 1050,
+   "from_key": "Witch_Doctor_1_-_YAHPP_D20_INFOBAR_TITLE_ARCADE",
+   "kind": "withdraw",
+   "names": [
+    "Witch Doctor #1 D20",
+    "Witch Doctor #1 D21"
+   ],
+   "side": "1p",
+   "to_tag": null,
+   "vid": "YuuOqPltYlc"
+  },
+  {
+   "chart": "Witch Doctor #1 S17",
+   "evidence": {
+    "ball": {
+     "confidence": "sure",
+     "item": "5ad32e9f70fb",
+     "packet": "b1-1807fc19",
+     "read": "SINGLE/19",
+     "readers": 2
+    },
+    "why": "a blind read of the result screen's level ball (two readers agree, seeded) shows SINGLE/19: Witch Doctor #1 S19's name level and its chartId's catalog level",
+    "winner": "Witch Doctor #1 S19",
+    "winner_catalog": {
+     "chartId": "4f822afb-9539-4e8e-b517-e169580a498f",
+     "p1_level": 19,
+     "p1_notes": 807,
+     "p2_level": 19,
+     "type": "Single"
+    }
+   },
+   "expected": 807,
+   "from_key": "Witch_Doctor_1_-_YAHPP_S17_ARCADE",
+   "kind": "withdraw",
+   "names": [
+    "Witch Doctor #1 S17",
+    "Witch Doctor #1 S19"
+   ],
+   "side": "2p",
+   "to_tag": null,
+   "vid": "Aq6KNVdA6N4"
+  }
+ ],
+ "rule": {
+  "best_f1": 0.8,
+  "margin": 0.3,
+  "rekey": "best block F1 >= best_f1, by >= margin over the mapped block and the runner-up (blocks with identical note events are one block), and the block converts to the certified total or a blind level-ball read agrees; never a census chart, a round-hundred total, a total two catalog charts of the song carry, or a target another chart keeps",
+  "withdraw": "one side certifies two charts: the census ledger (eye-verified) names one, or the pad's notes are one name's block by the rekey rule's margin and it converts to the total, or a blind ball read picks one"
+ },
+ "tool": "tools/identity.py"
+}

@@ -13,6 +13,9 @@
 # The merges are also exposed as pure functions over already-loaded data (merge_chart_map,
 # merge_certification, certified_charts), so tools/corpus_grade.py can build the same
 # population from a git revision's copies of these files instead of the working tree's.
+#
+# Identity overlays (tools/identity.py) are applied LAST, over both merges, once the oracle
+# manifest lists them (overlay_chart_map, overlay_certification; IDENTITY_OVERLAYS below).
 import json
 import os
 
@@ -34,11 +37,81 @@ SKINS_CERT = os.path.join(ROOT, "sources", "certification-skins-2026-09-27.json"
 # the two inputs certified_charts() reads besides the map and the ledgers
 TAIL_SWEEP = os.path.join(ROOT, "sources", "tail-2026-09-08.json")
 CENSUS = os.path.join(ROOT, "sources", "census-final.json")
+# Identity overlays (tools/identity.py): corrections to WHICH block a chart is, or to whether a
+# video's side shows a chart at all, found by fingerprinting the extraction against every block of
+# the song. They never edit the human data above; they are applied LAST, over the merged map and
+# ledgers. An overlay is applied only once the oracle manifest lists it (the owner's freeze), so
+# the loops' populations and the corpus grade's cannot disagree about it: until corpus_grade reads
+# the same file as oracle, applying it here alone would send a repair loop to a block the gate
+# grades as another chart's.
+IDENTITY_OVERLAYS = ("sources/identity-overlay-2026-09-27.json",)
+ORACLE_MANIFEST = os.path.join(ROOT, "sources", "oracle-manifest.json")
 
 def _load(path, default):
     if not os.path.exists(path):
         return default
     return json.load(open(path, encoding="utf-8"))
+
+def identity_overlays(accepted_only=True, manifest=None):
+    """[(relative path, overlay doc), ...] in IDENTITY_OVERLAYS order. With `accepted_only`, only
+    the files the oracle manifest lists (`manifest`: an already-loaded manifest, else the working
+    tree's)."""
+    listed = None
+    if accepted_only:
+        m = manifest if manifest is not None else _load(ORACLE_MANIFEST, {})
+        listed = set(((m or {}).get("oracle") or {}))
+    out = []
+    for rel in IDENTITY_OVERLAYS:
+        if listed is not None and rel not in listed:
+            continue
+        doc = _load(os.path.join(ROOT, *rel.split("/")), None)
+        if doc is not None:
+            out.append((rel, doc))
+    return out
+
+def overlay_chart_map(smap, overlays):
+    """The merged map with every `rekey` row applied: chart -> another block of the SAME file.
+    A row applies only while the chart still maps to the row's `from_key` in its `ssc_rel` (a map
+    that moved since the overlay was written is left alone), and never when the result would
+    leave two charts on one key - a crossed pair re-keys both of its charts or neither. The entry
+    keeps what it was: `identity = {from_key, overlay}`."""
+    rows = [(rel, r) for rel, doc in overlays for r in (doc or {}).get("rows", []) if r.get("kind") == "rekey"]
+    if not rows:
+        return smap
+    out = dict(smap)
+    moved = {}
+    for rel, r in rows:
+        e = out.get(r.get("chart"))
+        if not e or e.get("key") != r.get("from_key") or e.get("ssc_rel") != r.get("ssc_rel") or not r.get("to_key"):
+            continue
+        out[r["chart"]] = dict(e, key=r["to_key"], identity=dict(from_key=r["from_key"], overlay=rel))
+        moved[r["chart"]] = e
+    while True:                     # a reverted row can clash with a chart that moved onto its key
+        owners = {}
+        for name, e in out.items():
+            owners.setdefault((e.get("ssc_rel"), e.get("key")), []).append(name)
+        back = [n for names in owners.values() if len(names) > 1 for n in names if n in moved and out[n] is not moved[n]]
+        if not back:
+            return out
+        for n in back:
+            out[n] = moved[n]
+
+def overlay_certification(cert, overlays):
+    """The merged ledgers with every `withdraw` row applied: this video's side does not show this
+    chart (another chart's notes, a name the eye-verified census contradicts), so the chart's
+    certification on that video is taken out. Nothing else in the entry changes."""
+    rows = [r for rel, doc in overlays for r in (doc or {}).get("rows", []) if r.get("kind") == "withdraw"]
+    if not rows:
+        return cert
+    out = dict(cert)
+    for r in rows:
+        e = out.get(r.get("vid"))
+        charts = (e or {}).get("charts") or {}
+        c = charts.get(r.get("chart"))
+        if not c or (c.get("side") or "1p") != (r.get("side") or "1p"):
+            continue
+        out[r["vid"]] = dict(e, charts={n: v for n, v in charts.items() if n != r["chart"]})
+    return out
 
 def ledger_entries(raw):
     """A certification ledger as loaded (a dict by video, or a list of rows) -> {vid: entry}."""
@@ -54,9 +127,11 @@ def merge_chart_map(tail_map, census_map):
         out[entry["chart"]] = entry
     return out
 
-def chart_map():
-    """chart name -> {chart, key, ssc_rel, ...}."""
-    return merge_chart_map(_load(TAIL_MAP, []), _load(CENSUS_MAP, []))
+def chart_map(overlays=None):
+    """chart name -> {chart, key, ssc_rel, ...}, the accepted identity overlays applied last
+    (`overlays`: a list shaped like identity_overlays()'s to apply instead, [] for none)."""
+    return overlay_chart_map(merge_chart_map(_load(TAIL_MAP, []), _load(CENSUS_MAP, [])),
+                             identity_overlays() if overlays is None else overlays)
 
 def merge_certification(ledgers):
     """[{vid: entry}, ...] lowest precedence first (corpus, work tail, census) -> {vid: entry}.
@@ -76,14 +151,16 @@ def merge_certification(ledgers):
                 out[vid] = entry
     return out
 
-def certification(sources_only=False):
+def certification(sources_only=False, overlays=None):
     """video id -> {vid, status, t, 1p, 2p, charts: {name: {expected, side, verdict}}}.
     `sources_only` leaves out work/certification-tail.json, so the answer is exactly what the
-    committed ledgers say; every other tool wants the live merge. (The corpus grade builds its
-    population from its own list of oracle files, not from here: the skins ledger reaches it only
-    once the owner adds the file to corpus_grade's oracle and refreezes the manifest.)"""
+    committed ledgers say; every other tool wants the live merge. The accepted identity overlays
+    are applied last (`overlays` as for chart_map). (The corpus grade builds its population from
+    its own list of oracle files, not from here: the skins ledger reaches it only once the owner
+    adds the file to corpus_grade's oracle and refreezes the manifest.)"""
     srcs = (CORPUS_CERT, SKINS_CERT, CENSUS_CERT) if sources_only else (CORPUS_CERT, TAIL_CERT, SKINS_CERT, CENSUS_CERT)
-    return merge_certification([ledger_entries(_load(src, {})) for src in srcs])
+    return overlay_certification(merge_certification([ledger_entries(_load(src, {})) for src in srcs]),
+                                 identity_overlays() if overlays is None else overlays)
 
 def certified_charts(cert, smap, tail_sweep, census):
     """name -> {chart, key, ssc_rel, vid, side, expected, shape, in_tail} for every chart with a
@@ -105,6 +182,7 @@ def certified_charts(cert, smap, tail_sweep, census):
                              expected=expected, shape=row["shape"] if row else "census", in_tail=bool(row))
     return out
 
-def charts(sources_only=False):
-    """certified_charts() over the files on disk."""
-    return certified_charts(certification(sources_only), chart_map(), _load(TAIL_SWEEP, {}), _load(CENSUS, []))
+def charts(sources_only=False, overlays=None):
+    """certified_charts() over the files on disk (identity overlays as for chart_map)."""
+    return certified_charts(certification(sources_only, overlays), chart_map(overlays), _load(TAIL_SWEEP, {}),
+                            _load(CENSUS, []))

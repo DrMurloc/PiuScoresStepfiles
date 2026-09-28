@@ -1060,6 +1060,120 @@ closed family, a gate changed since the freeze, a fourth reveal, a hypothesis, p
 that does not exist - waiting does not fix a typo); 75 the machine stopped it (a MemoryError or any
 other OSError).
 
+## Chart identity (which block a certified play is)
+
+A certification says "this video's side shows chart X at N judged notes"; the chart map says "chart X
+is block B of this `.ssc`". Either can be wrong while the other is right. The tail sweep matched site
+charts to blocks by name and level, and a chart the game re-rated since the pack's mix sits under
+another block's level: the site's "Witch Doctor D22" carries chartId `b5cc8967`, which the Phoenix 1
+catalog lists as Double 23 with 1,162 notes - the pack's `D23 INFOBAR TITLE` block, not its `D22`
+block. A repair loop pointed at the wrong block "fixes" a chart that was never broken, into the
+wrong shape. Loop bucket #2 (work/loop-buckets-2026-09-26.txt) finds these from the notes.
+
+**`identity.py fingerprint <pass>... | @<list> [--out-dir D] [--force]`** /
+**`identity.py jobs <jobs.jsonl> --list-dir D [--shard-size N]`**
+Replays every cached sprite pass - `note_extract._read`'s post-decode step on the cached pass, in
+its order (flashes, colour gate, every floor candidate scored by flash agreement, the strictest
+floor within TIE, the fallback, the hold marks), no frame decoded: it replaces `cv2.VideoCapture`
+with a function that raises, so a replay cannot open a video - and scores the extraction by
+column+time F1 (`extract_repair.align` + `match`, 45 ms) against every same-width block of every
+song the video's certifications name. Blocks with identical note events (HIDDEN/INFOBAR twins) share
+a signature and count as one. A later block carrying an earlier block's tag is unreachable by any
+key and listed as such. The contrast scale is the pass name's two decimals (`_read` uses the
+unrounded value, so a pass cut at 0.87 may sit a thousandth off its production floors). One JSON per
+pass in `work/identity/fp/` (atomic; re-scored when the pass's song file or the code stamp over the
+replay and scoring functions moves), written under `atomicio.forbid_writes` (only that folder).
+`jobs` writes a supervise jobs file of song-grouped shards (no decode, so no slot). The anchor
+search is `quantize.anchor_offset` vectorized - the same offsets in the same order, the same hit
+test, the same median, the same first-best tie rule, including the fine search walking from the
+current best as the original's does - about 15 times faster; `identity.py selfcheck [--pairs N]`
+proves it identical to the original on random (pass, block) pairs.
+
+**`identity.py decide --out <report.json> [--seed N] [--controls N] [--swaps N]`**
+The rule, over the committed population (`corpus_map.charts(sources_only=True)`, no overlay): a
+certified side is re-keyed to another block of its file only when its extraction matches that block
+at F1 >= 0.8, by >= 0.3 over both the mapped block and the runner-up, and a second, independent
+reference agrees - the block converts to the certified result-screen total (count agreement), or a
+blind read of the result screen's level ball does. The mapped block converting to the certified
+total vetoes a re-key outright (`exact-notes-disagree`: a jack chart the extractor under-reads can
+match a sparser sibling better than its own block - Pumptris Quattro S18). Round-hundred totals, a
+total two catalog charts of the song carry, a census chart or a census-certified side (eye-verified),
+owner-revisit and quarantined charts, a target block another chart keeps, and a target tag that
+cannot be spelled as a chartstruct key go to the owner. A crossed pair moves together or not at
+all; when one half waits on a ball read, so does the other. One side certifying two charts (a
+result screen shows one total per side): the census ledger decides where it certifies one of them,
+else the pad's notes by the same rule (the winner's own block best by the margin, converting to the
+total), else a ball read. Controls: `--controls` random exact charts with own F1 >= 0.9 must each
+pick their own block (how many by the margin is reported too); the swap drill swaps the keys of `--swaps` pairs of exact,
+confidently-own charts of one file (charts the rule may act on: no owner reason) in a copy of the
+map and requires the rule to put every pair back with count agreement, 100%.
+
+**`identity.py packets --report R --batch B --out-root work/blind/<name> --keys work/blind-keys/<name>/<B>.json [--extra-videos v,...]`**
+Blind packets for what the notes and the count cannot settle: a crop of the result screen's level
+ball per side (Phoenix 140x112 and XX 184x190 at full resolution, placed from the MAX COMBO label
+`result_reader` anchors on), and for a song-level mismap a SAME/DIFFERENT pair of title strips
+against a same-skin reference video whose own notes prove the named song. No chart name, count or
+expected value goes into a packet; opaque file and item ids; at most 8 images a packet, 2 of them
+seeds with known answers (exact, own-block charts whose name level, catalog level and block level
+agree; SAME and DIFFERENT title pairs of proven songs). The key, with the seeds, stays outside.
+One decode per video, inside one machine-wide slot.
+
+**`identity.py reads --keys work/blind-keys/<name>/<B>.json --answers <answers.json> --report R --out <reads.json> [--predictions P]`**
+Applies one blind batch; it looks at no image. Each reader is scored against the packet's seeds
+first: a seed answered wrong, or a file opened outside the packet (anything but its
+`question.json` and its own images), voids that reader for that packet. An item counts as read only
+when two valid readers give the same answer (a ball's number compared as a number, so `09` is `9`);
+anything else is unsure and settles nothing. What the reads settle: a re-key waiting on a ball goes
+through when the ball shows the chart's own catalog level (its chartId's type at its Phoenix 1 or 2
+level - the play is the chart the chartId names, and the notes already said which block that is), a
+crossed pair only when both halves do; on a side certifying two names with no cached pass, the ball
+picks the name whose level it shows, and the others are withdrawn when that name's chartId is at
+the same level - a round-hundred total, a census row, or a ball no name carries goes to the owner
+instead, with the reads attached; a census withdrawal the ball agrees with carries the read, and one
+it contradicts goes to the owner. Song-level reads settle nothing: a title that differs from a
+reference video of the named song, or a ball no named chart shows (for an OPEN chart, none of the
+video's sides), is an owner item plus an ORACLE_CONFLICT proposal with catalog hints (charts at the
+read level carrying the side's total, and within `--near` notes of it); agreement is listed as a
+confirmation. The predictions registered before the reads are scored in the output.
+
+**`identity.py overlay --report R --out sources/identity-overlay-<date>.json [--extra rows.json]`** /
+**`identity.py grade-delta --overlay <file> --out <report.json>`** /
+**`identity.py owner-list --report R --out work/owner-list/identity.json [--conflicts-out sources/oracle-conflict-<date>.json] [--extra-items F] [--reads <reads.json>] [--staged "what::detail"]`**
+`overlay` writes the rows the rule settled: `rekey` (chart, ssc_rel, from_key, to_key, and the
+evidence: F1 table, margins, count, catalog row, ChartVideo side, the ball read where one decided)
+and `withdraw` (vid, side, chart: this side does not show this chart). `--extra` adds the rows a
+`reads` output settled; one replaces the report's row for the same kind, chart, video and side (a
+census withdrawal a ball confirmed carries the read) rather than doubling it. `grade-delta` grades the corpus with and without an overlay
+under the pinned converter and the working tree's oracle - `corpus_grade`'s own Oracle, grader and
+conflict builder, the overlay applied to a copy the way the staged `corpus_grade` change applies it -
+and reports it as ORACLE GROWTH, never as repairs (no block changes). `owner-list` writes the rows
+the rule may not settle, one line of reason each (and exact charts whose notes match another block
+by the margin, which the count vetoed; `--reads` adds a batch's owner items), and with
+`--conflicts-out` the proposed ORACLE_CONFLICT additions: not-exact charts whose notes match another
+block by the margin, or two blocks alike - a loop making one exact by editing its mapped block would
+be re-ticking the wrong block - and the song-level findings of `--reads` (OPEN charts included, so no
+loop certifies one from that video). Charts a batch settled are left out. That file is not read by
+the gate; the owner folds it into `sources/oracle-conflict.json`.
+
+**How an overlay lands.** `corpus_map` applies `IDENTITY_OVERLAYS` LAST, over the merged map and
+ledgers (`overlay_chart_map`, `overlay_certification`; a `rekey` row applies only while the chart
+still maps to its `from_key`, and never leaves two charts on one key) - but only once
+`sources/oracle-manifest.json` lists the file, so a loop's population and the gate's cannot
+disagree about it. Until then the overlay is inert everywhere. `corpus_grade` reading it as oracle
+is a change to the rails' own code, the owner's: the staged patch (`work/owner-list/identity-corpus_grade.patch`,
+listed in `work/owner-list/identity.json`) adds `ORACLE_IDENTITY` (corpus_map's list) and the same
+rule - an overlay is inert until the tree's manifest lists it, oracle after (hashed, checked, owner-only
+in `loopcommit`) - and `freeze --accept-identity`, which lists every overlay present: the owner's
+acceptance, a commit of its own whose gate shows what the overlay moved. Drilled in a throwaway
+clone of main with the final 2026-09-27 overlay (`work/identity-1-scratch/drill.sh`): the branch with
+the overlay committed inert gates 749 -> 749 on today's rails and on the patched ones; a review
+commit removing the two ORACLE_CONFLICT charts the overlay resolves passes as an oracle pass (the gate
+halts a conflict chart that becomes exact over the union of the base and head sets, so that review
+lands first); the acceptance commit (`freeze --accept-identity`, `conflicts --write`, `freeze`)
+passes `--oracle-pass --declared 4` with four GAINED, two EDITED-OFF (re-keyed onto their right
+blocks, still not exact) and eleven LEFT, 749 -> 753; an accepted overlay edited afterwards is
+refused.
+
 ## Reading footage
 
 **`combo_reader.py --scan <vid> side=<L|R|C> [atlas=tools/atlas-combo-p2]`**
@@ -1980,6 +2094,10 @@ every chart the older ledgers carry. The gate sees that ledger in two different 
   Measured on 2026-09-27 with the branch's tools (docs/STATUS.md, "Result-screen skins"), the
   123-chart corpus kept every verdict, clock and promotable block. Only Asterios -ReEntry- S4's
   band and reason text changed.
+
+The identity overlays (`IDENTITY_OVERLAYS`, written by `identity.py`) are applied last, over both
+merges, and only once the oracle manifest lists them (see "Chart identity" above); `chart_map`,
+`certification` and `charts` take `overlays=[]` to read the human data alone.
 
 **`tail_worklist.py <tail.json> [--shape ...] [--min-pct N] [--max-pct N] [--limit N] [--out-tag T]`**
 Turns rows of the catalog sweep into the two inputs a batch needs: `sources/ssc-map-tail.json`
