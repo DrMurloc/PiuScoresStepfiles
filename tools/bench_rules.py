@@ -234,7 +234,8 @@ RULES = {r.name: r for r in (
          "removed on the tune split: bar 5-7 frames, opening within 19 ms, closing within 12 ms, speeds within 2%, head at "
          "0.78-0.945 and cap under 0.91 of the median, 0.065-0.100 s apart.", post=loose_rail_cap2, wants_pass=True,
          params=dict(dist=0.019, rail_len=0.075, rail_max=0.125, reach=0.012, occ_th=0.25, rail_min=0.03, qu_min=0.78, qu_max=0.945,
-                     qv_max=0.91, speed_tol=0.02, min_gap=0.065, max_gap=0.100)),
+                     qv_max=0.91, speed_tol=0.02, min_gap=0.065, max_gap=0.100),
+         accepted="note_extract.drop_short_caps (post_decode); held-out look 2026-09-27 17:24"),
     Rule("tailcap-e", "tail-cap", "tailcap-d with the bar allowed to open up to 35 ms from the head (the caps tailcap-d left on "
          "the tune split that failed only its bar test opened a median 24 ms from the head, and closed within 8 ms of the cap).",
          post=loose_rail_cap2, wants_pass=True,

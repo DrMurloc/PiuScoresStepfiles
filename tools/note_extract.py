@@ -75,6 +75,22 @@ HIPASS = 0.0              # rows, in sprite heights, the smooth-down-the-screen 
                           # measured over and removed from both pictures
 REST = 0.0                # share of a column's own dimmest frames the receptor is read from
 MERGE = 0.015             # two detections nearer than this in one column are one note
+# A short hold's tail cap (tools/bench_rules.py tailcap-d, accepted by the extractor bench). A cap is
+# the head's own sprite, and mark_holds swallows it only inside a rail its head claimed - but the lit
+# bar a hold of about a tenth of a second leaves under its lane is too faint and brief for the rails
+# mark_holds reads (0.40 occupancy, 0.065 s), so the head claims nothing and the cap survives as an
+# extra: half of the extras on the benchmark's tune charts. Read looser, the bar is there, and it
+# opens as the head arrives and CLOSES as the cap goes by, where a jack's first tap leaves a flash
+# that does not wait for the second; both sprites of a short hold correlate weaker than the chart's
+# taps (the body runs through the matching window) and scroll at one speed. Every bound is the
+# central 90% of the caps the rule's looser form removed on the tune split.
+CAP_OCC, CAP_RAIL_MIN = 0.25, 0.03        # the looser lane reading: occupancy, shortest bar (s)
+CAP_OPEN, CAP_CLOSE = 0.019, 0.012        # s: the bar opens this near the head and closes this near the cap
+CAP_BAR = (0.075, 0.125)                  # s: and runs this long (5-7 frames)
+CAP_GAP = (0.065, 0.100)                  # s: from head to cap
+CAP_HEAD_Q = (0.78, 0.945)                # the head's strongest correlation, as a share of the chart's median
+CAP_Q = 0.91                              # the cap's, under this share
+CAP_SPEED = 0.02                          # the two scroll at one speed, within this share
 # The decode is the whole cost, and everything after it - which correlation to believe, the
 # holds, the grid - is post-processing worth re-running many times over the same pass. Off by
 # default: a corpus run of two thousand charts should not leave two thousand of these behind.
@@ -418,6 +434,52 @@ def mark_holds(scan, notes, tol=0.15):
     notes[:] = keep
     return n_hold
 
+def streak_q(n, ts, scored, floor):
+    """The strongest correlation on a note's own streak: the pass's hits in its column on the frames
+    it was tracked over, within 6 px of the line it was fitted to."""
+    cst = n["yj"] - n["v"] * n["t"]
+    i0, i1 = np.searchsorted(ts, n["first"] - 1e-6), np.searchsorted(ts, n["last"] + 1e-6)
+    best = None
+    for i in range(i0, i1):
+        y = n["v"] * ts[i] + cst
+        for a, b, q, s in scored[i][n["col"]]:
+            if q >= floor and abs(a - y) <= 6 and (best is None or q > best):
+                best = q
+    return best
+
+def drop_short_caps(ts, scored, scan, notes, floor):
+    """The tail caps of short holds no rail was claimed for (CAP_*), out of `notes`. Returns how many."""
+    speeds = [-n["v"] for n in notes if n.get("v")]
+    lag = ((scan["y1"] - scan["y0"]) / 2.0 + 8.0) / float(np.median(speeds)) if speeds else 0.06
+    rails = R.rails(scan, CAP_OCC, CAP_RAIL_MIN)
+    qs = [streak_q(n, ts, scored, floor) for n in notes]
+    known = [q for q in qs if q is not None]
+    if not known:
+        return 0
+    med = float(np.median(known))
+    cols = {}
+    for k, n in enumerate(notes):
+        cols.setdefault(n["col"], []).append(k)
+    drop = set()
+    for c, idx in cols.items():
+        idx.sort(key=lambda k: notes[k]["t"])
+        spans = rails.get(c, [])
+        for u, v in zip(idx, idx[1:]):
+            nu, nv = notes[u], notes[v]
+            gap = nv["t"] - nu["t"]
+            if nu.get("hold_end") is not None or u in drop or not (CAP_GAP[0] <= gap <= CAP_GAP[1]):
+                continue
+            if qs[u] is None or qs[v] is None or not (CAP_HEAD_Q[0] * med <= qs[u] < CAP_HEAD_Q[1] * med) \
+                    or qs[v] >= CAP_Q * med:
+                continue
+            if not nu.get("v") or abs(nv["v"] / nu["v"] - 1.0) > CAP_SPEED:
+                continue
+            if any(abs(a + lag - nu["t"]) <= CAP_OPEN and CAP_BAR[0] <= b - a <= CAP_BAR[1] and abs(b + lag - nv["t"]) <= CAP_CLOSE
+                   for a, b in spans):
+                drop.add(v)
+    notes[:] = [n for k, n in enumerate(notes) if k not in drop]
+    return len(drop)
+
 def extract_video(vid, ncols, side="1p", band="C", dur=None, quiet=False):
     """Read a chart off a video this repo knows nothing else about.
 
@@ -614,8 +676,9 @@ def post_decode(ts, scored, fps, y0, y1, scan, floors, ncols, vid=None, band=Non
                                                      np.percentile(speeds, 95)))
         print("  extracted %d note events" % len(notes))
     n_hold = mark_holds(scan, notes)
+    n_cap = drop_short_caps(ts, scored, scan, notes, floor)
     if not quiet:
-        print("  %d of them hold" % n_hold)
+        print("  %d of them hold, %d short-hold tail caps dropped" % (n_hold, n_cap))
     # the receptor flashes ride along: they are the second sensor, and a caller deciding whether
     # to believe a note the file lacks can ask whether the game lit the receptor for it
     return notes, dict(vid=vid, band=band, fps=fps, floor=floor, colour=sat, holds=n_hold,

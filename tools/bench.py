@@ -279,9 +279,12 @@ def fast_anchor():
 
 def extractor_stamp():
     """The post-decode step as it stands: its code and the constants it reads."""
-    return code_stamp(NX.post_decode, NX._clean, NX._cand, NX.track, NX.notes_from_tracks, NX.flash_agreement,
-                      NX.at_floor, NX.colour_floor, NX.mark_holds, _REAL_ONSETS, R.rails) + ":" + digest(
-        dict(FLOORS=NX.FLOORS, TIE=NX.TIE, MERGE=NX.MERGE, MIN_TRACK=NX.MIN_TRACK, TOP=NX.TOP), 12)
+    fns = [NX.post_decode, NX._clean, NX._cand, NX.track, NX.notes_from_tracks, NX.flash_agreement,
+           NX.at_floor, NX.colour_floor, NX.mark_holds, _REAL_ONSETS, R.rails]
+    fns += [getattr(NX, f) for f in ("drop_short_caps", "streak_q") if hasattr(NX, f)]
+    consts = dict(FLOORS=NX.FLOORS, TIE=NX.TIE, MERGE=NX.MERGE, MIN_TRACK=NX.MIN_TRACK, TOP=NX.TOP)
+    consts.update({k: getattr(NX, k) for k in sorted(vars(NX)) if k.startswith("CAP_")})
+    return code_stamp(*fns) + ":" + digest(consts, 12)
 
 
 def scorer_stamp():
