@@ -1,0 +1,263 @@
+{
+ "bands": {
+  "NEVSISTER:C:10": {
+   "centre": 75.5,
+   "hi": 76.1,
+   "invariant": "twin",
+   "lo": 75.0,
+   "n_fits": 40,
+   "n_passing": 40,
+   "n_sample_videos": 40,
+   "pitch_pct_all": [
+    75.5,
+    75.5,
+    75.5,
+    75.5,
+    75.6
+   ],
+   "source": "own"
+  },
+  "NEVSISTER:C:5": {
+   "centre": 75.8,
+   "hi": 76.3,
+   "invariant": "library-ncc",
+   "lo": 74.9,
+   "n_fits": 40,
+   "n_passing": 39,
+   "n_sample_videos": 40,
+   "pitch_pct_all": [
+    75.4,
+    75.8,
+    75.8,
+    75.8,
+    75.8
+   ],
+   "source": "own"
+  },
+  "NEVSISTER:L:5": {
+   "centre": 75.8,
+   "hi": 76.3,
+   "invariant": "library-ncc",
+   "lo": 75.1,
+   "n_fits": 40,
+   "n_passing": 40,
+   "n_sample_videos": 40,
+   "pitch_pct_all": [
+    75.6,
+    75.8,
+    75.8,
+    75.8,
+    75.8
+   ],
+   "source": "own"
+  },
+  "NEVSISTER:R:5": {
+   "centre": 75.8,
+   "hi": 76.3,
+   "invariant": "library-ncc",
+   "lo": 74.9,
+   "n_fits": 40,
+   "n_passing": 40,
+   "n_sample_videos": 40,
+   "pitch_pct_all": [
+    75.6,
+    75.8,
+    75.8,
+    75.8,
+    75.8
+   ],
+   "source": "own"
+  },
+  "NOT_IN_MAP:C:10": {
+   "centre": 75.5,
+   "hi": 76.06,
+   "invariant": "twin",
+   "lo": 75.0,
+   "n_fits": 40,
+   "n_passing": 40,
+   "n_sample_videos": 40,
+   "pitch_pct_all": [
+    75.5,
+    75.5,
+    75.5,
+    75.5,
+    75.5
+   ],
+   "source": "own"
+  },
+  "NOT_IN_MAP:C:5": {
+   "centre": 75.8,
+   "hi": 76.3,
+   "invariant": "library-ncc",
+   "lo": 75.13,
+   "n_fits": 15,
+   "n_passing": 14,
+   "n_sample_videos": 15,
+   "pitch_pct_all": [
+    70.2,
+    75.8,
+    75.8,
+    75.8,
+    75.8
+   ],
+   "source": "own"
+  },
+  "NOT_IN_MAP:L:5": {
+   "centre": 75.8,
+   "hi": 76.3,
+   "invariant": "library-ncc",
+   "lo": 74.94,
+   "n_fits": 13,
+   "n_passing": 12,
+   "n_sample_videos": 13,
+   "pitch_pct_all": [
+    68.2,
+    75.8,
+    75.8,
+    75.8,
+    75.8
+   ],
+   "source": "own"
+  },
+  "NOT_IN_MAP:R:5": {
+   "centre": 75.8,
+   "hi": 76.3,
+   "invariant": "library-ncc",
+   "lo": 74.96,
+   "n_fits": 16,
+   "n_passing": 16,
+   "n_sample_videos": 16,
+   "pitch_pct_all": [
+    75.7,
+    75.8,
+    75.8,
+    75.8,
+    75.8
+   ],
+   "source": "own"
+  },
+  "OFFICIAL:C:10": {
+   "centre": 75.3,
+   "hi": 75.9,
+   "invariant": "twin",
+   "lo": 74.53,
+   "n_fits": 175,
+   "n_passing": 30,
+   "n_sample_videos": 175,
+   "pitch_pct_all": [
+    52.2,
+    67.0,
+    67.3,
+    67.4,
+    75.4
+   ],
+   "source": "own"
+  },
+  "OFFICIAL:C:5": {
+   "centre": 74.6,
+   "hi": 75.5,
+   "invariant": "library-ncc",
+   "lo": 73.9,
+   "n_fits": 253,
+   "n_passing": 126,
+   "n_sample_videos": 127,
+   "pitch_pct_all": [
+    57.3,
+    57.5,
+    69.2,
+    74.6,
+    74.8
+   ],
+   "source": "own"
+  },
+  "OTHER:C:10": {
+   "centre": 75.5,
+   "hi": 76.0,
+   "invariant": "twin",
+   "lo": 75.0,
+   "n_fits": 13,
+   "n_passing": 13,
+   "n_sample_videos": 13,
+   "pitch_pct_all": [
+    75.5,
+    75.5,
+    75.5,
+    75.5,
+    75.5
+   ],
+   "source": "own"
+  },
+  "OTHER:C:5": {
+   "centre": 75.8,
+   "hi": 76.3,
+   "invariant": "library-ncc",
+   "lo": 74.9,
+   "n_fits": 5,
+   "n_passing": 5,
+   "n_sample_videos": 5,
+   "pitch_pct_all": [
+    75.6,
+    75.8,
+    75.8,
+    75.8,
+    75.8
+   ],
+   "source": "pooled OTHER:*:5 (18 fits)"
+  },
+  "OTHER:L:5": {
+   "centre": 75.8,
+   "hi": 76.3,
+   "invariant": "library-ncc",
+   "lo": 74.9,
+   "n_fits": 7,
+   "n_passing": 7,
+   "n_sample_videos": 7,
+   "pitch_pct_all": [
+    75.4,
+    75.5,
+    75.8,
+    75.8,
+    75.8
+   ],
+   "source": "pooled OTHER:*:5 (18 fits)"
+  },
+  "OTHER:R:5": {
+   "centre": 75.8,
+   "hi": 76.3,
+   "invariant": "library-ncc",
+   "lo": 74.9,
+   "n_fits": 6,
+   "n_passing": 6,
+   "n_sample_videos": 6,
+   "pitch_pct_all": [
+    75.8,
+    75.8,
+    75.8,
+    75.8,
+    75.8
+   ],
+   "source": "pooled OTHER:*:5 (18 fits)"
+  }
+ },
+ "census_sha256": "14e4ea374da847df8bf703f38784e7c922162e4f0189c28ff01e0c2c760692ce",
+ "date": "2026-09-27",
+ "invariant_min": 0.8,
+ "lib_min_fits": 8,
+ "library": {
+  "path": "sources/lanes/receptor-library-2026-09-27.npz",
+  "sha256": "d465abce056edd8ecdc9dbea0e5f4cba6b7dc92582c5b82a7d6ecc2216bf9355",
+  "sources": {
+   "NEVSISTER": 40,
+   "NOT_IN_MAP": 40,
+   "OFFICIAL": 30,
+   "OTHER": 13
+  },
+  "width": 48
+ },
+ "method": "a template's band is the 1st..99th percentile of the pitches of its sample fits whose independent invariant (twin for doubles; NCC against the channel group's receptor library for singles) reaches 0.80, widened by 0.5px each side; fewer than 8 such fits: the channel group's pooled passing fits for that column count",
+ "min_fits": 8,
+ "pad_px": 0.5,
+ "sample_sha256": "27b149dfcb51e42fa2d00cb9d41715152f55c95bf20979897b917bd4d1bd6ac7",
+ "sha256": "d61867c54352efb61ebea78cd77ab87fed8258ed8f687fa8e3dd43f28b4dea5d",
+ "what": "bucket #4 per-template pitch bands from the band sample's tune fits, each recomputed from the median-band cache by the BEFORE rule"
+}
