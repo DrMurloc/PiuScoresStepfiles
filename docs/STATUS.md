@@ -610,6 +610,99 @@ AiNqD7lZjiM (Beat of The War S21, 66 decode errors and a stop at 15 s). The owne
 now enforced in every worklist that can ship: Slam D24, which sat in the extraction loop's
 worklist as a PARK, is skipped with its reason.
 
+## Result-screen skins: certification coverage (2026-09-27)
+
+Bucket 12 of the loop plan, on `loops/skins-1`: result screens that were on the footage but
+unread. `tools/result_reader.py` gains three profiles, each its own commit - the XX screen's 2P
+column (`rx=500`; the XX profile said it showed one side only), Prime (2015) and Prime 2's DANCE
+GRADE screen (both in the XX font, each with its own MAX COMBO label, `tools/atlas-prime*/`) - and
+what they certify is landed as `sources/certification-skins-2026-09-27.json`, merged by
+`corpus_map`. No stepfile changed, so the snapshot is exactly as far behind as it was at `f27b6ef`.
+
+**What it certifies: 27 charts, 26 of them exact.** The gate per (video, side): all six cells
+are digits; maxcombo <= P+G, and no BAD or MISS means maxcombo == P+G; a second frame at least
+1.1 s away reads the same six cells; and two independent, seeded blind readers transcribe the
+same six cells as the reader (`cert_land.py land`; nobody here looked at a frame to decide a
+digit). Graded through the corpus grade's own converter with the ledger merged (`cert_land.py
+whatif`): **1,490 -> 1,517 certified, 749 -> 775 exact, PROTECTED 629 -> 655, PROVISIONAL 120
+-> 120**; the population set-diff on (vid, chart, side, expected) is +27, -0.
+- The XX 2P column: **+19 certified, +18 exact**, the research's numbers exactly. The 19th,
+  Papasito (feat. KuTiNA) - FULL SONG - S19 (McuAzdecSq4), converts to 1,492 against 1,500: a
+  repair lead.
+- Prime: **+8 certified, all 8 exact** (CROSS OVER feat. LyuU S15 and S22, Rave'til the earth's
+  end D14 and S15, Twist of Fate (feat. Ruriling) S10 and S16, Silver Beat feat. ChisaUezono D13,
+  Up & Up (Produced by AWAL) D21). Every one of the 26 exact charts was exact at the import
+  `a23cee5`, so all 26 enter PROTECTED.
+- DANCE GRADE: nothing. The one screen whose total is its chart's catalog count, Q-4XfqIiM1Q
+  (Just Hold on D22), is footage looked at while the profile was built, which never counts.
+
+**The corpus grade does not see it yet.** `corpus_grade` builds its population from its own list
+of oracle files, so until the owner adds the ledger there and refreezes the manifest (the patch is
+staged: `work/skins-1-scratch/owner/corpus-grade-skins-ledger.patch`, then `corpus_grade.py
+freeze`), the gate still grades 1,490 / 749 while `corpus_map` - every loop's worklist - already
+merges the 27. Merge the two together: in between, a loop that repaired Papasito FULL SONG S19
+would fail its gate on DECLARED, and an edit that broke one of the 26 exact charts would pass
+unseen.
+
+**The full-ledger invariance diff.** Every entry of the corpus and census certification ledgers
+(2,027 entries on 2,016 videos) was read three ways on the same decoded frames (`cert_skins.py`):
+main's reader, this reader with only the Phoenix and XX profiles, and this reader entire. Every
+cell, skin, t, scale and status was compared (seek frames for the 64 non-official videos the ledgers read no
+screen on; `work/skins-1-scratch/diff6-merged6-*.json`), **0 UNINTENDED** in either step:
+- main's reader -> the XX 2P column: 74 new 2P reads, 3 XX screens read on the 2P side alone, and
+  15 statuses no-result-screen -> corrupt-video (the decoder cannot open the file, or nothing in
+  its last 45 s decodes; 2 of them official uploads) - all INTENDED; 167 skin fields main's reader
+  already reads differently from the ledger (112 census, 55 corpus: PRE-EXISTING); 1,768 entries
+  unchanged in every field.
+- the XX 2P column -> the full reader: 27 new Prime reads and 6 new DANCE GRADE reads, INTENDED;
+  no Phoenix or XX read moves.
+All 1,490 committed certifications are reproduced by both main's code and this one; the set-diff
+on (vid, chart, side, matched value) is 0 removed, 19 added by the XX 2P column and 13 more by
+the Prime and DANCE GRADE profiles (8 of them land; the other 5 are footage that built or tuned a
+profile). **Band manifest**: 16 of the 45 XX certifications gain a 2P read, so the reader band
+of each moves C -> L (`work/certification-skins-2026-09-27.bands.json`, and
+the list in the ledger commit): anything keyed on the old band - a counter scan, a sprite pass, a
+trace-audit verdict - re-baselines on it.
+
+**Every video accounted for.** Of the 143 XX videos with no certified chart: 13 CERTIFIED, 121
+ERA, 9 REJECTED with a reason. Of the 64 non-official videos the ledgers read no result screen on:
+8 CERTIFIED (Prime), 5 would certify but built or tuned a profile (never counted; one of them,
+Beethoven Virus S6, 0qbKb2cWyFY, is not exact either: 286 against our 338), 13
+corrupt-video, 17 ERA, 21 REJECTED - 15 of them have no skin's MAX COMBO label on any decodable
+frame of the last 45 s (every profile's anchor under the reader's 0.75; the best is Phoenix's
+0.70, its level on screens that are not Phoenix), 3 because the XX atlas misreads the Prime digits
+(the blind readers agree on the true cells, which the reader does not read), and 3 whose total
+matches neither the catalog nor our file: Shub Niggurath - SHORT CUT - D23 (Zqul1BBl1nk, 1,450
+against 1,054 and 797: identity to review) and two repair leads, Stardust Overdrive - SHORT CUT -
+S16 (8dORsoiQppQ, blind-confirmed 741 against our 751) and D17 (FsFAU37qmj4, a bootstrap video,
+724 against our 723). Among the 64 the reader finds 27 Prime screens, 6 DANCE GRADE and 3 XX
+screens read on the 2P side alone, where the research counted 27, 7 and 3: szo_nUjJt2k (Prime
+Opening - SHORT CUT - D15), the likely 7th DANCE GRADE video, has no DANCE GRADE label above 0.42
+in its last 45 s.
+
+**What the Prime digits cost.** The XX digit atlas misreads some Prime captures: of the 12 Prime
+sides the blind readers transcribed, 9 equal the reader's cells and 3 do not (an 8 read as 9, a 1
+as 7, a 6 as 5). So a Prime read certifies only with an agreeing blind transcription, and some
+Prime ERA or REJECTED verdicts may themselves be misreads. Prime's revision 1 used two bootstrap
+videos and five more looked at for glyph extents only (never values) - past the three-video cap,
+so all seven are out of the yield. A Prime atlas of its own (revision 2,
+each digit the mean of its cells on three bootstrap sides, labelled by agreed transcriptions) read
+5 of 8 held-out sides right against the XX atlas's 6 and was not kept; DANCE GRADE revision 1
+certified nothing on held-out videos, so by the stopping rule neither skin has a further revision.
+
+**ERA staging.** 151 rows on 140 videos (137 XX, 11 Prime, 3 DANCE GRADE): the result screen's
+total is our file's lattice count, not the catalog's: the footage and our file agree and the
+catalog does not. They sit in `work/era/era-skins-1-2026-09-27.json`, stamped with the converter
+pin and each chart's block and header sha (`cert_land.py era-check`: 0 void); no loop reads them,
+and a row is never a close, a skip or an exclusion. They are machine reads with the on-screen
+checks and a second frame, not blind-checked. Whether ERA rows may be committed under `sources/`
+is the owner's call (recommended: a separate era ledger only).
+
+**For the owner.** Two charts are certified by the blind readers alone, and the reader cannot read
+them: Super Stylin' D17 (AAzHr017rp8, 851) and Asterios -ReEntry- S19 (_aq-Fsm7Mys, 1,000), both
+exact at the import. They are not landed; whether an agreed blind transcription with no reader
+agreement may ever certify is his call (recommended: no, keep them as a list).
+
 ## Beyond the census (sized 2026-09-06, listed in full 2026-09-08)
 
 The census was the *blatantly* wrong 121 — its cut was narrow on purpose: taps above the
