@@ -15,7 +15,7 @@
 #   python -X utf8 -B tools/corpus_grade.py grade [--rev <commit>] [--oracle-rev <commit>] [--out <path>|-]
 #   python -X utf8 -B tools/corpus_grade.py gate --base <rev> [--head <rev> | --worktree] [--oracle-pass] [--declared N]
 #                                                [--json <path>] [--audit-no-decode]
-#   python -X utf8 -B tools/corpus_grade.py freeze [--repin]      (writes sources/oracle-manifest.json)
+#   python -X utf8 -B tools/corpus_grade.py freeze [--repin] [--accept-identity]   (writes sources/oracle-manifest.json)
 #   python -X utf8 -B tools/corpus_grade.py conflicts [--write]   (builds sources/oracle-conflict.json)
 #   python -X utf8 -B tools/corpus_grade.py selfcheck             (guards' block split == the converter's)
 #   common: [--workers N] (default 6)  [--no-cache]  [--cache-dir <dir>]  [--unpinned]
@@ -36,13 +36,18 @@
 # The output JSON is deterministic - sorted, no timings (timings go to stderr) - so two grades of
 # one tree are byte-identical.
 #
-# THE ORACLE is the set of files that decide who is certified and at what count (ORACLE_DATA)
-# plus the policy files the gate enforces (ORACLE_POLICY). sources/oracle-manifest.json holds
+# THE ORACLE is the set of files that decide who is certified and at what count (ORACLE_DATA;
+# ORACLE_OPTIONAL, the certification ledgers added since the rails froze, wherever a tree has
+# them; ORACLE_IDENTITY, the identity overlays, once a tree's manifest lists them) plus the
+# policy files the gate enforces (ORACLE_POLICY). The population is corpus_map's merge over them,
+# in corpus_map's order: the corpus ledger, the optional ledgers, the census, then the overlays
+# (check_lists refuses while corpus_map's lists differ). sources/oracle-manifest.json holds
 # the sha256 of each (CRLF read as LF, so a CRLF checkout and an LF blob agree) and the CONVERTER
 # PIN: the sha256 over every piu_annotate module the conversion loads (see converter_pin). grade
 # and gate refuse to run when the working tree's oracle or the installed converter differs from
 # the manifest; `freeze` rewrites the manifest (the converter pin only with --repin, which is a
-# commit of its own). Only the committed ledgers count: work/certification-tail.json is the
+# commit of its own; an identity overlay only with --accept-identity, which is the owner's
+# acceptance of it). Only the committed ledgers count: work/certification-tail.json is the
 # live file result_reader appends to, and a row there is not oracle until it is promoted into
 # sources/ by an oracle commit.
 #
@@ -52,8 +57,11 @@
 # changing), audits every SHIP - a chart exact at the head whose block or file header the change
 # edited: GAINED, or EDITED-EXACT (a PROTECTED chart's re-edit too, where a promotion row lets it
 # through) - with tools/trace_audit.py (a GAINED chart against the import commit, so its whole
-# interior since upstream is judged; an EDITED-EXACT one against --base, the change alone; an
-# --oracle-pass audits nothing, since any stepfile edit fails it), and exits 1 when
+# interior since upstream is judged; an EDITED-EXACT one against --base, the change alone. An
+# --oracle-pass edits no stepfile - any stepfile edit fails it - but a re-key or a certification
+# row can still make exact a block an earlier pass edited: every chart it leaves GAINED,
+# ENTERED-EXACT or EDITED-EXACT on a block or file header that is not the import's is audited
+# against the import), and exits 1 when
 #   - a chart leaves exact without a sources/demotions.jsonl row naming it and its block_sha
 #     before the change (with a reason and evidence; a quarantined chart's row also needs the
 #     owner's yes in an "owner" field);
@@ -119,11 +127,37 @@ ORACLE_DATA = [
     "sources/tail-2026-09-08.json",                 # the catalog sweep (fallback expected counts)
     "sources/video-map.json",                       # the census video map (chart identity)
 ]
+# Certification ledgers added after the rails froze - corpus_map.certification()'s own ledgers, in
+# its order, between the corpus ledger and the census (census last). Oracle wherever a tree has one:
+# hashed, merged into the population, owner-only. A tree without it hashes exactly as it did before
+# the file existed (it is left out, not hashed as "absent"), so an older revision keeps the oracle
+# hash its own manifest recorded and a gate across the file's introduction still judges. A tree that
+# has the file while its manifest does not list it, or the reverse, is refused like any unfrozen
+# oracle edit - the same moment corpus_map (and so every loop's population) starts reading it.
+ORACLE_OPTIONAL = [
+    "sources/certification-skins-2026-09-27.json",  # result-screen skins the corpus ledger could not read (bucket #12)
+]
 ORACLE_POLICY = [
     "sources/oracle-conflict.json",                 # charts that halt the gate instead of scoring
     "sources/owner-revisit.json",                   # charts no loop may touch, with block hashes
     "sources/quarantine.json",                      # exact in total, wrong inside: owner review
 ]
+# The identity overlays (tools/identity.py): which block a chart is, and which certifications a side
+# does not carry, applied LAST over the merged map and ledgers - corpus_map's own rule, so the grade
+# and the loops' populations always agree: an overlay is oracle (hashed, checked, owner-only) from
+# the freeze that first lists it in the manifest (`freeze --accept-identity`, the owner's
+# acceptance), and inert before that; the gate over that commit shows what it moved.
+# Spelled out here rather than taken from corpus_map.IDENTITY_OVERLAYS: loopcommit builds its
+# owner-only paths from this list, and corpus_map is not owner-only, so a loop that edited
+# corpus_map's list could otherwise take an accepted overlay out of them. corpus_map must name the
+# same files in the same order, as it must the same ledgers (check_lists refuses otherwise).
+ORACLE_IDENTITY = [
+    "sources/identity-overlay-2026-09-27.json",     # chart identity, bucket #2 (accepted by the owner's freeze)
+]
+# The certification ledgers in corpus_map's merge order, lowest precedence first: the corpus
+# ledger, the optional ledgers, the census. The Oracle below merges exactly this.
+LEDGER_ORDER = (["sources/certification-corpus-2026-09-10.json"] + ORACLE_OPTIONAL
+                + ["sources/certification-2026-08-30.json"])
 DEMOTIONS = "sources/demotions.jsonl"
 PROMOTIONS = "sources/protected-promotions.jsonl"
 # Before 2026-09-27 the tail map lived only in the gitignored work/; a revision older than its
@@ -268,24 +302,51 @@ def _jsonl(data):
     return rows, bad
 
 
+def check_lists():
+    """Refuse unless corpus_map - every loop's population, the trace audit's plays - merges the same
+    certification ledgers in the same order, and names the same identity overlays in the same order,
+    as this oracle. These lists are the rails' (owner-only); corpus_map's are not."""
+    theirs = dict(ledgers=[os.path.relpath(p, corpus_map.ROOT).replace(os.sep, "/") for p in corpus_map.SOURCE_LEDGERS],
+                  overlays=list(corpus_map.IDENTITY_OVERLAYS))
+    ours = dict(ledgers=list(LEDGER_ORDER), overlays=list(ORACLE_IDENTITY))
+    bad = ["%s: corpus_map %s, corpus_grade %s" % (k, theirs[k], ours[k]) for k in sorted(ours) if theirs[k] != ours[k]]
+    if bad:
+        refuse("corpus_map and the oracle disagree about what the population reads (the loops would draw one "
+               "population and the grade judge another):\n  " + "\n  ".join(bad))
+
+
 class Oracle:
     """Everything the grade reads that is not a stepfile, from one Tree."""
 
     def __init__(self, tree):
+        check_lists()
         self.tree = tree
+        self.manifest = _json(tree.read(MANIFEST), None)
+        listed = set(((self.manifest or {}).get("oracle") or {}))
         raw = {p: tree.read_oracle(p) for p in ORACLE_DATA + ORACLE_POLICY}
+        # an optional ledger is oracle wherever the tree has it; a tree without it hashes as before,
+        # unless its manifest lists it (then "absent", which check_manifest refuses)
+        opt = {p: tree.read_oracle(p) for p in ORACLE_OPTIONAL}
+        raw.update({p: d for p, d in opt.items() if d is not None or p in listed})
+        # an identity overlay is oracle from the freeze that lists it (accepted), inert before
+        ident = {p: tree.read_oracle(p) for p in ORACLE_IDENTITY}
+        raw.update({p: d for p, d in ident.items() if p in listed})
         self.files = {p: (sha_bytes(lf(d)) if d is not None else "absent") for p, d in raw.items()}
         self.hash = sha_lines(self.files)
+        # what a freeze of this tree would accept: every identity overlay present in it
+        self.identity_present = {p: sha_bytes(lf(d)) for p, d in ident.items() if d is not None}
         missing = [p for p in ORACLE_DATA if raw[p] is None]
         if missing:
             refuse("%s has no %s" % (tree.label, ", ".join(missing)))
-        self.census_cert = corpus_map.ledger_entries(_json(raw["sources/certification-2026-08-30.json"], {}))
-        cert = corpus_map.merge_certification([
-            corpus_map.ledger_entries(_json(raw["sources/certification-corpus-2026-09-10.json"], {})),
-            self.census_cert])
+        ledgers = {p: corpus_map.ledger_entries(_json(raw.get(p), {})) for p in LEDGER_ORDER}
+        self.census_cert = ledgers["sources/certification-2026-08-30.json"]
+        cert = corpus_map.merge_certification([ledgers[p] for p in LEDGER_ORDER])
+        overlays = [(p, _json(raw[p], {})) for p in ORACLE_IDENTITY if raw.get(p) is not None]
+        cert = corpus_map.overlay_certification(cert, overlays)
         self.cert = cert
-        self.smap = corpus_map.merge_chart_map(_json(raw["sources/ssc-map-tail.json"], []),
-                                               _json(raw["sources/ssc-map.json"], []))
+        self.smap = corpus_map.overlay_chart_map(corpus_map.merge_chart_map(_json(raw["sources/ssc-map-tail.json"], []),
+                                                                            _json(raw["sources/ssc-map.json"], [])),
+                                                 overlays)
         self.population = corpus_map.certified_charts(cert, self.smap, _json(raw["sources/tail-2026-09-08.json"], {}),
                                                       _json(raw["sources/census-final.json"], []))
         self.catalog = _json(raw["sources/p1-note-counts-2026-07-04.json"], {}).get("charts", [])
@@ -294,7 +355,6 @@ class Oracle:
         self.quarantine = {c["chart"]: c for c in _json(raw["sources/quarantine.json"], {}).get("charts", [])}
         self.demotions, self.demotions_bad = _jsonl(tree.read(DEMOTIONS))
         self.promotions, self.promotions_bad = _jsonl(tree.read(PROMOTIONS))
-        self.manifest = _json(tree.read(MANIFEST), None)
 
 
 def check_manifest(oracle, pin, unpinned=False):
@@ -918,6 +978,14 @@ def cmd_gate(args):
     ob, oh = Oracle(base), Oracle(head)
     check_manifest(oh, pin, args.unpinned)             # the head must be graded by what it pins
     fails, notes = [], []
+    # the base is graded under the oracle its tree holds. Where that is not what its manifest pins
+    # (a tree that gained an optional ledger before a freeze listed it), say so: nothing weakens -
+    # the base only credits more - but a delta measured from such a base is not the one its manifest implies
+    pinned = (ob.manifest or {}).get("oracle")
+    if pinned is not None and pinned != ob.files:
+        notes.append("the base's oracle is not the one its own manifest pins (%s): it was graded as its tree holds it, "
+                     "so an oracle change already in the base's files counts as the base's, not this change's" % ", ".join(
+                         p for p in sorted(set(pinned) | set(ob.files)) if pinned.get(p) != ob.files.get(p)))
     if not args.worktree and not args.head:
         drift = worktree_drift()
         if drift:
@@ -937,7 +1005,7 @@ def cmd_gate(args):
         what = []
         if oracle_changed:
             what.append("oracle %s -> %s (%s)" % (ob.hash[:12], oh.hash[:12], ", ".join(
-                p for p in sorted(oh.files) if ob.files.get(p) != oh.files.get(p))))
+                p for p in sorted(set(ob.files) | set(oh.files)) if ob.files.get(p) != oh.files.get(p))))
         if pin_changed:
             what.append("converter pin %s -> %s" % (str(base_pin)[:12], str(head_pin)[:12]))
         if args.oracle_pass:
@@ -984,6 +1052,12 @@ def cmd_gate(args):
     conflict = set(ob.conflict) | set(oh.conflict)
     quarantine = set(ob.quarantine) | set(oh.quarantine)
     promo_head = {(r["chart"], r["block_sha"]) for r in oh.promotions if valid_promotion(r)}
+
+    def at_import(h):
+        """True when a head row's block and file header are the import commit's own."""
+        bs, hs = block_facts(g.import_tree.read("simfiles/" + h["ssc_rel"]), h.get("tag"))
+        return bs is not None and (bs, hs) == (h.get("block_sha"), h.get("header_sha"))
+
     trans, ships = [], []
     for name in sorted(set(rb) | set(rh)):
         b, h = rb.get(name), rh.get(name)
@@ -1054,6 +1128,12 @@ def cmd_gate(args):
             # audited against the import (its whole interior since upstream, as the audit ledger
             # judges it); an EDITED-EXACT one against --base (only this change - the chart shipped before)
             ships.append((row, h, g.import_tree.rev if t == "GAINED" else base.rev))
+        elif args.oracle_pass and t in ("GAINED", "ENTERED-EXACT", "EDITED-EXACT") and not at_import(h):
+            # an oracle pass edits no stepfile, but it can still make exact a block an earlier pass
+            # edited and nobody audited: a re-key moves the chart onto it, a certification row starts
+            # counting it, a count moves to meet it. What it leaves exact off the import's own block
+            # and header is audited against the import, as a GAINED ship is
+            ships.append((row, h, g.import_tree.rev))
         trans.append(row)
 
     # every ship's interior against the combo counter: FLAT and covered, or it does not ship
@@ -1177,11 +1257,14 @@ def cmd_freeze(args):
                      "is certified and at what count, the policy files its gate enforces, and the converter pin. "
                      "tools/corpus_grade.py grade and gate refuse to run when the working tree or the installed "
                      "converter differs from this. Rewrite it with `corpus_grade.py freeze` in an oracle commit "
-                     "(never together with stepfile edits); `--repin` moves the converter pin, as a commit of its own.",
-             oracle_hash=oracle.hash, oracle=oracle.files, converter=conv)
-    changed = sorted(p for p in set(oracle.files) | set(old.get("oracle", {})) if oracle.files.get(p) != old.get("oracle", {}).get(p))
+                     "(never together with stepfile edits); `--repin` moves the converter pin, as a commit of its own; "
+                     "`--accept-identity` lists the identity overlays present, which makes them oracle from that commit on.",
+             oracle_hash=sha_lines(dict(oracle.files, **(oracle.identity_present if args.accept_identity else {}))),
+             oracle=dict(oracle.files, **(oracle.identity_present if args.accept_identity else {})), converter=conv)
+    frozen = m["oracle"]
+    changed = sorted(p for p in set(frozen) | set(old.get("oracle", {})) if frozen.get(p) != old.get("oracle", {}).get(p))
     write_atomic(os.path.join(ROOT, *MANIFEST.split("/")), dump(m))
-    print("froze %s: oracle %s, converter pin %s; changed: %s" % (MANIFEST, oracle.hash[:12], pin["pin"][:12],
+    print("froze %s: oracle %s, converter pin %s; changed: %s" % (MANIFEST, m["oracle_hash"][:12], pin["pin"][:12],
                                                                 ", ".join(changed + (["converter pin"] if old_pin != pin["pin"] else [])) or "nothing"))
 
 
@@ -1286,7 +1369,8 @@ def build_conflicts(oracle, rows, tree):
                            "type and level) while the file already converts to the catalog count",
                    twin="another block of the file has identical STEPSTYPE, NOTES, BPMS, STOPS, DELAYS, WARPS, FAKES and "
                         "TICKCOUNTS (header inherited): byte-identical to the converter, e.g. HIDDEN / INFOBAR twins"),
-        built_from=dict(oracle_data={p: oracle.files[p] for p in ORACLE_DATA}, blocks_digest=blocks_digest(rows)),
+        built_from=dict(oracle_data={p: h for p, h in sorted(oracle.files.items()) if p not in ORACLE_POLICY},
+                        blocks_digest=blocks_digest(rows)),
         charts=[dict(chart=n, in_population=n in rows, reasons=reasons[n]) for n in sorted(reasons)],
         videos=videos)
 
@@ -1366,6 +1450,8 @@ def main():
     p.add_argument("--no-decode", action="store_true")
     p = sub.add_parser("freeze", parents=[common])
     p.add_argument("--repin", action="store_true")
+    p.add_argument("--accept-identity", action="store_true",
+                   help="list every identity overlay present in the manifest: from here on it is oracle")
     p = sub.add_parser("conflicts", parents=[common])
     p.add_argument("--write", action="store_true")
     sub.add_parser("selfcheck", parents=[common])

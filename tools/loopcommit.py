@@ -131,9 +131,12 @@ def owner_only():
     """Paths no loop commits: the rails' code, the oracle (the files the grade reads to decide who is
     certified and at what count, and the policy files its gate enforces), the oracle manifest, the
     ratchet's append-only ledgers (a demotion is the owner's call; a promotion is the trace audit's
-    corpus run) and the other human data the gate reads. corpus_grade's own lists, so they cannot drift."""
+    corpus run) and the other human data the gate reads. corpus_grade's own lists, so they cannot drift:
+    the optional certification ledgers and the identity overlays are owner-only whether or not the
+    manifest lists them yet (accepting an overlay is the owner's freeze, and so is editing one)."""
     import corpus_grade as CG
-    return tuple(RAILS_CODE) + tuple(CG.ORACLE_DATA) + tuple(CG.ORACLE_POLICY) + (CG.MANIFEST, CG.DEMOTIONS, CG.PROMOTIONS) + OWNER_DATA
+    return (tuple(RAILS_CODE) + tuple(CG.ORACLE_DATA) + tuple(CG.ORACLE_OPTIONAL) + tuple(CG.ORACLE_POLICY)
+            + tuple(CG.ORACLE_IDENTITY) + (CG.MANIFEST, CG.DEMOTIONS, CG.PROMOTIONS) + OWNER_DATA)
 
 
 class Refused(Exception):

@@ -1418,10 +1418,11 @@ def cmd_overlay(args):
 
 
 def cmd_grade_delta(args):
-    """The corpus grade with and without an overlay, both under the pinned converter and the
-    working tree's oracle: what the overlay is worth as ORACLE GROWTH (not repairs - no block
-    changes). corpus_grade reads no overlay today, so its Oracle is built as the grade builds it and
-    the overlay applied to the copy, the way the staged corpus_grade change would."""
+    """The corpus grade under the working tree's oracle, and again with an overlay applied over a
+    copy of it, both under the pinned converter: what the overlay is worth as ORACLE GROWTH (not
+    repairs - no block changes). corpus_grade's Oracle already applies every overlay the manifest
+    lists (since merge round 1), and the rows are idempotent, so for an accepted overlay the two sides
+    agree and the growth is zero; for one not yet accepted it is what `freeze --accept-identity` would move."""
     import corpus_grade as CG
     pin = CG.converter_pin()
     tree = CG.Tree(None)

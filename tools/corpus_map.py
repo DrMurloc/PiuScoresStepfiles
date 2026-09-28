@@ -34,6 +34,10 @@ CORPUS_CERT = os.path.join(ROOT, "sources", "certification-corpus-2026-09-10.jso
 # chart the older ledgers carry. It merges after the live tail (which mirrors the corpus ledger and
 # would otherwise hand back the old, one-sided read) and before the census.
 SKINS_CERT = os.path.join(ROOT, "sources", "certification-skins-2026-09-27.json")
+# The committed ledgers in merge order, lowest precedence first (certification() puts the live tail
+# after the corpus ledger). corpus_grade's oracle merges the same files in the same order and refuses
+# to grade while this list and its own differ, so a ledger added here is never read by the loops alone.
+SOURCE_LEDGERS = (CORPUS_CERT, SKINS_CERT, CENSUS_CERT)
 # the two inputs certified_charts() reads besides the map and the ledgers
 TAIL_SWEEP = os.path.join(ROOT, "sources", "tail-2026-09-08.json")
 CENSUS = os.path.join(ROOT, "sources", "census-final.json")
@@ -43,7 +47,8 @@ CENSUS = os.path.join(ROOT, "sources", "census-final.json")
 # ledgers. An overlay is applied only once the oracle manifest lists it (the owner's freeze), so
 # the loops' populations and the corpus grade's cannot disagree about it: until corpus_grade reads
 # the same file as oracle, applying it here alone would send a repair loop to a block the gate
-# grades as another chart's.
+# grades as another chart's. corpus_grade keeps its own copy of this list (ORACLE_IDENTITY, rails
+# code) and refuses to grade while the two differ.
 IDENTITY_OVERLAYS = ("sources/identity-overlay-2026-09-27.json",)
 ORACLE_MANIFEST = os.path.join(ROOT, "sources", "oracle-manifest.json")
 
@@ -155,10 +160,11 @@ def certification(sources_only=False, overlays=None):
     """video id -> {vid, status, t, 1p, 2p, charts: {name: {expected, side, verdict}}}.
     `sources_only` leaves out work/certification-tail.json, so the answer is exactly what the
     committed ledgers say; every other tool wants the live merge. The accepted identity overlays
-    are applied last (`overlays` as for chart_map). (The corpus grade builds its population from
-    its own list of oracle files, not from here: the skins ledger reaches it only once the owner
-    adds the file to corpus_grade's oracle and refreezes the manifest.)"""
-    srcs = (CORPUS_CERT, SKINS_CERT, CENSUS_CERT) if sources_only else (CORPUS_CERT, TAIL_CERT, SKINS_CERT, CENSUS_CERT)
+    are applied last (`overlays` as for chart_map). (The corpus grade reads the same committed
+    ledgers and overlays as oracle, from a revision's copies rather than from here, and refuses
+    while SOURCE_LEDGERS or IDENTITY_OVERLAYS differ from its own lists: a ledger is oracle wherever
+    a tree has it, an overlay once the manifest lists it.)"""
+    srcs = SOURCE_LEDGERS if sources_only else SOURCE_LEDGERS[:1] + (TAIL_CERT,) + SOURCE_LEDGERS[1:]
     return overlay_certification(merge_certification([ledger_entries(_load(src, {})) for src in srcs]),
                                  identity_overlays() if overlays is None else overlays)
 
