@@ -43,9 +43,20 @@ UNKNOWN_DIR = os.path.join(ROOT, "work", "unknown-glyphs")
 # The XX skin has a 2P column too, right-aligned 500 px right of its MAX COMBO label. Until
 # 2026-09-27 the profile said it showed one side only (rx=None), so every XX play on the 2P side
 # read as a 1P total that matched nothing, or as no result screen at all when 1P was empty.
+#
+# Prime (2015) sets its counts in the XX font (the XX digit atlas matches them at 0.8-1.0, the
+# Phoenix one at 0.1-0.7), 1P left-aligned far left and 2P right-aligned far right, with the
+# labels between - but it draws its own MAX COMBO label, so it has its own anchor (digit_atlas
+# says where the digits come from). Its number columns sit up to ~5 px either way of where the
+# label puts them from one capture to the next, so the profile searches the column's horizontal
+# offset (align: +-px, the offset whose cells match the digits best) and reads a 20 px band,
+# which lets an 18 px digit settle a pixel up or down. Built 2026-09-27 from bootstrap footage
+# that never counts toward yield: CetRYCDq8eE (1P; its label is the anchor) and J6A2eZGu-yc (2P).
 PROFILES = [
     dict(name="phoenix", atlas="atlas", pitch=31, cw=10, ch=18, x0=139, rx=330, cy=15, cells=6),
     dict(name="xx", atlas="atlas-xx", pitch=35, cw=16, ch=18, x0=358, rx=500, cy=15, cells=6),
+    dict(name="prime", atlas="atlas-prime", digit_atlas="atlas-xx", pitch=35, cw=16, ch=20, x0=388, rx=550,
+         cy=14, cells=6, align=8),
 ]
 ROW_PITCH, CELL_W, CELL_H, MAX_CELLS = 31, 10, 18, 6      # build_atlas still calibrates Phoenix
 ANCHOR_TO_X0, ANCHOR_TO_RX, ANCHOR_CY = 139, 330, 15
@@ -107,6 +118,8 @@ def load_profiles():
     out = []
     for prof in PROFILES:
         digits, anchor = load_atlas(prof["atlas"])
+        if prof.get("digit_atlas"):
+            digits = load_atlas(prof["digit_atlas"])[0]
         if digits and anchor is not None:
             out.append({**prof, "digits": digits, "anchor": anchor})
     return out
@@ -123,10 +136,51 @@ def classify(cell, digits, tag):
         return "?"
     return best_d
 
+def side_cells(frame, ax, ay_c, side, prof, dx=0):
+    """[cells of each of the six rows] for one side, the column shifted dx px from the profile's."""
+    cw, ch, n = prof["cw"], prof["ch"], prof["cells"]
+    rows = []
+    for k in range(len(LABELS)):
+        y0 = int(ay_c - prof["pitch"] * (5 - k) - ch / 2)
+        if side == "1P":
+            x0 = max(0, ax - prof["x0"] + dx)
+            rows.append(cells_left(glyph_mask(frame[y0:y0 + ch, x0:x0 + cw * n]), cw, n))
+        else:
+            rx = ax + prof["rx"] + dx
+            rows.append(cells_right(glyph_mask(frame[y0:y0 + ch, max(0, rx - cw * n):rx]), cw, n))
+    return rows
+
+def best_offset(frame, ax, ay_c, side, prof):
+    """The column offset (within +-prof['align'] px) whose cells match the digit atlas best on
+    average, over the offsets where every row has a cell; None when no offset gives six rows. Ties
+    go to the smaller offset."""
+    best = None
+    for dx in range(-prof["align"], prof["align"] + 1):
+        rows = side_cells(frame, ax, ay_c, side, prof, dx)
+        if not all(rows):
+            continue
+        scores = [max(float(cv2.matchTemplate(c, t, cv2.TM_CCOEFF_NORMED).max()) for t in prof["digits"].values())
+                  for r in rows for c in r]
+        key = (sum(scores) / len(scores), -abs(dx))
+        if best is None or key > best[0]:
+            best = (key, dx)
+    return None if best is None else best[1]
+
 def read_side(frame, ax, ay_c, side, vid, prof):
     cw, ch, n = prof["cw"], prof["ch"], prof["cells"]
     if side == "2P" and prof["rx"] is None:            # this skin shows one side only
         return {k: "" for k in LABELS} | {"judged": None}
+    if prof.get("align"):                              # a column that moves between captures
+        dx = best_offset(frame, ax, ay_c, side, prof)
+        if dx is None:
+            return {k: "" for k in LABELS} | {"judged": None}
+        rows = side_cells(frame, ax, ay_c, side, prof, dx)
+        out = {label: "".join(classify(c, prof["digits"], f"{vid}_{side}_{label}_{i}") for i, c in enumerate(cells))
+               for label, cells in zip(LABELS, rows)}
+        complete = all(out[k] != "" and out[k].isdigit() for k in LABELS)
+        out["judged"] = sum(int(out[k]) for k in LABELS[:5]) if complete else None
+        out["dx"] = dx
+        return out
     out = {}
     for k, label in enumerate(LABELS):
         y0 = int(ay_c - prof["pitch"] * (5 - k) - ch / 2)
