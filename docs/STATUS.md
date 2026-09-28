@@ -628,21 +628,56 @@ sample below, finished). On a shared machine at 100% CPU a picture costs 15-20 s
 this checkpoint 921 of 2,019 videos are cached. The preflight re-fits eight known videos from a
 fresh decode through `_fit_field` itself and through the cached-picture arithmetic: 8 of 8 give
 the cached `.inset` bytes, and the pictures the supervised run cached equal the fresh decodes.
+Those eight are all h264, while every PHOENIX 2 held-out upload is AV1 (and four official uploads
+are VP9), and no AV1 or VP9 video has a cached `.inset` fit; so the preflight now also probes one
+AV1 and one VP9 official upload carrying only tune charts: the decode reports the named codec,
+`_fit_field` and the arithmetic agree on the same fresh decode, and the cached picture equals it.
+Run as `lanes-1-preflight2` (2026-09-27 20:11, cv2 5.0.0): the eight h264 videos again 8 of 8, and
+both probes agree - AV1 (390 s under contention) and VP9 (64 s) give the same fit through
+`_fit_field`, the fresh arithmetic and the cached picture, which equals the fresh decode.
 
 **Frozen before any rule ran** (`sources/lanes/`, each with its own sha256). The **partitions**:
 held out are the 101 PHOENIX 2 official-pack charts whose file converts to the map's count and
-the 36 certified misfits; 27 of those are named in the docs, tools, loop proposal or a research
-note and go to `seen` (tune-only); validate 56 charts (45 scorable), sealed 54 (44 scorable),
-grouped by song family and video. The **BEFORE census**: 2,161 fits (certified charts, both fields
-of every official singles upload - the pad is never taken from the map's stored side - and every
-cached `.inset` fit), 1,351 with a fit on disk, each stamped `field.inset@627dede7f324b0d4`, with
-a template from metadata (channel group, band, columns). The **pitch bands**, from a band sample
-chosen before any band was computed, out of the sample fits that pass their independent invariant:
-NEVSISTER doubles 75.00-76.10 (centre 75.50), NEVSISTER singles 74.90-76.30 (75.80), official
-doubles 74.53-75.90 (75.30), official singles 73.90-75.50 (74.60). Only 30 of 175 official doubles
-fits and 126 of 253 official singles fields pass - the official uploads' fits are mostly misfits,
-at 66.9-67.4 for doubles and 57.1-58.0 for singles fields, so the pitch histogram's own median
-(67.3 for official doubles) would have set the band on the misfit.
+the 36 certified misfits; charts named in the docs, tools, loop proposal or a research note go to
+`seen` (tune-only); the rest are grouped by song family and video and split into a validation and a
+sealed half. The **BEFORE census**: 2,161 fits (certified charts, both fields of every official
+singles upload - the pad is never taken from the map's stored side - and every cached `.inset`
+fit), 1,351 with a fit on disk, each stamped `field.inset@627dede7f324b0d4`, with a template from
+metadata (channel group, band, columns). The **pitch bands**, from a band sample chosen before any
+band was computed, out of the sample fits that pass their independent invariant: NEVSISTER doubles
+75.00-76.10 (centre 75.50), NEVSISTER singles 74.90-76.30 (75.80), official doubles 74.53-75.90
+(75.30), official singles 73.90-75.50 (74.60). Only 30 of 175 official doubles fits and 126 of 253
+official singles fields pass - the official uploads' fits are mostly misfits, at 66.9-67.4 for
+doubles and 57.1-58.0 for singles fields, so the pitch histogram's own median (67.3 for official
+doubles) would have set the band on the misfit.
+
+**The partitions were corrected once (v2), before any F1.** Verification found v1's `seen` scan
+too narrow: it matched only the exact string "Title Level", so a sealed chart the extraction notes
+name as "Legendary Dominion S20 and S16" stayed sealed, and so did the census rows of its video,
+which also carry the seen S20; a validation chart named as "DESTRUCIMATE S21 (...), D23 (...)"
+stayed held out too. Partitions v2 reads the same text (the docs, tools and root notes as committed
+at the v1 freeze, `9f8baf6`, so nothing written after a look can move a chart), matches a title and
+its level token within one phrase, and makes every held-out chart on a video that carries a named
+chart `seen`; a census row carrying a seen chart is seen. Four charts moved (DESTRUCIMATE D23,
+Legendary Dominion S16 and S22, Magical Vacation S18), six census rows with them, and nothing moved
+back. `seen` is now 31 charts; validate 55 (44 scorable), sealed 51 (41 scorable). The correction
+is logged in `heldout-looks.jsonl`: the only held-out result seen before it was rule 1's verdict
+counts, no extraction and no F1, and the V5gJ5gKqTi0 rows were not cached then.
+
+Two things the partitions do not do, measured rather than fixed. The scan reads a research file
+only when it is a script, text or JSON of at most 20 KB that names at most ten corpus charts (a
+longer listing is a script's output over a population, not a look at a chart). 105 held-out charts
+are named in research files it does not read, but none in a file naming ten or fewer: 29 appear at
+best in files naming 11-30 (mostly the misfit stratum's own discovery listings, such as
+`ext/lowsharp_below.txt`, and a counter probe of five official charts), 76 only in larger ones.
+And the split is grouped by song family and video only between the two halves, not against the
+tune side: 14 song families span `seen` and the halves, 86 tune census charts in 27 families share a
+held-out family, and 7 band-sample videos - the videos the frozen bands and receptor library were
+computed from - carry a held-out family. So the bands and the library were
+recomputed without those 7 videos (`lanefit.py sensitivity`, after a recompute with nothing left
+out that reproduced the frozen bands and library exactly): **no band edge or centre moves in any of
+the 14 templates**; passing fits drop by at most 2 per template, and the NEVSISTER library is built
+from 38 fits instead of 40 (its effect on singles NCC was not re-measured). Nothing was refrozen.
 
 **The invariants.** Twin agreement for doubles (lane k against lane k+5, the same receptor): 0.92
 at the lowest over 261 in-band doubles fits, 0.28-0.61 on the out-of-band ones. For singles the
@@ -658,26 +693,35 @@ mirror-symmetric re-searches its span - peaks standing symmetric about the mirro
 lands in the band, or, when no pair does, one peak mirrored about the axis (on split screens one
 outer ridge often fails to stand as a peak of its own) - and a re-fit is kept only when its
 invariant reaches 0.80 and beats the old fit's by 0.10. Over the finished part of the cache (904
-videos when it ran): 1,083 fits recomputed; the 482 that have a cached `.inset` fit came back byte for byte; **728 in band,
-all returned byte-identical; 351 re-fitted and accepted, 0 rejected by the invariant; 4 to the
-exceptions ledger.** The 197 doubles re-fits went from twin 0.28-0.61 to 0.89-0.98 (from pitches
-51-72 to 75.2-75.6; 184 found a symmetric pair at the first floor, 12 needed the mirrored peak);
-the 154 singles re-fits from NCC 0.32-0.74 to 0.81-0.99 (from 56-69 to 74.2-75.8; 53 by the mirrored
-peak). Of the 36 certified misfits, all cached: 35 re-fitted and accepted, 1 an exception. The four
-exceptions, none re-fitted and the band never widened for them: two asymmetric pictures (Bad
-Apple!! feat. Nomico - FULL SONG - D22 at 49.4, sealed; an official singles field at 51.3), one fit
-that raised at a 28 px pitch and whose picture is asymmetric, and one NEVSISTER singles fit at 73.1
-(NCC 0.67) with no peak that reaches its band. Nothing was rescued from a raise.
+videos when it ran): 1,083 fits recomputed, and the 482 that have a cached `.inset` fit came back
+byte for byte - that is the identity evidence. 728 were in band and are left alone; the rule hands
+an in-band fit back as the BEFORE fit itself, so "identical" is true there by construction and
+proves nothing beyond the recompute (when the rule is promoted, in-band identity is checked through
+the promoted `receptors.field()` against the `.inset` bytes). **351 re-fitted and accepted, 0
+rejected by the invariant, 4 to the exceptions ledger.** The 197 doubles re-fits went from twin
+0.28-0.61 to 0.89-0.98 (from pitches 51-72 to 75.2-75.6; 184 found a symmetric pair at the first
+floor, 12 needed the mirrored peak); the 154 singles re-fits from NCC 0.32-0.74 to 0.81-0.99 (from
+56-69 to 74.2-75.8; 53 by the mirrored peak). Of the 36 certified misfits, all cached: 35 re-fitted
+and accepted, 1 an exception. The four exceptions, none re-fitted and the band never widened for
+them: two asymmetric pictures (one a sealed-half chart at 49.4; an official singles field at 51.3),
+one fit that raised at a 28 px pitch and whose picture is asymmetric, and one NEVSISTER singles fit
+at 73.1 (NCC 0.67) with no peak that reaches its band. Nothing was rescued from a raise.
 
 **What this is not yet.** Twin and NCC say the lanes now sit on receptors; they do not say the
 extraction got better. That is the held-out gate: per-chart F1 against the count-exact files
 through the old and the new lanes on the validation half (sign test, pre-registered effect), then
 the sealed half once - which needs sprite passes through the re-fitted lanes, and waits for the
 cache to finish. Nothing is promoted into `receptors.field()` before it passes. The held-out rows
-were run through the rule for this report (their verdict counts only, no extraction and no F1),
-and that is logged as one look per half in `sources/lanes/heldout-looks.jsonl`. Which pad is which
-on the official split screens is not decided here and will not be taken from the map's stored
-sides: it needs a 2x2 column+time F1 matrix from extractions of both fields.
+were run through the rule for the checkpoint report (their verdict counts only, no extraction and
+no F1), logged as one look per half in `sources/lanes/heldout-looks.jsonl`. That look and its
+commit name one sealed chart; both are append-only, so the name stays there, the chart stays sealed
+(moving it would select on a verdict already seen), and these notes no longer name sealed charts
+until the sealed half is scored. Rule 1 now runs the tune side (`tune`, `seen`) by default, a
+held-out half only with `--heldout-look` (logged, output under `work/lanes/heldout/`), and the
+checkpoint's output was split the same way: the exceptions ledger a later rule is developed on
+holds tune-side rows only (3 of the 4). Which pad is which on the official split screens is not
+decided here and will not be taken from the map's stored sides: it needs a 2x2 column+time F1 matrix
+from extractions of both fields.
 
 ## Beyond the census (sized 2026-09-06, listed in full 2026-09-08)
 
