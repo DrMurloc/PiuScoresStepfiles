@@ -64,7 +64,13 @@ BOOTSTRAP = {"prime": ["CetRYCDq8eE", "J6A2eZGu-yc"], "dancegrade": ["FsFAU37qmj
 # too. Prime's five take its footage used in building past the three-video cap; reported as such.
 INSPECTED = {"prime": ["q9Tj8qYrisM", "rkhGTHyz28Q", "bNefB8CxLIg", "0qbKb2cWyFY", "Nywh-HyJhBI"],
              "dancegrade": ["Q-4XfqIiM1Q"]}
-NOT_YIELD = {v for d in (BOOTSTRAP, INSPECTED) for vs in d.values() for v in vs}
+# Prime revision 2 (rejected) cut a digit atlas from these three sides' cells and labelled the cells
+# with batch b1's agreed blind transcriptions. That broke the loop plan's cross-cutting rule that
+# agent eye-reads are never training labels, and it had no per-glyph provenance manifest either
+# (docs/STATUS.md, "Result-screen skins"). So this footage is bootstrap footage too and never counts
+# toward yield. No transcription from batch b1 or b2 may label an atlas.
+REV2_BOOTSTRAP = {"prime": ["Nywh-HyJhBI", "Y1r3ZykiMjU", "Zqul1BBl1nk"]}
+NOT_YIELD = {v for d in (BOOTSTRAP, INSPECTED, REV2_BOOTSTRAP) for vs in d.values() for v in vs}
 INSTRUCTIONS = ("Each item is one image: a column of six numbers cut from a rhythm game's end-of-song result "
                 "screen, enlarged. Read the six numbers from top to bottom exactly as they are drawn, keeping "
                 "every leading zero. Do not add, correct or infer anything: if a digit is cut off, covered or "
@@ -465,7 +471,7 @@ def cmd_land(a):
     for s in plan["sides"]:
         why = []
         if s["not_yield"]:
-            why.append("bootstrap or inspected footage (built the profile)")
+            why.append("bootstrap or inspected footage (a profile or a revision was built on it)")
         if "Official" in (s.get("channel") or ""):
             why.append("official upload: benchmark identity only, never a certification")
         if s["checks"]:

@@ -1,7 +1,10 @@
-# Blind, seeded eye-read packets (the owner's 2026-09-26 ruling on what agent eye-reads may count
-# as: "blind, seeded contact-sheet review counts as 'looked at' for labeling atlas glyphs and
-# certification cells"). A loop that needs a human-style look at frames never looks and decides
-# itself: it writes packets, stops, and is resumed with two independent readers' answers.
+# Blind, seeded eye-read packets: the blind protocol that work/loop-buckets-2026-09-26.txt sets for
+# agent eye-reads. A loop that needs a human-style look at frames never looks and decides itself:
+# it writes packets, stops, and is resumed with two independent readers' answers.
+# What an agreed answer may count as: it can certify a result screen's cells. It is never a
+# training label. The plan's cross-cutting rules say eye-reads are never training labels. Its
+# recommendation that contact-sheet review may label atlas glyphs, with a provenance manifest per
+# glyph, has no recorded ruling, so until the owner rules, no answer scored here labels anything.
 #
 #   A packet is a folder work/blind/<loop>/<batch>/<packet-id>/ holding only images with opaque
 #   names and question.json {"id", "instructions", "items": [{"item", "images", "ask",
