@@ -711,7 +711,7 @@ The timing family's first candidate, retime-a (re-time a short streak more than 
 speed at the local median), nets +0.071 points on tune by pulling 359 notes into the window and
 pushing 212 real ones out, up to 30 on one chart: rejected on tune, no look spent.
 
-**Where the loop stands.** 10 candidates registered of 40 (3 drills among them), 6 held-out looks of
+**Where the loop stands.** 9 candidates registered of 40 (3 drills among them), 6 held-out looks of
 20 on validate, 2 accepted. The drill and tail-cap families have had their 3 looks each. Nothing else
 measured on tune separates at the gate's standard; what is left is timing on gimmick charts, notes
 the pass never saw (recall 94.6% on tune) and lanes - the decode-level and lane-fit buckets (#11,
@@ -719,6 +719,66 @@ the pass never saw (recall 94.6% on tune) and lanes - the decode-level and lane-
 chosen blind to any extraction) is decoding in its own overlay (run `bench-1-canary-decode`); both
 accepted rules are NEVSISTER-validated only until it is frozen and replayed. The sealed split is
 unopened.
+
+## The extractor bench closed: the canary, the sealed look, the parks again (2026-09-28)
+
+The rest of bucket 5, on `loops/bench-1`. No stepfile changed.
+
+**The canary is frozen** (`sources/benchmark/canary-v1.json`, sha `557f0280`): 15 of Andamiro's own
+single-chart doubles uploads, 12,648 file notes. The first selection broke the rule that canaries are
+tune-only: a canary is never in the manifest, so the filter on its split excluded nothing, and Neo
+Catharsis - SHORT CUT - D23 (family on sealed) and Moment Day D23 (song file on validate) were among
+the 15. `canary-candidates` now holds off any upload sharing a title family, video or song file with a
+validate/sealed component (10 of 262), and the same salted order and fit rule replace those two with
+Underworld ft. Skizzo (PIU Edit.) D18 and Awakening D24 (two more decodes, a slot each).
+
+**The canary gate passes, and says little.** Replayed under the original extractor (f0ebca0),
+after tailcap-d (ca1278f) and after tailcap-e (ours) with `replay --extractor-rev`: tailcap-d PASS,
+tailcap-e PASS, both together PASS - because neither rule removes a single note on any canary.
+The extractor itself reads these uploads badly: recall 72.51%, precision 50.48%, F1 59.53, against
+about 95 on the certified footage. On four canaries, of 644 short same-column pairs 68 pass both
+correlation gates and 2 scroll at one speed within 2% (on four tune doubles charts: 56, and 52, with
+19 closing on the cap). So the canary shows the step leaves footage unlike the corpus alone - no
+collateral - and nothing about a gain on it. The two rules are canary-checked, inert on the canary.
+
+**The sealed look** (one chained row, final): everything the loop accepted, production against the
+original extractor, on the 131 sealed charts (81,480 notes) - the unbiased estimate:
+
+| | original | production |
+|---|---|---|
+| F1 at 45 ms | 95.856 | 96.621 (+0.765) |
+| recall | 98.11% | 98.11% |
+| precision | 93.70% | 95.17% |
+| bar-pass (93%/93%) | 94 | 111 of 131 |
+| planned additions | 564 | 364 |
+
+Bootstrap 2.5th percentile +0.497 points (57 components), +0.618 without the five charts that gained
+most, +0.760 at 30 ms and +0.766 at 60 ms, p90 timing 12.27 ms both ways; 1,320 notes removed, every
+one an extra, no real note lost; hold edits, pinned holds and all three sentinels unchanged. The
+validate estimate (+0.836, taken adaptively) was 0.07 points high. The loop on manifest v1 is closed:
+9 candidates registered of 40 (3 drills), 6 validate looks and the sealed one, 2 accepted, and
+`register` now refuses until a v2 manifest.
+
+**The parks again** (`tools/park_resurvey.py`, runs `bench-1-resurvey` and `-b`, into
+`work/bench-1-resurvey`): the 713 charts the extraction loop's first run parked (714 rows, Club Night
+D18 twice), read by production from cached passes only - no chart lacked one, nothing decoded - with
+only tail moves and tap->hold applied:
+
+- **2 ship candidates**, each one release moved: After a thousand years D20 (the new extractor's:
+  under the original, precision 89.9% parked it below the bar; now 94.6%) and Money Fingers S17
+  (not the extractor's: the original gives the same; run 1 also applied 2 add-taps and landed +2).
+  Not shipped - a stepfile pass is refused on the branch until main has this note_extract, and a
+  single release that lands exact still has to pass the gate's trace audit.
+- **209 need the owner**: the plan's only move is an addition. 683 withheld (679 taps, 4 holds),
+  682 of them unbacked by the counter (the backed one, Get Up! D15 at 7.84 s, is a counter-backed
+  sentinel note); applying every edit the plan has, additions included, closes **none** of the 209
+  (median 156 off, 20 within 5). The additions are not the lever for any park.
+- 497 still park: 150 below the 93% bars (run 1 had 299 there), 58 on the 2% additions cap, 134 off
+  the count, 155 whose notes match and whose ticks do not. 2 are exact now (Love is a Danger Zone
+  S11, YOU AND I D20, repaired since), 2 are corrupt footage, Slam D24 is the owner's.
+
+The plans on these charts propose 3,579 additions against run 1's 4,983 - not a controlled number
+(run 1 read them on 2026-09-22 with that day's files), but the direction the bench measured.
 
 ## Beyond the census (sized 2026-09-06, listed in full 2026-09-08)
 

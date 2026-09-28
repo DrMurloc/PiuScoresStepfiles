@@ -106,7 +106,10 @@ so there is an order of magnitude in hand.
    correlate weaker than the chart's taps and scroll at one speed. `drop_short_caps` (the `CAP_*`
    constants, two passes) is the last step of `post_decode`: on the bench's held-out charts the two
    passes took F1 at 45 ms from 95.14 to 95.98, removing 1,666 extras and 1 real note (docs/STATUS.md,
-   "The extractor replay bench").
+   "The extractor replay bench"), and on the sealed charts, opened once after the loop closed, from
+   95.86 to 96.62 with 1,320 extras and no real note removed. On Andamiro's own uploads (the
+   official canary) it removes nothing: their short same-column pairs almost never scroll at one
+   speed, so the step leaves that footage exactly as it was.
 3. **Holds need no new machinery.** The game already reports a held hold at the receptor, as a
    saturated bright rail down the lane, and `receptors.rails` reads it: the head is the note
    that opens the rail and the tail is where it closes. Two settings had to be got right. The
