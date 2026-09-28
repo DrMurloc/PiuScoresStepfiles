@@ -44,19 +44,23 @@ UNKNOWN_DIR = os.path.join(ROOT, "work", "unknown-glyphs")
 # 2026-09-27 the profile said it showed one side only (rx=None), so every XX play on the 2P side
 # read as a 1P total that matched nothing, or as no result screen at all when 1P was empty.
 #
-# Prime (2015) sets its counts in the XX font (the XX digit atlas matches them at 0.8-1.0, the
-# Phoenix one at 0.1-0.7), 1P left-aligned far left and 2P right-aligned far right, with the
-# labels between - but it draws its own MAX COMBO label, so it has its own anchor (digit_atlas
-# says where the digits come from). Its number columns sit up to ~5 px either way of where the
-# label puts them from one capture to the next, so the profile searches the column's horizontal
-# offset (align: +-px, the offset whose cells match the digits best) and reads a 20 px band,
-# which lets an 18 px digit settle a pixel up or down. Built 2026-09-27 from bootstrap footage
-# that never counts toward yield: CetRYCDq8eE (1P; its label is the anchor) and J6A2eZGu-yc (2P).
+# Prime (2015) and Prime 2's DANCE GRADE screen set their counts in the XX font (the XX digit
+# atlas matches them at 0.8-1.0, the Phoenix one at 0.1-0.7), 1P left-aligned far left and 2P
+# right-aligned far right, with the labels between - but each draws its own MAX COMBO label, so
+# each has its own anchor (digit_atlas says where the digits come from). Their number columns
+# sit up to ~5 px either way of where the label puts them from one capture to the next, so these
+# profiles search the column's horizontal offset (align: +-px, the offset whose cells match the
+# digits best) and read a 20 px band, which lets an 18 px digit settle a pixel up or down.
+# Built 2026-09-27 from bootstrap footage that never counts toward yield: Prime from CetRYCDq8eE
+# (1P; its label is the anchor) and J6A2eZGu-yc (2P), DANCE GRADE from FsFAU37qmj4 (1P; anchor)
+# and 9waUMyMNqLM (2P).
 PROFILES = [
     dict(name="phoenix", atlas="atlas", pitch=31, cw=10, ch=18, x0=139, rx=330, cy=15, cells=6),
     dict(name="xx", atlas="atlas-xx", pitch=35, cw=16, ch=18, x0=358, rx=500, cy=15, cells=6),
     dict(name="prime", atlas="atlas-prime", digit_atlas="atlas-xx", pitch=35, cw=16, ch=20, x0=388, rx=550,
          cy=14, cells=6, align=8),
+    dict(name="dancegrade", atlas="atlas-prime-dancegrade", digit_atlas="atlas-xx", pitch=35, cw=16, ch=20,
+         x0=384, rx=557, cy=14, cells=6, align=8),
 ]
 ROW_PITCH, CELL_W, CELL_H, MAX_CELLS = 31, 10, 18, 6      # build_atlas still calibrates Phoenix
 ANCHOR_TO_X0, ANCHOR_TO_RX, ANCHOR_CY = 139, 330, 15
