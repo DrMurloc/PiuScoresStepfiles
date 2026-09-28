@@ -977,6 +977,11 @@ def cmd_register(args):
     if have.get(rule.name):
         die("%s is registered with another code hash (%s): a changed rule is a new candidate under a new name" % (
             rule.name, have[rule.name][-1]["code_hash"]))
+    manifest = load_manifest()
+    if any(r.get("kind") == "look" and r.get("split") == "sealed" and r.get("manifest_sha256") == manifest["sha256"]
+           for r in read_ledger()[0]):
+        die("the sealed split of manifest %s has been opened: its loop is closed, and a new candidate waits for the next "
+            "manifest (`freeze --version v2`)" % manifest["version"])
     n = sum(1 for k, v in have.items() if BR.RULES.get(k) is None or BR.RULES[k].family != "baseline")
     if rule.family != "baseline" and n >= 40:
         die("the candidate cap (40) is reached")
@@ -1141,12 +1146,61 @@ def _remember_passes():
     A.load_pickle = load
 
 
-def _worker_init():
+_NX_OURS = NX
+_NX_AT = {}
+
+
+def extractor_at(rev):
+    """tools/note_extract.py as it stands at `rev`, imported as a module of its own over the same
+    receptors / sprites / atomicio objects as ours (so the onsets cache and the frame refusal apply
+    to it too). The whole file, not a cut: its post_decode and every constant it reads."""
+    if rev not in _NX_AT:
+        src = git_show(rev, "tools/note_extract.py")
+        if src is None:
+            die("tools/note_extract.py is not at %s" % rev)
+        tag = hashlib.sha256(src.encode("utf-8")).hexdigest()[:12]
+        path = os.path.join(CACHE, "ref", "note_extract_%s.py" % tag)
+        if not os.path.exists(path):
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            A.write_bytes(path, src.encode("utf-8"))
+        saved = list(sys.path)
+        spec = importlib.util.spec_from_file_location("nx_at_" + tag, path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        sys.path[:] = saved
+        mod.ROOT = _NX_OURS.ROOT
+        _NX_AT[rev] = mod
+    return _NX_AT[rev]
+
+
+def use_extractor(rev=None):
+    """Point this process's extractor (NX: post_decode, and extractor_stamp over it) at `rev`'s
+    note_extract, or back at ours with None. A record's key carries the extractor's stamp, so a
+    replay under an older revision lands under exactly the key that revision's own checkout gives
+    (the stamp is over syntax trees and constants, not file names): the original extractor's
+    records are the same records whether replayed from a checkout of it or through this."""
+    global NX
+    NX = extractor_at(rev) if rev else _NX_OURS
+    return NX
+
+
+def key_under(rev, rule, manifest):
+    """A rule's record key with the extractor at `rev` (None: ours)."""
+    use_extractor(rev)
+    try:
+        return rule_key(rule, manifest)
+    finally:
+        use_extractor(None)
+
+
+def _worker_init(extractor_rev=None):
     no_decode()
     read_only()
     cache_onsets()
     fast_anchor()
     _remember_passes()
+    if extractor_rev:
+        use_extractor(extractor_rev)
 
 
 def charts_for(manifest, sets):
@@ -1179,23 +1233,26 @@ def cmd_replay(args):
     sets = args.set.split(",")
     if "sealed" in sets and rule.name != "baseline":
         die("the sealed split is replayed for a candidate only at the stop (`grade --split sealed --final`)")
+    if args.extractor_rev and rule.name != "baseline":
+        die("--extractor-rev replays the baseline as it stood at a revision; a candidate rule is replayed over ours")
     pin = converter_pin()
-    key = rule_key(rule, manifest)
+    key = key_under(args.extractor_rev, rule, manifest)
     bkey = None if rule.name == "baseline" else baseline_key(manifest)
     rows = shard_of(sorted(charts_for(manifest, sets), key=lambda r: r["chart"]), args.shard)
     t0 = time.time()
     jobs = [(r, rule.name, key, bkey, pin) for r in rows]
     c = Counter()
     if args.workers <= 1:
-        _worker_init()
+        _worker_init(args.extractor_rev)
         for j in jobs:
             c[_replay_job(j)[1]] += 1
     else:
-        with Pool(args.workers, initializer=_worker_init) as P:
+        with Pool(args.workers, initializer=_worker_init, initargs=(args.extractor_rev,)) as P:
             for _, s in P.imap_unordered(_replay_job, jobs, chunksize=2):
                 c[s] += 1
-    print("replay %s (key %s) over %s%s: %d charts, %s, %.0f s" % (rule.name, key, args.set,
-                                                                     " shard " + args.shard if args.shard else "", len(rows), dict(c), time.time() - t0))
+    print("replay %s%s (key %s) over %s%s: %d charts, %s, %.0f s" % (
+        rule.name, " at " + args.extractor_rev if args.extractor_rev else "", key, args.set,
+        " shard " + args.shard if args.shard else "", len(rows), dict(c), time.time() - t0))
     return 0 if not c.get("no baseline record") else 3
 
 
@@ -1394,7 +1451,8 @@ def judge(split_s, tune_s, sent, canary, lb, top5, n_file_split, n_file_tune):
     d45 = 100 * (split_s["f1_45"][1] - split_s["f1_45"][0])
     add("f1_gain", d45 >= 0.20, "pooled F1@45 %+.3f pt (%.3f -> %.3f)" % (d45, 100 * split_s["f1_45"][0], 100 * split_s["f1_45"][1]))
     add("bootstrap", lb > 0, "2.5th percentile of the component bootstrap %+.3f pt" % lb)
-    add("top5", top5[0] > 0, "gain without the top 5 gainers %+.3f pt (dropped %s)" % (top5[0], ", ".join(top5[1])))
+    # counts only: which held-out charts gained most is a per-chart look at the split
+    add("top5", top5[0] > 0, "gain without the top 5 gainers %+.3f pt (%d charts dropped)" % (top5[0], len(top5[1])))
     d30 = 100 * (split_s["f1_30"][1] - split_s["f1_30"][0])
     d60 = 100 * (split_s["f1_60"][1] - split_s["f1_60"][0])
     add("tolerances", d30 > 0 and d60 > 0, "F1@30 %+.3f pt, F1@60 %+.3f pt" % (d30, d60))
@@ -1479,15 +1537,26 @@ def cmd_grade(args):
         die("%s is not registered at its current code hash %s" % (rule.name, rule.code_hash))
     pin = converter_pin()
     no_decode()
-    bkey, ckey = baseline_key(manifest), rule_key(rule, manifest)
+    # --base-rev: the baseline is the extractor as it stood at that revision (the original, for the
+    # look at everything the loop accepted: `grade --rule baseline --base-rev <rev>` is ours against it)
+    base_rev = args.base_rev
+    bkey = key_under(base_rev, BR.RULES["baseline"], manifest) if base_rev else baseline_key(manifest)
+    ckey = rule_key(rule, manifest)
+    base_stamp = None
+    if base_rev:
+        use_extractor(base_rev)
+        base_stamp = extractor_stamp()
+        use_extractor(None)
+    comparing = rule.name != "baseline" or base_rev is not None
     split = args.split
     held_out = split in ("validate", "sealed")
-    diff_hash = digest(dict(rule=rule.code_hash, extractor=extractor_stamp()), 32)
-    if held_out and rule.name != "baseline":
+    if split == "sealed" and not (args.final and comparing):
+        die("the sealed split opens once, at the stop, for one comparison: `grade --split sealed --final` "
+            "(a candidate, or the baseline with --base-rev)")
+    diff_hash = digest(dict(rule=rule.code_hash, extractor=extractor_stamp(), **({"base": base_stamp} if base_rev else {})), 32)
+    if held_out and comparing:
         rows_l, _ = read_ledger()
         looks = [r for r in rows_l if r.get("kind") == "look" and r.get("bench") == BENCH and r.get("manifest_sha256") == manifest["sha256"]]
-        if split == "sealed" and not args.final:
-            die("the sealed split opens once, at the stop: `grade --split sealed --final`")
         if sum(1 for r in looks if r["split"] == split) >= (20 if split == "validate" else 1):
             die("the held-out look cap for %s is reached" % split)
         if split == "validate" and sum(1 for r in looks if r["split"] == split and r.get("family") == rule.family) >= 3:
@@ -1517,7 +1586,8 @@ def cmd_grade(args):
     can = canary_summary(bkey, ckey, pin)
     res = judge(s_split, s_tune, sent, can, lb, t5, s_split["file_notes"], s_tune["file_notes"])
     verdict = "ACCEPT" if all(r["ok"] is not False for r in res) else "REJECT"
-    print("%s on %s (manifest %s, baseline %s, candidate %s, diff %s)" % (rule.name, split, manifest["version"], bkey, ckey, diff_hash[:12]))
+    print("%s on %s (manifest %s, baseline %s%s, candidate %s, diff %s)" % (
+        rule.name, split, manifest["version"], bkey, " = the extractor at " + base_rev if base_rev else "", ckey, diff_hash[:12]))
     print(fmt_summary(split, s_split))
     if split != "tune":
         print(fmt_summary("tune", s_tune))
@@ -1525,14 +1595,16 @@ def cmd_grade(args):
         print("  %-4s %-26s %s" % ({True: "ok", False: "FAIL", None: "n/a"}[r["ok"]], r["id"], r["text"]))
     print("VERDICT: %s%s" % (verdict, "" if can is not None else " (NEVSISTER-validated only)"))
     report = dict(rule=rule.name, family=rule.family, split=split, manifest=manifest["sha256"], baseline_key=bkey, candidate_key=ckey,
-                  diff_hash=diff_hash, split_summary=s_split, tune_summary=s_tune, bootstrap=dict(lb=lb, components=n_comp, seed=seed),
-                  top5=t5, sentinels=sent, canary=can, criteria=res, verdict=verdict)
+                  base_rev=base_rev, diff_hash=diff_hash, split_summary=s_split, tune_summary=s_tune,
+                  bootstrap=dict(lb=lb, components=n_comp, seed=seed), top5=t5[0], sentinels=sent, canary=can, criteria=res,
+                  verdict=verdict)
     if args.json:
         A.write_json(args.json, report, indent=1, default=list)
-    if held_out and rule.name != "baseline":
+    if held_out and comparing:
         append_ledger(dict(kind="look", bench=BENCH, manifest_sha256=manifest["sha256"], split=split, rule=rule.name,
                            family=rule.family, drill=rule.drill, code_hash=rule.code_hash, diff_hash=diff_hash,
-                           baseline_key=bkey, candidate_key=ckey, verdict=verdict,
+                           baseline_key=bkey, candidate_key=ckey, verdict=verdict, final=bool(args.final),
+                           **({"base_rev": rev_parse(base_rev), "base_extractor": base_stamp} if base_rev else {}),
                            failed=[r["id"] for r in res if r["ok"] is False],
                            numbers=dict(f1_45=s_split["f1_45"], f1_30=s_split["f1_30"], f1_60=s_split["f1_60"], lost=s_split["lost"],
                                         lost_tune=s_tune["lost"], removed=s_split["removed"], removed_extra=s_split["removed_extra"],
@@ -1679,9 +1751,28 @@ def in_overlay(vid):
         os.chdir(saved[1])
 
 
+def held_out_reach(manifest):
+    """What a canary may not share with the held-out splits: the title families, videos and song
+    files of every manifest chart (any stratum) whose component is on validate or sealed. A canary
+    is an uncertified upload, so it is never in the manifest itself and its own split reads None;
+    it is kept off the held-out components by what joins a component (the split rule: title
+    family, video, song file), or a canary of one of their songs is graded on the tune side of a
+    song a held-out look scores."""
+    reach = dict(family=set(), vid=set(), ssc=set())
+    for r in manifest["charts"]:
+        if r["split"] in ("validate", "sealed"):
+            reach["family"].add(family_of(r["chart"]))
+            if r.get("vid"):
+                reach["vid"].add(r["vid"])
+            if r.get("ssc_rel"):
+                reach["ssc"].add(r["ssc_rel"])
+    return reach
+
+
 def cmd_canary_candidates(args):
     manifest = load_manifest()
-    split_of = {r["chart"]: r["split"] for r in manifest["charts"]}
+    reach = held_out_reach(manifest)
+    held = Counter()
     smap = corpus_map.chart_map()
     quarantine = {c["chart"] for c in json.load(open(os.path.join(ROOT, "sources", "quarantine.json"), encoding="utf-8"))["charts"]}
     cm = json.load(open(os.path.join(ROOT, "work", "corpus-video-map.json"), encoding="utf-8"))
@@ -1694,7 +1785,7 @@ def cmd_canary_candidates(args):
         name, vid = c["chart"], e["vid"]
         if name.split()[-1][0] != "D" or name not in smap or name in quarantine or G.is_owner_revisit(name):
             continue
-        if split_of.get(name) in ("validate", "sealed") or G.footage_corrupt_reason(vid):
+        if G.footage_corrupt_reason(vid):
             continue
         if not os.path.exists(os.path.join(ROOT, "videos", vid + ".mp4")) or not c.get("judged"):
             continue
@@ -1703,6 +1794,10 @@ def cmd_canary_candidates(args):
         tag = X.block_tag(m["key"])
         blk = X.load_block(ssc, tag)
         if not blk or blk.get("error") or blk["implied"] != int(c["judged"]) or blk["ncols"] != 10:
+            continue
+        why = [k for k, v in (("family", family_of(name)), ("vid", vid), ("ssc", m["ssc_rel"])) if v in reach[k]]
+        if why:
+            held["+".join(why)] += 1
             continue
         cap = cv2.VideoCapture(os.path.join(ROOT, "videos", vid + ".mp4"))
         dur = cap.get(cv2.CAP_PROP_FRAME_COUNT) / (cap.get(cv2.CAP_PROP_FPS) or 60)
@@ -1714,7 +1809,8 @@ def cmd_canary_candidates(args):
     out.sort(key=lambda r: r["order"])
     os.makedirs(CANARY_DIR, exist_ok=True)
     A.write_json(os.path.join(CANARY_DIR, "candidates.json"), out, indent=1)
-    print("%d official single-chart doubles uploads whose file derives the published count (not validate/sealed)" % len(out))
+    print("%d official single-chart doubles uploads whose file derives the published count, none sharing a title family, "
+          "video or song file with a validate/sealed component (held off: %s)" % (len(out), dict(held) or "none"))
     return 0
 
 
@@ -1769,6 +1865,11 @@ def cmd_canary_freeze(args):
         die("sources/benchmark/canary-v1.json exists: a frozen canary is never rewritten")
     no_decode()
     chosen = json.load(open(os.path.join(CANARY_DIR, "chosen.json"), encoding="utf-8"))
+    reach = held_out_reach(load_manifest())
+    near = [c["chart"] for c in chosen["chosen"]
+            if family_of(c["chart"]) in reach["family"] or c["vid"] in reach["vid"] or c["ssc_rel"] in reach["ssc"]]
+    if near:
+        die("chosen canaries share a component with validate/sealed (re-run canary-candidates and canary-select): %s" % ", ".join(near))
     rows = []
     for c in chosen["chosen"]:
         with in_overlay(c["vid"]):
@@ -1789,13 +1890,70 @@ def cmd_canary_freeze(args):
     pin = converter_pin()
     body = dict(bench=BENCH, version="canary-v1", frozen=time.strftime("%Y-%m-%d %H:%M"), converter_pin=pin,
                 mode_pitch=chosen["mode_pitch"], rule="official single-chart doubles uploads (corpus-video-map channel "
-                "Official), file derives the published count, not validate/sealed; salted-hash order; field fit single, "
+                "Official), file derives the published count, no title family, video or song file shared with a "
+                "validate/sealed component; salted-hash order; field fit single, "
                 "symmetry >= 0.95, pitch within 3%% of the modal pitch; first %d" % CANARY_N,
                 charts=sorted(rows, key=lambda r: r["chart"]))
     A.write_json(dest, dict(body, sha256=digest(body)), indent=1, sort_keys=True, ensure_ascii=False)
     append_ledger(dict(kind="canary-freeze", bench=BENCH, canary_sha256=digest(body), charts=len(rows)))
     print("wrote %s: %d canaries" % (os.path.relpath(dest, ROOT), len(rows)))
     return 0
+
+
+def cmd_canary_grade(args):
+    """The canary criterion between two extractors, each a revision's note_extract (--rev omitted:
+    ours): pooled canary recall at 45 ms must not fall, and no canary may lose more than 1 real note
+    (a file note the base matched and the candidate does not), under the base's own alignment per
+    canary. Every canary is printed (they are out-of-distribution footage, not a held-out split),
+    and the look is chained into sources/runs.jsonl."""
+    path = os.path.join(BENCH_DIR, "canary-v1.json")
+    cm = A.load_json(path, quiet=True)
+    if cm is None:
+        die("the canary is not frozen (`canary-freeze`)")
+    body = {k: v for k, v in cm.items() if k != "sha256"}
+    if digest(body) != cm.get("sha256"):
+        die("sources/benchmark/canary-v1.json does not hash to the sha256 it records: edited after the freeze")
+    manifest = load_manifest()
+    pin = converter_pin()
+    no_decode()
+    rule = BR.RULES["baseline"]
+    bkey, ckey = key_under(args.base_rev, rule, manifest), key_under(args.rev, rule, manifest)
+    rows = cm["charts"]
+    b_recs, c_recs = load_records(bkey, rows), load_records(ckey, rows)
+    missing = sorted({c for c, v in list(b_recs.items()) + list(c_recs.items()) if v is None or v.get("status") != "OK"})
+    if missing:
+        die("%d canary records missing or failed (replay --set canary under both first): %s" % (len(missing), ", ".join(missing[:5])))
+    per_b, per_c, d = evaluate(cm, rows, b_recs, c_recs, pin)
+    charts = [r["chart"] for r in rows]
+    pb, pc = pooled(per_b, charts, 0.045), pooled(per_c, charts, 0.045)
+    base_name, cand_name = args.base_rev, args.rev or "ours"
+    print("canary %s (%d charts, %d file notes): %s (key %s) -> %s (key %s)" % (
+        cm["version"], len(charts), pb["file"], base_name, bkey, cand_name, ckey))
+    for c in sorted(charts):
+        b, x = per_b[c][0.045], per_c[c][0.045]
+        print("  %-44s R %.4f -> %.4f  P %.4f -> %.4f  lost %d gained %d removed %d (%d extras)" % (
+            c[:44], b["tp"] / b["file"] if b["file"] else 0, x["tp"] / x["file"] if x["file"] else 0,
+            b["tp"] / (b["ext"] - b["fake"]) if b["ext"] - b["fake"] else 0, x["tp"] / (x["ext"] - x["fake"]) if x["ext"] - x["fake"] else 0,
+            d[c]["lost"], d[c]["gained"], d[c]["removed"], d[c]["removed_extra"]))
+    lost = sum(d[c]["lost"] for c in charts)
+    lost_max = max((d[c]["lost"] for c in charts), default=0)
+    removed = sum(d[c]["removed"] for c in charts)
+    removed_extra = sum(d[c]["removed_extra"] for c in charts)
+    ok_recall, ok_lost = pc["recall"] >= pb["recall"], lost_max <= 1
+    print("  %-4s recall            %.4f -> %.4f (pooled, 45 ms)" % ("ok" if ok_recall else "FAIL", pb["recall"], pc["recall"]))
+    print("  %-4s real_lost         %d real notes lost, at most %d on one canary (cap 1 a canary)" % ("ok" if ok_lost else "FAIL", lost, lost_max))
+    print("  info precision         %.4f -> %.4f; F1 %.3f -> %.3f; %d removed, %d of them extras (collateral %.1f%%)" % (
+        pb["precision"], pc["precision"], 100 * pb["f1"], 100 * pc["f1"], removed, removed_extra,
+        100.0 * (removed - removed_extra) / removed if removed else 0.0))
+    verdict = "PASS" if ok_recall and ok_lost else "FAIL"
+    print("VERDICT: %s" % verdict)
+    append_ledger(dict(kind="canary-look", bench=BENCH, canary_sha256=cm["sha256"], manifest_sha256=manifest["sha256"],
+                       base_rev=rev_parse(args.base_rev), rev=rev_parse(args.rev) if args.rev else "ours", baseline_key=bkey,
+                       candidate_key=ckey, verdict=verdict,
+                       numbers=dict(recall=(pb["recall"], pc["recall"]), precision=(pb["precision"], pc["precision"]),
+                                    f1=(pb["f1"], pc["f1"]), lost=lost, lost_max_chart=lost_max, removed=removed,
+                                    removed_extra=removed_extra)))
+    return 0 if verdict == "PASS" else 1
 
 
 # ---------------------------------------------------------------- CLI
@@ -1822,12 +1980,14 @@ def main():
     p.add_argument("--set", default="tune,validate,sentinel")
     p.add_argument("--shard")
     p.add_argument("--workers", type=int, default=4)
+    p.add_argument("--extractor-rev", help="the baseline as the extractor stood at this revision (e.g. the original)")
     p = sub.add_parser("register")
     p.add_argument("--rule", required=True)
     p = sub.add_parser("grade")
     p.add_argument("--rule", required=True)
     p.add_argument("--split", required=True, choices=("tune", "validate", "sealed"))
     p.add_argument("--final", action="store_true")
+    p.add_argument("--base-rev", help="grade against the extractor as it stood at this revision instead of ours")
     p.add_argument("--json")
     p = sub.add_parser("baseline")
     p.add_argument("--json")
@@ -1843,13 +2003,17 @@ def main():
     p.add_argument("--slow", type=int, default=0)
     p = sub.add_parser("canary-freeze")
     p.add_argument("--partial", action="store_true")
+    p = sub.add_parser("canary-grade")
+    p.add_argument("--base-rev", required=True, help="the extractor graded against (a revision)")
+    p.add_argument("--rev", help="the extractor graded (a revision; omitted: ours)")
     args = ap.parse_args()
     os.chdir(ROOT)      # receptors keeps its caches under relative paths
     return dict(identity=cmd_identity, freeze=cmd_freeze, replay=cmd_replay, register=cmd_register, grade=cmd_grade,
                 baseline=cmd_baseline, chain=cmd_chain, **{"identity-summary": cmd_identity_summary,
                                                            "canary-candidates": cmd_canary_candidates, "canary-fit": cmd_canary_fit,
                                                            "canary-select": cmd_canary_select, "canary-decode": cmd_canary_decode,
-                                                           "canary-freeze": cmd_canary_freeze, "verify-anchor": cmd_verify_anchor})[args.cmd](args)
+                                                           "canary-freeze": cmd_canary_freeze, "canary-grade": cmd_canary_grade,
+                                                           "verify-anchor": cmd_verify_anchor})[args.cmd](args)
 
 
 if __name__ == "__main__":
