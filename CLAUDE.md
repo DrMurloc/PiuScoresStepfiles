@@ -120,3 +120,10 @@ the video, its result-screen numbers, the offset and how it was determined, the 
 and how the peaks were settled, what the audit said, and the closing arithmetic. Someone
 reviewing a year from now should be able to re-derive the number without re-watching the
 video. Tooling changes get their own commits and explain the failure that motivated them.
+
+
+## Owner rulings (2026-09-28)
+
+- The orchestrating Claude session (never a loop) may apply adversarially reviewed rails patches (corpus_grade, guards, trace_audit, loopcommit, supervise, atomicio, childsite, the hooks) and run the oracle landing steps (freeze, freeze --accept-identity, the ORACLE_CONFLICT review/rebuild) at merge time. Each passes a gate-security review and the full drill set first, lands as its own commit, and is named in the checkpoint report. Demotions, quarantine reverts, snapshots and converter changes stay the owner's.
+- A counter atlas glyph may be admitted when its label comes from a count-exact file's running count and two isolated, seeded blind agent readers agree they see that digit. The blind read confirms a label; it is never the source of one.
+
