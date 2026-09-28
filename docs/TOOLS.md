@@ -616,9 +616,9 @@ candidate ran to +1.3 million ticks inside a BPM gimmick before the gate refused
 ## The extractor replay bench
 
 **`bench.py identity --against <rev> [--shard i/n] [--subshard j/k] [--stale]`** / **`identity-summary --against <rev> [--json F]`** / **`verify-anchor`**
-**`bench.py freeze [--version v1] [--salt S]`** / **`register --rule R`** / **`replay --rule R [--set tune,validate,sentinel,canary] [--shard i/n] [--workers N]`**
-**`bench.py grade --rule R --split tune|validate|sealed [--final] [--json F]`** / **`baseline [--json F]`** / **`chain`**
-**`bench.py canary-candidates`** / **`canary-fit --vid V`** / **`canary-select`** / **`canary-decode --vid V`** / **`canary-freeze [--partial]`**
+**`bench.py freeze [--version v1] [--salt S]`** / **`register --rule R`** / **`replay --rule R [--set tune,validate,sentinel,canary] [--shard i/n] [--workers N] [--extractor-rev REV]`**
+**`bench.py grade --rule R --split tune|validate|sealed [--final] [--base-rev REV] [--json F]`** / **`baseline [--json F]`** / **`chain`**
+**`bench.py canary-candidates`** / **`canary-fit --vid V`** / **`canary-select`** / **`canary-decode --vid V`** / **`canary-freeze [--partial]`** / **`canary-grade --base-rev A [--rev B]`**
 A frozen benchmark that grades a change to the extractor's post-decode step from the cached sprite
 passes alone (bucket #5 of work/loop-buckets-2026-09-26.txt), so a tuning loop can claim an
 extractor gain honestly. Candidate changes live in `tools/bench_rules.py`.
@@ -687,7 +687,26 @@ read writes kept there, so nothing lands in the shared caches), chosen blind to 
 candidates in a salted-hash order, field fits first (`canary-fit`, a slot each), then only a clean
 single field within 3% of the official skin's modal lane pitch (`canary-select`), the first 15
 decoded (`canary-decode`, a slot each) and pinned (`canary-freeze`, `canary-v1.json`). Until it is
-frozen the canary criterion reads N/A and an accept carries "NEVSISTER-validated only".
+frozen the canary criterion reads N/A and an accept carries "NEVSISTER-validated only". Canaries
+are tune-only, and a canary is never in the manifest (its own split reads None), so
+`canary-candidates` holds off any upload whose title family, video or song file belongs to a
+validate or sealed component - what joins a component - and `canary-freeze` refuses a chosen list
+that reaches one (the first selection, 2026-09-27, carried Neo Catharsis - SHORT CUT - D23, whose
+family is on sealed, and Moment Day D23, whose song file is on validate). `canary-grade` is the
+canary criterion between two extractors (`--base-rev`, and `--rev` or ours), every canary printed
+with its recall, precision, real notes lost and removals, the look chained into
+`sources/runs.jsonl` as a `canary-look` row.
+
+*Older extractors.* `replay --extractor-rev REV` replays the baseline as the extractor stood at REV:
+that revision's whole `note_extract.py`, loaded beside ours over the same receptors and atomicio
+(the onsets cache and the frame refusal hold for it too). The record key carries the extractor's
+stamp, which hashes syntax trees and constants, not file names, so the records land under the key
+the revision's own checkout gives (f0ebca0 and c48604a: `21672f3b79026df3`, the original;
+ca1278f: `9ae7710be1858c1f`; df848d5: `235fce2ff4a28461`), and post_decode recomputed through the
+loaded module, with no post cache, equals the stored records note for note (5 tune charts each
+way, 2026-09-27). `grade --base-rev REV` grades against that extractor instead of ours: `grade
+--rule baseline --base-rev <original> --split sealed --final` is the one look at everything the
+loop accepted.
 
 *Grading.* Matching is extract_repair's own (`match`, one-to-one per column), under the baseline's
 alignment frozen per chart, at 30, 45 and 60 ms; an extracted note on a drawn fake is neither a hit
@@ -712,7 +731,27 @@ registration, so a rule adjusted after a look is a new candidate. A `grade --spl
 candidate is a held-out look: one chained row keyed by the change's diff hash (the rule's code hash
 over the extractor's stamp) with its numbers and verdict, capped at 20 per split and 3 per rule
 family (the drills are family "drill"), 40 candidates in all; the same change is never looked at
-twice. The sealed split opens once, at the stop (`--final`). `chain` verifies the ledger.
+twice. The sealed split opens once, at the stop (`--final`), for one comparison - a candidate, or
+the baseline with `--base-rev` - and is logged either way; a grade of the sealed split without
+both is refused (the baseline's own numbers there included), and once a manifest's sealed split
+has been opened `register` refuses: that manifest's loop is closed and the next candidate waits for
+`freeze --version v2`. `grade` prints how many of the top gainers it drops, never which: naming
+the held-out charts that gained most is a per-chart look at the split. `chain` verifies the ledger.
+
+**`park_resurvey.py survey --out work/<dir> [--from work] [--shard i/n] [--only "<chart>"] [--redo]`** / **`summary --out work/<dir>`**
+The extraction loop's parks re-surveyed under the extractor as it stands, the step after an
+accepted post-decode rule (bucket #5): `extract_repair.survey_chart`, unchanged, over every chart
+the run-1 reports under `--from` parked, with frames refused (a chart whose sprite pass is not
+cached is NO_PASS, never decoded), every write outside `--out` refused and `receptors.save_scan`
+a no-op, and only tail moves and tap->hold applied. The plan's additions are withheld and
+recorded (an addition on one of bench.py's counter-backed notes is marked backed; none is applied):
+a chart that closes on its certified count on tail/tap->hold alone is SHIP_CANDIDATE, one only
+additions would move is NEEDS_OWNER (with whether the whole plan would close it), and the
+survey's 2% additions cap still parks a chart whatever it closes on. Every record carries the
+git blob of `tools/note_extract.py`, the extractor's stamp and HEAD. `summary` merges the shards
+into `park-resurvey-summary.json` (the ship candidates and the needs-owner list). It commits
+nothing: a ship candidate still goes through `extract_repair.py commit`'s in-place tick_verify
+and the gate, and a stepfile pass is refused while the gate's code differs from main's.
 
 ## The tick loop
 
