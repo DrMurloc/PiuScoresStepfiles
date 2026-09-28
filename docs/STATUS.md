@@ -636,13 +636,56 @@ whatif`): **1,490 -> 1,517 certified, 749 -> 775 exact, PROTECTED 629 -> 655, PR
 - DANCE GRADE: nothing. The one screen whose total is its chart's catalog count, Q-4XfqIiM1Q
   (Just Hold on D22), is footage looked at while the profile was built, which never counts.
 
-**The corpus grade does not see it yet.** `corpus_grade` builds its population from its own list
-of oracle files, so until the owner adds the ledger there and refreezes the manifest (the patch is
-staged: `work/skins-1-scratch/owner/corpus-grade-skins-ledger.patch`, then `corpus_grade.py
-freeze`), the gate still grades 1,490 / 749 while `corpus_map` - every loop's worklist - already
-merges the 27. Merge the two together: in between, a loop that repaired Papasito FULL SONG S19
-would fail its gate on DECLARED, and an edit that broke one of the 26 exact charts would pass
-unseen.
+**What merging this branch changes in the gate.** This section first said the gate could not see
+the ledger until the owner's `corpus_grade` patch. Verification round 1 showed that holds for the
+grade, but not for the trace audit. The audit sees the ledger the moment the branch merges.
+
+*The grade waits for the owner.* `corpus_grade` builds its population from its own list of oracle
+files. Until the owner adds the ledger there and refreezes the manifest, the gate grades 1,490
+certified, 749 exact and 629 PROTECTED, while `corpus_map` (every loop's worklist) already merges
+the 27. The patch is staged. From the repo root, run `git apply
+work/skins-1-scratch/owner/corpus-grade-skins-ledger.patch`, then `corpus_grade.py freeze`. Merge
+the patch together with the branch. In between, a loop that repaired Papasito FULL SONG S19 would
+fail its gate on DECLARED, and an edit that broke one of the 26 exact charts would pass unseen.
+
+*The trace audit sees it at once.* `corpus_map.py` is gate code. `trace_audit` imports it, and it is
+in the audit's `audit_version` closure and in its `clock_code`. The audit's `play_of` takes a play's
+reader band from `certification()`. So a plain merge of this branch has four effects:
+- **`audit_version` moves** from `3794914c` to `760f4077`, and `tools/corpus_map.py` is the only
+  source that moves. The committed ledger `sources/trace-audit-2026-09-27.json` goes stale, and so
+  do its calibration and power sections.
+- **`clock_code` moves**, so every clock the audit has cached is measured again from the cached
+  passes.
+- **The band flips.** For the 16 band-manifest charts, the gate's ship audit now reads band L where
+  it read band C. Asterios -ReEntry- S4 is one of the 123 audited charts: it goes C -> L, and it
+  is UNCOVERED both ways. The audit never scans on demand, and none of the 16 videos has a
+  band-L counter scan. Five of them (Higgledy Piggledy S6, Passacaglia S4, Cleaner S7, Nihilism -
+  Another Ver. - S15 and God Mode 2.0 S17, all UNCOVERED controls on main) have band-C scans, and the
+  other 11 have no scan at all. So a ship on any of the 16 audits UNCOVERED, and cannot pass until
+  its band-L scan exists.
+- **The audit's population gains the 27.** The population comes from `extract_repair.charts()`, so
+  it becomes 1,517 certified. It still has 123 gained, because all 26 new exact charts were exact at
+  the import. It has 650 untouched exact.
+
+Measured with this branch's tools and `--no-decode`, against the committed ledger (run
+`skins-1-ta2`, `work/skins-1-scratch/ta-merge/`):
+- **The corpus does not move.** The 123 edit-derived exact charts still audit 3 FLAT, 10 OFF and
+  110 UNCOVERED, with 0 errors. All 452 edit verdicts, all 123 clocks and the three promotable
+  blocks (Final Audition S18, Get Your Groove On D10, Set me up S10) are unchanged. Only one record
+  differs: Asterios -ReEntry- S4, whose band and reason go from "no counter scan for UJjQiElua9w
+  band C" to "... band L". It is UNCOVERED both ways.
+- **The controls are expected to drop from 261 to 256.** The five band-C controls lose their scan
+  and leave the controls. None of the 27 new charts has a scan in its band, so none joins. That
+  half of the run is still going, so this is an expectation from the cache, not yet a measurement.
+- **Re-measuring the clocks is slow on a busy machine.** It needed no decode, but the corpus's 106
+  clocks took about 36 minutes on 2 BelowNormal workers while a game and the other buckets ran.
+  That time is split across the first attempt, `skins-1-ta1`, which was stopped and relaunched
+  detached, and `skins-1-ta2`. The merge-time re-record reuses those clocks, as long as the six
+  modules `clock_code` hashes are unchanged at the merge.
+
+**At the merge**, re-record the trace-audit ledger on the merged tools, as the rails merge did
+(`76a9b87`): run `trace_audit.py controls`, then `power`, then `corpus --out-dir sources`, all with
+`--no-decode`. Then confirm that the 123 verdicts do not move.
 
 **The full-ledger invariance diff.** Every entry of the corpus and census certification ledgers
 (2,027 entries on 2,016 videos) was read three ways on the same decoded frames (`cert_skins.py`):
@@ -675,7 +718,10 @@ frame of the last 45 s (every profile's anchor under the reader's 0.75; the best
 matches neither the catalog nor our file: Shub Niggurath - SHORT CUT - D23 (Zqul1BBl1nk, 1,450
 against 1,054 and 797: identity to review) and two repair leads, Stardust Overdrive - SHORT CUT -
 S16 (8dORsoiQppQ, blind-confirmed 741 against our 751) and D17 (FsFAU37qmj4, a bootstrap video,
-724 against our 723). Among the 64 the reader finds 27 Prime screens, 6 DANCE GRADE and 3 XX
+724 against our 723). Twelve of the 64 are footage that a profile or a revision was built on, and
+they never count toward yield: the 5 that would certify, 4 of the 17 ERA, and 3 of the 21 REJECTED.
+Those 3 are FsFAU37qmj4, plus Y1r3ZykiMjU and Zqul1BBl1nk, two of Prime revision 2's bootstrap
+videos (below). Among the 64 the reader finds 27 Prime screens, 6 DANCE GRADE and 3 XX
 screens read on the 2P side alone, where the research counted 27, 7 and 3: szo_nUjJt2k (Prime
 Opening - SHORT CUT - D15), the likely 7th DANCE GRADE video, has no DANCE GRADE label above 0.42
 in its last 45 s.
@@ -685,10 +731,35 @@ sides the blind readers transcribed, 9 equal the reader's cells and 3 do not (an
 as 7, a 6 as 5). So a Prime read certifies only with an agreeing blind transcription, and some
 Prime ERA or REJECTED verdicts may themselves be misreads. Prime's revision 1 used two bootstrap
 videos and five more looked at for glyph extents only (never values) - past the three-video cap,
-so all seven are out of the yield. A Prime atlas of its own (revision 2,
-each digit the mean of its cells on three bootstrap sides, labelled by agreed transcriptions) read
-5 of 8 held-out sides right against the XX atlas's 6 and was not kept; DANCE GRADE revision 1
-certified nothing on held-out videos, so by the stopping rule neither skin has a further revision.
+so all seven are out of the yield. A Prime atlas of its own (revision 2, each digit the mean of
+its cells on three bootstrap sides) read 5 of 8 held-out sides right against the XX atlas's 6 and
+was not kept. DANCE GRADE revision 1 certified nothing on held-out videos, so by the stopping rule
+neither skin gets a further revision.
+
+**A rule broken, and what was done about it.** Revision 2 labelled its atlas cells with batch b1's
+agreed blind transcriptions. The loop plan's cross-cutting rules say agent eye-reads are never
+used as training labels, so this broke the rule. It would also have failed the plan's permissive
+reading, which needs a provenance manifest per glyph, and revision 2 had none. Nothing that landed
+depends on it: revision 2 was rejected, the committed Prime profile reads with the XX atlas, and
+`tools/atlas-prime/` holds only the MAX COMBO label. What changes now:
+- Its three bootstrap videos never count toward yield (`cert_land.py`'s `REV2_BOOTSTRAP`). They are
+  Nywh-HyJhBI, which was already out as inspected footage, and Y1r3ZykiMjU and Zqul1BBl1nk, which
+  were REJECTED anyway.
+- A re-run of `plan` and `land` with that list gives a byte-identical ledger, band manifest and ERA
+  staging. Those two sides are now also refused as bootstrap footage.
+- No transcription from batches b1 or b2 may label any future atlas.
+- Only a Prime atlas trained without eye-read labels could re-open the two remaining misreads
+  (Super Stylin' D17 and Asterios -ReEntry- S19).
+
+**The blind batches.** 42 real items in all (b1: 14 + 14 + 12, b2: 2) and 15 seeds. The two
+readers agreed on every item. Against the reader's cells:
+- XX: 29 of 29 equal.
+- Prime: 9 of 12 equal.
+- DANCE GRADE: 1 of 1 equal.
+
+Batch b2's readers recorded the files they opened, and each opened only its own packet. Batch b1
+recorded no reader isolation: its score file holds only each reader's packet verdicts and
+answers, so b1's isolation is not evidenced.
 
 **ERA staging.** 151 rows on 140 videos (137 XX, 11 Prime, 3 DANCE GRADE): the result screen's
 total is our file's lattice count, not the catalog's: the footage and our file agree and the

@@ -1089,8 +1089,11 @@ The XX atlas misreads some Prime captures - an 8 as a 9, a 1 as a 7, a 6 as a 5:
 sides two blind readers transcribed on 2026-09-27 - in ways the on-screen checks cannot always see,
 so a Prime or DANCE GRADE read certifies only with a blind transcription that agrees
 (`cert_land.py land`). A Prime atlas of its own (revision 2: each digit the mean of its cells from
-three bootstrap sides, labelled by those transcriptions) read 5 of 8 held-out sides right against
-the XX atlas's 6, and was not kept.
+three bootstrap sides) read 5 of 8 held-out sides right against the XX atlas's 6, and was not kept.
+Its cells were labelled with those blind transcriptions. That broke the loop plan's rule that
+agent eye-reads are never training labels, and there was no per-glyph provenance manifest either.
+So its three bootstrap videos (Nywh-HyJhBI, Y1r3ZykiMjU, Zqul1BBl1nk) never count toward yield
+(`cert_land.py`'s `REV2_BOOTSTRAP`), and no answer from those batches may label an atlas.
 A video the decoder cannot open, or whose last 45 s do not decode, is `corrupt-video` with a
 reason (as is one on `sources/footage-corrupt.json` with no readable screen), never
 `no-result-screen`.
@@ -1146,18 +1149,21 @@ transcribed only to judge a profile. `land --plan <plan> --keys <k> --answers <d
 the checks, the second frame, and a blind transcription two readers agree on that equals the
 reader's six cells (a diagnostic item never lands a side). What passes is written as a
 certification ledger in the corpus ledger's shape plus `evidence` (the code, the confirming frame,
-the blind batch, packet, item and readers), holding only the charts it newly certifies; bootstrap
-and inspected footage never lands, nor does an official upload (benchmark identity only). The band manifest lists the certified charts whose reader band
-moves. `era --plan <plan> --out work/era/<file>` stages the ERA rows stamped with the converter
-pin and each chart's block and header sha, and `era-check <file>` names every row a change has made
+the blind batch, packet, item and readers), holding only the charts it newly certifies. Bootstrap
+and inspected footage never lands (`NOT_YIELD`: each profile's bootstrap and inspected videos,
+plus the three a rejected revision was built on), and neither does an official upload (benchmark
+identity only). The band manifest lists the certified charts whose reader band moves.
+`era --plan <plan> --out work/era/<file>` stages the ERA rows stamped with the converter pin and
+each chart's block and header sha, and `era-check <file>` names every row a change has made
 stale (void); no loop reads that file, and a row is never a close, a skip or an exclusion.
 `whatif --extra <ledger> [--out <report>]` grades the committed oracle through corpus_grade's own
 converter and cache, with and without the ledger merged between the corpus and census ledgers,
 and prints both counts and the population set-diff on (vid, chart, side, expected).
 
 **`blind_packets.py score --keys <keys.json> --answers <dir> [--out <report>]`** (and a library)
-Blind, seeded eye-read packets, the owner's 2026-09-26 ruling on what an agent's look at frames
-may count as. A loop never looks at a frame and decides a digit itself: `make()` writes packets -
+Blind, seeded eye-read packets: the blind protocol the loop plan (`work/loop-buckets-2026-09-26.txt`)
+sets for what an agent's look at frames may count as. A loop never looks at a frame and decides a
+digit itself: `make()` writes packets -
 `work/blind/<loop>/<batch>/<packet-id>/` holding only images with opaque names and `question.json`
 (`id`, `instructions`, `items` of `item`, `images`, `ask`, `answer_format`; no expected value, no
 chart name) - with seeded known-answer items shuffled in (about a quarter of each packet), at most
@@ -1166,10 +1172,14 @@ chart name) - with seeded known-answer items shuffled in (about a quarter of eac
 `work/blind-answers/<loop>/<batch>/<reader>/<packet-id>.json` (`{"id", "answers": {item: text}}`).
 `score` voids a reader's whole packet when it misses any seed, and calls a real item AGREED only
 when two unvoided readers give the same answer (after `normalize`: separators and whitespace);
-anything else is UNSURE. Under the same ruling a transcription two readers agreed on may label
-atlas glyphs, with a provenance manifest per glyph (which video, frame, row and cell, and which
-batch, packet, item and readers); a spot-check verdict (a reader judging a candidate rather than
-transcribing what is drawn) never labels anything.
+anything else is UNSURE. An agreed transcription can certify a result screen's cells (bucket
+#12's gate). It is never a training label. The plan's cross-cutting rules say agent eye-reads
+are never used as training labels. The plan's recommendation on eye-reads would let a blind
+transcription label atlas glyphs, but only with a provenance manifest per glyph (which video,
+frame, row and cell, and which batch, packet, item and readers). There is no recorded ruling that
+settles the two, so until the owner rules, no transcription scored here labels anything. A
+spot-check verdict (a reader judging a candidate rather than transcribing what is drawn) never
+labels anything.
 
 **`run_drift.py "<chart>" <offset> [--conf 0.85] [--gap 2.0]`**
 The tap-grid check that needs **no run structure**. Inside one rising stretch of the counter
@@ -1691,9 +1701,26 @@ Since 2026-09-27 `certification()` also merges `sources/certification-skins-2026
 (bucket #12's result-screen skins, written by `cert_land.py land`: the XX screen's 2P column and
 the Prime screen), after the live tail and before the census. That ledger holds only what it
 adds - each video's new read and the charts it newly certifies - so the per-chart merge keeps
-every chart the older ledgers carry. The corpus grade builds its population from its own list of
-oracle files, not through `certification()`, so the gate sees that ledger only once the owner adds
-it to `corpus_grade`'s oracle and refreezes the manifest.
+every chart the older ledgers carry. The gate sees that ledger in two different ways:
+- **The grade does not see it until the owner acts.** `corpus_grade` builds its population from
+  its own list of oracle files, not through `certification()`. So the certified and exact counts,
+  PROTECTED and DECLARED see the ledger only once the owner adds it to that list and refreezes the
+  manifest.
+- **The ship audit sees it as soon as it merges.** `trace_audit` imports `corpus_map`, and its
+  `play_of` takes a play's reader band from `certification()`: C for a one-sided screen, L or R
+  for a split one. `corpus_map.py` is also in the audit's `audit_version` closure and its
+  `clock_code`. So merging the ledger has three effects:
+  - it moves the band the gate's ship audit reads for every chart in the band manifest. The audit
+    never scans on demand, so a manifest chart with no scan in its new band audits UNCOVERED and
+    cannot ship until that band is scanned;
+  - it moves `audit_version`, which makes the committed trace-audit ledger stale, so it is
+    re-recorded at that merge (`controls`, `power`, `corpus --out-dir sources`, all
+    `--no-decode`);
+  - it makes every cached clock re-measured.
+
+  Measured on 2026-09-27 with the branch's tools (docs/STATUS.md, "Result-screen skins"), the
+  123-chart corpus kept every verdict, clock and promotable block. Only Asterios -ReEntry- S4's
+  band and reason text changed.
 
 **`tail_worklist.py <tail.json> [--shape ...] [--min-pct N] [--max-pct N] [--limit N] [--out-tag T]`**
 Turns rows of the catalog sweep into the two inputs a batch needs: `sources/ssc-map-tail.json`
