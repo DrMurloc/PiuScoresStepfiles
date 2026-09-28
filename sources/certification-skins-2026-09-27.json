@@ -1,0 +1,1891 @@
+{
+ "0_CEI-ZCa1k": {
+  "vid": "0_CEI-ZCa1k",
+  "status": "ok",
+  "t": 155.4,
+  "skin": "prime",
+  "1p": {
+   "perfect": "970",
+   "great": "007",
+   "good": "001",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "977",
+   "judged": 978,
+   "dx": -1
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "CROSS OVER feat. LyuU S15": {
+    "expected": 978,
+    "side": "1p",
+    "verdict": "CERTIFIED",
+    "matched": 978,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "1p": {
+     "skin": "prime",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 154.3,
+     "blind": {
+      "batch": "b1",
+      "packet": "p43862aa6c8",
+      "item": "idcbd9568b1",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "970/007/001/000/000/977"
+     }
+    }
+   }
+  }
+ },
+ "2fcRpTiCE1o": {
+  "vid": "2fcRpTiCE1o",
+  "status": "ok",
+  "t": 196.7,
+  "skin": "xx",
+  "1p": {
+   "perfect": "1327",
+   "great": "007",
+   "good": "004",
+   "bad": "001",
+   "miss": "001",
+   "maxcombo": "1243",
+   "judged": 1340
+  },
+  "2p": {
+   "perfect": "1671",
+   "great": "019",
+   "good": "007",
+   "bad": "001",
+   "miss": "002",
+   "maxcombo": "1057",
+   "judged": 1700
+  },
+  "charts": {
+   "Good Night - FULL SONG - S21": {
+    "expected": 1700,
+    "side": "2p",
+    "verdict": "CERTIFIED",
+    "matched": 1700,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 195.6,
+     "blind": {
+      "batch": "b1",
+      "packet": "p43862aa6c8",
+      "item": "i4f66afb6c6",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "1671/019/007/001/002/1057"
+     }
+    }
+   }
+  }
+ },
+ "8S_sQLJ-Ti4": {
+  "vid": "8S_sQLJ-Ti4",
+  "status": "ok",
+  "t": 120.8,
+  "skin": "xx",
+  "1p": {
+   "perfect": "361",
+   "great": "015",
+   "good": "005",
+   "bad": "004",
+   "miss": "000",
+   "maxcombo": "171",
+   "judged": 385
+  },
+  "2p": {
+   "perfect": "510",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "002",
+   "maxcombo": "344",
+   "judged": 512
+  },
+  "charts": {
+   "Higgledy Piggledy S9": {
+    "expected": 512,
+    "side": "2p",
+    "verdict": "CERTIFIED",
+    "matched": 512,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 119.7,
+     "blind": {
+      "batch": "b1",
+      "packet": "p43862aa6c8",
+      "item": "i3fa51a8b1f",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "510/000/000/000/002/344"
+     }
+    }
+   }
+  }
+ },
+ "AIOq3e6cd2k": {
+  "vid": "AIOq3e6cd2k",
+  "status": "ok",
+  "t": 133.3,
+  "skin": "xx",
+  "1p": {
+   "perfect": "879",
+   "great": "004",
+   "good": "001",
+   "bad": "001",
+   "miss": "000",
+   "maxcombo": "688",
+   "judged": 885
+  },
+  "2p": {
+   "perfect": "952",
+   "great": "006",
+   "good": "000",
+   "bad": "001",
+   "miss": "002",
+   "maxcombo": "586",
+   "judged": 961
+  },
+  "charts": {
+   "Phalanx \"RS2018 Edit\" S19": {
+    "expected": 961,
+    "side": "2p",
+    "verdict": "CERTIFIED",
+    "matched": 961,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 132.2,
+     "blind": {
+      "batch": "b1",
+      "packet": "p43862aa6c8",
+      "item": "i4b57093620",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "952/006/000/001/002/586"
+     }
+    }
+   }
+  }
+ },
+ "HmckgcE_mNk": {
+  "vid": "HmckgcE_mNk",
+  "status": "ok",
+  "t": 125.4,
+  "skin": "xx",
+  "1p": {
+   "perfect": "218",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "218",
+   "judged": 218
+  },
+  "2p": {
+   "perfect": "455",
+   "great": "003",
+   "good": "000",
+   "bad": "001",
+   "miss": "000",
+   "maxcombo": "246",
+   "judged": 459
+  },
+  "charts": {
+   "Final Audition Ep. 2-1 S8": {
+    "expected": 459,
+    "side": "2p",
+    "verdict": "CERTIFIED",
+    "matched": 459,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 124.3,
+     "blind": {
+      "batch": "b1",
+      "packet": "p43862aa6c8",
+      "item": "ia32eadc1f0",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "455/003/000/001/000/246"
+     }
+    }
+   }
+  }
+ },
+ "HoCyS7TGbCI": {
+  "vid": "HoCyS7TGbCI",
+  "status": "ok",
+  "t": 162.1,
+  "skin": "xx",
+  "1p": {
+   "perfect": "1046",
+   "great": "027",
+   "good": "003",
+   "bad": "003",
+   "miss": "004",
+   "maxcombo": "498",
+   "judged": 1083
+  },
+  "2p": {
+   "perfect": "1350",
+   "great": "019",
+   "good": "000",
+   "bad": "000",
+   "miss": "004",
+   "maxcombo": "863",
+   "judged": 1373
+  },
+  "charts": {
+   "Re \\: End of a Dream S21": {
+    "expected": 1373,
+    "side": "2p",
+    "verdict": "CERTIFIED",
+    "matched": 1373,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 161.0,
+     "blind": {
+      "batch": "b1",
+      "packet": "p43862aa6c8",
+      "item": "iac1cf5c49c",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "1350/019/000/000/004/863"
+     }
+    }
+   }
+  }
+ },
+ "KphiHqfCWa8": {
+  "vid": "KphiHqfCWa8",
+  "status": "ok",
+  "t": 129.0,
+  "skin": "xx",
+  "1p": {
+   "perfect": "369",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "369",
+   "judged": 369
+  },
+  "2p": {
+   "perfect": "566",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "566",
+   "judged": 566
+  },
+  "charts": {
+   "God Mode 2.0 feat. Skizzo S13": {
+    "expected": 566,
+    "side": "2p",
+    "verdict": "CERTIFIED",
+    "matched": 566,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 127.9,
+     "blind": {
+      "batch": "b1",
+      "packet": "p43862aa6c8",
+      "item": "ie002c1b447",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "566/000/000/000/000/566"
+     }
+    }
+   }
+  }
+ },
+ "McuAzdecSq4": {
+  "vid": "McuAzdecSq4",
+  "status": "ok",
+  "t": 268.6,
+  "skin": "xx",
+  "1p": {
+   "perfect": "999",
+   "great": "001",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "1000",
+   "judged": 1000
+  },
+  "2p": {
+   "perfect": "1451",
+   "great": "040",
+   "good": "002",
+   "bad": "004",
+   "miss": "003",
+   "maxcombo": "636",
+   "judged": 1500
+  },
+  "charts": {
+   "Papasito (feat.  KuTiNA) - FULL SONG - S19": {
+    "expected": 1500,
+    "side": "2p",
+    "verdict": "CERTIFIED",
+    "matched": 1500,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 267.5,
+     "blind": {
+      "batch": "b1",
+      "packet": "p43862aa6c8",
+      "item": "i80cda6eb3c",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "1451/040/002/004/003/636"
+     }
+    }
+   }
+  }
+ },
+ "P8uto3fBNtg": {
+  "vid": "P8uto3fBNtg",
+  "status": "ok",
+  "t": 150.9,
+  "skin": "xx",
+  "1p": {
+   "perfect": "063",
+   "great": "001",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "064",
+   "judged": 64
+  },
+  "2p": {
+   "perfect": "463",
+   "great": "018",
+   "good": "002",
+   "bad": "000",
+   "miss": "002",
+   "maxcombo": "374",
+   "judged": 485
+  },
+  "charts": {
+   "Fly high S9": {
+    "expected": 485,
+    "side": "2p",
+    "verdict": "CERTIFIED",
+    "matched": 485,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 149.8,
+     "blind": {
+      "batch": "b1",
+      "packet": "p43862aa6c8",
+      "item": "i27c46d6abf",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "463/018/002/000/002/374"
+     }
+    }
+   }
+  }
+ },
+ "PmpkstadFM4": {
+  "vid": "PmpkstadFM4",
+  "status": "ok",
+  "t": 142.7,
+  "skin": "prime",
+  "1p": {
+   "perfect": "497",
+   "great": "001",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "498",
+   "judged": 498,
+   "dx": -2
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Rave'til the earth's end D14": {
+    "expected": 498,
+    "side": "1p",
+    "verdict": "CERTIFIED",
+    "matched": 498,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "1p": {
+     "skin": "prime",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 141.6,
+     "blind": {
+      "batch": "b1",
+      "packet": "p43862aa6c8",
+      "item": "i3acc5d25c1",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "497/001/000/000/000/498"
+     }
+    }
+   }
+  }
+ },
+ "QtMJoHtrRNQ": {
+  "vid": "QtMJoHtrRNQ",
+  "status": "ok",
+  "t": 132.9,
+  "skin": "xx",
+  "1p": {
+   "perfect": "867",
+   "great": "066",
+   "good": "023",
+   "bad": "011",
+   "miss": "037",
+   "maxcombo": "218",
+   "judged": 1004
+  },
+  "2p": {
+   "perfect": "948",
+   "great": "028",
+   "good": "013",
+   "bad": "007",
+   "miss": "008",
+   "maxcombo": "489",
+   "judged": 1004
+  },
+  "charts": {},
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 131.8,
+     "blind": {
+      "batch": "b1",
+      "packet": "p43862aa6c8",
+      "item": "ia5c1506e8b",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "948/028/013/007/008/489"
+     }
+    }
+   }
+  }
+ },
+ "U40FoPbp64w": {
+  "vid": "U40FoPbp64w",
+  "status": "ok",
+  "t": 137.6,
+  "skin": "xx",
+  "1p": {
+   "perfect": "288",
+   "great": "012",
+   "good": "006",
+   "bad": "001",
+   "miss": "003",
+   "maxcombo": "273",
+   "judged": 310
+  },
+  "2p": {
+   "perfect": "454",
+   "great": "002",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "456",
+   "judged": 456
+  },
+  "charts": {
+   "Red Swan S7": {
+    "expected": 456,
+    "side": "2p",
+    "verdict": "CERTIFIED",
+    "matched": 456,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 136.5,
+     "blind": {
+      "batch": "b1",
+      "packet": "p43862aa6c8",
+      "item": "i1a87835f7b",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "454/002/000/000/000/456"
+     }
+    }
+   }
+  }
+ },
+ "UJjQiElua9w": {
+  "vid": "UJjQiElua9w",
+  "status": "ok",
+  "t": 135.1,
+  "skin": "xx",
+  "1p": {
+   "perfect": "158",
+   "great": "002",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "160",
+   "judged": 160
+  },
+  "2p": {
+   "perfect": "278",
+   "great": "001",
+   "good": "000",
+   "bad": "000",
+   "miss": "001",
+   "maxcombo": "148",
+   "judged": 280
+  },
+  "charts": {},
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 134.0,
+     "blind": {
+      "batch": "b1",
+      "packet": "p43862aa6c8",
+      "item": "i1e5b24a2b3",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "278/001/000/000/001/148"
+     }
+    }
+   }
+  }
+ },
+ "VRJsqe5B_lw": {
+  "vid": "VRJsqe5B_lw",
+  "status": "ok",
+  "t": 141.7,
+  "skin": "prime",
+  "1p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "2p": {
+   "perfect": "621",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "621",
+   "judged": 621,
+   "dx": 1
+  },
+  "charts": {
+   "Twist of Fate (feat. Ruriling) S10": {
+    "expected": 621,
+    "side": "2p",
+    "verdict": "CERTIFIED",
+    "matched": 621,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "prime",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 140.6,
+     "blind": {
+      "batch": "b1",
+      "packet": "p43862aa6c8",
+      "item": "icd4723b88b",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "621/000/000/000/000/621"
+     }
+    }
+   }
+  }
+ },
+ "X1w01nMkyrM": {
+  "vid": "X1w01nMkyrM",
+  "status": "ok",
+  "t": 128.5,
+  "skin": "prime",
+  "1p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "2p": {
+   "perfect": "634",
+   "great": "004",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "638",
+   "judged": 638,
+   "dx": 1
+  },
+  "charts": {
+   "Rave'til the earth's end S15": {
+    "expected": 638,
+    "side": "2p",
+    "verdict": "CERTIFIED",
+    "matched": 638,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "prime",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 127.4,
+     "blind": {
+      "batch": "b1",
+      "packet": "p506c449ea3",
+      "item": "ic74d5d1f4f",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "634/004/000/000/000/638"
+     }
+    }
+   }
+  }
+ },
+ "X9S7M8etGHE": {
+  "vid": "X9S7M8etGHE",
+  "status": "ok",
+  "t": 137.4,
+  "skin": "xx",
+  "1p": {
+   "perfect": "1049",
+   "great": "025",
+   "good": "006",
+   "bad": "002",
+   "miss": "004",
+   "maxcombo": "681",
+   "judged": 1086
+  },
+  "2p": {
+   "perfect": "1092",
+   "great": "069",
+   "good": "022",
+   "bad": "014",
+   "miss": "034",
+   "maxcombo": "263",
+   "judged": 1231
+  },
+  "charts": {},
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 136.3,
+     "blind": {
+      "batch": "b1",
+      "packet": "p506c449ea3",
+      "item": "i53ba046d09",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "1092/069/022/014/034/263"
+     }
+    }
+   }
+  }
+ },
+ "Y9Li24XWv7Y": {
+  "vid": "Y9Li24XWv7Y",
+  "status": "ok",
+  "t": 118.3,
+  "skin": "xx",
+  "1p": {
+   "perfect": "492",
+   "great": "006",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "498",
+   "judged": 498
+  },
+  "2p": {
+   "perfect": "562",
+   "great": "011",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "573",
+   "judged": 573
+  },
+  "charts": {
+   "The People didn't know S16": {
+    "expected": 573,
+    "side": "2p",
+    "verdict": "CERTIFIED",
+    "matched": 573,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 117.2,
+     "blind": {
+      "batch": "b1",
+      "packet": "p506c449ea3",
+      "item": "i520ae2cfa1",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "562/011/000/000/000/573"
+     }
+    }
+   }
+  }
+ },
+ "ZWwJS2OF-Po": {
+  "vid": "ZWwJS2OF-Po",
+  "status": "ok",
+  "t": 128.3,
+  "skin": "xx",
+  "1p": {
+   "perfect": "325",
+   "great": "005",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "330",
+   "judged": 330
+  },
+  "2p": {
+   "perfect": "513",
+   "great": "001",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "514",
+   "judged": 514
+  },
+  "charts": {
+   "B2 S7": {
+    "expected": 514,
+    "side": "2p",
+    "verdict": "CERTIFIED",
+    "matched": 514,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 127.2,
+     "blind": {
+      "batch": "b1",
+      "packet": "p506c449ea3",
+      "item": "i72a88a2c7c",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "513/001/000/000/000/514"
+     }
+    }
+   }
+  }
+ },
+ "ZrOFrxcff_Q": {
+  "vid": "ZrOFrxcff_Q",
+  "status": "ok",
+  "t": 134.2,
+  "skin": "xx",
+  "1p": {
+   "perfect": "266",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "266",
+   "judged": 266
+  },
+  "2p": {
+   "perfect": "523",
+   "great": "004",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "527",
+   "judged": 527
+  },
+  "charts": {},
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 133.1,
+     "blind": {
+      "batch": "b1",
+      "packet": "p506c449ea3",
+      "item": "i2b90a2ad71",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "523/004/000/000/000/527"
+     }
+    }
+   }
+  }
+ },
+ "aAy5xvXJyyw": {
+  "vid": "aAy5xvXJyyw",
+  "status": "ok",
+  "t": 147.6,
+  "skin": "xx",
+  "1p": {
+   "perfect": "986",
+   "great": "004",
+   "good": "004",
+   "bad": "002",
+   "miss": "004",
+   "maxcombo": "512",
+   "judged": 1000
+  },
+  "2p": {
+   "perfect": "1034",
+   "great": "057",
+   "good": "006",
+   "bad": "007",
+   "miss": "007",
+   "maxcombo": "385",
+   "judged": 1111
+  },
+  "charts": {
+   "Conflict S19": {
+    "expected": 1111,
+    "side": "2p",
+    "verdict": "CERTIFIED",
+    "matched": 1111,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 146.5,
+     "blind": {
+      "batch": "b1",
+      "packet": "p506c449ea3",
+      "item": "i94fb0ee0dc",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "1034/057/006/007/007/385"
+     }
+    }
+   }
+  }
+ },
+ "c2sRk0Pws7A": {
+  "vid": "c2sRk0Pws7A",
+  "status": "ok",
+  "t": 156.1,
+  "skin": "xx",
+  "1p": {
+   "perfect": "1081",
+   "great": "053",
+   "good": "020",
+   "bad": "013",
+   "miss": "012",
+   "maxcombo": "576",
+   "judged": 1179
+  },
+  "2p": {
+   "perfect": "1127",
+   "great": "016",
+   "good": "003",
+   "bad": "000",
+   "miss": "001",
+   "maxcombo": "988",
+   "judged": 1147
+  },
+  "charts": {
+   "Nihilism - Another Ver. - S18": {
+    "expected": 1147,
+    "side": "2p",
+    "verdict": "CERTIFIED",
+    "matched": 1147,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 155.0,
+     "blind": {
+      "batch": "b1",
+      "packet": "p506c449ea3",
+      "item": "icb1d96b9c0",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "1127/016/003/000/001/988"
+     }
+    }
+   }
+  }
+ },
+ "d0CKcE6VWhY": {
+  "vid": "d0CKcE6VWhY",
+  "status": "ok",
+  "t": 120.2,
+  "skin": "xx",
+  "1p": {
+   "perfect": "337",
+   "great": "006",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "343",
+   "judged": 343
+  },
+  "2p": {
+   "perfect": "497",
+   "great": "009",
+   "good": "003",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "506",
+   "judged": 509
+  },
+  "charts": {
+   "Phantom S13": {
+    "expected": 509,
+    "side": "2p",
+    "verdict": "CERTIFIED",
+    "matched": 509,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 119.1,
+     "blind": {
+      "batch": "b1",
+      "packet": "p506c449ea3",
+      "item": "i965649e706",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "497/009/003/000/000/506"
+     }
+    }
+   }
+  }
+ },
+ "drbcgTxkEGk": {
+  "vid": "drbcgTxkEGk",
+  "status": "ok",
+  "t": 141.6,
+  "skin": "xx",
+  "1p": {
+   "perfect": "259",
+   "great": "001",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "260",
+   "judged": 260
+  },
+  "2p": {
+   "perfect": "497",
+   "great": "006",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "503",
+   "judged": 503
+  },
+  "charts": {
+   "Mitotsudaira S9": {
+    "expected": 503,
+    "side": "2p",
+    "verdict": "CERTIFIED",
+    "matched": 503,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 140.5,
+     "blind": {
+      "batch": "b1",
+      "packet": "p506c449ea3",
+      "item": "ie6d0fc183d",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "497/006/000/000/000/503"
+     }
+    }
+   }
+  }
+ },
+ "e3c9lVA5huU": {
+  "vid": "e3c9lVA5huU",
+  "status": "ok",
+  "t": 305.2,
+  "skin": "xx",
+  "1p": {
+   "perfect": "2010",
+   "great": "282",
+   "good": "097",
+   "bad": "046",
+   "miss": "065",
+   "maxcombo": "457",
+   "judged": 2500
+  },
+  "2p": {
+   "perfect": "2132",
+   "great": "211",
+   "good": "057",
+   "bad": "037",
+   "miss": "063",
+   "maxcombo": "142",
+   "judged": 2500
+  },
+  "charts": {},
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 304.1,
+     "blind": {
+      "batch": "b1",
+      "packet": "p506c449ea3",
+      "item": "i60ef8d4365",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "2132/211/057/037/063/142"
+     }
+    }
+   }
+  }
+ },
+ "eRN5h7lgKow": {
+  "vid": "eRN5h7lgKow",
+  "status": "ok",
+  "t": 131.4,
+  "skin": "xx",
+  "1p": {
+   "perfect": "500",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "500",
+   "judged": 500
+  },
+  "2p": {
+   "perfect": "800",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "800",
+   "judged": 800
+  },
+  "charts": {},
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 130.3,
+     "blind": {
+      "batch": "b1",
+      "packet": "p506c449ea3",
+      "item": "i22c2cf56cf",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "800/000/000/000/000/800"
+     }
+    }
+   }
+  }
+ },
+ "f46zP7lxZMM": {
+  "vid": "f46zP7lxZMM",
+  "status": "ok",
+  "t": 127.9,
+  "skin": "xx",
+  "1p": {
+   "perfect": "290",
+   "great": "007",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "297",
+   "judged": 297
+  },
+  "2p": {
+   "perfect": "352",
+   "great": "010",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "362",
+   "judged": 362
+  },
+  "charts": {
+   "Final Audition 3 S9": {
+    "expected": 362,
+    "side": "2p",
+    "verdict": "CERTIFIED",
+    "matched": 362,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 126.8,
+     "blind": {
+      "batch": "b1",
+      "packet": "p506c449ea3",
+      "item": "i010d0b3dda",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "352/010/000/000/000/362"
+     }
+    }
+   }
+  }
+ },
+ "f5AiaSGOOz8": {
+  "vid": "f5AiaSGOOz8",
+  "status": "ok",
+  "t": 153.4,
+  "skin": "prime",
+  "1p": {
+   "perfect": "1269",
+   "great": "025",
+   "good": "007",
+   "bad": "007",
+   "miss": "009",
+   "maxcombo": "644",
+   "judged": 1317,
+   "dx": -2
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "CROSS OVER feat. LyuU S22": {
+    "expected": 1317,
+    "side": "1p",
+    "verdict": "CERTIFIED",
+    "matched": 1317,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "1p": {
+     "skin": "prime",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 152.3,
+     "blind": {
+      "batch": "b1",
+      "packet": "p506c449ea3",
+      "item": "i0ebf924aca",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "1269/025/007/007/009/644"
+     }
+    }
+   }
+  }
+ },
+ "fZqK0R6jmy4": {
+  "vid": "fZqK0R6jmy4",
+  "status": "ok",
+  "t": 150.0,
+  "skin": "prime",
+  "1p": {
+   "perfect": "632",
+   "great": "007",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "639",
+   "judged": 639,
+   "dx": -1
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Silver Beat feat. ChisaUezono D13": {
+    "expected": 639,
+    "side": "1p",
+    "verdict": "CERTIFIED",
+    "matched": 639,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "1p": {
+     "skin": "prime",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 148.9,
+     "blind": {
+      "batch": "b1",
+      "packet": "p506c449ea3",
+      "item": "ia096afde8d",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "632/007/000/000/000/639"
+     }
+    }
+   }
+  }
+ },
+ "gXPI6InbOxU": {
+  "vid": "gXPI6InbOxU",
+  "status": "ok",
+  "t": 138.3,
+  "skin": "xx",
+  "1p": {
+   "perfect": "362",
+   "great": "037",
+   "good": "010",
+   "bad": "003",
+   "miss": "002",
+   "maxcombo": "157",
+   "judged": 414
+  },
+  "2p": {
+   "perfect": "740",
+   "great": "012",
+   "good": "003",
+   "bad": "000",
+   "miss": "005",
+   "maxcombo": "559",
+   "judged": 760
+  },
+  "charts": {},
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 137.2,
+     "blind": {
+      "batch": "b1",
+      "packet": "p2aba682557",
+      "item": "i80d497c6fd",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "740/012/003/000/005/559"
+     }
+    }
+   }
+  }
+ },
+ "iWS5qQ5lkLA": {
+  "vid": "iWS5qQ5lkLA",
+  "status": "ok",
+  "t": 196.6,
+  "skin": "xx",
+  "1p": {
+   "perfect": "2100",
+   "great": "094",
+   "good": "052",
+   "bad": "021",
+   "miss": "133",
+   "maxcombo": "207",
+   "judged": 2400
+  },
+  "2p": {
+   "perfect": "2071",
+   "great": "196",
+   "good": "066",
+   "bad": "041",
+   "miss": "026",
+   "maxcombo": "301",
+   "judged": 2400
+  },
+  "charts": {},
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 195.5,
+     "blind": {
+      "batch": "b1",
+      "packet": "p2aba682557",
+      "item": "icb834961fb",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "2071/196/066/041/026/301"
+     }
+    }
+   }
+  }
+ },
+ "kJNt1CHDoWg": {
+  "vid": "kJNt1CHDoWg",
+  "status": "ok",
+  "t": 143.2,
+  "skin": "prime",
+  "1p": {
+   "perfect": "848",
+   "great": "003",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "851",
+   "judged": 851,
+   "dx": -1
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Twist of Fate (feat. Ruriling) S16": {
+    "expected": 851,
+    "side": "1p",
+    "verdict": "CERTIFIED",
+    "matched": 851,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "1p": {
+     "skin": "prime",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 142.1,
+     "blind": {
+      "batch": "b2",
+      "packet": "p2f9cf8f2c0",
+      "item": "i9b107ea62a",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "848/003/000/000/000/851"
+     }
+    }
+   }
+  }
+ },
+ "mF3QNUtKTFE": {
+  "vid": "mF3QNUtKTFE",
+  "status": "ok",
+  "t": 137.7,
+  "skin": "prime",
+  "1p": {
+   "perfect": "788",
+   "great": "038",
+   "good": "003",
+   "bad": "001",
+   "miss": "006",
+   "maxcombo": "465",
+   "judged": 836,
+   "dx": -2
+  },
+  "2p": {
+   "perfect": "",
+   "great": "",
+   "good": "",
+   "bad": "",
+   "miss": "",
+   "maxcombo": "",
+   "judged": null
+  },
+  "charts": {
+   "Up & Up (Produced by AWAL) D21": {
+    "expected": 836,
+    "side": "1p",
+    "verdict": "CERTIFIED",
+    "matched": 836,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "1p": {
+     "skin": "prime",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 136.6,
+     "blind": {
+      "batch": "b2",
+      "packet": "p2f9cf8f2c0",
+      "item": "ifb8c080996",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "788/038/003/001/006/465"
+     }
+    }
+   }
+  }
+ },
+ "owVgTSjkBEU": {
+  "vid": "owVgTSjkBEU",
+  "status": "ok",
+  "t": 153.7,
+  "skin": "xx",
+  "1p": {
+   "perfect": "806",
+   "great": "001",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "807",
+   "judged": 807
+  },
+  "2p": {
+   "perfect": "534",
+   "great": "001",
+   "good": "002",
+   "bad": "000",
+   "miss": "001",
+   "maxcombo": "510",
+   "judged": 538
+  },
+  "charts": {},
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 152.6,
+     "blind": {
+      "batch": "b1",
+      "packet": "p2aba682557",
+      "item": "i24aa932ab8",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "534/001/002/000/001/510"
+     }
+    }
+   }
+  }
+ },
+ "rqy-6NY0-j8": {
+  "vid": "rqy-6NY0-j8",
+  "status": "ok",
+  "t": 141.5,
+  "skin": "xx",
+  "1p": {
+   "perfect": "444",
+   "great": "003",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "447",
+   "judged": 447
+  },
+  "2p": {
+   "perfect": "707",
+   "great": "010",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "717",
+   "judged": 717
+  },
+  "charts": {
+   "Silver Beat feat. ChisaUezono S13": {
+    "expected": 717,
+    "side": "2p",
+    "verdict": "CERTIFIED",
+    "matched": 717,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 140.4,
+     "blind": {
+      "batch": "b1",
+      "packet": "p2aba682557",
+      "item": "ia1d9dfed13",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "707/010/000/000/000/717"
+     }
+    }
+   }
+  }
+ },
+ "texD-5Oa1aM": {
+  "vid": "texD-5Oa1aM",
+  "status": "ok",
+  "t": 114.6,
+  "skin": "xx",
+  "1p": {
+   "perfect": "269",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "269",
+   "judged": 269
+  },
+  "2p": {
+   "perfect": "247",
+   "great": "003",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "250",
+   "judged": 250
+  },
+  "charts": {
+   "PaPa Gonzales S8": {
+    "expected": 250,
+    "side": "2p",
+    "verdict": "CERTIFIED",
+    "matched": 250,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 113.5,
+     "blind": {
+      "batch": "b1",
+      "packet": "p2aba682557",
+      "item": "i2cc0d4d7d2",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "247/003/000/000/000/250"
+     }
+    }
+   }
+  }
+ },
+ "xfrx_3iq7FQ": {
+  "vid": "xfrx_3iq7FQ",
+  "status": "ok",
+  "t": 128.4,
+  "skin": "xx",
+  "1p": {
+   "perfect": "971",
+   "great": "000",
+   "good": "000",
+   "bad": "000",
+   "miss": "000",
+   "maxcombo": "971",
+   "judged": 971
+  },
+  "2p": {
+   "perfect": "1065",
+   "great": "002",
+   "good": "001",
+   "bad": "001",
+   "miss": "000",
+   "maxcombo": "958",
+   "judged": 1069
+  },
+  "charts": {},
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 127.3,
+     "blind": {
+      "batch": "b1",
+      "packet": "p2aba682557",
+      "item": "i8d58d0a594",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "1065/002/001/001/000/958"
+     }
+    }
+   }
+  }
+ },
+ "znNabG4gI6w": {
+  "vid": "znNabG4gI6w",
+  "status": "ok",
+  "t": 144.6,
+  "skin": "xx",
+  "1p": {
+   "perfect": "991",
+   "great": "001",
+   "good": "001",
+   "bad": "001",
+   "miss": "000",
+   "maxcombo": "953",
+   "judged": 994
+  },
+  "2p": {
+   "perfect": "1177",
+   "great": "017",
+   "good": "001",
+   "bad": "000",
+   "miss": "004",
+   "maxcombo": "874",
+   "judged": 1199
+  },
+  "charts": {
+   "Silver Beat feat. ChisaUezono S18": {
+    "expected": 1199,
+    "side": "2p",
+    "verdict": "CERTIFIED",
+    "matched": 1199,
+    "via": "judged"
+   }
+  },
+  "evidence": {
+   "sides": {
+    "2p": {
+     "skin": "xx",
+     "code": "faf77518af4d725c",
+     "checks": "six digit cells; maxcombo <= P+G; no BAD/MISS -> maxcombo == P+G",
+     "confirm_t": 143.5,
+     "blind": {
+      "batch": "b1",
+      "packet": "p2aba682557",
+      "item": "i97a401e9ac",
+      "readers": [
+       "r0",
+       "r1"
+      ],
+      "answer": "1177/017/001/000/004/874"
+     }
+    }
+   }
+  }
+ }
+}
