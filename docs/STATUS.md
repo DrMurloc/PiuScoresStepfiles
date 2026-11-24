@@ -268,7 +268,10 @@ regenerated on the owner's word on 2026-09-21 (`piucenter-snapshot-092126.zip`, 
 `p2-092126`): all 106 census repairs, the five tail repairs, the six Phoenix 2 v1.01 songs (59
 charts) and The Resistance's three v1.01.0 fixes; then again the same evening as
 `piucenter-snapshot-092226.zip` (release `p2-092226`, built on `092126`'s predictions) for the
-four charts taken from their current files (the census, below). The snapshot is current. It is
+four charts taken from their current files (the census, below). Since then, `092326` (the tick
+lattice) and, on the owner's word on 2026-11-24, `piucenter-snapshot-112426.zip` (release
+`p2-112426`): the six Phoenix 2 v1.02 songs (50 charts) and K.O.A: Alice in Wonderworld - SHORT
+CUT - S9 from The Resistance's Phoenix Recompilation Pack (below). The snapshot is current. It is
 regenerated only when the owner asks.
 
 ## Upstream, as of 2026-11-24

@@ -4,10 +4,12 @@ The zip here is the **current** full annotated batch for `/Admin/PiuCenter` uplo
 
 | Current | Generated | Contents | Notes |
 |---|---|---|---|
-| `piucenter-snapshot-092326.zip` | 2026-09-23 (release `p2-092326`, built on `p2-092226`'s predictions with the 89 changed charts re-done, **the first release whose hold ticks are counted by the tick lattice** - piu-annotate `piuscores-windows-port` commit `e01246d`) | 4,641 chart JSONs (P1 ∪ P2 corpus) + `page-content/` (chart-table, stepchart-skills, tierlists) + `stepfiles/` (the 664-file `.ssc` corpus) + `version.txt` = `092326` | Every chart's `Hold ticks` is now the game's arithmetic ([docs/EVIDENCE-RULES.md](../docs/EVIDENCE-RULES.md), "A staggered release is not a tick"): hold-tick totals moved on 1,778 charts, 1,766 of them by the converter alone (1,423 down, 343 up, median -2; Conflict D26 from 23,477 ticks inside a BPM gimmick to 402, exact). Of the 992 certified charts whose shipped ticks changed, 634 now derive their judged count exactly, 273 are closer, 84 are farther (files short on ticks that the old over-count had hidden). It also carries the 72 re-authored and 12 reverted repairs, and the loops' ten new fixes (eight extraction, two tick loop). Arrows and limbs changed only on the 13 charts whose notes were edited; eNPS on 9; skills on one chart-table row; `tierlists.json` identical. Verified: `blast_radius` 72 of 4,641 moved, none without an edit (the 11 edited files that moved nothing are schedules re-authored to keep their counts, re-ingested and checked); `verify_release` 107/107; `verify_zip --ticks` CLEAN - every chart's hold ticks equal the lattice converter's own derivation from the banked stepfile, segment by segment. 32.6 MB, 73 `*` keys restored. Built in 48 minutes via `tools/snapshot_reuse.py`. |
+| `piucenter-snapshot-112426.zip` | 2026-11-24 (release `p2-112426`, built on `p2-092326`'s predictions via `tools/snapshot_reuse.py`, piu-annotate `piuscores-windows-port` at `e01246d`, the tick lattice) | 4,691 chart JSONs (P1 ∪ P2 corpus) + `page-content/` (chart-table, stepchart-skills, tierlists) + `stepfiles/` (the 670-file `.ssc` corpus) + `version.txt` = `112426` | Adds the six Phoenix 2 v1.02 songs - Mephitz 9, Falling Stars 8, Until Defined 7, NEMONEMO 11, PHYSALIS 8, Assault TAXI 7, 50 charts, their first analysis anywhere - ingested through their own charts list (`sources/charts-lists/p2-phoenix2-v102-112426.json`), and one chart from The Resistance's Phoenix Recompilation Pack, K.O.A: Alice in Wonderworld - SHORT CUT - S9 (262 -> 502, the catalog count; the one whose trace audit is FLAT, docs/STATUS.md "Upstream, as of 2026-11-24"). Verified: `blast_radius` 1 of 4,641 shared charts moved (that one, ticks 76 -> 316, taps unchanged), 0 dropped, 50 added, nothing moved without an edit; `verify_release` 107/107, no census repair's tick total changed; `verify_zip --ticks` CLEAN. Zip against `092326`: notes, holds and limb labels identical on every shared chart but K.O.A S9; the corpus-relative fields move with fifty new charts in the corpus - "Similar charts" on 1,024 charts, "Segment metadata" (closest sections) on 2,201, the three-skill summary on 138; `tierlists.json` identical. 33.0 MB, 82 `*` keys restored (73 + Mephitz's nine, artist "litmus*"). Built in 38 minutes. |
 
-`092226` (2026-09-21, the old hold-tick arithmetic) is superseded by `092326`; whichever of them
-went up last, `092326`'s stamp exceeds it. `092126` (the morning's full clean rebuild, 2 h 52 min) was pushed and superseded the same
+`092326` (2026-09-23, the first tick-lattice release: hold-tick totals moved on 1,778 charts, the
+72 re-authored and 12 reverted repairs, the loops' ten fixes) is superseded by `112426`; whether
+it was uploaded is not known here, and `112426`'s stamp exceeds it either way. `092226`
+(2026-09-21, the old hold-tick arithmetic) was superseded by `092326`. `092126` (the morning's full clean rebuild, 2 h 52 min) was pushed and superseded the same
 day; whether it was uploaded in between is not known here, so `092226` carries a higher stamp
 rather than a rebuild in place — `version.txt` is what `/Admin/PiuCenter` compares, and it
 must exceed whatever went up last. `090326` was uploaded on 2026-09-05. (`083126` never was,
@@ -30,7 +32,8 @@ cd ../piu-annotate
 SIMFILES=/c/Users/jonec/repos/PiuScoresStepfiles/simfiles/ ./run-pipeline-union.sh p2-<MMDDYY> \
     artifacts/accessible-stepcharts/050726-arroweclipse.json \
     artifacts/accessible-stepcharts/p2-phoenix2-082626.json \
-    artifacts/accessible-stepcharts/p2-phoenix2-v101-092126.json
+    artifacts/accessible-stepcharts/p2-phoenix2-v101-092126.json \
+    artifacts/accessible-stepcharts/p2-phoenix2-v102-112426.json
 python package_snapshot.py p2-<MMDDYY> <MMDDYY> \
     C:\Users\jonec\repos\PiuScoresStepfiles\snapshots\piucenter-snapshot-<MMDDYY>.zip
 ```
@@ -49,7 +52,8 @@ the third on 2026-09-21. The full runbook is [docs/SNAPSHOT.md](../docs/SNAPSHOT
   reused cached predictions; a clean rebuild is ~75 minutes, most of it in stages 2-3.
 - **New songs need a charts list of their own.** The ingest converts only what a list names,
   so a stepfile added to `simfiles/` with no list row is skipped without a word. Each content
-  update adds one small list (`p2-phoenix2-v101-092126.json` is the first).
+  update adds one small list (`p2-phoenix2-v101-092126.json` is the first, `p2-phoenix2-v102-112426.json`
+  the second).
 
 Then verify before shipping it — the release folder, the blast radius, and the zip itself:
 
