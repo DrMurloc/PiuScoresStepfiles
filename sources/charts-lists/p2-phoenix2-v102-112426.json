@@ -1,0 +1,558 @@
+{
+ "page": 1,
+ "count": 50,
+ "totalResults": 50,
+ "note": "Phoenix 2 v1.02 additions (the 2026-10-15 catalog batch: Falling Stars, Mephitz, NEMONEMO and Until Defined from the /Admin/BulkAddCharts JSON, PHYSALIS and Assault TAXI from the RISE-songs SQL; six songs, 50 charts, co-ops left out), in the api/charts shape. id and imagePath are null - the ingest reads only song name, song type, chart type and level.",
+ "results": [
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S13",
+   "level": 13,
+   "song": {
+    "name": "Assault TAXI",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S15",
+   "level": 15,
+   "song": {
+    "name": "Assault TAXI",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S18",
+   "level": 18,
+   "song": {
+    "name": "Assault TAXI",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S21",
+   "level": 21,
+   "song": {
+    "name": "Assault TAXI",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D14",
+   "level": 14,
+   "song": {
+    "name": "Assault TAXI",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D20",
+   "level": 20,
+   "song": {
+    "name": "Assault TAXI",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D23",
+   "level": 23,
+   "song": {
+    "name": "Assault TAXI",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S9",
+   "level": 9,
+   "song": {
+    "name": "Falling Stars",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S13",
+   "level": 13,
+   "song": {
+    "name": "Falling Stars",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S17",
+   "level": 17,
+   "song": {
+    "name": "Falling Stars",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S20",
+   "level": 20,
+   "song": {
+    "name": "Falling Stars",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S22",
+   "level": 22,
+   "song": {
+    "name": "Falling Stars",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D16",
+   "level": 16,
+   "song": {
+    "name": "Falling Stars",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D20",
+   "level": 20,
+   "song": {
+    "name": "Falling Stars",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D24",
+   "level": 24,
+   "song": {
+    "name": "Falling Stars",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S12",
+   "level": 12,
+   "song": {
+    "name": "Mephitz",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S16",
+   "level": 16,
+   "song": {
+    "name": "Mephitz",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S18",
+   "level": 18,
+   "song": {
+    "name": "Mephitz",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S20",
+   "level": 20,
+   "song": {
+    "name": "Mephitz",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S22",
+   "level": 22,
+   "song": {
+    "name": "Mephitz",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D15",
+   "level": 15,
+   "song": {
+    "name": "Mephitz",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D18",
+   "level": 18,
+   "song": {
+    "name": "Mephitz",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D21",
+   "level": 21,
+   "song": {
+    "name": "Mephitz",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D24",
+   "level": 24,
+   "song": {
+    "name": "Mephitz",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S2",
+   "level": 2,
+   "song": {
+    "name": "NEMONEMO",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S4",
+   "level": 4,
+   "song": {
+    "name": "NEMONEMO",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S6",
+   "level": 6,
+   "song": {
+    "name": "NEMONEMO",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S10",
+   "level": 10,
+   "song": {
+    "name": "NEMONEMO",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S15",
+   "level": 15,
+   "song": {
+    "name": "NEMONEMO",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S18",
+   "level": 18,
+   "song": {
+    "name": "NEMONEMO",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S21",
+   "level": 21,
+   "song": {
+    "name": "NEMONEMO",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D11",
+   "level": 11,
+   "song": {
+    "name": "NEMONEMO",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D16",
+   "level": 16,
+   "song": {
+    "name": "NEMONEMO",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D19",
+   "level": 19,
+   "song": {
+    "name": "NEMONEMO",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D22",
+   "level": 22,
+   "song": {
+    "name": "NEMONEMO",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S15",
+   "level": 15,
+   "song": {
+    "name": "PHYSALIS",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S19",
+   "level": 19,
+   "song": {
+    "name": "PHYSALIS",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S22",
+   "level": 22,
+   "song": {
+    "name": "PHYSALIS",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S24",
+   "level": 24,
+   "song": {
+    "name": "PHYSALIS",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D17",
+   "level": 17,
+   "song": {
+    "name": "PHYSALIS",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D20",
+   "level": 20,
+   "song": {
+    "name": "PHYSALIS",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D24",
+   "level": 24,
+   "song": {
+    "name": "PHYSALIS",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D26",
+   "level": 26,
+   "song": {
+    "name": "PHYSALIS",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S12",
+   "level": 12,
+   "song": {
+    "name": "Until Defined",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S15",
+   "level": 15,
+   "song": {
+    "name": "Until Defined",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S19",
+   "level": 19,
+   "song": {
+    "name": "Until Defined",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Single",
+   "shorthand": "S21",
+   "level": 21,
+   "song": {
+    "name": "Until Defined",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D16",
+   "level": 16,
+   "song": {
+    "name": "Until Defined",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D21",
+   "level": 21,
+   "song": {
+    "name": "Until Defined",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  },
+  {
+   "id": null,
+   "type": "Double",
+   "shorthand": "D23",
+   "level": 23,
+   "song": {
+    "name": "Until Defined",
+    "type": "Arcade",
+    "imagePath": null
+   }
+  }
+ ]
+}

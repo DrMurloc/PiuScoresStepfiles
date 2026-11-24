@@ -7,10 +7,11 @@ as a commit that names its evidence.
 
 ## What's here
 
-The 664 .ssc files (pack-relative layout, `<pack>/<song>/<file>.ssc`) that the current
+The 670 .ssc files (pack-relative layout, `<pack>/<song>/<file>.ssc`) that the current
 annotation corpus reads — the 658 files referenced by the p2-082626 chartstruct release, plus
-the six Phoenix 2 v1.01 songs added on 2026-09-21 — covering every matched official chart
-(Phoenix 1 ∪ Phoenix 2). Enumerated in `../sources/corpus-manifest.json`.
+the six Phoenix 2 v1.01 songs added on 2026-09-21 and the six v1.02 songs added on 2026-11-24 —
+covering every matched official chart (Phoenix 1 ∪ Phoenix 2). Enumerated in
+`../sources/corpus-manifest.json`.
 
 **Seed provenance**: imported unmodified from the public community repo
 [rayden-61/PIU-Simfiles](https://github.com/rayden-61/PIU-Simfiles) (branch `stepp1-phoenix`,
@@ -26,6 +27,13 @@ you on Bassbook? lol, 59 official charts — imported unmodified from the same b
 v1.01.0 songpack of 2026-09-18. The files are blob-identical to upstream, and every official
 block's notes and timing tags were also compared against the pack itself: identical, the
 mirror differing only in slot labels and in tagging two charts half-double.
+
+**Phoenix 2 v1.02 (added 2026-11-24)**: Mephitz, Falling Stars, Until Defined, NEMONEMO,
+PHYSALIS and Assault TAXI, 50 official charts — imported unmodified from the same branch at
+commit `8fb8d5c2` ("added Phnx2 1.02 charts by TRSF (ac mix only)", 2026-11-01), which mirrors
+The Resistance's v1.02.0 songpack of 2026-10-30. Blob-identical to upstream, and every official
+block's notes and timing tags identical to the pack's own copy. The game's other fifteen v1.02.0
+songs (the RISE Steam Link tracks) are in neither, so they have no stepfile here.
 
 **Checking for the next one**: `git fetch` in the `../PIU-Simfiles` clone and diff
 `17 - PHOENIX 2` against the last imported commit. That mirror carries new arcade songs only —
