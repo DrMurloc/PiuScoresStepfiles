@@ -24,7 +24,19 @@
 # writing, it re-reads both files with the pipeline's parser and refuses - restoring our
 # bytes - unless the transplanted block's judged events and timing equal theirs exactly.
 # That mode needs the piu-annotate venv.
+#
+# Two things a whole block can need before it fits our file, both done here and printed
+# (first met in The Resistance's Phoenix Recompilation Pack, 2026-11-24):
+# - A measure whose row count is not a multiple of 4 is rewritten on lcm(N, 4) rows, row k at
+#   index k*M/N. That moves nothing (a row's beat is 4k/N either way), but the converter refuses
+#   such a measure ("1 lines in measure is not divisible by 4"), so an unpadded block would pass
+#   the read-back check here and then fail tick_verify and the ingest.
+# - Our pump-halfdouble block against their pump-double one (the mirror tags half-doubles, the
+#   packs write them as doubles): our type stays, so the chart's key does not move, and their
+#   centre six panels come across - refused when any row of theirs uses the outer four.
+# --new-stepstype narrows the search for their block when a label is not unique in their file.
 import argparse
+import math
 import re
 import sys
 
@@ -94,6 +106,49 @@ def entries(v):
 KEEP = ("DESCRIPTION", "METER", "DIFFICULTY", "CHARTNAME", "CHARTSTYLE", "LASTSECONDHINT")
 
 
+def pad_measures(block):
+    """(block, measures rewritten): every measure of NOTES whose row count is not a multiple of 4
+    rewritten on lcm(N, 4) rows - the same beats, in a form the converter accepts."""
+    span = tag(block, "NOTES")
+    if span is None:
+        return block, 0
+    stype = (value(block, "STEPSTYPE") or "").strip()
+    ncols = 5 if stype == "pump-single" else 6 if stype == "pump-halfdouble" else 10
+    out, n_pad = [], 0
+    for measure in block[span[0]:span[1]].split(","):
+        rows = [t for line in measure.splitlines() if (t := line.split("//")[0].strip())]
+        n = len(rows)
+        if n == 0 or n % 4 == 0:
+            out.append(measure)
+            continue
+        m = n * 4 // math.gcd(n, 4)
+        grid_ = ["0" * ncols] * m
+        for k, r in enumerate(rows):
+            grid_[k * m // n] = r
+        eol = "\r\n" if "\r\n" in measure else "\n"
+        out.append(eol + eol.join(grid_) + eol)
+        n_pad += 1
+    return block[:span[0]] + ",".join(out) + block[span[1]:], n_pad
+
+
+def centre_six(block, stepstype):
+    """Their pump-double block as our half-double: the centre six panels of every row, under our
+    STEPSTYPE. None when a row uses an outer panel (then it is not a half-double chart)."""
+    n0, n1 = tag(block, "NOTES")
+    lines = block[n0:n1].split("\n")
+    out = []
+    for line in lines:
+        t = line.split("//")[0].strip()
+        if t and t not in (",", ";") and not t.startswith(","):
+            if len(t) != 10 or t[:2] != "00" or t[8:] != "00":
+                return None
+            line = line.replace(t, t[2:8], 1)
+        out.append(line)
+    block = block[:n0] + "\n".join(out) + block[n1:]
+    s0, s1 = tag(block, "STEPSTYPE")
+    return block[:s0] + stepstype + block[s1:]
+
+
 def set_tag(block, name, val, eol):
     """#NAME:val; replaced in place, or added after #DESCRIPTION when the block lacks it."""
     span = tag(block, name)
@@ -141,6 +196,7 @@ def main():
     ap.add_argument("--stepstype")
     ap.add_argument("--tags", default="", help="comma-separated tags whose changed entries to transplant")
     ap.add_argument("--new-block", help="their label for the block, when it differs from ours (default: --block)")
+    ap.add_argument("--new-stepstype", help="their block's STEPSTYPE, when their label alone is not unique")
     ap.add_argument("--whole-block", action="store_true", help="take their whole block, keeping our labels")
     ap.add_argument("--apply", action="store_true")
     a = ap.parse_args()
@@ -150,7 +206,7 @@ def main():
     mine = ours[s:e]
     new_text = read(a.new)
     theirs = a.new_block or a.block
-    ns, ne = find_block(new_text, theirs)
+    ns, ne = find_block(new_text, theirs, a.new_stepstype)
     new = new_text[ns:ne]
     base = mine
     if a.old:
@@ -163,6 +219,17 @@ def main():
 
     if a.whole_block:
         eol = "\r\n" if "\r\n" in ours else "\n"
+        st_mine, st_new = (value(mine, "STEPSTYPE") or "").strip(), (value(new, "STEPSTYPE") or "").strip()
+        if st_mine != st_new:
+            if (st_mine, st_new) != ("pump-halfdouble", "pump-double"):
+                sys.exit(f"REFUSED: our block is {st_mine}, theirs {st_new}")
+            new = centre_six(new, st_mine)
+            if new is None:
+                sys.exit("REFUSED: their pump-double block uses the outer panels - not our half-double chart")
+            print(f"   their pump-double block taken as our {st_mine}: the centre six panels")
+        new, n_pad = pad_measures(new)
+        if n_pad:
+            print(f"   {n_pad} measure(s) rewritten on a multiple of 4 rows (the same beats; the converter refuses the others)")
         patched = transplant(mine, new, eol)
         g_mine, g_new = grid(value(mine, "NOTES")), grid(value(new, "NOTES"))
         moved = sum(1 for x, y in zip(g_mine, g_new) if x != y) + abs(len(g_mine) - len(g_new))

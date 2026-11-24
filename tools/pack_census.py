@@ -26,9 +26,12 @@
 import datetime
 import hashlib
 import json
+import math
 import os
 import re
 import sys
+import urllib.error
+import zlib
 from collections import Counter
 from fractions import Fraction
 import atomicio  # noqa: E402  (atomic writes: tools/atomicio.py)
@@ -38,8 +41,12 @@ sys.path.insert(0, os.path.join(ROOT, "tools"))
 sys.path.insert(0, r"C:\Users\jonec\repos\piu-annotate")
 WORK = os.path.join(ROOT, "work", "packs")
 INDEX = os.path.join(WORK, "index.json")
+# The second field picks the pack by part of its file name and must match exactly one. "Compilation"
+# alone stopped doing that on 2026-11-12, when "[STEPP1+ Phyrebird] Phoenix Recompilation Pack.zip"
+# joined the hub: the old charts as Phoenix plays them, gimmicks removed and hold ticks checked
+# against combo counts. Its stepfiles write an empty measure as one row (see convert).
 PACKS = [("PHOENIX2", "PHOENIX2 songpack"), ("PHOENIX", "PHOENIX songpack"), ("XX", "XX songpack"),
-         ("PRIME2", "PRIME2 songpack"), ("STEPP1", "Compilation")]
+         ("PRIME2", "PRIME2 songpack"), ("STEPP1", "Compilation and Reorganization"), ("PHYREBIRD", "Phyrebird")]
 TIMING = ("BPMS", "WARPS", "STOPS", "DELAYS", "FAKES", "TICKCOUNTS")
 VERDICTS = ["theirs exact", "theirs closer", "both exact", "same distance", "same count, no reference",
             "differs, no reference", "ours closer", "ours exact, theirs off", "not converted",
@@ -65,14 +72,26 @@ def fetch():
     ours = corpus_files()
     index = json.load(open(INDEX, encoding="utf-8")) if os.path.isfile(INDEX) else {}
     for label, part in PACKS:
-        f, rf, z = rp.open_pack(part, password)
+        try:
+            f, rf, z = rp.open_pack(part, password)
+        except urllib.error.HTTPError as ex:
+            # a file page behind a bot challenge (HTTP 403, cf-mitigated: challenge - the PHOENIX and XX
+            # packs on 2026-11-24) is skipped, never forced: its copies already cached stay as they are
+            print(f"{label}: unreachable (HTTP {ex.code}, cf-mitigated={ex.headers.get('cf-mitigated')}) - "
+                  f"skipped; its cached copies are from an earlier fetch", flush=True)
+            continue
         wanted = sorted((i for i in z.infolist() if i.filename.lower().endswith(".ssc")
                          and os.path.basename(i.filename).lower() in ours), key=lambda i: i.header_offset)
         done = 0
         for n, i in enumerate(wanted, 1):
             key = f"{label}/{i.filename}"
             out = os.path.join(WORK, label, *i.filename.split("/"))
-            if key in index and os.path.isfile(out) and os.path.getsize(out) == i.file_size:
+            # unchanged only when the content is: a size alone misses a same-size edit (the 2026-09-21
+            # Bassbook row moved one panel and kept every byte count). The directory's CRC says it; an
+            # AES (AE-2) entry carries CRC 0 there, and then the entry's own date stands in for it.
+            if key in index and os.path.isfile(out) and os.path.getsize(out) == i.file_size and (
+                    (zlib.crc32(open(out, "rb").read()) & 0xFFFFFFFF) == i.CRC if i.CRC
+                    else index[key].get("date") == datetime.datetime(*i.date_time).isoformat(sep=" ")):
                 continue
             try:
                 data = z.read(i)
@@ -155,17 +174,49 @@ def signature(blocks):
     return sorted((b["fam"], hash(b["events"]), hash(tuple(sorted(b["timing"].items())))) for b in blocks)
 
 
+def padded_notes(notes, ncols):
+    """(notes, measures rewritten): each measure whose row count is not a multiple of 4 written on
+    lcm(N, 4) rows, row k at index k*M/N - the same beats. The converter refuses any other count
+    ("1 lines in measure is not divisible by 4"), and the Phoenix Recompilation Pack writes every
+    empty measure as one row: unpadded, 1,884 of its blocks could not be judged (2026-11-24)."""
+    out, n_pad = [], 0
+    for measure in notes.split(","):
+        rows = [t for line in measure.split("\n") if (t := line.split("//")[0].strip()) and not t.startswith("#")]
+        n = len(rows)
+        if n == 0 or n % 4 == 0:
+            out.append(measure)
+            continue
+        m = n * 4 // math.gcd(n, 4)
+        grid = ["0" * ncols] * m
+        for k, r in enumerate(rows):
+            grid[k * m // n] = r
+        out.append("\n" + "\n".join(grid) + "\n")
+        n_pad += 1
+    return ",".join(out), n_pad
+
+
 def convert(sc):
+    """(taps, ticks, implied, status) through the pipeline's converter, on a padded copy of the
+    block's NOTES (restored after). A block the converter refuses - it returns two values, not
+    three - is reported by the converter's own message, not as the unpacking error it causes."""
     from piu_annotate.formats.ssc_to_chartstruct import stepchart_ssc_to_chartstruct
+    original = sc.data["NOTES"]
+    notes, n_pad = padded_notes(original, {"pump-single": 5, "pump-halfdouble": 6}.get(sc["STEPSTYPE"], 10))
+    sc.data["NOTES"] = notes
     try:
-        df, ht, msg = stepchart_ssc_to_chartstruct(sc)
+        res = stepchart_ssc_to_chartstruct(sc)
     except Exception as ex:
         return None, None, None, f"error {type(ex).__name__}"
+    finally:
+        sc.data["NOTES"] = original
+    if len(res) != 3:
+        return None, None, None, f"refused: {str(res[-1])[:80]}"
+    df, ht, msg = res
     if df is None:
         return None, None, None, msg
     taps = int(df["Line"].str.contains("1", regex=False).sum())
     ticks = sum(int(round(t[2])) for t in ht)
-    return taps, ticks, taps + ticks, "ok"
+    return taps, ticks, taps + ticks, "ok" if not n_pad else "ok (padded)"
 
 
 def pair_blocks(ours, pack):

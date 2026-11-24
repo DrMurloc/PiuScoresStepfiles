@@ -453,6 +453,21 @@ among them. Newer is not better: their current file drifted off an exact count o
 their notes, never by their labels — a label-keyed diff hides exactly the blocks whose labels
 changed, and a half-double block is compared by cell, since a `{…}` cell is one column.
 
+Since 2026-11-24, three things the second census needed. **`fetch` re-reads an entry whose
+content changed**, judged by the directory's CRC (an AES entry carries CRC 0 there, and then its
+date stands in): it used to skip any entry whose size was unchanged, which misses a same-size edit
+like the 2026-09-21 Bassbook row. A pack whose file page answers with a bot challenge (HTTP 403,
+`cf-mitigated: challenge` — PHOENIX and XX on 2026-11-24) is skipped, never forced, and its cached
+copies stand. **The hub has a sixth pack**, `[STEPP1+ Phyrebird] Phoenix Recompilation Pack.zip`
+(label `PHYREBIRD`, 2026-11-12): the 1st-to-XX songs' charts as Phoenix plays them, by The
+Resistance with AwesomeHairo — gimmicks removed, hold tick counts checked against combo counts. It
+made "Compilation" match two packs, hence `"Compilation and Reorganization"` for `STEPP1`. **And
+`compare` converts a padded copy of each block**: that pack writes every empty measure as ONE row,
+which the converter refuses ("1 lines in measure is not divisible by 4"), so the first 2026-11-24
+run could judge only half its blocks; a measure of N rows rewritten on lcm(N, 4) rows puts every
+row on the same beat. A converter refusal now prints the converter's own message — it returns two
+values, not three, and used to surface as "error ValueError".
+
 ## Caches, reports and commits: the plumbing every loop stands on
 
 The loops run for days, several at once, over caches that cost hours to rebuild (the 1,413
@@ -1929,6 +1944,14 @@ CHARTSTYLE/LASTSECONDHINT and any tag only our block carries. After writing, it 
 files with the pipeline's parser and restores our bytes unless the block's judged events and
 six converter tags equal theirs. That mode runs on the venv. First uses: DESTRUCIMATE S19,
 Asterios -ReEntry- S4 and Conflict D25, the three the census found exact upstream.
+Two adjustments it makes to their block first, each printed (2026-11-24, for The Resistance's
+Phoenix Recompilation Pack): a measure written on a row count that is not a multiple of four is
+rewritten on lcm(N, 4) rows - the same beats, in the only form the converter accepts, since
+without it the block would pass the read-back check here and then fail `tick_verify` and the
+ingest; and our `pump-halfdouble` block against their `pump-double` one keeps our type, so the
+key does not move, taking their centre six panels - refused when any row of theirs uses an outer
+panel. `--new-stepstype` narrows the search for their block when its label is not unique in
+their file.
 
 **`author_new.py <vid> --title "<title>" --level <n> --cols 10 [--ticks 4] [--combo <combo.jsonl>] [--cache]`**
 Writes a stepfile for a chart the repo has no file for - a song Andamiro has just released - from
