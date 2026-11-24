@@ -46,7 +46,7 @@ been run under.
 Then create `artifacts/models/120524/model-config.local.yaml`, which both launchers read: a
 copy of `model-config.yaml` beside it with `model.dir` set to that folder's absolute path on
 this machine. It is gitignored because that path differs per machine; the models themselves
-are in the repository. Copy in the two Phoenix 2 charts lists as well (below). The footage
+are in the repository. Copy in the Phoenix 2 charts lists as well (below). The footage
 tools also want `opencv-python-headless` and `yt-dlp` in the same venv, and the pack tools run
 on a system Python with `pyzipper` (docs/TOOLS.md).
 
@@ -60,7 +60,8 @@ cd ../piu-annotate
 SIMFILES=/c/Users/jonec/repos/PiuScoresStepfiles/simfiles/ ./run-pipeline-union.sh p2-<name> \
     artifacts/accessible-stepcharts/050726-arroweclipse.json \
     artifacts/accessible-stepcharts/p2-phoenix2-082626.json \
-    artifacts/accessible-stepcharts/p2-phoenix2-v101-092126.json
+    artifacts/accessible-stepcharts/p2-phoenix2-v101-092126.json \
+    artifacts/accessible-stepcharts/p2-phoenix2-v102-112426.json
 
 python package_snapshot.py p2-<name> <MMDDYY> \
     C:\Users\jonec\repos\PiuScoresStepfiles\snapshots\piucenter-snapshot-<MMDDYY>.zip
@@ -104,13 +105,15 @@ The ingest converts only blocks that a charts list names, so new stepfiles in `s
 nothing on their own: a song with no list row is skipped, silently, and the release simply
 comes out without it. Each game content update therefore adds one small list beside the two
 above. `p2-phoenix2-v101-092126.json` is the first — the six Phoenix 2 v1.01 songs, 59 rows —
-built from the `/Admin/BulkAddCharts` batch JSON that put those songs in the site's catalog.
+built from the `/Admin/BulkAddCharts` batch JSON that put those songs in the site's catalog;
+`p2-phoenix2-v102-112426.json` the second, the six v1.02 songs' 50 rows, two of them RISE songs
+whose Phoenix 2 charts came into the catalog by SQL rather than the batch.
 Its `id` and `imagePath` are null on purpose: the matcher
 (`piu_annotate/formats/arroweclipse.py`) reads only the song's name and type and the chart's
 type and level. A chart that existed in Phoenix 1 goes in at its **Phoenix 1** level, because
 the stepfiles carry Phoenix 1 meters and the match is on the meter.
 
-The piu-annotate clone gitignores `artifacts/`, so the two Phoenix 2 lists are tracked **here**,
+The piu-annotate clone gitignores `artifacts/`, so the Phoenix 2 lists are tracked **here**,
 in `sources/charts-lists/`. Copy them into `../piu-annotate/artifacts/accessible-stepcharts/`
 if a fresh clone lacks them, and put each new list in both places.
 

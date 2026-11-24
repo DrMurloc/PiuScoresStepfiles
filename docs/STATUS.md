@@ -271,6 +271,61 @@ charts) and The Resistance's three v1.01.0 fixes; then again the same evening as
 four charts taken from their current files (the census, below). The snapshot is current. It is
 regenerated only when the owner asks.
 
+## Upstream, as of 2026-11-24
+
+Read on 2026-11-24 the same way as in September (`git fetch` of the mirror, `resistance_packs.py`
+list / changelog / recent, then `pack_census.py`), with two packs out of reach: the file pages of
+the PHOENIX (re-uploaded 2026-10-12) and XX (2026-10-09) packs answered with a bot challenge
+(HTTP 403, `cf-mitigated: challenge`), which is not forced; what changed in those two since
+September is unknown, and their September copies stand in the census.
+
+- **Phoenix 2 v1.02.0** (their changelog: "v1.02.0 update - 30 October 2026"): six songs, 50
+  official charts, in the mirror at `8fb8d5c2` and blob-identical there to what landed here
+  (`499ba0d`). No changelog line fixes a chart already published. The other fifteen songs of the
+  game's v1.02.0 (the RISE Steam Link tracks, 120 Phoenix 2 charts) are in neither source, and
+  v1.03.0 (Korea, 2026-11-24) is not covered yet.
+- **The PHOENIX 2, PRIME 2 and STEPP1 packs changed none of our files.** The October re-uploads
+  fixed the 1st~Perf and EXTRA~PREX3 folder order (the new pack's NOTES.pdf says so), so folder
+  prefixes moved and content did not.
+- **A sixth pack, `[STEPP1+ Phyrebird] Phoenix Recompilation Pack.zip` (2026-11-12)**: the 1st-to-XX
+  songs' charts as Phoenix plays them, by The Resistance with AwesomeHairo - some gimmicks removed,
+  hold tick counts checked against combo counts. It holds 487 of our files.
+
+### The Phoenix Recompilation census: 866 blocks exact upstream, tiered by evidence
+
+`sources/resistance-diff-2026-11-24.json` is the census (the tool's own run, padding included);
+of the 2,207 tail charts their current files reach the catalog's count exactly on **832**, and on
+866 blocks in all, where ours is off - 662 of them on certified footage, against 20 where ours is
+exact and theirs is off. Every one of the 866 was then transplanted into a copy of our file with
+`apply_upstream_fix.py --whole-block` and checked, and `sources/phoenix-recompilation-2026-11-24.json`
+holds what each check said and the tier it lands in:
+
+| tier | blocks | what the evidence is |
+|---|---|---|
+| T1 | 1 | `trace_audit` FLAT - the counter vouches for the interior; the rails gate's own bar |
+| T2 | 139 | the arrows change; certified footage read note for note (`extract_repair` survey, cached sprite passes) disagrees with their file less than with ours, both rates at the 93% bar or better |
+| T2b | 108 | a few notes change, mostly releases; the footage reads both files alike |
+| T3 | 425 | the arrows do not change: every tap row, hold head and release where ours is (377), or re-timed by under 30 ms (48) - only the tick schedule and the timing map's encoding move |
+| T4 | 181 | the arrows change and nothing can judge them: 91 have no certified footage, 7 no cached sprite pass, the rest read below the bar |
+| rejected | 11 | the footage prefers our arrows by two disagreements or more |
+| not taken | 1 | a half-double of ours whose double of theirs uses the outer panels |
+
+Every one of the 865 transplants converts to the reference count exactly (`tick_verify`), and no
+transplant touched another block of its file. `trace_audit` ran on all 661 certified ones: **no
+OFF anywhere** - no counter read contradicts any of their files - but 660 UNCOVERED, because a
+re-encoded timing map makes the audit whole-chart: 506 videos have no counter scan cached, and
+most of the rest are human plays with GOODs or blind stretches, which can never audit FLAT.
+
+The rejects are what the evidence rules warn about: Avalanche S19, Leakage Voltage S17 and
+Interference - FULL SONG - D18 reach the exact count by **adding** 14 to 60 notes that the screen
+never shows, and Solitary S17 and S18 paired with a different chart of theirs that happened to
+reach the count (21% of its notes on screen). A count alone is not a repair.
+
+Landed: the one T1, K.O.A: Alice in Wonderworld - SHORT CUT - S9, 262 -> 502 (`e77452e`; the
+gate: GAINED 1, ship audit FLAT, PASS). T2, T2b and T3 wait on the owner, since the rails do not
+ship an edit whose interior the counter cannot see; T4 waits on footage; the rejects are not taken.
+The extraction survey's proofs are scratch (`work/phyrebird/`), as are the candidate files.
+
 ## Upstream, as of 2026-09-21
 
 The corpus follows two upstream sources and they are not the same thing
